@@ -1,0 +1,138 @@
+/* navbar */
+
+.navbar-container {
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 10%; /* Fixed height */
+    padding: 0 20px;
+    background-color: #fff; /* White background */
+    border-bottom: 1px solid #ddd; /* Light border for separation */
+    position: fixed; /* Fixed to the top */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10; /* Ensure it stays above the sidebar */
+    color: (--bg-color  );
+
+}
+  
+  .navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .notification {
+    position: relative;
+  }
+  
+  .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
+  }
+  
+  .user-info {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+  }
+  
+  .user-info h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: bold;
+  }
+  
+  .user-info h4 {
+    margin: 0;
+    font-size: 0.85rem;
+    color: gray;
+  }
+  
+  .user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background-color: #d8d8d8;
+    border-radius: 50%;
+  }
+  
+  .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .navbar-logo {
+    max-height: 100px;
+      }
+  
+
+
+      /* sidebar  */
+
+      .sidebar {
+        width: 189px; /* Fixed width */
+        height: 100vh; /* Full height of the viewport */
+        background-color: #ffffff; /* Light gray background */
+        border-left: 1px solid #ddd;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end; /* Align items at the bottom */
+        padding: 20px;
+        position: fixed; /* Fixed position */
+        top: 0;
+        right: 0; /* Align to the right */
+        z-index: 0; /* Ensure it stays behind the navbar */
+      }
+      
+      .sidebar-bottom {
+        display: flex;
+        flex-direction: column;
+        gap: 20px; /* Space between menu items */
+      }
+      .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Space between icon and text */
+        cursor: pointer;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid transparent; /* Initial border */
+        transition: all 0.3s ease; /* Smooth animation for hover */
+      }
+      
+      .menu-item:hover {
+        border: 1px solid black; /* Add a black border on hover */
+        transform: scale(1.05); /* Slightly increase size on hover */
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Subtle shadow effect */
+        transition: all 0.3s ease; /* Smooth transition for hover effect */          }
+      
+      .logout {
+        display: flex;
+        align-items: center;
+        gap: 10px; /* Space between icon and text */
+        cursor: pointer;
+        padding: 10px;
+        border-radius: 5px;
+        transition: all 0.3s ease; /* Smooth animation for hover */
+        color: red; /* Default color */
+      }
+      
+      .logout:hover {
+        background-color: white; /* Change background to white */
+        color: red; /* Keep text color red */
+        border: 1px solid red; /* Add a red border */
+        transform: scale(1.1); /* Slightly enlarge the item */
+        box-shadow: 0 0 10px rgba(255, 0, 0, 0.5); /* Add a glowing red shadow */
+      }
+      
