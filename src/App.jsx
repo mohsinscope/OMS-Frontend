@@ -10,20 +10,12 @@ import AdminExpenses from "./roles/admin/admin-expensess/adminExpensess.jsx";
 import AdminUserManagement from "./roles/admin/user-managment/AdminUserManagment.jsx";
 import SuperVisorExpensesRequuest from './roles/superVisor/expenses/SyperVisorExpensesRequest.jsx';
 import SuperVisorExpensesHistory from "./roles/superVisor/expenses/SuperVisorExpensessHistory.jsx";
-
+import Layout from './pages/LayOut.jsx';
 import Settings from './reusable/settings.jsx';
 import useAuthStore from './store/store.js';
 import ExpensessView from "./reusable/ExpensessView.jsx";
 
-/* Layout Component */
-const Layout = () => (
-  <div className="layout-container">
-    <Dashboard /> {/* Fixed Dashboard */}
-    <div className="content-container">
-      <Outlet /> {/* Dynamically render child routes here */}
-    </div>
-  </div>
-);
+
 
 const App = () => {
   const { initialize } = useAuthStore();
