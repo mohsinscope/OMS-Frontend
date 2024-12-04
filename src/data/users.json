@@ -1,0 +1,28 @@
+[
+    {
+      "username": "mohsen",
+      "password": "admin123",
+      "role": "admin"
+    },
+    {
+      "username": "manager",
+      "password": "manager123",
+      "role": "manager"
+    },
+    {
+      "username": "employee1",
+      "password": "employee123",
+      "role": "employee_expenses"
+    },
+    {
+      "username": "ali",
+      "password": "supervisor123",
+      "role": "supervisor"
+    },
+    {
+      "username": "staff",
+      "password": "staff123",
+      "role": "employee_damage"
+    }
+  ]
+  

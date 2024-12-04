@@ -1,0 +1,172 @@
+.supervisor-expenses-history-page{
+    max-width: 1400px;
+    /* Limit the width */
+    margin-top: 6%;
+    margin-left: 9%;
+    padding: 20px;
+
+    border-radius: 8px;
+    /* Smooth rounded corners */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    
+}
+
+
+
+.supervisor-expenses-history-filters{
+    display: flex;
+    justify-content: start;
+    align-items: end;
+    width: 100%;
+    gap: 20px;
+
+}
+.supervisor-expenses-history-form{
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 10px;
+}
+.filter-buttons{
+    gap: 10px;
+}
+.supervisor-expenses-history-form div{
+    display: flex;
+    justify-content: start;
+    align-items: start;
+    margin-left: 20px;
+    font-size: large;
+   
+}
+
+.supervisor-expenses-history-form input {
+    width: 267px;
+    height: 39px;
+    padding: 0 20px;
+    border-radius: 8px;
+    outline: none;
+    border: #bcc1ca 1px solid;
+    text-align: right;
+    font-size: large;   
+
+}
+.supervisor-expenses-history-form select{
+    width: 267px;
+    height: 39px;
+    padding: 0 20px;
+    border-radius: 8px;
+    outline: none;
+    border: #bcc1ca 1px solid;
+    text-align: right;
+    font-size: large;
+
+}
+.supervisor-expenses-history-filters button,.supervisor-expenses-history-table-container button{
+
+    background-color: #4880ff;
+    color: white;
+    width: 100px;
+    height: 39px;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: large;
+
+
+}
+.supervisor-expenses-history-details-link{
+    background-color: #4880ff;
+    color: white;
+   padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.supervisor-expenses-history-table-container table ,.supervisor-expenses-history-table-container div  table thead th{
+    text-align: center !important;
+    font-size: large;
+}
+
+
+#date{
+    padding-right: 10px;
+}
+.supervisor-expenses-history-field-wrapper{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: start;
+    gap: 1px;
+}
+
+
+/* table of history */
+
+.supervisor-expenses-history-table-container{
+    width: 100%;
+    
+    display: flex;
+    justify-content: start;
+    align-items: end;
+    margin-top: 50px;
+
+
+}
+.ant-table-wrapper{
+    padding: 20px 0 !important;
+}
+
+
+
+
+/* table */
+
+.supervisor-expenses-history-table{
+
+    max-width: 1400px;
+    width: 100%;
+    /* Limit the width */
+    margin-left: 9%;
+    padding: 20px;
+
+    border-radius: 8px;
+   
+
+}
+.ant-table-wrapper{
+    width: 100%;
+}
+.ant-spin-nested-loading{
+    width: 100%;
+}
+.ant-spin-container{
+    width: 100%;
+}
+.ant-table-content{
+    width: 100%;
+}
+.ant-table-content table{
+    width: 100%;
+}
+
+.sidebar-collapsed{
+
+    max-width: 1600px;
+    width: 100%;
+    /* Limit the width */
+    margin-top: 5%;
+    
+    padding: 20px;
+
+    border-radius: 8px;
+    /* Smooth rounded corners */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+
+}

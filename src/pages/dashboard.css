@@ -1,0 +1,316 @@
+/* navbar */
+
+.navbar-container {
+    
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 10%; /* Fixed height */
+    padding: 0 20px;
+    background-color: #fff; /* White background */
+    border-bottom: 1px solid #ddd; /* Light border for separation */
+    position: fixed; /* Fixed to the top */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10; /* Ensure it stays above the sidebar */
+    color: (--bg-color  );
+
+}
+  
+  .navbar-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .notification {
+    position: relative;
+  }
+  
+  .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
+  }
+  
+  .user-info {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+  }
+  
+  .user-info h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: bold;
+  }
+  
+  .user-info h4 {
+    margin: 0;
+    font-size: 0.85rem;
+    color: gray;
+  }
+  
+  .user-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background-color: #d8d8d8;
+    border-radius: 50%;
+  }
+  
+  .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .navbar-logo {
+    max-height: 100px;
+      }
+  
+
+
+      /* sidebar  */
+/* Sidebar Container */
+.sidebar {
+  width: 200px; /* Slightly wider for better spacing */
+  height: 100vh; /* Full height of the viewport */
+  background-color: white; /* Softer background color */
+  border-left: 1px solid #ddd; /* Subtle border */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Space between top and bottom sections */
+  padding: 0px;
+  position: fixed; /* Fixed position */
+  top: 10%;
+  transition: all 0.3s ease; /* Smooth transition for hover effect */
+  right: 0; /* Align to the right */
+
+}
+
+/* Sidebar Top Section */
+.sidebar-top {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Reduce gap for better alignment */
+}
+
+/* Sidebar Bottom Section */
+.sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Reduced gap to match top section */
+  margin-bottom: 54%;
+  padding: 16px;
+}
+
+/* Menu Item Styles */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between icon and text */
+  cursor: pointer;
+  padding: 12px 10px; /* Adjust padding for balanced appearance */
+  border-radius: 1px; /* Rounded corners for modern look */
+  background-color: #fff; /* White background for contrast */
+  border: 1px solid transparent; /* Initial transparent border */
+  transition: all 0.3s ease; /* Smooth transition for hover effect */
+  font-size: 1rem; /* Increase text size for readability */
+  font-weight: 500; /* Medium font weight */
+  color: #333; /* Darker text color for readability */
+}
+
+/* Menu Item Hover Effect */
+.menu-item-hover {
+  /* Highlighted border color */
+  transform: translateY(-2px); /* Subtle lift effect */
+
+  
+}
+
+/* Logout Button Styles */
+.logout {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Space between icon and text */
+  cursor: pointer;
+  padding: 12px 12px; /* Consistent padding with menu items */
+  border-radius: 8px; /* Rounded corners */
+  transition: all 0.3s ease; /* Smooth animation */
+  color: white; /* Red text color for emphasis */
+  background-color: red;
+  width: fit-content;
+  font-size: 1rem; /* Text size for better readability */
+  font-weight: 500; /* Medium font weight */
+}
+
+.logout:hover{
+
+
+  transform: translateY(-2px); /* Subtle lift effect */
+ 
+}
+.sidebar.collapsed .logout{
+  background-color: white;
+  color: red;
+  margin-left: 6px;
+  
+  padding: 10px 0;
+}
+
+/* Icon Styling */
+.menu-item > svg,
+.logout > svg {
+  flex-shrink: 0;
+  color: inherit; /* Match icon color with text */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 160px; /* Narrower sidebar for smaller screens */
+    padding: 15px;
+  }
+
+  .menu-item,
+  .logout {
+    font-size: 0.9rem; /* Slightly smaller text */
+    padding: 10px; /* Adjust padding */
+  }
+}
+
+.sidebar-bottom h3{
+  font-size: 12px;
+}
+.sidebar-top .menu-item h3{
+  font-size: 14px;
+  color: #565e6c;
+}
+
+
+.sidebar-top .menu-item svg{
+    color: #4880ff;
+}
+
+
+/* collapse the sidebar */
+
+/* Collapsed Sidebar */
+.sidebar.collapsed {
+  width: 60px; /* Shrink the width */
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed .menu-item {
+  justify-content: center; /* Center the icons */
+  padding: 10px 0;
+}
+
+.sidebar.collapsed .menu-item h3 {
+  display: none; /* Hide the text */
+}
+.sidebar.collapsed .logout h3{
+ 
+  display: none;
+}
+
+.sidebar.collapsed .logout :hover{
+  box-shadow: 0;
+  border: 0;
+  background-color: white;
+}
+/* Expanded Content */
+.dashboard-content.expanded {
+  margin-right: 60px; /* Adjust margin to match the collapsed sidebar */
+  transition: margin-right 0.3s ease;
+}
+
+/* Notification Icon Active */
+.notification.active {
+  background-color: #f0f9f9; /* Add a subtle background */
+  border-radius: 50px;
+  padding: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  justify-content: center;
+}
+
+
+/* notifecation adjusment */
+
+
+.notification-content {
+  position: absolute;
+  top: 100px; /* Ensure it appears below the notification icon */
+  left: 0; /* Align to the right */
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  padding: 10px;
+  z-index: 100;
+  width: 250px; /* Fixed width for dropdown */
+}
+
+.notification-content p {
+  margin: 5px 0; /* Space between notifications */
+  font-size: 0.9rem;
+  color: #333;
+  cursor: pointer; /* Indicate interactivity */
+}
+
+.notification-content p:hover {
+  background-color: #f5f5f5; /* Highlight on hover */
+  border-radius: 5px;
+}
+
+/* Collapsed Sidebar Adjustments */
+.sidebar.collapsed .menu-item h3 {
+  display: none; /* Hide text */
+}
+
+.sidebar.collapsed .menu-item {
+  justify-content: center;
+  padding: 15px 0; /* Center the icons */
+}
+
+.sidebar.collapsed .logout h3 {
+  display: none; /* Hide text */
+}
+
+.sidebar.collapsed .logout {
+  justify-content: center;
+  margin-bottom: 70px;
+
+}
+
+/* Dashboard Content Adjustment */
+.dashboard-content {
+  margin-right: 200px; /* Space for expanded sidebar */
+  transition: margin-right 0.3s ease; /* Smooth transition */
+}
+
+.dashboard-content.expanded {
+  margin-right: 60px; /* Adjust margin for collapsed sidebar */
+  transition: margin-right 0.3s ease;
+}
+
+
+
+
+
+
+
+.menu-item-active {
+  border-right: 4px solid #007bff; /* Highlight active item */
+
+}
