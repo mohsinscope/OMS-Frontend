@@ -1,0 +1,191 @@
+
+.supervisor-request-page-container {
+  max-width: 1400px;
+  /* Limit the width */
+  margin-top: 6%;
+  margin-left: 9%;
+  padding: 20px;
+
+  border-radius: 8px;
+  /* Smooth rounded corners */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+}
+
+.supervisor-request-form-card{
+  width: 100%;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: large !important;
+
+  }
+  .supervisor-request-form{
+    display: flex;
+    justify-content: end;
+    align-items: start;
+    
+  }
+  .supervisor-request-form-card label{
+    margin-bottom: 5px;
+  }
+  .upload-label{
+    margin-bottom: 7px;
+  }
+  .supervisor-request-form-card form{
+    display: flex;
+    flex-wrap: wrap;
+    
+  }
+  .supervisor-request-form-card form input , .supervisor-request-form-card form select {
+    width: 200px;
+    height: 45px;
+    border: #bcc1ca 1px solid;
+    border-radius: 6px;
+    padding: 5px 20px;
+    font-size: large !important;
+  }
+  .supervisor-request-form-card form textarea{
+    border: #bcc1ca 1px solid;
+    border-radius: 6px;
+    padding: 5px 20px;
+    max-width: 500px;
+    max-height: 300px;
+    font-size: large !important;
+  }
+   .supervisor-request-form >div {
+    display: flex;
+    justify-content: start;
+    gap: 20px;
+    flex-wrap: wrap;
+   }
+
+   button{
+    font-size: large !important;
+   }
+
+   #date{
+    text-align: right;
+    padding-right: 5px;
+   }
+
+   .supervisor-request-field-wrapper{
+    display: flex;
+    flex-direction: column;
+   }
+
+   .image-display{
+    margin-top: 10px;
+    margin-bottom: 10px;
+   }
+   .image-pagination-controls{
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+   }
+
+   .supervisor-request-title-2{
+    margin-top: 20px;
+    margin-bottom: 20px;
+   }
+
+   /* table */
+
+   .supervisor-request-table-card{
+    max-width: 1400px;
+    /* Limit the width */
+    width: 100%;
+    margin-left: 9%;
+    padding: 20px;
+    
+    border-radius: 8px;
+    /* Smooth rounded corners */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+   }
+   .supervisor-request-table-card div{
+    width: 100%;
+    text-align: center ;
+   }
+   .supervisor-request-table-card div thead th{
+    text-align: center !important;
+    font-size: large !important;
+   }
+   .supervisor-request-table-card div tbody tr{
+    text-align: center !important;
+    font-size: large !important;
+   }
+
+   .supervisor-request-action-space {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .ant-space-item button{
+    
+    height: 40px;
+    padding: 20px;
+  }
+
+  .supervisor-request-edit-button {
+    border: 1px solid #98690c;
+    background-color: white;
+    color: #98690c;
+    font-weight: bold;
+  }
+  
+  .supervisor-request-edit-button:hover {
+    background-color: #98690c !important;
+    border-color: #98690c;
+  }
+  
+  .supervisor-request-delete-button {
+    background-color: red !important;
+    color: white;
+    border: none;
+    font-weight: bold;
+    border: red 1px solid !important;
+  }
+  
+  .supervisor-request-delete-button:hover {
+    background-color: white !important;
+    color: red !important;
+    border: red 1px solid !important;
+  }
+  
+ .supervisor-request-table-card{
+  background: none;
+  border: none;
+  padding: 20px 0 !important;
+  width: 100%;
+ }
+ .supervisor-request-table-card div{
+  padding: 0 !important;
+ }
+
+
+ .add-expensses-button{
+    width: 201px;
+    height: 52px;
+    background-color: #4880ff;
+    border-radius: 8px;
+    border: none;
+    color: white;
+    cursor: pointer;
+
+ }
+
+ .upload-section button{
+
+  margin-top: 5px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+ }

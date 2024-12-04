@@ -12,17 +12,17 @@
     {
       "username": "employee1",
       "password": "employee123",
-      "role": "employee"
+      "role": "employee_expenses"
     },
     {
-      "username": "supervisor",
+      "username": "ali",
       "password": "supervisor123",
       "role": "supervisor"
     },
     {
       "username": "staff",
       "password": "staff123",
-      "role": "staff"
+      "role": "employee_damage"
     }
   ]
   

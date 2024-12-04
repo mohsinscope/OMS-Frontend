@@ -4,6 +4,7 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+        
 }
 
 :root {
@@ -11,4 +12,8 @@
     font-family: "Cairo", sans-serif;
     --bg-color: #171a1f;
     background-color: #f4f7fe;
+}
+
+input,select,textarea{
+    outline: none;
 }

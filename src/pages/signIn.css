@@ -7,7 +7,7 @@
 /* Left-side styling */
 .left-side {
   padding: 6% 4%;
-  width: 50%;
+  width: 60%;
   background: linear-gradient(133.27deg, #007e78 11.78%, #00197d 50.49%, #003d84 100%);
 
   color: white;
@@ -28,7 +28,7 @@
 
 /* Right-side styling */
 .right-side {
-  width: 50%;
+  max-width: fit-content;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -43,7 +43,7 @@
 }
 
 /* Form styling */
-form {
+.form {
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -55,7 +55,7 @@ form {
 .input-field {
   width: 100%;
   padding: 15px;
-  border: 1px solid #ddd;
+  border: 1px solid #afacac;
   border-radius: 5px;
   font-size: 1rem;
   outline: none;
@@ -161,4 +161,24 @@ form {
   .login-btn {
     width: 100%;
   }
+}
+
+
+.input-wrapper {
+  width: 192%; /* Matches button width */
+
+}
+
+
+
+
+.right-side form div{
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  
+
 }

@@ -1,0 +1,11 @@
+  .expenses-container{
+    max-width: 1300px; /* Limit the width */
+    margin-top: 6%;
+    margin-left: 14%;
+    padding: 20px;
+
+    border-radius: 8px; /* Smooth rounded corners */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
