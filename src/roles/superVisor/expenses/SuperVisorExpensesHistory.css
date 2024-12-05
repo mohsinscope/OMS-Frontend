@@ -1,13 +1,11 @@
 .supervisor-expenses-history-page{
     max-width: 1400px;
-    /* Limit the width */
     margin-top: 6%;
     margin-left: 9%;
     padding: 20px;
-
     border-radius: 8px;
-    /* Smooth rounded corners */
-    display: flex;
+    display: flex
+;
     flex-direction: column;
     justify-content: center;
     align-items: start;
@@ -44,7 +42,7 @@
 
 .supervisor-expenses-history-form input {
     width: 267px;
-    height: 39px;
+    height: 45px;
     padding: 0 20px;
     border-radius: 8px;
     outline: none;
@@ -55,7 +53,7 @@
 }
 .supervisor-expenses-history-form select{
     width: 267px;
-    height: 39px;
+    height: 45px;
     padding: 0 20px;
     border-radius: 8px;
     outline: none;
@@ -69,7 +67,7 @@
     background-color: #4880ff;
     color: white;
     width: 100px;
-    height: 39px;
+    height: 45px;
     border: none;
     cursor: pointer;
     border-radius: 6px;
@@ -94,6 +92,7 @@
 
 #date{
     padding-right: 10px;
+    height: 45px;
 }
 .supervisor-expenses-history-field-wrapper{
     display: flex;
@@ -168,5 +167,11 @@
     flex-direction: column;
     justify-content: center;
     align-items: start;
+
+}
+
+
+.sidebar-collapsed .supervisor-expenses-history-page{
+margin-left: 7%;
 
 }
