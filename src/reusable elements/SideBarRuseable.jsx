@@ -7,8 +7,8 @@ import useAuthStore from "../store/store.js";
 const DynamicSidebar = ({
   fetchUrl,
   onLogout,
-  currentPath, // Current path to determine active menu item
-  sidebarClassName,
+  currentPath,
+  sidebarClassName, // Sidebar class name passed dynamically
   menuItemClassName,
   activeMenuItemClassName,
   logoutClassName,
@@ -92,7 +92,7 @@ const DynamicSidebar = ({
 DynamicSidebar.propTypes = {
   fetchUrl: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
   onLogout: PropTypes.func.isRequired,
-  currentPath: PropTypes.string.isRequired, // Current path to determine active menu item
+  currentPath: PropTypes.string.isRequired,
   sidebarClassName: PropTypes.string,
   menuItemClassName: PropTypes.string,
   activeMenuItemClassName: PropTypes.string,

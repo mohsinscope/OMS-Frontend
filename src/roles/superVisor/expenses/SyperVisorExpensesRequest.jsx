@@ -6,9 +6,13 @@ import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import expensesData from "./../../../data/expensess.json"; // Sample data for expenses
 import DeleteConfirmationModal from "./../../../reusable elements/DeletingModal.jsx"; // Reusable delete modal
 import EditExpenseModal from './../../../reusable elements/EditModal.jsx';
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
+
 const { Title } = Typography; // Typography component from Ant Design
 
 export default function SuperVisorExpensesRequest() {
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
+
   const [uploadedImages, setUploadedImages] = useState([]); // State to manage uploaded images
   const [dataSource, setDataSource] = useState(expensesData); // State for the table data source
   const [formData, setFormData] = useState({}); // State to manage form data
@@ -130,7 +134,9 @@ export default function SuperVisorExpensesRequest() {
   return (
     <>
 
-      <div className="supervisor-request-page-container" dir="rtl">
+      <div       className={`supervisor-expenses-history-page ${
+        isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-expenses-history-page"
+      }`} dir="rtl">
         {/* Form Section */}
         <Title level={3} className="supervisor-request-title">
           إضافة المصاريف

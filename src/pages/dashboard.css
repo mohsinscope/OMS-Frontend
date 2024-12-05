@@ -337,8 +337,24 @@
 }
 
 .dashboard-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px; /* Add some padding for spacing */
-  background-color: #f7f7f7;
+
+  
 }
+
+
+/* conditional sideba styling */
+
+
+.content-expanded{
+
+
+  
+}
+
+.content-shrunk{
+
+  
+}
+
+
+
