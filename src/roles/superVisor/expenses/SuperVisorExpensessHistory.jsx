@@ -3,13 +3,15 @@ import { Table, message } from "antd"; // Import Ant Design components
 import { Link } from "react-router-dom"; // Import Link
 import "./SuperVisorExpensesHistory.css"; // Import CSS for styling
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx"; // Reusable form component
-import expensesData from "./../../../data/expensess.json"; // Sample data for expenses
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
+import expensesData from "./../../../data/singleExpense.json";
 
 export default function SuperVisorExpensesHistory() {
   const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   const [filterData, setFilterData] = useState({});
-  const [expensesList, setExpensesList] = useState(expensesData);
+  const [expensesList, setExpensesList] = useState(
+    expensesData.map((expense) => expense.generalInfo)
+  ); // Use `generalInfo` from new structure
 
   const fields = [
     {
@@ -41,20 +43,23 @@ export default function SuperVisorExpensesHistory() {
   const handleFilterSubmit = (formData) => {
     setFilterData(formData);
 
-    const filteredExpenses = expensesData.filter((expense) => {
-      const matchesStatus =
-        !formData["الحالة"] || expense["الحالة"] === formData["الحالة"];
-      const matchesId =
-        !formData["الرقم التسلسلي"] ||
-        expense["الرقم التسلسلي"]
-          .toString()
-          .toLowerCase()
-          .includes(formData["الرقم التسلسلي"].toLowerCase());
-      const matchesDate =
-        !formData["التاريخ"] || expense["التاريخ"].includes(formData["التاريخ"]);
+    const filteredExpenses = expensesData
+      .map((expense) => expense.generalInfo)
+      .filter((generalInfo) => {
+        const matchesStatus =
+          !formData["الحالة"] || generalInfo["الحالة"] === formData["الحالة"];
+        const matchesId =
+          !formData["الرقم التسلسلي"] ||
+          generalInfo["الرقم التسلسلي"]
+            .toString()
+            .toLowerCase()
+            .includes(formData["الرقم التسلسلي"].toLowerCase());
+        const matchesDate =
+          !formData["التاريخ"] ||
+          generalInfo["التاريخ"].includes(formData["التاريخ"]);
 
-      return matchesStatus && matchesId && matchesDate;
-    });
+        return matchesStatus && matchesId && matchesDate;
+      });
 
     if (filteredExpenses.length === 0) {
       message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
@@ -65,7 +70,7 @@ export default function SuperVisorExpensesHistory() {
 
   const handleReset = () => {
     setFilterData({});
-    setExpensesList(expensesData);
+    setExpensesList(expensesData.map((expense) => expense.generalInfo));
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
@@ -98,22 +103,29 @@ export default function SuperVisorExpensesHistory() {
       title: "التفاصيل",
       key: "details",
       className: "table-column-details",
-      render: (_, record) => (
-        <Link
-          to="/expenses-view"
-          state={{ expense: record }}
-          className="supervisor-expenses-history-details-link"
-        >
-          عرض
-        </Link>
-      ),
+      render: (_, record) => {
+        const expense = expensesData.find(
+          (exp) => exp.generalInfo["الرقم التسلسلي"] === record["الرقم التسلسلي"]
+        );
+        return (
+          <Link
+            to="/expenses-view"
+            state={{ expense }}
+            className="supervisor-expenses-history-details-link"
+          >
+            عرض
+          </Link>
+        );
+      },
     },
   ];
 
   return (
     <div
       className={`supervisor-expenses-history-page ${
-        isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-expenses-history-page"
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-expenses-history-page"
       }`}
       dir="rtl"
     >

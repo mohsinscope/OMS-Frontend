@@ -42,13 +42,13 @@ export default function NavBar({ onSidebarToggle }) {
 
         {/* User Avatar */}
         <div className="user-avatar">
-          <Icon icon="material-symbols:person" width="45" height="45" /> {/* Default person avatar icon */}
+        <Icon icon="ic:round-person" width="45" height="45" /> {/* Default person avatar icon */}
         </div>
       </div>
 
       {/* Right Section */}
       <div className="navbar-right">
-        <h1>نظام إدارة المكاتب</h1> {/* Title of the system in Arabic */}
+        <h1 style={{marginRight:"20px"}}>نظام إدارة المكاتب</h1> {/* Title of the system in Arabic */}
         <Icon
           icon="gg:menu" // Hamburger menu icon
           width="45"

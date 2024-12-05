@@ -1,22 +1,17 @@
 .expensess-date{
-    margin-top: 6%;
-    margin-right: 7%;
+
     text-align: center;
 }
 
 .expensess-view-container{
-    max-width: 1400px;
-    /* Limit the width */
-    margin-top: 2%;
-    margin-left: 9%;
+    margin-top: 6%;
     padding: 20px;
-
     border-radius: 8px;
-    /* Smooth rounded corners */
     display: flex;
     flex-direction: column;
-    justify-content: start;
-    align-items: end;
+    justify-content: center;
+    align-items: start;
+    
 }
 
 
@@ -63,3 +58,17 @@
     justify-content: center;
 }
 
+/* modal */
+
+.ant-modal.css-dev-only-do-not-override-1wwf28x{
+    width: 100% !important;
+    height: 600px !important;
+}
+
+.ant-modal-body{
+    display: flex;
+    justify-content: space-between;
+}
+.ant-modal-body p{
+    font-size: large;
+}

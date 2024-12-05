@@ -1,11 +1,9 @@
 .supervisor-expenses-history-page{
-    max-width: 1400px;
+
     margin-top: 6%;
-    margin-left: 9%;
     padding: 20px;
     border-radius: 8px;
-    display: flex
-;
+    display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: start;
@@ -108,10 +106,8 @@
 .supervisor-expenses-history-table-container{
     width: 100%;
     
-    display: flex;
-    justify-content: start;
-    align-items: end;
-    margin-top: 50px;
+
+    margin-top: 20px;
 
 
 }
@@ -126,7 +122,7 @@
 
 .supervisor-expenses-history-table{
 
-    max-width: 1400px;
+  
     width: 100%;
     /* Limit the width */
     margin-left: 9%;
@@ -154,10 +150,10 @@
 
 .sidebar-collapsed{
 
-    max-width: 1600px;
-    width: 100%;
+   
+    width: 105%;
     /* Limit the width */
-    margin-top: 5%;
+    margin-top: 6%;
     
     padding: 20px;
 
