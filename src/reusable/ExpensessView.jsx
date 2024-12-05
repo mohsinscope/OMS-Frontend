@@ -1,23 +1,31 @@
-import React from "react";
+import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Table } from "antd"; // Importing Table component
+import { Table, Button, Modal, Image, Empty,ConfigProvider  } from "antd"; // Importing components from Ant Design
 import "./styles/ExpensessView.css";
 import Dashboard from "./../pages/dashBoard.jsx";
-
+import useAuthStore from './../store/store.js';
 export default function ExpensessView() {
-  const location = useLocation();
-  const expense = location.state?.expense; // Get expense details from state
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
 
+
+  // Fetch data passed from the previous page
+  const location = useLocation();
+  const expense = location.state?.expense; // Access the expense object from state
+
+  const [selectedItem, setSelectedItem] = useState(null); // For showing item details
+  const [isModalVisible, setIsModalVisible] = useState(false); // For modal visibility
+
+  // Return Empty component if no data is passed
   if (!expense) {
-    return <p>لا توجد تفاصيل لعرضها.</p>;
+    return <Empty description="لا توجد تفاصيل لعرضها. تأكد من تمرير البيانات بشكل صحيح." />;
   }
 
-  // Table columns based on the provided structure
-  const columns = [
+  // Table columns for general details
+  const generalColumns = [
     {
-      title: "سعر الصرف الكلي",
-      dataIndex: "سعر الصرف الكلي",
-      key: "سعر الصرف الكلي",
+      title: "الكلفة الكلية",
+      dataIndex: "الكلفة الكلية",
+      key: "الكلفة الكلية",
       align: "center",
     },
     {
@@ -39,69 +47,135 @@ export default function ExpensessView() {
       align: "center",
     },
     {
-      title: "رقم الطلب",
-      dataIndex: "رقم الطلب",
-      key: "رقم الطلب",
+      title: "الرقم التسلسلي",
+      dataIndex: "الرقم التسلسلي",
+      key: "الرقم التسلسلي",
       align: "center",
     },
   ];
 
-  // Table data from the expense object
-  const tableData = [
+  // General details table data
+  const generalData = [expense.generalInfo]; // Use generalInfo from the passed expense
+
+  // Table columns for expense items
+  const itemColumns = [
+   ,
     {
-      key: "1",
-      "رقم الطلب": expense["رقم الطلب"] || "غير متوفر",
-      "اسم المشرف": expense["اسم المشرف"] || "غير متوفر",
-      "المحافظة": expense["المحافظة"] || "غير متوفر",
-      "اسم المكتب": expense["اسم المكتب"] || "غير متوفر",
-      "سعر الصرف الكلي": expense["سعر الصرف الكلي"] || "غير متوفر",
+      title: "نوع المصروف",
+      dataIndex: "نوع المصروف",
+      key: "نوع المصروف",
+      align: "center",
     },
+    {
+      title: "الكمية",
+      dataIndex: "الكمية",
+      key: "الكمية",
+      align: "center",
+    },
+    {
+      title: "السعر",
+      dataIndex: "السعر",
+      key: "السعر",
+      align: "center",
+    }, 
+    {
+      title: "التاريخ",
+      dataIndex: "التاريخ",
+      key: "التاريخ",
+      align: "center",
+    },{
+      title: "عرض",
+      key: "عرض",
+      align: "center",
+      render: (_, record) => (
+        <Button
+          type="primary"
+          onClick={() => {
+            setSelectedItem(record); // Set selected item
+            setIsModalVisible(true); // Show modal
+          }}
+        >
+          عرض
+        </Button>
+      ),
+    }
   ];
+
+  // Expense items table data
+  const itemData = expense.items || []; // Use items from the passed expense
 
   return (
     <>
       <Dashboard />
-      <h1 className="expensess-date">{`التاريخ: ${expense.التاريخ}`}</h1>
-      
+      <div  dir="rtl"
+       className={`supervisor-expenses-history-page ${
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-expenses-history-page"
+      }`}>
+        <h1 className="expensess-date">{`التاريخ: ${expense.generalInfo["التاريخ"] || "غير متوفر"}`}</h1>
 
-      <div className="expensess-view-container">
-      {/* Table Section */}
-      <Table
-        className="expense-details-table"
-        columns={columns}
-        dataSource={tableData}
-        bordered
-        pagination={false}
-      />
+        {/* General Details Table */}
+        <Table
+          className="expense-details-table"
+          columns={generalColumns}
+          dataSource={generalData}
+          bordered
+          pagination={false}
+          locale={{ emptyText: "لا توجد بيانات" }}
+        />
+
         <button className="expenssses-print-button">طباعة</button>
         <hr />
-        <div className="expensess-view-small-containers">
-          {/* Dedicated image container */}
-          {expense.img && (
-            <div className="expensess-image-container">
-              <img
-                src={expense.img}
-                alt="تفاصيل الصورة"
-                onError={(e) => (e.target.src = "/path/to/placeholder.jpg")} // Fallback for invalid image
-                className="expense-image"
-              />
-              <h3 className="image-caption">اضغط للتكبير</h3>
-            </div>
-          )}
 
-          {/* Dynamic mapping of other expense details */}
-          <div className="expensess-details-container" dir="rtl">
-            {Object.entries(expense)
-              .filter(([key]) => key !== "details" && key !== "img") // Exclude "details" and "img" keys
-              .map(([key, value], index) => (
-                <div key={index} className="expensess-detail-item">
-                  <p>
-                    {key}: {value || "غير متوفر"}
-                  </p>
+        {/* Expense Items Table */}
+        <Table
+          className="expense-items-table"
+          columns={itemColumns}
+          dataSource={itemData}
+          bordered
+          pagination={{ pageSize: 5 }}
+          locale={{ emptyText: "لا توجد عناصر للصرف." }}
+        />
+
+        {/* Modal for Item Details */}
+        <ConfigProvider direction="rtl">
+        <Modal 
+        
+          title="تفاصيل المصروف"
+          visible={isModalVisible}
+          onCancel={() => setIsModalVisible(false)}
+          footer={[
+            <Button key="close" onClick={() => setIsModalVisible(false)}>
+              الخروج
+            </Button>,
+          ]}
+        >
+          {selectedItem ? (
+            <>
+            <div>
+              <p>{`نوع المصروف: ${selectedItem["نوع المصروف"] || "غير متوفر"}`}</p>
+              <p>{`السعر: ${selectedItem["السعر"] || "غير متوفر"}`}</p>
+              <p>{`الكمية: ${selectedItem["الكمية"] || "غير متوفر"}`}</p>
+              <p>{`التاريخ: ${selectedItem["التاريخ"] || "غير متوفر"}`}</p>
+
+            </div>
+              {selectedItem.image ? (
+                <div className="image-container">
+                  <Image
+                    src={selectedItem.image}
+                    alt="تفاصيل الصورة"
+                    style={{ maxWidth: "100%", height: "auto" }}
+                  />
                 </div>
-              ))}
-          </div>
-        </div>
+              ) : (
+                <p>لا توجد صورة لعرضها</p>
+              )}
+            </>
+          ) : (
+            <p>لا توجد بيانات لعرضها</p>
+          )}
+        </Modal></ConfigProvider>
       </div>
     </>
   );
