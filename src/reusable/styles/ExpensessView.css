@@ -4,14 +4,15 @@
 }
 
 .expensess-view-container{
-    margin-top: 6%;
+    margin-top: 1%;
     padding: 20px;
     border-radius: 8px;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-direction: row;
+    justify-content: start;
     align-items: start;
-    
+    width:85%;
+    gap: 50px;
 }
 
 
@@ -42,7 +43,14 @@
     box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;    
 }
 
-.expensess-view-smaller-container{
+.ExpensessView-modal-container{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.ExpensessView-modal-container .expensess-view-smaller-container{
     display: flex;
     flex-direction: column;
     justify-content: top;
@@ -51,7 +59,7 @@
    
 }
 
-.expensess-image-container{
+.ExpensessView-modal-container .expensess-image-container{
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -60,15 +68,39 @@
 
 /* modal */
 
-.ant-modal.css-dev-only-do-not-override-1wwf28x{
+.ExpensessView-modal-container .ant-modal.css-dev-only-do-not-override-1wwf28x{
     width: 100% !important;
     height: 600px !important;
 }
 
-.ant-modal-body{
+.ExpensessView-modal-container .ant-modal-body{
     display: flex;
-    justify-content: space-between;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    height: 300px;
 }
-.ant-modal-body p{
+.ExpensessView-modal-container .ant-modal-body p{
     font-size: large;
+}
+
+.ExpensessView-modal-container .expensess-view-container input{
+    width: 300px;
+    height: 30px;
+}
+
+
+.input-expenses-view-page-warp-container{
+    display: flex;
+    justify-content: start;
+    align-items: start;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.expensses-view-button{
+    padding: 20px;
+    text-align: center;
+
 }

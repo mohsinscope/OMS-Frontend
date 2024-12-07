@@ -17,3 +17,7 @@
 input,select,textarea{
     outline: none;
 }
+
+ table thead tr th{
+    background-color: #f3f4f6 !important;
+}

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Image, Button, Upload } from "antd"; // Importing Ant Design components
 import { LeftOutlined, RightOutlined, UploadOutlined } from "@ant-design/icons"; // Icons for controls
 import './styles/imagePreViewer.css';
+
 export default function ImagePreviewer() {
   const [uploadedImages, setUploadedImages] = useState([]); // State to store uploaded image URLs
   const [currentIndex, setCurrentIndex] = useState(0); // State to track the currently displayed image index
@@ -27,6 +28,20 @@ export default function ImagePreviewer() {
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
+    }
+  };
+
+  // Function to delete the current image
+  const handleDelete = () => {
+    setUploadedImages((prev) =>
+      prev.filter((_, index) => index !== currentIndex)
+    );
+
+    // Adjust the current index after deletion
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1);
+    } else if (currentIndex === 0 && uploadedImages.length === 1) {
+      setCurrentIndex(0); // Reset to 0 if there are no images left
     }
   };
 
@@ -81,6 +96,17 @@ export default function ImagePreviewer() {
               className="pagination-button next-button"
             >
               التالي {/* Label for next button */}
+            </Button>
+          </div>
+
+          {/* Delete Button */}
+          <div className="delete-button-container">
+            <Button
+              onClick={handleDelete} // Delete the current image
+              danger
+              className="delete-button"
+            >
+              حذف {/* Label for delete button */}
             </Button>
           </div>
         </>

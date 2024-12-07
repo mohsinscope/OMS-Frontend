@@ -7,7 +7,7 @@ import expensesData from "./../../../data/expensess.json"; // Sample data for ex
 import DeleteConfirmationModal from "./../../../reusable elements/DeletingModal.jsx"; // Reusable delete modal
 import EditExpenseModal from './../../../reusable elements/EditModal.jsx';
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
-
+import Icons from './../../../reusable elements/icons.jsx';
 const { Title } = Typography; // Typography component from Ant Design
 
 export default function SuperVisorExpensesRequest() {
@@ -116,6 +116,10 @@ export default function SuperVisorExpensesRequest() {
       key: "actions",
       render: (_, record) => (
         <Space>
+          
+           <Button danger size="small" onClick={() => handleDelete(record)}>
+            حذف
+          </Button>
           <Button
             type="primary"
             size="small"
@@ -123,9 +127,7 @@ export default function SuperVisorExpensesRequest() {
           >
             تعديل
           </Button>
-          <Button danger size="small" onClick={() => handleDelete(record)}>
-            حذف
-          </Button>
+         
         </Space>
       ),
     },
@@ -153,7 +155,7 @@ export default function SuperVisorExpensesRequest() {
             hideButtons={true}
             showImagePreviewer={true}
           />
-          <button className="add-expensses-button">إضافة مصروف</button>
+          <button className="add-expensses-button" >   إضافة مصروف<Icons type="add" /> </button>
         </Card>
 
         {/* Table Section */}
