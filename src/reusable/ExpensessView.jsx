@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
-import { Table, Button, Modal, Image, Empty,ConfigProvider  } from "antd"; // Importing components from Ant Design
+import { Table, Button, Modal, Image, Empty, ConfigProvider } from "antd"; // Importing components from Ant Design
 import "./styles/ExpensessView.css";
 import Dashboard from "./../pages/dashBoard.jsx";
 import useAuthStore from './../store/store.js';
@@ -59,7 +59,7 @@ export default function ExpensessView() {
 
   // Table columns for expense items
   const itemColumns = [
-   ,
+    ,
     {
       title: "نوع المصروف",
       dataIndex: "نوع المصروف",
@@ -77,18 +77,19 @@ export default function ExpensessView() {
       dataIndex: "السعر",
       key: "السعر",
       align: "center",
-    }, 
+    },
     {
       title: "التاريخ",
       dataIndex: "التاريخ",
       key: "التاريخ",
       align: "center",
-    },{
+    }, {
       title: "عرض",
       key: "عرض",
       align: "center",
       render: (_, record) => (
         <Button
+        className="expensses-view-button"
           type="primary"
           onClick={() => {
             setSelectedItem(record); // Set selected item
@@ -107,12 +108,11 @@ export default function ExpensessView() {
   return (
     <>
       <Dashboard />
-      <div  dir="rtl"
-       className={`supervisor-expenses-history-page ${
-        isSidebarCollapsed
+      <div dir="rtl"
+        className={`supervisor-expenses-history-page ${isSidebarCollapsed
           ? "sidebar-collapsed"
           : "supervisor-expenses-history-page"
-      }`}>
+          }`}>
         <h1 className="expensess-date">{`التاريخ: ${expense.generalInfo["التاريخ"] || "غير متوفر"}`}</h1>
 
         {/* General Details Table */}
@@ -139,43 +139,60 @@ export default function ExpensessView() {
         />
 
         {/* Modal for Item Details */}
-        <ConfigProvider direction="rtl">
-        <Modal 
-        
-          title="تفاصيل المصروف"
-          visible={isModalVisible}
-          onCancel={() => setIsModalVisible(false)}
-          footer={[
-            <Button key="close" onClick={() => setIsModalVisible(false)}>
-              الخروج
-            </Button>,
-          ]}
-        >
-          {selectedItem ? (
-            <>
-            <div>
-              <p>{`نوع المصروف: ${selectedItem["نوع المصروف"] || "غير متوفر"}`}</p>
-              <p>{`السعر: ${selectedItem["السعر"] || "غير متوفر"}`}</p>
-              <p>{`الكمية: ${selectedItem["الكمية"] || "غير متوفر"}`}</p>
-              <p>{`التاريخ: ${selectedItem["التاريخ"] || "غير متوفر"}`}</p>
+        <div >
+                  <ConfigProvider direction="rtl">
+          <Modal
+            width={1500}
+            height={300}
+            title="تفاصيل المصروف"
+            visible={isModalVisible}
+            onCancel={() => setIsModalVisible(false)}
+            footer={[
+              <Button key="close" onClick={() => setIsModalVisible(false)}>
+                الخروج
+              </Button>,
+            ]}
+          >
+            {selectedItem ? (
+              <><div className="ExpensessView-modal-container">
+                <div >
+                  <div className="input-expenses-view-page-warp-container">
+                    <label>نوع المصروف</label>
+                    <input type="text" disabled placeholder={`${selectedItem["نوع المصروف"] || "غير متوفر"}`} />
+                    <label>السعر</label>
+                    <input type="text" disabled placeholder={`${selectedItem["السعر"] || "غير متوفر"}`} />
+                  </div>
+                  <div className="input-expenses-view-page-warp-container">
+                    <label>الكمية</label>
+                    <input type="text" disabled placeholder={`${selectedItem["الكمية"] || "غير متوفر"}`} />
+                    
+                    <label>التاريخ</label>
+                    <input type="text" disabled placeholder={`${selectedItem["التاريخ"] || "غير متوفر"}`} />
+                  
 
-            </div>
-              {selectedItem.image ? (
-                <div className="image-container">
-                  <Image
-                    src={selectedItem.image}
-                    alt="تفاصيل الصورة"
-                    style={{ maxWidth: "100%", height: "auto" }}
-                  />
+                  </div>
+
                 </div>
-              ) : (
-                <p>لا توجد صورة لعرضها</p>
-              )}
-            </>
-          ) : (
-            <p>لا توجد بيانات لعرضها</p>
-          )}
-        </Modal></ConfigProvider>
+                {selectedItem.image ? (
+                  <div className="image-container">
+                    <p>الصورة:</p>
+                    <hr style={{marginBottom:"10px",marginTop:"10px"}} />
+                    <Image
+                      src={selectedItem.image}
+                      alt="تفاصيل الصورة"
+                      style={{ maxWidth: "100%", height: "auto" }}
+                    />
+                  </div>
+                ) : (
+                  <p>لا توجد صورة لعرضها</p>
+                )}
+             </div> </>
+            ) : (
+              <p>لا توجد بيانات لعرضها</p>
+            )}
+          </Modal></ConfigProvider>
+        </div>
+
       </div>
     </>
   );

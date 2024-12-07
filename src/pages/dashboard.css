@@ -27,6 +27,7 @@
   
   .notification {
     position: relative;
+    margin-top: 10px;
   }
   
   .notification-badge {
@@ -131,7 +132,7 @@
 }
 
 /* Menu Item Hover Effect */
-.menu-item-hover {
+.menu-item:hover {
   /* Highlighted border color */
   transform: translateY(-2px); /* Subtle lift effect */
 
@@ -163,7 +164,7 @@
 .sidebar.collapsed .logout{
   background-color: white;
   color: red;
-  margin-left: 6px;
+  margin-left: 3px;
   
   padding: 10px 0;
 }

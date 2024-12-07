@@ -10,8 +10,10 @@
     { "label": "تقارير", "icon": "mdi:file-document", "path": "/manager/reports" }
   ], 
    "supervisor": [
-    { "label": "طلبات المصاريف", "icon": "material-symbols:receipt", "path": "/supervisor/ExpensesRequests" },
-    { "label": "المصاريف", "icon": "mdi:file-document", "path": "/supervisor/Expensess" }
+    { "label": "طلبات المصاريف", "icon": "bill-request", "path": "/supervisor/ExpensesRequests" },
+    { "label": "المصاريف", "icon": "bill", "path": "/supervisor/Expensess" },
+    { "label": "الحضور", "icon": "attendence", "path": "/supervisor/Attendence" },
+    { "label": "تسجيل الحضور", "icon": "attendence-add", "path": "/supervisor/AttendenceAdd" }
   ],
   "employee_expenses": [
     { "label": "لوحة التحكم", "icon": "mdi:view-dashboard", "path": "/employee_expenses/expenses/dashboard" },

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Icon } from "@iconify/react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/store.js";
-
+import Icons from './icons.jsx';
 const DynamicSidebar = ({
   fetchUrl,
   onLogout,
@@ -13,7 +12,7 @@ const DynamicSidebar = ({
   activeMenuItemClassName,
   logoutClassName,
 }) => {
-  const { user } = useAuthStore();
+  const { user,isSidebarCollapsed } = useAuthStore();
   const [roleItems, setRoleItems] = useState([]);
   const navigate = useNavigate();
 
@@ -40,8 +39,8 @@ const DynamicSidebar = ({
   }, [fetchUrl, user]);
 
   const commonItems = [
-    { label: "الإعدادات", icon: "material-symbols:settings-outline", path: "/settings" },
-    { label: "تسجيل الخروج", icon: "mdi:logout", action: onLogout },
+    { label: "الإعدادات", icon: "settings", path: "/settings" },
+    { label: "تسجيل الخروج", icon: "logout", action: onLogout },
   ];
 
   const handleMenuClick = (path, action) => {
@@ -64,7 +63,7 @@ const DynamicSidebar = ({
             }`}
             onClick={() => handleMenuClick(item.path, item.action)}
           >
-            <Icon icon={item.icon} width="30" height="30" />
+            <Icons type={item.icon} width={40} height={40} color="#4880ff" />
             <h3>{item.label}</h3>
           </div>
         ))}
@@ -79,8 +78,21 @@ const DynamicSidebar = ({
               currentPath === item.path ? activeMenuItemClassName : ""
             }`}
             onClick={() => handleMenuClick(item.path, item.action)}
-          >
-            <Icon icon={item.icon} width="24" height="24" />
+          > 
+          
+               <Icons
+        type={item.icon}
+        width={24}
+        height={24}
+        color={
+          item.label === "تسجيل الخروج"
+            ? isSidebarCollapsed
+              ? "red" // Red color if the sidebar is collapsed
+              : "white" // White color otherwise
+            : "black" // Default black for other icons
+        }
+      />
+            
             <h3>{item.label}</h3>
           </div>
         ))}

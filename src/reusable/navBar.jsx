@@ -3,6 +3,7 @@ import { Icon } from "@iconify/react"; // Iconify library for icons
 import useAuthStore from "./../store/store.js"; // Hook to fetch logged-in user info
 import "./../pages/dashboard.css"; // Custom CSS file for the NavBar
 import Logo from "./../assets/Scopesky Logo.png"; // Importing the logo
+import Icons from './../reusable elements/icons.jsx';
 
 export default function NavBar({ onSidebarToggle }) {
   const { user } = useAuthStore(); // Fetch logged-in user's information
@@ -22,7 +23,7 @@ export default function NavBar({ onSidebarToggle }) {
           className={`notification ${isNotificationsActive ? "active" : ""}`} // Add 'active' class if notifications are active
           onClick={handleNotificationClick} // Handle notification icon click
         >
-          <Icon icon="material-symbols:notifications" width="30" height="30" /> {/* Notification bell icon */}
+          <Icons type="notification" width={38} height={20}/> {/* Notification bell icon */}
           <span className="notification-badge"></span> {/* Badge for unread notifications */}
         </div>
 
@@ -42,7 +43,7 @@ export default function NavBar({ onSidebarToggle }) {
 
         {/* User Avatar */}
         <div className="user-avatar">
-        <Icon icon="ic:round-person" width="45" height="45" /> {/* Default person avatar icon */}
+        <Icons type="user" width={48} height={48} color="#4880ff"/> {/* Default person avatar icon */}
         </div>
       </div>
 
