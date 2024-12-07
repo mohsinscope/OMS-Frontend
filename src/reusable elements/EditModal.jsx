@@ -53,6 +53,9 @@ const EditModal = ({ visible, onCancel, onSave, editingRecord, setEditingRecord 
       visible={visible}
       onCancel={onCancel}
       onOk={onSave}
+      okText="الحفظ"
+      cancelText="الغاء"
+      
       width={600}
     >
       <div className="editing-modal-container">
@@ -172,7 +175,7 @@ const EditModal = ({ visible, onCancel, onSave, editingRecord, setEditingRecord 
                     onClick={handleDeleteImage}
                     style={{ marginLeft: "10px" }}
                   >
-                حذف الصورة
+                    حذف الصورة
                   </Button>
                 </div>
               </div>

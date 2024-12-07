@@ -14,8 +14,8 @@ import Layout from './pages/LayOut.jsx';
 import Settings from './reusable/settings.jsx';
 import useAuthStore from './store/store.js';
 import ExpensessView from "./reusable/ExpensessView.jsx";
-
-
+import SuperVisorAttendenceHistory from './roles/superVisor/attendence/superVisorAttendenceHistory.jsx';
+import SuperVisorAttendenceAdd from './roles/superVisor/attendence/superVisorAttendenceAdd.jsx';
 
 const App = () => {
   const { initialize } = useAuthStore();
@@ -49,6 +49,8 @@ const App = () => {
             <Route path="supervisor/ExpensesRequests" element={<SuperVisorExpensesRequuest />} />
             <Route path="supervisor/Expensess" element={<SuperVisorExpensesHistory />} />
             <Route path="expenses-view" element={<ExpensessView />} />
+            <Route path="supervisor/Attendence" element={<SuperVisorAttendenceHistory />} />
+            <Route path="supervisor/AttendenceAdd" element={<SuperVisorAttendenceAdd />} />
           </Route>
         </Routes>
       </Router>
