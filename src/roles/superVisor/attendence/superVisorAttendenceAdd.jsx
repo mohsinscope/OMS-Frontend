@@ -3,7 +3,7 @@ import { Table, Checkbox, Button, Modal, message } from "antd";
 import axios from "axios"; // For API requests
 import TextFields from "./../../../reusable elements/ReuseAbleTextField.jsx"; // Import your TextFields component
 import "./superVisorAteensenceAdd.css";
-
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 export default function SuperVisorAttendanceAdd() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [passportAttendance, setPassportAttendance] = useState({
@@ -17,7 +17,7 @@ export default function SuperVisorAttendanceAdd() {
     { id: "002", name: "سعد أحمد", role: "مشرف", attended: false },
     { id: "003", name: "محمد علي", role: "موظف حسابات", attended: true },
   ]);
-
+  const { isSidebarCollapsed } = useAuthStore();
   const [modalVisible, setModalVisible] = useState(false);
   const [modalAction, setModalAction] = useState(""); // Keep track of which button was clicked
   const governorate = "بغداد"; // Example governorate
@@ -162,7 +162,13 @@ export default function SuperVisorAttendanceAdd() {
   ];
 
   return (
-    <div className="supervisor-attendence-register-container" dir="rtl">
+    <div
+      className={`supervisor-attendence-register-container ${
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-expenses-history-page"
+      }`}
+      dir="rtl">
       {/* Section: Attendance Details */}
       <h2 style={{ marginTop: "20px" }}>حضور موظفين الجوازات</h2>
       <TextFields
@@ -190,15 +196,13 @@ export default function SuperVisorAttendanceAdd() {
           type="default"
           danger
           onClick={() => showModal("reset")}
-          style={{ margin: "10px" }}
-        >
+          style={{ margin: "10px" }}>
           إعادة التعيين
         </Button>
         <Button
           type="primary"
           onClick={() => showModal("save")}
-          style={{ margin: "10px" }}
-        >
+          style={{ margin: "10px" }}>
           الحفظ والإرسال
         </Button>
       </div>
@@ -210,8 +214,7 @@ export default function SuperVisorAttendanceAdd() {
         onOk={handleModalConfirm}
         onCancel={handleModalCancel}
         okText="نعم"
-        cancelText="الغاء"
-      >
+        cancelText="الغاء">
         <p>
           {modalAction === "reset"
             ? "هل أنت متأكد من إعادة التعيين؟"

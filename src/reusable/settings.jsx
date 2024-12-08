@@ -1,9 +1,7 @@
-
 import Dashboard from "./../pages/dashBoard.jsx"; // Import the Dashboard component
 import useAuthStore from "./../store/store.js"; // Import the authentication store
 import { useState } from "react"; // Import useState hook from React
-import { Icon } from "@iconify/react"; // Import Iconify for icons
-import './styles/settings.css';
+import "./styles/settings.css";
 export default function Settings() {
   // Fetch the currently logged-in user's data from the authentication store
   const { user } = useAuthStore(); // Destructure the `user` property from the store
@@ -101,9 +99,7 @@ export default function Settings() {
             <button
               type="button"
               className="toggle-password"
-              onClick={() =>
-                setShowConfirmPassword(!showConfirmPassword)
-              } // Toggle the confirm password visibility
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)} // Toggle the confirm password visibility
             >
               <Icon
                 icon={

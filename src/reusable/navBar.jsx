@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { Icon } from "@iconify/react"; // Iconify library for icons
 import useAuthStore from "./../store/store.js"; // Hook to fetch logged-in user info
 import "./../pages/dashboard.css"; // Custom CSS file for the NavBar
 import Logo from "./../assets/Scopesky Logo.png"; // Importing the logo
-import Icons from './../reusable elements/icons.jsx';
+import Icons from "./../reusable elements/icons.jsx";
 
 export default function NavBar({ onSidebarToggle }) {
   const { user } = useAuthStore(); // Fetch logged-in user's information
@@ -23,8 +22,10 @@ export default function NavBar({ onSidebarToggle }) {
           className={`notification ${isNotificationsActive ? "active" : ""}`} // Add 'active' class if notifications are active
           onClick={handleNotificationClick} // Handle notification icon click
         >
-          <Icons type="notification" width={38} height={20}/> {/* Notification bell icon */}
-          <span className="notification-badge"></span> {/* Badge for unread notifications */}
+          <Icons type="notification" width={38} height={20} />{" "}
+          {/* Notification bell icon */}
+          <span className="notification-badge"></span>{" "}
+          {/* Badge for unread notifications */}
         </div>
 
         {/* Notification Dropdown */}
@@ -37,27 +38,32 @@ export default function NavBar({ onSidebarToggle }) {
 
         {/* User Info */}
         <div className="user-info">
-          <h3>{user?.username || "Guest"}</h3> {/* Display username or fallback to "Guest" */}
-          <h4>{user?.role || "Unknown Role"}</h4> {/* Display user role or fallback to "Unknown Role" */}
+          <h3>{user?.username || "Guest"}</h3>{" "}
+          {/* Display username or fallback to "Guest" */}
+          <h4>{user?.role || "Unknown Role"}</h4>{" "}
+          {/* Display user role or fallback to "Unknown Role" */}
         </div>
 
         {/* User Avatar */}
         <div className="user-avatar">
-        <Icons type="user" width={48} height={48} color="#4880ff"/> {/* Default person avatar icon */}
+          <Icons type="user" width={48} height={48} color="#4880ff" />{" "}
+          {/* Default person avatar icon */}
         </div>
       </div>
 
       {/* Right Section */}
       <div className="navbar-right">
-        <h1 style={{marginRight:"20px"}}>نظام إدارة المكاتب</h1> {/* Title of the system in Arabic */}
-        <Icon
-          icon="gg:menu" // Hamburger menu icon
-          width="45"
-          height="45"
+        <h1 style={{ marginRight: "20px" }}>نظام إدارة المكاتب</h1>{" "}
+        {/* Title of the system in Arabic */}
+        <Icons
+          type="menu" // Hamburger menu icon
+          width={45}
+          height={45}
           onClick={onSidebarToggle} // Trigger sidebar toggle function
           style={{ cursor: "pointer" }} // Pointer cursor for better UX
         />
-        <img src={Logo} alt="Logo" className="navbar-logo" /> {/* Display the company logo */}
+        <img src={Logo} alt="Logo" className="navbar-logo" />{" "}
+        {/* Display the company logo */}
       </div>
     </div>
   );
