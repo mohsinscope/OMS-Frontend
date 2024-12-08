@@ -171,3 +171,50 @@
 margin-left: 7%;
 
 }
+
+
+.supervisor-expenses-history-field-wrapper #date{
+    width: 200px;
+    height: 34px;
+    border: none;
+    box-shadow: none;
+}
+.supervisor-expenses-history-field-wrapper input{
+    border: #bcc1ca 1px solid;
+}
+.supervisor-expenses-history-field-wrapper input:hover{
+    border:#1677ff 1px solid;
+    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
+    outline: 0;
+}
+.supervisor-expenses-history-field-wrapper input:focus{
+    border:#1677ff 1px solid;
+    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
+    outline: 0;
+}
+
+.supervisor-expenses-history-field-wrapper select:hover{
+    border:#1677ff 1px solid;
+    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
+    outline: 0;
+}
+.supervisor-expenses-history-field-wrapper select:focus{
+    border:#1677ff 1px solid;
+    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
+    outline: 0;
+}
+
+
+
+
+.supervisor-expenses-history-field-wrapper #date:focus{
+    border: none;
+    box-shadow: none;
+    outline: none;
+}
+
+.supervisor-expenses-history-field-wrapper #date:hover{
+    border: none;
+    box-shadow: none;
+    outline: none;
+}

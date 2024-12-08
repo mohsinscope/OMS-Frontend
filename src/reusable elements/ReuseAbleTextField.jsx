@@ -2,10 +2,12 @@ import React, { useEffect, useState, forwardRef } from "react";
 import PropTypes from "prop-types"; // PropTypes for type-checking
 import axios from "axios"; // Axios for fetching data
 import ImagePreviewer from "./../reusable/ImagePreViewer.jsx"; // ImagePreviewer component
+import { DatePicker } from "antd"; // Import Ant Design DatePicker
 
 const TextFieldForm = forwardRef(
   (
     {
+      
       fields, // Array of form field configurations
       fetchUrl, // URL to fetch dropdown options
       onFormSubmit, // Function to handle form submission
@@ -44,6 +46,10 @@ const TextFieldForm = forwardRef(
     const handleChange = (e) => {
       const { name, value } = e.target;
       setFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleDateChange = (date, dateString, name) => {
+      setFormData((prev) => ({ ...prev, [name]: dateString }));
     };
 
     const handleSubmit = () => {
@@ -110,6 +116,19 @@ const TextFieldForm = forwardRef(
                     className={inputClassName}
                     rows={field.rows || 3}
                     cols={field.cols || 50}
+                    disabled={field.disabled || false} // Apply the disabled property
+                  />
+                </>
+              ) : field.type === "date" ? (
+                // Render Ant Design DatePicker for date fields
+                <>
+                  <label htmlFor={field.name}>{field.label}</label>
+                  <DatePicker
+                    id={field.name}
+                    style={{ width: "100%" }}
+                    onChange={(date, dateString) =>
+                      handleDateChange(date, dateString, field.name)
+                    }
                     disabled={field.disabled || false} // Apply the disabled property
                   />
                 </>
