@@ -22,7 +22,7 @@ export default function NavBar({ onSidebarToggle }) {
           className={`notification ${isNotificationsActive ? "active" : ""}`} // Add 'active' class if notifications are active
           onClick={handleNotificationClick} // Handle notification icon click
         >
-          <Icons type="notification" width={38} height={20} />{" "}
+          <Icons type="notification" width={38} height={20} color="black"/>{" "}
           {/* Notification bell icon */}
           <span className="notification-badge"></span>{" "}
           {/* Badge for unread notifications */}
@@ -31,7 +31,7 @@ export default function NavBar({ onSidebarToggle }) {
         {/* Notification Dropdown */}
         {isNotificationsActive && (
           <div className="notification-content">
-            <p>New notification!</p> {/* Sample notification */}
+            <p >New notification!</p> {/* Sample notification */}
             <p>You have a meeting at 3 PM.</p> {/* Sample notification */}
           </div>
         )}
@@ -46,7 +46,7 @@ export default function NavBar({ onSidebarToggle }) {
 
         {/* User Avatar */}
         <div className="user-avatar">
-          <Icons type="user" width={48} height={48} color="#4880ff" />{" "}
+          <Icons type="user" width={48} height={48} color="#636AE8" />{" "}
           {/* Default person avatar icon */}
         </div>
       </div>

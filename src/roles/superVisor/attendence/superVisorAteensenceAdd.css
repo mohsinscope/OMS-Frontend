@@ -13,13 +13,18 @@
         align-items: start;
 }
 
-
+.attendance-input-group{
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+}
 .attendance-input-group div{
     display: flex;
     justify-content: start;
     align-items: start;
     gap: 20px;
     flex-wrap: wrap;
+   
 }
 .attendance-field-wrapper-add {
     align-items: start;

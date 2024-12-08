@@ -1,27 +1,27 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom"; // Fixed Link import
+import axios from "axios"; // Axios for API requests
 import TextFields from "./../../../reusable elements/ReuseAbleTextField.jsx";
-import { Table, Checkbox } from "antd"; // Importing Ant Design components
+import { Table, Button } from "antd"; // Importing Ant Design components
 import "./superVisorAttendeceHistory.css";
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
+
 export default function SupervisorAttendanceHistory() {
-  const [passportData, setPassportData] = useState([]); // State for passport employees data
-  const [companyData, setCompanyData] = useState([]); // State for company employees data
-  const [attendanceData, setAttendanceData] = useState([]); // State for table attendance data
+  const [attendanceData, setAttendanceData] = useState([]); // State for attendance table data
   const { isSidebarCollapsed } = useAuthStore();
-  // Fetch data from a JSON file
+
+  // Fetch attendance data from API
   useEffect(() => {
-    const fetchChartData = async () => {
+    const fetchAttendanceData = async () => {
       try {
-        const response = await import("./../../../data/attendenceData.json"); // Adjust the path to your JSON file
-        setPassportData(response.default.passportEmployees); // Assuming JSON is exported as default
-        setCompanyData(response.default.companyEmployees);
-        setAttendanceData(response.default.attendanceTable || []); // For table data
+        const response = await axios.get("https://example.com/api/attendance"); // Replace with your API endpoint
+        setAttendanceData(response.data || []); // Update state with API data
       } catch (error) {
-        console.error("Error loading chart data:", error);
+        console.error("Error fetching attendance data:", error);
       }
     };
 
-    fetchChartData();
+    fetchAttendanceData();
   }, []);
 
   const fields = [
@@ -41,13 +41,13 @@ export default function SupervisorAttendanceHistory() {
     },
     {
       name: "date",
-
       label: "التاريخ",
       placeholder: "اختر التاريخ",
       type: "date",
     },
   ];
 
+  // Define table columns
   const tableColumns = [
     {
       title: "الرقم التسلسلي",
@@ -68,11 +68,46 @@ export default function SupervisorAttendanceHistory() {
       title: "الحضور",
       dataIndex: "attended",
       key: "attended",
+      render: (attended) => (attended ? "نعم" : "لا"), // Display Yes/No based on attendance status
+    },
+    {
+      title: "الإجراءات",
+      key: "actions",
       render: (_, record) => (
-        <Checkbox checked={record.attended} disabled /> // Checkbox is disabled
+        <div>
+          {/* Edit Button */}
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => handleEdit(record)}
+            style={{ marginLeft: "5px" }}
+          >
+            تعديل
+          </Button>
+          {/* View Button */}
+          <Button
+            type="default"
+            size="small"
+            onClick={() => handleView(record)}
+            style={{ marginLeft: "5px" }}
+          >
+            عرض
+          </Button>
+        </div>
       ),
     },
   ];
+
+  // Handlers for buttons
+  const handleEdit = (record) => {
+    console.log("Editing record:", record);
+    // Navigate to edit page or open modal
+  };
+
+  const handleView = (record) => {
+    console.log("Viewing record:", record);
+    // Navigate to view page or open modal
+  };
 
   return (
     <div
@@ -81,7 +116,8 @@ export default function SupervisorAttendanceHistory() {
           ? "sidebar-collapsed"
           : "supervisor-expenses-history-page"
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       {/* Title Section */}
       <div className="supervisor-attendance-history-title">
         <h1>الحضور</h1>
@@ -99,59 +135,21 @@ export default function SupervisorAttendanceHistory() {
           hideButtons={false}
           showImagePreviewer={false}
         />
+        <Link to="AttendenceAdd">
+          <button className="attendance-add-button">اضافة حضور</button>
+        </Link>
       </div>
 
-      {/* Passport Employees Section */}
-      <h2 style={{ marginTop: "20px" }}>حضور موظفين الجوازات</h2>
-      <div className="supervisor-attendance-history-charts">
-        {passportData.length > 0 ? (
-          passportData.map((item, index) => (
-            <div key={index} className="supervisor-attendance-chart-box">
-              <h3>{item.title}</h3>
-              <p>{item.value}</p>
-              <p>{item.details}</p>
-              <img
-                src={item.img}
-                alt="chart"
-                style={{ width: "50px", height: "50px" }}
-              />
-            </div>
-          ))
-        ) : (
-          <p>جاري تحميل بيانات موظفين الجوازات...</p>
-        )}
+      {/* Attendance Table */}
+      <div className="supervisor-attendance-history-table">
+        <Table
+          dataSource={attendanceData}
+          columns={tableColumns}
+          rowKey="id"
+          bordered
+          pagination={{ pageSize: 5 }}
+        />
       </div>
-      <hr style={{ width: "100%", marginTop: "20px" }} />
-
-      {/* Company Employees Section */}
-      <h2 style={{ marginTop: "20px" }}>حضور موظفين الشركة</h2>
-      <div className="supervisor-attendance-history-charts">
-        {companyData.length > 0 ? (
-          companyData.map((item, index) => (
-            <div key={index} className="supervisor-attendance-chart-box">
-              <h3>{item.title}</h3>
-              <p>{item.value}</p>
-              <p>{item.details}</p>
-              <img
-                src={item.img}
-                alt="chart"
-                style={{ width: "50px", height: "50px" }}
-              />
-            </div>
-          ))
-        ) : (
-          <p>جاري تحميل بيانات موظفين الشركة...</p>
-        )}
-      </div>
-
-      {/* Table Section */}
-      <h3 style={{ marginTop: "30px" }}>جدول الحضور</h3>
-      <Table
-        dataSource={attendanceData}
-        columns={tableColumns}
-        rowKey="id"
-        pagination={{ pageSize: 5 }}
-      />
     </div>
   );
 }

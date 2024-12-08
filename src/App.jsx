@@ -63,7 +63,7 @@ const App = () => {
             element={<SuperVisorAttendenceHistory />}
           />
           <Route
-            path="supervisor/AttendenceAdd"
+            path="/supervisor/Attendence/AttendenceAdd"
             element={<SuperVisorAttendenceAdd />}
           />
         </Route>
