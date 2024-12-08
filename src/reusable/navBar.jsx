@@ -55,13 +55,19 @@ export default function NavBar({ onSidebarToggle }) {
       <div className="navbar-right">
         <h1 style={{ marginRight: "20px" }}>نظام إدارة المكاتب</h1>{" "}
         {/* Title of the system in Arabic */}
+        <div style={{cursor:"pointer"}} onClick={() => {
+            onSidebarToggle();
+          }}>
+
         <Icons
           type="menu" // Hamburger menu icon
           width={45}
           height={45}
-          onClick={onSidebarToggle} // Trigger sidebar toggle function
+         
+        
           style={{ cursor: "pointer" }} // Pointer cursor for better UX
         />
+        </div>
         <img src={Logo} alt="Logo" className="navbar-logo" />{" "}
         {/* Display the company logo */}
       </div>

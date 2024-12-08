@@ -8,7 +8,7 @@ const Dashboard = () => {
     <div className="dashboard-layout">
       {/* Fixed NavBar */}
 
-      <NavBar />
+      <NavBar toggleSidebar/>
       {/* Sidebar and Content */}
       <div className="main-layout">
         <DynamicSidebar /> {/* Sidebar */}
