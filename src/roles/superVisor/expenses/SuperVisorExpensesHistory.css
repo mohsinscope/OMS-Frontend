@@ -6,6 +6,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: start;
+  margin-right: 20px;
+  margin-left: 20px;
 }
 
 .supervisor-expenses-history-filters {

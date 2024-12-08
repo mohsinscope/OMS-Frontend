@@ -22,7 +22,7 @@
     display: flex;
     align-items: center;
     gap: 15px;
-    color: #4880ff;
+    color: #636AE8;
   }
   
   .notification {
@@ -32,8 +32,8 @@
   
   .notification-badge {
     position: absolute;
-    top: -5px;
-    right: -5px;
+    top: 1px;
+    right: 4px;
     width: 10px;
     height: 10px;
     background-color: red;
@@ -361,3 +361,13 @@
 
 
 
+/* latest */
+
+.icons-sidebar-adjusment-for-mohsen{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 10px;
+}

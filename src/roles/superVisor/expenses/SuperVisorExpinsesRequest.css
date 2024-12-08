@@ -1,8 +1,7 @@
-.supervisor-request-page-container {
-  max-width: 1400px;
-  /* Limit the width */
-  margin-top: 6%;
+.supervisor-expenses-history-page {
 
+  margin-top: 6%;
+  
   padding: 20px;
 
   border-radius: 8px;
@@ -109,6 +108,7 @@ button {
 .supervisor-request-table-card div tbody tr {
   text-align: center !important;
   font-size: large !important;
+  
 }
 
 .supervisor-request-action-space {

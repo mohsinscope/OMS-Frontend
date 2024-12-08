@@ -2,17 +2,18 @@ import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/store.js";
-import Icons from './icons.jsx';
+import Icons from "./icons.jsx";
+
 const DynamicSidebar = ({
   fetchUrl,
   onLogout,
   currentPath,
-  sidebarClassName, // Sidebar class name passed dynamically
+  sidebarClassName,
   menuItemClassName,
   activeMenuItemClassName,
   logoutClassName,
 }) => {
-  const { user,isSidebarCollapsed } = useAuthStore();
+  const { user } = useAuthStore();
   const [roleItems, setRoleItems] = useState([]);
   const navigate = useNavigate();
 
@@ -61,9 +62,25 @@ const DynamicSidebar = ({
             className={`${menuItemClassName} ${
               currentPath === item.path ? activeMenuItemClassName : ""
             }`}
+            style={{
+              color: currentPath === item.path ? "white" : "black",
+            }}
             onClick={() => handleMenuClick(item.path, item.action)}
           >
-            <Icons type={item.icon} width={40} height={40} color="#4880ff" />
+
+            <span className="icons-sidebar-adjusment-for-mohsen" style={{
+              backgroundColor: currentPath === item.path ? "#4880ff" : "transparent",
+              color: currentPath === item.path ? "white" : "black",
+            }} >
+            <Icons
+            
+              type={item.icon}
+              width={40}
+              height={40}
+              color={currentPath === item.path ? "white" : "black"}
+            />
+
+            </span>
             <h3>{item.label}</h3>
           </div>
         ))}
@@ -78,21 +95,16 @@ const DynamicSidebar = ({
               currentPath === item.path ? activeMenuItemClassName : ""
             }`}
             onClick={() => handleMenuClick(item.path, item.action)}
-          > 
-          
-               <Icons
-        type={item.icon}
-        width={24}
-        height={24}
-        color={
-          item.label === "تسجيل الخروج"
-            ? isSidebarCollapsed
-              ? "red" // Red color if the sidebar is collapsed
-              : "white" // White color otherwise
-            : "black" // Default black for other icons
-        }
-      />
-            
+          >
+   
+                  <Icons
+              type={item.icon}
+              width={24}
+              height={24}
+              color={item.label === "تسجيل الخروج" ? "white" : "black"}
+            />
+           
+        
             <h3>{item.label}</h3>
           </div>
         ))}
