@@ -33,10 +33,11 @@ export default function SuperVisorExpensesHistory() {
       type: "text",
     },
     {
-      name: "التاريخ",
+      name: "date",
       label: "التاريخ",
       placeholder: "اختر التاريخ",
       type: "date",
+      id: "date", // Add the ID for the date field
     },
   ];
 

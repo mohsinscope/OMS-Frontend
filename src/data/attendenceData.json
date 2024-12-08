@@ -1,0 +1,45 @@
+{
+    "passportEmployees": [
+      {
+        "title": "موظفين الاستلام",
+        "value": 2,
+        "details": "2/12",
+        "img": "../421-4214857_heat-map-web-page-version-of-pie-chart-svg-png-icon-pie.png"
+      },
+      {
+        "title": "موظفين الحسابات",
+        "value": 3,
+        "details": "3/15",
+        "img": "../421-4214857_heat-map-web-page-version-of-pie-chart-svg-png-icon-pie.png"
+      }
+    ],
+    "companyEmployees": [
+      {
+        "title": "موظفين الخدمات",
+        "value": 3,
+        "details": "3/10",
+        "img": "../421-4214857_heat-map-web-page-version-of-pie-chart-svg-png-icon-pie.png"
+      },
+      {
+        "title": "المشرفين",
+        "value": 5,
+        "details": "5/25",
+        "img": "../421-4214857_heat-map-web-page-version-of-pie-chart-svg-png-icon-pie.png"
+      }
+    ],
+    "attendanceTable": [
+      {
+        "id": "1",
+        "name": "أحمد سعيد",
+        "role": "موظف I.T",
+        "attended": false
+      },
+      {
+        "id": "2",
+        "name": "محمد علي",
+        "role": "مشرف",
+        "attended": true
+      }
+    ]
+  }
+  

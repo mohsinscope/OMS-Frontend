@@ -73,9 +73,11 @@
 
 .supervisor-attendance-history-charts{
     display: flex;
-    justify-content: center;
+    justify-content: start;
     align-items: center;
+    gap: 20px;
     margin-top: 50px;
+    flex-wrap: wrap;
 }
 .supervisor-attendance-chart-box{
    
@@ -83,9 +85,12 @@
     height: 200px;
     background-color: white;
     border-radius: 10px;
+    margin-left: 20px;
+    padding: 20px;
 }
 
 
 .attendance-field-wrapper #date{
-    height: 50px;
+    height: 40px;
+    width: 200px;
 }
