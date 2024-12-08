@@ -1,6 +1,8 @@
-import Dashboard from "./../pages/dashBoard.jsx"; // Import the Dashboard component
+
 import useAuthStore from "./../store/store.js"; // Import the authentication store
 import { useState } from "react"; // Import useState hook from React
+import Icons from './../reusable elements/icons.jsx';
+
 import "./styles/settings.css";
 export default function Settings() {
   // Fetch the currently logged-in user's data from the authentication store
@@ -16,8 +18,7 @@ export default function Settings() {
 
   return (
     <>
-      {/* Dashboard Component */}
-      <Dashboard />
+
 
       {/* Settings Container */}
       <div className="settings-container" dir="rtl">
@@ -80,10 +81,11 @@ export default function Settings() {
               className="toggle-password"
               onClick={() => setShowPassword(!showPassword)} // Toggle the password visibility
             >
-              <Icon
-                icon={showPassword ? "mdi:eye-off-outline" : "mdi:eye-outline"} // Change icon based on visibility state
-                width="24"
-                height="24"
+              <Icons
+             
+                type={showPassword ? "eye-off" : "eye"} // Change icon based on visibility state
+                width={24}
+                height={24}
               />
             </button>
           </div>
@@ -101,14 +103,14 @@ export default function Settings() {
               className="toggle-password"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)} // Toggle the confirm password visibility
             >
-              <Icon
-                icon={
+              <Icons
+                type={
                   showConfirmPassword
-                    ? "mdi:eye-off-outline"
-                    : "mdi:eye-outline"
+                    ? "eye-off"
+                    : "eye"
                 } // Change icon based on visibility state
-                width="24"
-                height="24"
+                width={24}
+                height={24}
               />
             </button>
           </div>
