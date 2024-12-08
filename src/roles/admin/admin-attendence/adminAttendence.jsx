@@ -1,9 +1,7 @@
-import React, { useState } from "react";
-import { DataTable } from "mantine-datatable";
-import { Button, Modal } from "@mantine/core";
+import { useState } from "react";
 import Dashboard from "./../../../pages/dashBoard.jsx";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
-import './adminAttendence.css';
+import "./adminAttendence.css";
 
 const AdminAttendance = () => {
   // State to hold filtered records based on user inputs
@@ -80,7 +78,6 @@ const AdminAttendance = () => {
       <Dashboard /> {/* Dashboard navigation header */}
       <div className="attendance-container" dir="rtl">
         <h1 className="attendance-header">إدارة الحضور</h1> {/* Page Header */}
-
         {/* Filters Section */}
         <div className="attendance-filters">
           <TextFieldForm
@@ -127,7 +124,6 @@ const AdminAttendance = () => {
             buttonClassName="attendance-filter-button"
           />
         </div>
-
         {/* Data Table Section */}
         <div className="attendance-data-table-container">
           {/* Add Button */}
@@ -140,101 +136,7 @@ const AdminAttendance = () => {
               + إضافة
             </button>
           </div>
-
-          {/* Display attendance records in a table */}
-          <DataTable
-            className="attendance-table"
-            withTableBorder
-            withColumnBorders
-            highlightOnHover
-            records={filteredRecords.length > 0 ? filteredRecords : attendanceRecords} // Display filtered or all records
-            columns={[
-              { accessor: "id", title: "تسلسل" }, // Record ID
-              { accessor: "employeeName", title: "اسم الموظف" }, // Employee name
-              { accessor: "position", title: "الوظيفة" }, // Position
-              { accessor: "date", title: "التاريخ" }, // Date
-              { accessor: "status", title: "الحالة" }, // Attendance status
-              {
-                accessor: "actions",
-                title: "الإجراءات", // Action buttons
-                render: (attendance) => (
-                  <div className="attendance-action-buttons">
-                    <Button
-                      variant="outline"
-                      color="blue"
-                      size="xs"
-                      onClick={() => handleEdit(attendance)} // Edit action
-                    >
-                      تعديل
-                    </Button>
-                    <Button
-                      variant="outline"
-                      color="red"
-                      size="xs"
-                      onClick={() => handleDelete(attendance.id)} // Delete action
-                    >
-                      حذف
-                    </Button>
-                  </div>
-                ),
-              },
-            ]}
-          />
         </div>
-
-        {/* Modal for Editing Attendance */}
-        <Modal
-          opened={modalOpened} // Modal visibility
-          onClose={() => setModalOpened(false)} // Close modal
-          title="تعديل الحضور"
-          centered
-        >
-          {/* Render edit form inside the modal */}
-          {editAttendance && (
-            <TextFieldForm
-              fields={[
-                {
-                  name: "employeeName",
-                  label: "اسم الموظف",
-                  type: "text",
-                  placeholder: "اسم الموظف",
-                  defaultValue: editAttendance.employeeName,
-                },
-                {
-                  name: "position",
-                  label: "الوظيفة",
-                  type: "text",
-                  placeholder: "الوظيفة",
-                  defaultValue: editAttendance.position,
-                },
-                {
-                  name: "date",
-                  label: "التاريخ",
-                  type: "date",
-                  defaultValue: editAttendance.date,
-                },
-                {
-                  name: "status",
-                  label: "الحالة",
-                  type: "dropdown",
-                  options: [
-                    { value: "حاضر", label: "حاضر" },
-                    { value: "غائب", label: "غائب" },
-                  ],
-                  defaultValue: editAttendance.status,
-                },
-              ]}
-              onFormSubmit={(updatedFields) =>
-                console.log("Updated Fields: ", updatedFields) // Placeholder for update logic
-              }
-              formClassName="attendance-edit-form"
-              inputClassName="attendance-edit-input"
-              dropdownClassName="attendance-edit-dropdown"
-              fieldWrapperClassName="attendance-edit-field-wrapper"
-              buttonClassName="attendance-edit-button"
-            />
-          )}
-        </Modal>
       </div>
     </>
   );

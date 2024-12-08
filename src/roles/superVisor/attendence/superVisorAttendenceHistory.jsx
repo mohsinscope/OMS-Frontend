@@ -2,12 +2,12 @@ import React, { useState, useEffect } from "react";
 import TextFields from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import { Table, Checkbox } from "antd"; // Importing Ant Design components
 import "./superVisorAttendeceHistory.css";
-
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 export default function SupervisorAttendanceHistory() {
   const [passportData, setPassportData] = useState([]); // State for passport employees data
   const [companyData, setCompanyData] = useState([]); // State for company employees data
   const [attendanceData, setAttendanceData] = useState([]); // State for table attendance data
-
+  const { isSidebarCollapsed } = useAuthStore();
   // Fetch data from a JSON file
   useEffect(() => {
     const fetchChartData = async () => {
@@ -41,11 +41,10 @@ export default function SupervisorAttendanceHistory() {
     },
     {
       name: "date",
-      
+
       label: "التاريخ",
       placeholder: "اختر التاريخ",
       type: "date",
-      
     },
   ];
 
@@ -76,7 +75,13 @@ export default function SupervisorAttendanceHistory() {
   ];
 
   return (
-    <div className="supervisor-attendance-history-main-container" dir="rtl">
+    <div
+      className={`supervisor-attendance-history-main-container ${
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-expenses-history-page"
+      }`}
+      dir="rtl">
       {/* Title Section */}
       <div className="supervisor-attendance-history-title">
         <h1>الحضور</h1>

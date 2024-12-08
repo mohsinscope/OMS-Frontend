@@ -1,6 +1,4 @@
-import React, { useState } from "react";
-import { DataTable } from "mantine-datatable";
-import { Button, Modal } from "@mantine/core";
+import { useState } from "react";
 import Dashboard from "./../../../pages/dashBoard.jsx";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import "./AdminUserManagment.css";
@@ -39,14 +37,21 @@ const AdminUserManagment = () => {
 
     const filtered = userRecords.filter((record) => {
       const matchesUsername =
-        !username || record.username.toLowerCase().includes(username.toLowerCase());
-      const matchesRole = !role || record.role.toLowerCase() === role.toLowerCase();
+        !username ||
+        record.username.toLowerCase().includes(username.toLowerCase());
+      const matchesRole =
+        !role || record.role.toLowerCase() === role.toLowerCase();
       const matchesGovernorate =
         !governorate || record.governorate.includes(governorate);
       const matchesOfficeName =
         !officeName || record.officeName.includes(officeName);
 
-      return matchesUsername && matchesRole && matchesGovernorate && matchesOfficeName;
+      return (
+        matchesUsername &&
+        matchesRole &&
+        matchesGovernorate &&
+        matchesOfficeName
+      );
     });
 
     setFilteredRecords(filtered);
@@ -138,122 +143,16 @@ const AdminUserManagment = () => {
         {/* Data Table */}
         <div className="data-table-container">
           <div dir="ltr">
-
-              <button
+            <button
               dir="ltr"
-          type="button"
-          className="add-button"
-          onClick={() => console.log('Add button clicked')} // Replace with actual functionality
-        >
-          + إ ضافة
-        </button>
+              type="button"
+              className="add-button"
+              onClick={() => console.log("Add button clicked")} // Replace with actual functionality
+            >
+              + إ ضافة
+            </button>
           </div>
-          {filteredRecords.length > 0 || userRecords.length > 0 ? (
-            <DataTable
-              withTableBorder
-              withColumnBorders
-              highlightOnHover    
-              noRecordsText=""
-              records={filteredRecords.length > 0 ? filteredRecords : userRecords}
-              key="id"
-              columns={[
-                { accessor: "username", title: "اسم المستخدم" },
-                { accessor: "role", title: "الصلاحية" },
-                { accessor: "governorate", title: "المحافظة" },
-                { accessor: "officeName", title: "اسم المكتب" },
-                {
-                  accessor: "actions",
-                  title: "الإجراءات",
-                  render: (user) => (
-                    <div className="action-buttons">
-                      <Button
-                        variant="outline"
-                        color="blue"
-                        size="xs"
-                        onClick={() => handleEdit(user)}
-                      >
-                        تعديل
-                      </Button>
-                      <Button
-                        variant="outline"
-                        color="red"
-                        size="xs"
-                        onClick={() => handleDelete(user.id)}
-                      >
-                        حذف
-                      </Button>
-                    </div>
-                  ),
-                },
-              ]}
-            />
-          ) : (
-            <div className="no-records-text">لا توجد بيانات للعرض</div>
-          )}
         </div>
-
-        {/* Modal for Editing User */}
-        <Modal
-          opened={modalOpened}
-          onClose={() => setModalOpened(false)}
-          title="تعديل معلومات المستخدم"
-          centered
-        >
-          {editUser && (
-            <TextFieldForm /* overflow disable */
-              fields={[
-                {
-                  name: "username",
-                  label: "اسم المستخدم",
-                  type: "text",
-                  placeholder: "اسم المستخدم",
-                  defaultValue: editUser.username,
-                },
-                {
-                  name: "role",
-                  label: "الصلاحية",
-                  type: "dropdown",
-                  options: [
-                    { value: "admin", label: "مدير" },
-                    { value: "manager", label: "مدير قسم" },
-                    { value: "employee", label: "موظف" },
-                  ],
-                  defaultValue: editUser.role,
-                },
-                {
-                  name: "governorate",
-                  label: "المحافظة",
-                  type: "dropdown",
-                  options: [
-                    { value: "بغداد", label: "بغداد" },
-                    { value: "نينوى", label: "نينوى" },
-                    { value: "البصرة", label: "البصرة" },
-                  ],
-                  defaultValue: editUser.governorate,
-                },
-                {
-                  name: "officeName",
-                  label: "اسم المكتب",
-                  type: "dropdown",
-                  options: [
-                    { value: "المكتب الرئيسي", label: "المكتب الرئيسي" },
-                    { value: "مكتب الفرع", label: "مكتب الفرع" },
-                    { value: "مكتب الجنوب", label: "مكتب الجنوب" },
-                  ],
-                  defaultValue: editUser.officeName,
-                },
-              ]}
-              onFormSubmit={(updatedFields) =>
-                handleEditSubmit({ ...editUser, ...updatedFields })
-              }
-              formClassName="edit-form"
-              inputClassName="filter-input"
-              dropdownClassName="filter-dropdown"
-              fieldWrapperClassName="filter-field-wrapper"
-              buttonClassName="filter-button"
-            />
-          )}
-        </Modal>
       </div>
     </>
   );
