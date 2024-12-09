@@ -1,27 +1,44 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom"; // Fixed Link import
-import axios from "axios"; // Axios for API requests
-import TextFields from "./../../../reusable elements/ReuseAbleTextField.jsx";
-import { Table, Button } from "antd"; // Importing Ant Design components
+import { Link, useNavigate } from "react-router-dom";
+import { Table, Button, Modal, message, DatePicker } from "antd"; // Importing Ant Design components
 import "./superVisorAttendeceHistory.css";
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
+import attendenceData from "./../../../data/attendenceData.json"; // Import the JSON file directly
+import TextFields from "./../../../reusable elements/ReuseAbleTextField.jsx";
 
 export default function SupervisorAttendanceHistory() {
   const [attendanceData, setAttendanceData] = useState([]); // State for attendance table data
+  const [filteredData, setFilteredData] = useState([]); // State for filtered data
+  const [selectedDate, setSelectedDate] = useState(null); // State for selected date
+  const [isModalVisible, setIsModalVisible] = useState(false); // Modal visibility for no match
   const { isSidebarCollapsed } = useAuthStore();
+  const navigate = useNavigate(); // Initialize navigate function
 
-  // Fetch attendance data from API
+  // Fetch attendance data from imported JSON
   useEffect(() => {
-    const fetchAttendanceData = async () => {
-      try {
-        const response = await axios.get("https://example.com/api/attendance"); // Replace with your API endpoint
-        setAttendanceData(response.data || []); // Update state with API data
-      } catch (error) {
-        console.error("Error fetching attendance data:", error);
-      }
-    };
+    try {
+      // Combine main attendance and additional attendance into a single array
+      const mainData = {
+        id: 1,
+        date: attendenceData.date,
+        totalPassportAttendance: attendenceData.totalPassportAttendance,
+        totalCompanyAttendance: attendenceData.totalCompanyAttendance,
+      };
 
-    fetchAttendanceData();
+      const additionalData = attendenceData.additionalAttendance.map((item, index) => ({
+        id: index + 2, // Ensure unique IDs start from 2
+        date: item.date,
+        totalPassportAttendance: item.totalPassportAttendance,
+        totalCompanyAttendance: item.totalCompanyAttendance,
+      }));
+
+      const combinedData = [mainData, ...additionalData];
+
+      setAttendanceData(combinedData);
+      setFilteredData(combinedData); // Initialize filtered data
+    } catch (error) {
+      console.error("Error processing attendance data:", error);
+    }
   }, []);
 
   const fields = [
@@ -30,24 +47,33 @@ export default function SupervisorAttendanceHistory() {
       label: "المحافظة",
       placeholder: "بغداد",
       type: "text",
-      disabled: true, // Disable the input
+      disabled: true,
     },
     {
       name: "office",
       label: "اسم المكتب",
       placeholder: "مكتب الكرخ",
       type: "text",
-      disabled: true, // Disable the input
-    },
-    {
-      name: "date",
-      label: "التاريخ",
-      placeholder: "اختر التاريخ",
-      type: "date",
+      disabled: true,
     },
   ];
 
-  // Define table columns
+  // Handle search button action
+  const handleSearch = () => {
+    if (!selectedDate) {
+      message.warning("لم يتم إدخال تاريخ، عرض جميع البيانات.");
+      setFilteredData(attendanceData); // Show all data if no date is entered
+      return;
+    }
+
+    const filtered = attendanceData.filter((item) => item.date === selectedDate);
+    if (filtered.length > 0) {
+      setFilteredData(filtered); // Update filtered data
+    } else {
+      setIsModalVisible(true); // Show modal if no match
+    }
+  };
+
   const tableColumns = [
     {
       title: "الرقم التسلسلي",
@@ -55,36 +81,25 @@ export default function SupervisorAttendanceHistory() {
       key: "id",
     },
     {
-      title: "الاسم",
-      dataIndex: "name",
-      key: "name",
+      title: "عدد حضور موظفي الجوازات",
+      dataIndex: "totalPassportAttendance",
+      key: "totalPassportAttendance",
     },
     {
-      title: "الدور الوظيفي",
-      dataIndex: "role",
-      key: "role",
+      title: "عدد حضور موظفي الشركة",
+      dataIndex: "totalCompanyAttendance",
+      key: "totalCompanyAttendance",
     },
     {
-      title: "الحضور",
-      dataIndex: "attended",
-      key: "attended",
-      render: (attended) => (attended ? "نعم" : "لا"), // Display Yes/No based on attendance status
+      title: "التاريخ",
+      dataIndex: "date",
+      key: "date",
     },
     {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
         <div>
-          {/* Edit Button */}
-          <Button
-            type="primary"
-            size="small"
-            onClick={() => handleEdit(record)}
-            style={{ marginLeft: "5px" }}
-          >
-            تعديل
-          </Button>
-          {/* View Button */}
           <Button
             type="default"
             size="small"
@@ -98,15 +113,8 @@ export default function SupervisorAttendanceHistory() {
     },
   ];
 
-  // Handlers for buttons
-  const handleEdit = (record) => {
-    console.log("Editing record:", record);
-    // Navigate to edit page or open modal
-  };
-
   const handleView = (record) => {
-    console.log("Viewing record:", record);
-    // Navigate to view page or open modal
+    navigate("/attendance/view", { state: { data: record } });
   };
 
   return (
@@ -118,12 +126,10 @@ export default function SupervisorAttendanceHistory() {
       }`}
       dir="rtl"
     >
-      {/* Title Section */}
       <div className="supervisor-attendance-history-title">
         <h1>الحضور</h1>
       </div>
 
-      {/* Input Fields Section */}
       <div className="supervisor-attendance-history-fields">
         <TextFields
           fields={fields}
@@ -132,24 +138,54 @@ export default function SupervisorAttendanceHistory() {
           dropdownClassName="attendance-dropdown"
           fieldWrapperClassName="attendance-field-wrapper"
           buttonClassName="attendance-button"
-          hideButtons={false}
+          hideButtons={true}
           showImagePreviewer={false}
         />
+        {/* Ant Design DatePicker for date selection */}
+        <div className="date-attendence-histore">
+          <label htmlFor="searchDate" style={{ display: "block" }}>
+            اختر التاريخ
+          </label>
+          <DatePicker
+            id="searchDate"
+            onChange={(date, dateString) => setSelectedDate(dateString)} // Update selectedDate state
+            style={{ width: "100%" }}
+            placeholder="اختر التاريخ"
+          />
+        </div>
+        {/* Search Button */}
+        <button
+          className="attendance-add-button"
+          onClick={handleSearch} // Attach search logic
+        >
+          البحث
+        </button>
         <Link to="AttendenceAdd">
-          <button className="attendance-add-button">اضافة حضور</button>
+          <button>اضافة حضور</button>
         </Link>
       </div>
 
-      {/* Attendance Table */}
       <div className="supervisor-attendance-history-table">
         <Table
-          dataSource={attendanceData}
+          dataSource={filteredData}
           columns={tableColumns}
           rowKey="id"
           bordered
           pagination={{ pageSize: 5 }}
+          style={{ textAlign: "center" }}
         />
       </div>
+
+      <Modal
+        title="تنبيه"
+        visible={isModalVisible}
+        onOk={() => setIsModalVisible(false)}
+        onCancel={() => setIsModalVisible(false)}
+        okText="حسناً"
+        cancelText="إغلاق"
+      >
+        <p>لا يوجد تطابق للفلاتر</p>
+      </Modal>
     </div>
   );
 }
