@@ -1,13 +1,16 @@
 .admin-user-management-container {
-    max-width: 1300px; /* Limit the width */
+    /* Limit the width */
     margin-top: 6%;
-    margin-left: 14%;
+    margin-right: 20px;
+    margin-left: 20px;
     padding: 20px;
-
-    border-radius: 8px; /* Smooth rounded corners */
+    
+    border-radius: 8px;
+    /* Smooth rounded corners */
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: start;
   
   }
   
@@ -28,10 +31,18 @@
     margin-bottom: 25px; /* Spacing between filters and table */
 
   }
+.filter-field-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+
   .filter-row{
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: end;
+    gap: 30px;
 
   }
   .filter-row > div {
@@ -76,11 +87,10 @@
   
   .data-table-container {
     margin-top: 20px;
-    background: #ffffff;
+  
     padding: 20px;
     border-radius: 8px;
-    border: 1px solid #ddd;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 100%;
   }
   
   .data-table-container table {

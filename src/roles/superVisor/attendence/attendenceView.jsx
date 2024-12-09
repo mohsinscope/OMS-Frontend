@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation,Link } from "react-router-dom";
 import { Table, Checkbox } from "antd"; // Ant Design Table and Checkbox components
 import "./attendenceView.css";
 
@@ -43,7 +43,10 @@ export default function ViewAttendance() {
       {/* Date Section */}
       <div style={{display:"flex", justifyContent:"space-between",alignItems:"start",width:"100%"}}>
              <h1>التاريخ : {data.date}</h1>
+             <Link to="supervisor/editattendence">
+             
         <button className="edit-button">التعديل</button>
+             </Link>
       </div>
  
       {/* Passport Attendance Section */}

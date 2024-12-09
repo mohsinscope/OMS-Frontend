@@ -22,7 +22,7 @@ import ExpensessView from "./reusable/ExpensessView.jsx";
 import SuperVisorAttendenceHistory from "./roles/superVisor/attendence/superVisorAttendenceHistory.jsx";
 import SuperVisorAttendenceAdd from "./roles/superVisor/attendence/superVisorAttendenceAdd.jsx";
 import ViewAttendance from './roles/superVisor/attendence/attendenceView.jsx';
-
+import SuperVisorAttendenceEdit from './roles/superVisor/attendence/editAttendence.jsx';
 const App = () => {
   const { initialize } = useAuthStore();
 
@@ -69,6 +69,7 @@ const App = () => {
           />
 
           <Route path="/attendance/view" element={<ViewAttendance />} />
+          <Route path="/attendance/view/supervisor/editattendence" element={<SuperVisorAttendenceEdit />} />
         </Route>
       </Routes>
     </Router>
