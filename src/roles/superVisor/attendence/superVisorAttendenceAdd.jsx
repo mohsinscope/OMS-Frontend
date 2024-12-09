@@ -7,10 +7,11 @@ import useAuthStore from "./../../../store/store"; // Import sidebar state for d
 export default function SuperVisorAttendanceAdd() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [passportAttendance, setPassportAttendance] = useState({
-    الطباعة: 0,
     الاستلام: 0,
-    التسليم: 0,
     الحسابات: 0,
+    الطباعة: 0,
+    الجودة: 0,
+    التسليم: 0,
   }); // Dynamic fields for passport employees attendance
   const [tableData, setTableData] = useState([
     { id: "001", name: "أحمد سعد", role: "موظف I.T", attended: true },
@@ -27,7 +28,7 @@ export default function SuperVisorAttendanceAdd() {
     {
       name: "governorate",
       label: "اسم المحافظة",
-      placeholder: "",
+      placeholder: "بغداد",
       type: "text",
       value: governorate,
       disabled: true,
@@ -35,10 +36,19 @@ export default function SuperVisorAttendanceAdd() {
     {
       name: "officeName",
       label: "اسم المكتب",
-      placeholder: "",
+      placeholder: "الكرادة",
       type: "text",
       value: officeName,
       disabled: true,
+    },{
+      name: "workShift",
+      label: "نوع الدوام",
+      placeholder: "",
+      type: "dropdown",
+      options: [
+        { value: "صباحي", label: "صباحي" },
+        { value: "مسائي", label: "مسائي" },
+      ],
     },
     {
       name: "date",
@@ -50,7 +60,7 @@ export default function SuperVisorAttendanceAdd() {
     ...Object.keys(passportAttendance).map((key) => ({
       name: key,
       label: `عدد موظفين ${key}`,
-      placeholder: `أدخل عدد موظفين ${key}`,
+      placeholder: "",
       type: "number",
       value: passportAttendance[key],
       onChange: (e) =>
@@ -62,7 +72,7 @@ export default function SuperVisorAttendanceAdd() {
     {
       name: "notes",
       label: "ملاحظات",
-      placeholder: "أدخل الملاحظات",
+      placeholder: "",
       type: "textarea",
     },
   ];

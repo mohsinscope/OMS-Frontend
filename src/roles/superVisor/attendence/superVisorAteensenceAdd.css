@@ -33,7 +33,7 @@
 }
 .attendance-field-wrapper-add input{
     height: 45px;
-    width: 300px;
+    width: 200px;
     outline: none;
     border: #bcc1ca 1px solid;
     border-radius: 6px;
@@ -83,7 +83,7 @@
 
 .attendance-input-group #date{
     height: 35px;
-    width: 300px;
+    width: 150px;
     
 }
 .attendance-input-group #date:hover{
@@ -98,4 +98,26 @@
 }
 .attendance-buttons button{
     padding: 20px;
+}
+
+.attendance-dropdown{
+    width: 200px;
+    height: 45px;
+    outline: none;
+    border: #bcc1ca 1px solid;
+    border-radius: 6px;
+    padding: 20px;
+}
+
+.attendance-dropdown:hover{
+    border:#1677ff 1px solid;
+    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
+    outline: 0;
+
+}
+
+.attendance-dropdown:focus{
+    border:#1677ff 1px solid;
+    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
+    outline: 0;
 }

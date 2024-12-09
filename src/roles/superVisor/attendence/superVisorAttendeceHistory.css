@@ -22,6 +22,21 @@
 }
 .supervisor-attendance-history-table{
     width: 100%;
+    display: flex   ;
+    justify-content: center;
+    text-align: center;
+}
+.supervisor-attendance-history-table div{
+   text-align: center;
+    width: 100%;
+}
+
+.ant-table-cell  {
+    text-align: center !important;
+}
+.supervisor-attendance-history-table button{
+    padding: 20px;
+  
 }
 
 .supervisor-attendance-history-fields button{
@@ -117,4 +132,23 @@
 .attendance-field-wrapper #date{
     height: 40px;
     width: 200px;
+}
+
+#searchDate{
+    height: 40px;
+    width: 200px;
+    padding: 10px 20px;
+}
+
+.date-attendence-histore{
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+    justify-content: end;
+    width: 100%;
+    gap: 15px;
+}
+
+.attendance-add-button{
+ padding: 20px;
 }
