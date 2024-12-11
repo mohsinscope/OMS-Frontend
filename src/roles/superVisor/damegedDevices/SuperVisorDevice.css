@@ -154,7 +154,6 @@
 
 .supervisor-devices-dameged-form div {
   display: flex;
-  flex-direction: column; /* Stack label and input vertically */
   gap: 8px; /* Space between label and input */
 }
 
@@ -163,4 +162,8 @@
   display: flex; /* Align buttons in a row */
   gap: 10px; /* Space between buttons */
   margin-top: 10px; /* Add spacing above buttons */
+}
+
+.supervisor-devices-dameged-field-wrapper input{
+  width: 200px;
 }
