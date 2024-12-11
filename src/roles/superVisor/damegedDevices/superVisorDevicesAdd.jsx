@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Form, Button, message } from "antd";
 import TextFieldForm from "../../../reusable elements/ReuseAbleTextField.jsx";
 import ImagePreviewer from "../../../reusable/ImagePreViewer"; // Import your image previewer component
+import axios from "axios";
 import "./superVisorDevicesAdd.css"; // Use unique styles for devices
 
 const SuperVisorDevicesAdd = () => {
@@ -30,7 +31,23 @@ const SuperVisorDevicesAdd = () => {
       message.error("حدث خطأ أثناء إرسال البيانات");
     }
   };
+  useEffect(() => {
+    // Define an async function to fetch data
+    const fetchGovernorates = async () => {
+      try {
+        // Make a GET request using axios
+        const response = await axios.get("http://localhost:5214/api/Governorate");
+        // Log the response data to the console
+        console.log("Governorates Response:", response.data);
+      } catch (error) {
+        // Log any error that occurs during the request
+        console.error("Error fetching governorates:", error);
+      }
+    };
 
+    // Call the fetch function
+    fetchGovernorates();
+  }, []); // Empty dependency array ensures this runs only once
   // Define Fields for Reusable Component
   const fields = [
     {

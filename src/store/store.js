@@ -3,72 +3,103 @@ import { persist } from "zustand/middleware"; // Middleware to persist state in 
 
 /**
  * useAuthStore
- * Zustand store to manage user authentication state and sidebar state.
+ * Zustand store to manage user authentication state, access token, and sidebar state.
  */
 const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       // User authentication state
       user: null, // Stores the logged-in user's details
       isLoggedIn: false, // Tracks the login status
       error: "", // Holds error messages during login
+
+      // Access token state
+      accessToken: null, // Stores the user's access token for API authentication
 
       // Sidebar state
       isSidebarCollapsed: false, // Tracks whether the sidebar is collapsed or expanded
 
       /**
        * login function
-       * Authenticates the user by checking their credentials.
+       * Authenticates the user by checking their credentials and saves the Bearer token.
        *
        * @param {string} username - Username entered by the user.
        * @param {string} password - Password entered by the user.
-       * @param {Array} users - List of valid users for authentication.
+       * @param {Function} fetchToken - Function to fetch access token from the server.
        */
-      login: (username, password, users) => {
-        // Find the user matching the provided username and password
-        const user = users.find(
-          (u) => u.username === username && u.password === password
-        );
+      login: async (username, password, fetchToken) => {
+        try {
+          // Fetch the access token from the server
+          const response = await fetchToken(username, password);
 
-        if (user) {
-          // Successful login: update state with user details
-          set({ user, isLoggedIn: true, error: "" });
-        } else {
-          // Failed login: set error message and reset user state
+          // Save user details and token in the global state
+          const { token, user } = response; // Assuming response includes 'token' and 'user'
           set({
-            error: "اسم المستخدم أو كلمة المرور غير صحيحة", // Error: Invalid credentials
+            user, // Save user details
+            isLoggedIn: true,
+            accessToken: token, // Save the Bearer token
+            error: "",
+          });
+        } catch (err) {
+          // Handle errors during token retrieval
+          console.error("Error fetching access token:", err);
+          set({
+            error: "فشل في الحصول على رمز الدخول. يرجى المحاولة لاحقًا.", // Error: Token fetch failed
             user: null,
             isLoggedIn: false,
+            accessToken: null,
           });
         }
       },
 
       /**
        * logout function
-       * Logs the user out by clearing user state and error messages.
+       * Logs the user out by clearing user state, Bearer token, and error messages.
        */
       logout: () => {
-        set({ user: null, isLoggedIn: false, error: "" });
+        set({
+          user: null,
+          isLoggedIn: false,
+          error: "",
+          accessToken: null, // Clear the token on logout
+        });
       },
 
       /**
        * initialize function
-       * Validates the persisted state in localStorage and restores it.
+       * Validates the persisted state in localStorage and restores it, including the Bearer token.
        */
       initialize: () => {
         // Retrieve the persisted state from localStorage
-        const storedUser = JSON.parse(localStorage.getItem("auth-storage"));
-        if (storedUser && storedUser.state.isLoggedIn) {
+        const storedAuth = JSON.parse(localStorage.getItem("auth-storage"));
+        if (storedAuth && storedAuth.state.isLoggedIn) {
           // If valid state exists, restore user information and login status
           set({
-            user: storedUser.state.user,
+            user: storedAuth.state.user,
             isLoggedIn: true,
+            accessToken: storedAuth.state.accessToken,
             error: "",
           });
         } else {
           // Otherwise, reset user state to default
-          set({ user: null, isLoggedIn: false, error: "" });
+          set({
+            user: null,
+            isLoggedIn: false,
+            accessToken: null,
+            error: "",
+          });
         }
+      },
+
+      /**
+       * getAuthHeader function
+       * Retrieves the Bearer token as an Authorization header for API calls.
+       *
+       * @returns {Object} The Authorization header with Bearer token or an empty object if not available.
+       */
+      getAuthHeader: () => {
+        const token = get().accessToken;
+        return token ? { Authorization: `Bearer ${token}` } : {};
       },
 
       /**
@@ -79,7 +110,7 @@ const useAuthStore = create(
       setSidebarCollapsed: (collapsed) =>
         set(() => ({ isSidebarCollapsed: collapsed })),
     }),
-    { name: "auth-storage" } // Persist only authentication state with the key 'auth-storage' in localStorage
+    { name: "auth-storage" } // Persist the authentication state with the key 'auth-storage' in localStorage
   )
 );
 
