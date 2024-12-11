@@ -1,26 +1,83 @@
 {
   "admin": [
-    { "label": "المصاريف", "icon": "arcticons:expense-register", "path": "/admin/expenses" },
-    { "label": "الحضور", "icon": "basil:edit-outline", "path": "/admin/attendence" },
-    { "label": "إدارة المستخدمين", "icon": "mdi:account-group", "path": "/admin/users" },
-    { "label": "ادارة القيم", "icon": "mdi:account-group", "path": "/admin/listofvalues" }
+    {
+      "label": "المصاريف",
+      "icon": "arcticons:expense-register",
+      "path": "/admin/expenses"
+    },
+    {
+      "label": "الحضور",
+      "icon": "basil:edit-outline",
+      "path": "/admin/attendence"
+    },
+    {
+      "label": "إدارة المستخدمين",
+      "icon": "mdi:account-group",
+      "path": "/admin/users"
+    },
+    {
+      "label": "ادارة القيم",
+      "icon": "mdi:account-group",
+      "path": "/admin/listofvalues"
+    }
   ],
   "manager": [
-    { "label": "لوحة التحكم", "icon": "mdi:view-dashboard", "path": "/manager/dashboard" },
-    { "label": "تقارير", "icon": "mdi:file-document", "path": "/manager/reports" }
-  ], 
-   "supervisor": [
-    { "label": "تسجيل المصاريف", "icon": "bill-request", "path": "/supervisor/ExpensesRequests" },
+    {
+      "label": "لوحة التحكم",
+      "icon": "mdi:view-dashboard",
+      "path": "/manager/dashboard"
+    },
+    {
+      "label": "تقارير",
+      "icon": "mdi:file-document",
+      "path": "/manager/reports"
+    }
+  ],
+  "supervisor": [
+    {
+      "label": "تسجيل المصاريف",
+      "icon": "bill-request",
+      "path": "/supervisor/ExpensesRequests"
+    },
     { "label": "المصاريف", "icon": "bill", "path": "/supervisor/Expensess" },
-    { "label": "الحضور", "icon": "attendence", "path": "/supervisor/Attendence" },
-    { "label": "الجوازات التالفة", "icon": "passport", "path": "/supervisor/damagedpasportshistory" }
+    {
+      "label": "الحضور",
+      "icon": "attendence",
+      "path": "/supervisor/Attendence"
+    },
+    {
+      "label": "الجوازات التالفة",
+      "icon": "passport",
+      "path": "/supervisor/damegedPassport"
+    },
+    {
+      "label": "الاجهزة التالفة",
+      "icon": "devices",
+      "path": "/superVisor/damegedDevices"
+    }
   ],
   "employee_expenses": [
-    { "label": "لوحة التحكم", "icon": "mdi:view-dashboard", "path": "/employee_expenses/expenses/dashboard" },
-    { "label": "المصاريف", "icon": "mdi:cash-multiple", "path": "/employee_expenses/expenses/reports" }
+    {
+      "label": "لوحة التحكم",
+      "icon": "mdi:view-dashboard",
+      "path": "/employee_expenses/expenses/dashboard"
+    },
+    {
+      "label": "المصاريف",
+      "icon": "mdi:cash-multiple",
+      "path": "/employee_expenses/expenses/reports"
+    }
   ],
   "employee_damage": [
-    { "label": "لوحة التحكم", "icon": "mdi:view-dashboard", "path": "/employee_damage/damage/dashboard" },
-    { "label": "التلف", "icon": "mdi:alert-box-outline", "path": "/employee_damage/damage/reports" }
+    {
+      "label": "لوحة التحكم",
+      "icon": "mdi:view-dashboard",
+      "path": "/employee_damage/damage/dashboard"
+    },
+    {
+      "label": "التلف",
+      "icon": "mdi:alert-box-outline",
+      "path": "/employee_damage/damage/reports"
+    }
   ]
 }
