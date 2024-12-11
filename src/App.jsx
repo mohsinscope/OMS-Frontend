@@ -28,7 +28,7 @@ import DammagedPasportsShow from "./roles/superVisor/damaggedPasports/DammagedPa
 import SuperVisorDammagePassportAdd from "./roles/superVisor/damaggedPasports/superVisorDammagePassportAdd.jsx";
 import SuperVisorDevices from "./roles/superVisor/damegedDevices/SuperVisorDevice.jsx";
 import SuperVisorDeviceShow from "./roles/superVisor/damegedDevices/SuperVisorDeviceShow.jsx";
-
+import SuperVisorDivecesAdd from './roles/superVisor/damegedDevices/superVisorDevicesAdd.jsx';
 const App = () => {
   const { initialize } = useAuthStore();
 
@@ -93,12 +93,16 @@ const App = () => {
             element={<SuperVisorDammagePassportAdd />}
           />
           <Route
-            path="/superVisor/damegedDevices"
+            path="/supervisor/damegedDevices"
             element={<SuperVisorDevices />}
           />
           <Route
-            path="/supervisor/damegedDevices"
+            path="/supervisor/damegedDevices/show"
             element={<SuperVisorDeviceShow />}
+          />
+               <Route
+            path="/supervisor/damegedDevices/add"
+            element={<SuperVisorDivecesAdd />}
           />
         </Route>
       </Routes>
