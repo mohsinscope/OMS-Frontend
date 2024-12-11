@@ -23,6 +23,11 @@ import SuperVisorAttendenceHistory from "./roles/superVisor/attendence/superViso
 import SuperVisorAttendenceAdd from "./roles/superVisor/attendence/superVisorAttendenceAdd.jsx";
 import ViewAttendance from './roles/superVisor/attendence/attendenceView.jsx';
 import SuperVisorAttendenceEdit from './roles/superVisor/attendence/editAttendence.jsx';
+import SuperVisorDamagedpasportsHistory from './roles/superVisor/damaggedPasports/dammagedPasportsHistory.jsx';
+import DammagedPasportsShow from './roles/superVisor/damaggedPasports/DammagedPasportsShow.jsx';
+import SuperVisorDammagePassportAdd from './roles/superVisor/damaggedPasports/superVisorDammagePassportAdd.jsx';
+
+
 const App = () => {
   const { initialize } = useAuthStore();
 
@@ -70,6 +75,12 @@ const App = () => {
 
           <Route path="/attendance/view" element={<ViewAttendance />} />
           <Route path="/attendance/view/supervisor/editattendence" element={<SuperVisorAttendenceEdit />} />
+
+
+          <Route path="/supervisor/damagedpasportshistory" element={<SuperVisorDamagedpasportsHistory />} />
+          <Route path="supervisor/damagedpasportshistory/DammagedPasportsShow" element={< DammagedPasportsShow/>} />
+          <Route path="/supervisor/damagedpasportshistory/supervisordammagepasportadd" element={< SuperVisorDammagePassportAdd/>} />
+
         </Route>
       </Routes>
     </Router>
