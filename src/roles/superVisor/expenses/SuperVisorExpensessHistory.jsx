@@ -29,13 +29,13 @@ export default function SuperVisorExpensesHistory() {
     {
       name: "الرقم التسلسلي",
       label: "رقم الطلب",
-      placeholder: "رقم الطلب",
+      placeholder: "",
       type: "text",
     },
     {
       name: "date",
       label: "التاريخ",
-      placeholder: "اختر التاريخ",
+      placeholder: "",
       type: "date",
       id: "date", // Add the ID for the date field
     },

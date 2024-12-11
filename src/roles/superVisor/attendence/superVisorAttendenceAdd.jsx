@@ -50,6 +50,7 @@ export default function SuperVisorAttendanceAdd() {
         { value: "مسائي", label: "مسائي" },
       ],
     },
+    
     {
       name: "date",
       label: "التاريخ",

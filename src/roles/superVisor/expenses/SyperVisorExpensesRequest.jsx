@@ -133,7 +133,7 @@ export default function SuperVisorExpensesRequest() {
     {
       name: "expenseType",
       label: "نوع المصروف", // Expense type field
-      placeholder: "نوع المصروف",
+      placeholder: "",
       type: "dropdown", // Dropdown input
       options: [
         { value: "نثرية", label: "نثرية" },
@@ -143,25 +143,25 @@ export default function SuperVisorExpensesRequest() {
     {
       name: "price",
       label: "السعر", // Price field
-      placeholder: "أدخل السعر",
+      placeholder: "",
       type: "text", // Text input
     },
     {
       name: "quantity",
       label: "الكمية", // Quantity field
-      placeholder: "أدخل الكمية",
+      placeholder: "",
       type: "number", // Number input
     },
     {
       name: "date",
       label: "التاريخ", // Date field
-      placeholder: "اختر التاريخ",
+      placeholder: "",
       type: "date", // Date input
     },
     {
       name: "remarks",
       label: "الملاحظات", // Remarks field
-      placeholder: "أدخل الملاحظات",
+      placeholder: "",
       type: "textarea", // Textarea input
       rows: 4, // Number of rows
       cols: 50, // Number of columns
@@ -256,6 +256,8 @@ export default function SuperVisorExpensesRequest() {
         onCancel={() => setIsDeleting(false)}
         onConfirm={confirmDelete}
       />
+
+      <button>ارسال للمدير</button>
     </div>
   );
 }

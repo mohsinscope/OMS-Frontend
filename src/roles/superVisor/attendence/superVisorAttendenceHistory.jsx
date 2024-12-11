@@ -101,7 +101,7 @@ export default function SupervisorAttendanceHistory() {
       render: (_, record) => (
         <div>
           <Button
-            type="default"
+            type="primary"
             size="small"
             onClick={() => handleView(record)}
             style={{ marginLeft: "5px" }}

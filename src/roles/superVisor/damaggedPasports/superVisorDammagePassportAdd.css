@@ -1,0 +1,56 @@
+.supervisor-damaged-passport-add-container{
+    margin-top: 6%;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    margin-right: 20px;
+    margin-left: 20px;
+    transition: all 0.3s ease-in-out;
+}
+.passport-details-form {
+
+
+}
+.add-details-container{
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    width: 100%;
+}
+
+.passport-field-wrapper input {
+
+    border: #bcc1ca 1px solid;
+    border-radius: 6px;
+    padding: 10px;
+    height: 50px;
+
+}
+.passport-field-wrapper label{
+    font-size: large;
+}
+.passport-field-wrapper textarea{
+    border: #bcc1ca 1px solid;
+    border-radius: 6px;
+    padding: 10px;
+    max-width:500px;
+    max-height: 300px;
+}
+
+.image-previewer-section{
+    margin-top: 30px;
+}
+
+.image-previewer-section{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.image-previewer-section button{
+    padding: 20px;
+}
