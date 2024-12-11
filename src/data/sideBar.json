@@ -48,7 +48,7 @@
     {
       "label": "الجوازات التالفة",
       "icon": "passport",
-      "path": "/supervisor/damegedPassport"
+      "path": "/supervisor/damagedpasportshistory"
     },
     {
       "label": "الاجهزة التالفة",

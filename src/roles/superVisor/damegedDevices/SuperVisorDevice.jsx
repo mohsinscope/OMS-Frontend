@@ -40,7 +40,7 @@ export default function SuperVisorDevices() {
       ],
     },
     {
-      name: "التاريخ",
+      name: "date",
       label: "التاريخ",
       placeholder: "",
       type: "date",
