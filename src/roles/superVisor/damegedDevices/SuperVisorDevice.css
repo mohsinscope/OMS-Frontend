@@ -59,7 +59,7 @@
 .supervisor-devices-dameged-input,
 .supervisor-devices-dameged-dropdown {
   width: 250px; /* Consistent width for inputs and dropdowns */
-  height: 40px; /* Slightly smaller height for better proportion */
+  height: 45px; /* Slightly smaller height for better proportion */
   padding: 0 15px; /* Adjust padding for cleaner design */
   border-radius: 6px; /* Rounded corners for a modern look */
   border: 1px solid #ccc; /* Neutral border color */
@@ -149,9 +149,17 @@
   justify-content: flex-start; /* Align filters to the start */
   align-items: flex-end; /* Align fields at the bottom for a consistent look */
   gap: 20px; /* Space between fields */
-  margin-bottom: 20px; /* Add spacing below the filter form */
-}
 
+}
+.supervisor-devices-dameged-filters button{
+  height: 40px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  
+}
+.supervisor-devices-dameged-filters button:hover{
+  background-color: #0056b3; /* Darker hover color */
+  transform: translateY(-2px); /* Lift effect */
+}
 .supervisor-devices-dameged-form div {
   display: flex;
   gap: 8px; /* Space between label and input */
@@ -166,4 +174,8 @@
 
 .supervisor-devices-dameged-field-wrapper input{
   width: 200px;
+}
+
+.supervisor-devices-dameged-field-wrapper{} #date {
+  
 }

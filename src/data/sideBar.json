@@ -53,7 +53,7 @@
     {
       "label": "الاجهزة التالفة",
       "icon": "devices",
-      "path": "/superVisor/damegedDevices"
+      "path": "/supervisor/damegedDevices"
     }
   ],
   "employee_expenses": [

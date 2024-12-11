@@ -45,6 +45,7 @@ export default function SuperVisorDevices() {
       placeholder: "",
       type: "date",
     },
+    
   ];
 
   const handleFilterSubmit = (formData) => {
@@ -107,7 +108,7 @@ export default function SuperVisorDevices() {
         );
         return (
           <Link
-            to="/supervisor/damegedDevices"
+            to="/supervisor/damegedDevices/show"
             state={{ device }}
             className="supervisor-devices-dameged-details-link">
             عرض
@@ -137,6 +138,10 @@ export default function SuperVisorDevices() {
           fieldWrapperClassName="supervisor-devices-dameged-field-wrapper"
           buttonClassName="supervisor-devices-dameged-button"
         />
+        <Link to="/supervisor/damegedDevices/add">
+        
+        <button className="supervisor-passport-dameged-button">اضافة جهاز تالف</button>
+        </Link>
       </div>
       <div className="supervisor-devices-dameged-table-container">
         <Table

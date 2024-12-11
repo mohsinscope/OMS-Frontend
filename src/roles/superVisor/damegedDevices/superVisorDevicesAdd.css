@@ -1,4 +1,4 @@
-.supervisor-damaged-passport-add-container{
+.supervisor-devices-add-container{
     margin-top: 6%;
     padding: 20px;
     border-radius: 8px;
@@ -11,7 +11,7 @@
     transition: all 0.3s ease-in-out;
 }
 
-.add-details-container{
+.devices-add-details-container{
     display: flex;
     justify-content: space-between;
     align-items: start;
@@ -23,36 +23,36 @@
     margin-bottom: 20px;
 }
 
-.passport-field-wrapper input {
-
+.device-field-wrapper input{
     border: #bcc1ca 1px solid;
     border-radius: 6px;
     padding: 10px;
     height: 50px;
-
 }
-.passport-field-wrapper label{
+.device-field-wrapper label{
     font-size: large;
 }
-.passport-field-wrapper textarea{
+.device-field-wrapper textarea{
     border: #bcc1ca 1px solid;
     border-radius: 6px;
     padding: 10px;
     max-width:500px;
     max-height: 300px;
+    min-height: 200px;
+
 }
 
-.image-previewer-section{
+.device-image-previewer-section{
     margin-top: 30px;
+
 }
 
-.image-previewer-section{
+.device-action-buttons-container{
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 20px;
 }
-
-.image-previewer-section button{
+.device-action-buttons-container button{
     padding: 20px;
 }
