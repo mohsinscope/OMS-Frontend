@@ -30,7 +30,8 @@ export default function Sidebar() {
       />
 
       {/* Placeholder for additional content */}
-      <div className={`dashboard-content ${isSidebarCollapsed ? "expanded" : ""}`}>
+      <div
+        className={`dashboard-content ${isSidebarCollapsed ? "expanded" : ""}`}>
         {/* Rendered content goes here */}
       </div>
     </div>

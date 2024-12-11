@@ -21,12 +21,13 @@ import useAuthStore from "./store/store.js";
 import ExpensessView from "./reusable/ExpensessView.jsx";
 import SuperVisorAttendenceHistory from "./roles/superVisor/attendence/superVisorAttendenceHistory.jsx";
 import SuperVisorAttendenceAdd from "./roles/superVisor/attendence/superVisorAttendenceAdd.jsx";
-import ViewAttendance from './roles/superVisor/attendence/attendenceView.jsx';
-import SuperVisorAttendenceEdit from './roles/superVisor/attendence/editAttendence.jsx';
-import SuperVisorDamagedpasportsHistory from './roles/superVisor/damaggedPasports/dammagedPasportsHistory.jsx';
-import DammagedPasportsShow from './roles/superVisor/damaggedPasports/DammagedPasportsShow.jsx';
-import SuperVisorDammagePassportAdd from './roles/superVisor/damaggedPasports/superVisorDammagePassportAdd.jsx';
-
+import ViewAttendance from "./roles/superVisor/attendence/attendenceView.jsx";
+import SuperVisorAttendenceEdit from "./roles/superVisor/attendence/editAttendence.jsx";
+import SuperVisorDamagedpasportsHistory from "./roles/superVisor/damaggedPasports/dammagedPasportsHistory.jsx";
+import DammagedPasportsShow from "./roles/superVisor/damaggedPasports/DammagedPasportsShow.jsx";
+import SuperVisorDammagePassportAdd from "./roles/superVisor/damaggedPasports/superVisorDammagePassportAdd.jsx";
+import SuperVisorDevices from "./roles/superVisor/damegedDevices/SuperVisorDevice.jsx";
+import SuperVisorDeviceShow from "./roles/superVisor/damegedDevices/SuperVisorDeviceShow.jsx";
 
 const App = () => {
   const { initialize } = useAuthStore();
@@ -74,13 +75,31 @@ const App = () => {
           />
 
           <Route path="/attendance/view" element={<ViewAttendance />} />
-          <Route path="/attendance/view/supervisor/editattendence" element={<SuperVisorAttendenceEdit />} />
+          <Route
+            path="/attendance/view/supervisor/editattendence"
+            element={<SuperVisorAttendenceEdit />}
+          />
 
-
-          <Route path="/supervisor/damagedpasportshistory" element={<SuperVisorDamagedpasportsHistory />} />
-          <Route path="supervisor/damagedpasportshistory/DammagedPasportsShow" element={< DammagedPasportsShow/>} />
-          <Route path="/supervisor/damagedpasportshistory/supervisordammagepasportadd" element={< SuperVisorDammagePassportAdd/>} />
-
+          <Route
+            path="/supervisor/damagedpasportshistory"
+            element={<SuperVisorDamagedpasportsHistory />}
+          />
+          <Route
+            path="supervisor/damagedpasportshistory/DammagedPasportsShow"
+            element={<DammagedPasportsShow />}
+          />
+          <Route
+            path="/supervisor/damagedpasportshistory/supervisordammagepasportadd"
+            element={<SuperVisorDammagePassportAdd />}
+          />
+          <Route
+            path="/superVisor/damegedDevices"
+            element={<SuperVisorDevices />}
+          />
+          <Route
+            path="/supervisor/damegedDevices"
+            element={<SuperVisorDeviceShow />}
+          />
         </Route>
       </Routes>
     </Router>
