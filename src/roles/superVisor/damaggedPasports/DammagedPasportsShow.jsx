@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Modal, Button, Form, Input, DatePicker, message } from "antd";
 import TextFieldForm from "../../../reusable elements/ReuseAbleTextField.jsx";
 import "./dammagedPasportsShow.css";
-
+import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 const DammagedPasportsShow = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -118,39 +118,45 @@ const DammagedPasportsShow = () => {
         onCancel={handleCancel}
         footer={null}
         destroyOnClose
-        style={{ direction: "rtl" }}
-      >
+        style={{ direction: "rtl" }}>
         <Form
           form={form}
           onFinish={handleFormSubmit}
           layout="vertical"
-          style={{ direction: "rtl" }}
-        >
+          style={{ direction: "rtl" }}>
           <Form.Item
             name="passportNumber"
             label="رقم الجواز"
-            rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}
-          >
+            rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
             <Input style={{ padding: "10px" }} />
           </Form.Item>
           <Form.Item
             name="damageReason"
             label="سبب التلف"
-            rules={[{ required: true, message: "يرجى إدخال سبب التلف" }]}
-          >
+            rules={[{ required: true, message: "يرجى إدخال سبب التلف" }]}>
             <Input style={{ padding: "10px" }} />
           </Form.Item>
           <Form.Item
             name="date"
             label="التاريخ"
-            rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}
-          >
+            rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
             <DatePicker format="YYYY-MM-DD" style={{ width: "100%" }} />
           </Form.Item>
           <Form.Item name="notes" label="الملاحظات">
             <Input.TextArea rows={4} style={{ padding: "20px" }} />
           </Form.Item>
-          <Button type="primary" htmlType="submit" block>
+
+          {/* Image Previewer */}
+          <div className="image-previewer-section">
+            <h3>المرفقات</h3>
+            <ImagePreviewer />
+          </div>
+
+          <Button
+            style={{ padding: "20px", marginTop: "20px" }}
+            type="primary"
+            htmlType="submit"
+            block>
             حفظ التعديلات
           </Button>
         </Form>

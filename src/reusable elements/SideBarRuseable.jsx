@@ -13,11 +13,10 @@ const DynamicSidebar = ({
   activeMenuItemClassName,
   logoutClassName,
 }) => {
-  const { user } = useAuthStore(); // Access user from Zustand store
-  const [roleItems, setRoleItems] = useState([]); // Menu items based on role
+  const { user } = useAuthStore();
+  const [roleItems, setRoleItems] = useState([]);
   const navigate = useNavigate();
 
-  // Fetch sidebar data based on role
   useEffect(() => {
     const fetchSidebarData = async () => {
       try {
@@ -40,13 +39,11 @@ const DynamicSidebar = ({
     fetchSidebarData();
   }, [fetchUrl, user]);
 
-  // Common menu items for all users
   const commonItems = [
     { label: "الإعدادات", icon: "settings", path: "/settings" },
     { label: "تسجيل الخروج", icon: "logout", action: onLogout },
   ];
 
-  // Handle menu clicks (navigation or actions)
   const handleMenuClick = (path, action) => {
     if (action) {
       action();
@@ -57,43 +54,39 @@ const DynamicSidebar = ({
 
   return (
     <div className={sidebarClassName || "sidebar"} dir="rtl">
-      {/* Role-based menu items */}
+      {/* Top section: Dynamic menu items */}
       <div className="sidebar-top" dir="ltr">
-        {roleItems.length > 0 ? (
-          roleItems.map((item, index) => (
-            <div
-              key={index}
-              className={`${menuItemClassName} ${
-                currentPath === item.path ? activeMenuItemClassName : ""
-              }`}
-              style={{
-                color: currentPath === item.path ? "white" : "black",
-              }}
-              onClick={() => handleMenuClick(item.path, item.action)}
-            >
-              <span
-                className="icons-sidebar-adjusment"
-                style={{
-                  backgroundColor: currentPath === item.path ? "#4880ff" : "transparent",
-                  color: currentPath === item.path ? "white" : "black",
-                }}
-              >
-                <Icons
-                  type={item.icon}
-                  width={40}
-                  height={40}
-                  color={currentPath === item.path ? "white" : "black"}
-                />
-              </span>
-              <h3>{item.label}</h3>
-            </div>
-          ))
-        ) : (
-          <p style={{ textAlign: "center", color: "gray" }}>No items available</p>
-        )}
+        {roleItems.map((item, index) => (
+          <div
+            key={index}
+            className={`${menuItemClassName} ${
+              currentPath === item.path ? activeMenuItemClassName : ""
+            }`}
+            style={{
+              color: currentPath === item.path ? "white" : "black",
+            }}
+            onClick={() => handleMenuClick(item.path, item.action)}
+          >
+
+            <span className="icons-sidebar-adjusment-for-mohsen" style={{
+              backgroundColor: currentPath === item.path ? "#4880ff" : "transparent",
+              color: currentPath === item.path ? "white" : "black",
+            }} >
+            <Icons
+            
+              type={item.icon}
+              width={40}
+              height={40}
+              color={currentPath === item.path ? "white" : "black"}
+            />
+
+            </span>
+            <h3>{item.label}</h3>
+          </div>
+        ))}
       </div>
 
-      {/* Common items */}
+      {/* Bottom section: Common items */}
       <div className="sidebar-bottom" dir="ltr">
         {commonItems.map((item, index) => (
           <div
@@ -103,12 +96,15 @@ const DynamicSidebar = ({
             }`}
             onClick={() => handleMenuClick(item.path, item.action)}
           >
-            <Icons
+   
+                  <Icons
               type={item.icon}
               width={24}
               height={24}
               color={item.label === "تسجيل الخروج" ? "white" : "black"}
             />
+           
+        
             <h3>{item.label}</h3>
           </div>
         ))}

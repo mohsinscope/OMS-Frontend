@@ -39,7 +39,6 @@
 .dropdown-wrapper {
   display: flex;
   flex-direction: column; /* Stack label and dropdown */
-  gap: 10px;
 }
 .supervisor-passport-dameged-field-wrapper {
   display: flex;

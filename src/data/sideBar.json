@@ -2,22 +2,22 @@
   "Admin": [
     {
       "label": "المصاريف",
-      "icon": "arcticons:expense-register",
+      "icon": "bill",
       "path": "/admin/expenses"
     },
     {
       "label": "الحضور",
-      "icon": "basil:edit-outline",
+      "icon": "attendence",
       "path": "/admin/attendence"
     },
     {
       "label": "إدارة المستخدمين",
-      "icon": "mdi:account-group",
+      "icon": "attendence-add",
       "path": "/admin/users"
     },
     {
       "label": "ادارة القيم",
-      "icon": "mdi:account-group",
+      "icon": "data",
       "path": "/admin/listofvalues"
     }
   ],
