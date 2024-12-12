@@ -1,23 +1,19 @@
-import { useState } from "react";
-import Dashboard from "./../../../pages/dashBoard.jsx";
+import React, { useState } from "react";
+import { Table, Button } from "antd"; // Import Ant Design Table and Button
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import "./adminAttendence.css";
 
 const AdminAttendance = () => {
-  // State to hold filtered records based on user inputs
-  const [filteredRecords, setFilteredRecords] = useState([]);
-
-  // State to hold the initial attendance records
   const [attendanceRecords] = useState([
     {
-      id: "001",
-      employeeName: "محمد علي", // Employee name
-      position: "مدير", // Position
-      date: "2024-11-30", // Date of attendance
-      status: "حاضر", // Attendance status
+      key: "1",
+      employeeName: "محمد علي",
+      position: "مدير",
+      date: "2024-11-30",
+      status: "حاضر",
     },
     {
-      id: "002",
+      key: "2",
       employeeName: "أحمد كريم",
       position: "محاسب",
       date: "2024-11-29",
@@ -25,17 +21,96 @@ const AdminAttendance = () => {
     },
   ]);
 
-  // State to control the visibility of the modal for editing attendance
-  const [modalOpened, setModalOpened] = useState(false);
+  const [filteredRecords, setFilteredRecords] = useState(attendanceRecords);
 
-  // State to hold the currently selected attendance record for editing
-  const [editAttendance, setEditAttendance] = useState(null);
+  // Function to get fields for the filter form
+  const getFilterFields = () => [
+    {
+      name: "governorate",
+      label: "المحافظة",
+      type: "dropdown",
+      placeholder: "اختر المحافظة",
+      options: [
+        { value: "بغداد", label: "بغداد" },
+        { value: "نينوى", label: "نينوى" },
+      ],
+    },
+    {
+      name: "office",
+      label: "المكتب",
+      type: "dropdown",
+      placeholder: "اختر المكتب",
+      options: [
+        { value: "مدير", label: "مدير" },
+        { value: "محاسب", label: "محاسب" },
+      ],
+    },
+    {
+      name: "fromDate",
+      label: "التاريخ من",
+      type: "date",
+    },
+    {
+      name: "toDate",
+      label: "التاريخ إلى",
+      type: "date",
+    },
+  ];
 
-  // Function to apply filters to attendance records based on user input
+  // Table columns
+  const columns = [
+    {
+      title: "اسم الموظف",
+      dataIndex: "employeeName",
+      key: "employeeName",
+      align: "center",
+    },
+    {
+      title: "الوظيفة",
+      dataIndex: "position",
+      key: "position",
+      align: "center",
+    },
+    {
+      title: "التاريخ",
+      dataIndex: "date",
+      key: "date",
+      align: "center",
+    },
+    {
+      title: "الحالة",
+      dataIndex: "status",
+      key: "status",
+      align: "center",
+    },
+    {
+      title: "الإجراءات",
+      key: "actions",
+      align: "center",
+      render: (text, record) => (
+        <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
+          <Button
+            type="primary"
+            onClick={() => console.log("Edit:", record)}
+          >
+            تعديل
+          </Button>
+          <Button
+            type="default"
+            danger
+            onClick={() => handleDelete(record.key)}
+          >
+            حذف
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  // Filter logic
   const applyFilters = (filters) => {
     const { governorate, office, fromDate, toDate } = filters;
 
-    // Filter logic based on input fields
     const filtered = attendanceRecords.filter((record) => {
       const matchesGovernorate =
         !governorate || record.employeeName.includes(governorate);
@@ -47,76 +122,31 @@ const AdminAttendance = () => {
       return matchesGovernorate && matchesOffice && matchesDate;
     });
 
-    // Update the state with filtered results
     setFilteredRecords(filtered);
   };
 
-  // Function to reset the filters and show all records
-  const resetFilters = () => {
-    setFilteredRecords([]);
-  };
-
-  // Function to handle the edit action
-  const handleEdit = (attendance) => {
-    setEditAttendance(attendance); // Set the selected record for editing
-    setModalOpened(true); // Open the modal
-  };
-
-  // Function to handle the delete action
-  const handleDelete = (attendanceId) => {
-    const confirmed = window.confirm("هل أنت متأكد أنك تريد حذف هذا السجل؟"); // Confirmation dialog
+  const handleDelete = (key) => {
+    const confirmed = window.confirm("هل أنت متأكد أنك تريد حذف هذا السجل؟");
     if (confirmed) {
-      // Remove the record with the specified ID
-      setFilteredRecords((prev) =>
-        prev.filter((attendance) => attendance.id !== attendanceId)
-      );
+      setFilteredRecords((prev) => prev.filter((record) => record.key !== key));
     }
+  };
+
+  const resetFilters = () => {
+    setFilteredRecords(attendanceRecords); // Reset to original data
   };
 
   return (
     <>
-      <Dashboard /> {/* Dashboard navigation header */}
       <div className="attendance-container" dir="rtl">
-        <h1 className="attendance-header">إدارة الحضور</h1> {/* Page Header */}
+        <h1 className="attendance-header">إدارة الحضور</h1>
+
         {/* Filters Section */}
         <div className="attendance-filters">
           <TextFieldForm
-            fields={[
-              {
-                name: "governorate",
-                label: "المحافظة", // Dropdown for governorate
-                type: "dropdown",
-                placeholder: "اختر المحافظة",
-                options: [
-                  { value: "بغداد", label: "بغداد" },
-                  { value: "نينوى", label: "نينوى" },
-                ],
-              },
-              {
-                name: "office",
-                label: "المكتب", // Dropdown for office
-                type: "dropdown",
-                placeholder: "اختر المكتب",
-                options: [
-                  { value: "مدير", label: "مدير" },
-                  { value: "محاسب", label: "محاسب" },
-                ],
-              },
-              {
-                name: "fromDate",
-                label: "التاريخ من", // Date input for start date
-                type: "date",
-                placeholder: "",
-              },
-              {
-                name: "toDate",
-                label: "التاريخ إلى", // Date input for end date
-                type: "date",
-                placeholder: "",
-              },
-            ]}
-            onFormSubmit={applyFilters} // Apply filters on form submit
-            onReset={resetFilters} // Reset filters
+            fields={getFilterFields()} // Use the extracted function to get fields
+            onFormSubmit={applyFilters}
+            onReset={resetFilters}
             formClassName="attendance-filter-form"
             inputClassName="attendance-filter-input"
             dropdownClassName="attendance-filter-dropdown"
@@ -124,18 +154,16 @@ const AdminAttendance = () => {
             buttonClassName="attendance-filter-button"
           />
         </div>
+
         {/* Data Table Section */}
         <div className="attendance-data-table-container">
-          {/* Add Button */}
-          <div className="attendance-add-button-container">
-            <button
-              type="button"
-              className="attendance-add-button"
-              onClick={() => console.log("Add button clicked")} // Placeholder for add logic
-            >
-              + إضافة
-            </button>
-          </div>
+          <Table
+            columns={columns}
+            dataSource={filteredRecords}
+            pagination={{ pageSize: 5 }}
+            bordered
+            size="middle"
+          />
         </div>
       </div>
     </>

@@ -30,12 +30,15 @@ import SuperVisorDevices from "./roles/superVisor/damegedDevices/SuperVisorDevic
 import SuperVisorDeviceShow from "./roles/superVisor/damegedDevices/SuperVisorDeviceShow.jsx";
 import SuperVisorDivecesAdd from './roles/superVisor/damegedDevices/superVisorDevicesAdd.jsx';
 const App = () => {
-  const { initialize } = useAuthStore();
-
-  useEffect(() => {
-    initialize(); // Validate persisted state
-  }, []);
-
+  const App = () => {
+    const { initialize, isLoggedIn } = useAuthStore();
+  
+    useEffect(() => {
+      initialize(); // This causes the error if `initialize` doesn't exist
+    }, [initialize]);
+  
+    return <div>{isLoggedIn ? "Welcome back!" : "Please log in."}</div>;
+  };
   return (
     <Router>
       <Routes>
