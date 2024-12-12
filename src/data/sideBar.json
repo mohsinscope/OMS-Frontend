@@ -1,5 +1,5 @@
 {
-  "admin": [
+  "Admin": [
     {
       "label": "المصاريف",
       "icon": "arcticons:expense-register",
@@ -33,7 +33,7 @@
       "path": "/manager/reports"
     }
   ],
-  "supervisor": [
+  "Supervisor": [
     {
       "label": "تسجيل المصاريف",
       "icon": "bill-request",
