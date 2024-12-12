@@ -1,51 +1,48 @@
-import React, { useState, useEffect } from "react"; // Import React hooks
-import { Table, Button, Modal, Form, Input, Select, message, Spin } from "antd"; // Import Ant Design components
-import axios from "axios"; // Import Axios for HTTP requests
-import Dashboard from "./../../../pages/dashBoard.jsx"; // Import the Dashboard component
-import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx"; // Import a reusable TextFieldForm component
-import "./AdminUserManagment.css"; // Import CSS for styling
-
-const { Option } = Select; // Destructure Option for use in Select components
+import React, { useState, useEffect } from "react";
+import { Table, Button, Modal, Form, Input, Select, message, Spin } from "antd";
+import axios from "axios";
+import Dashboard from "./../../../pages/dashBoard.jsx";
+import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
+import "./AdminUserManagment.css";
+import useAuthStore from './../../../store/store.js';
+const { Option } = Select;
 
 const AdminUserManagment = () => {
-  const [userRecords, setUserRecords] = useState([]); // State to store user records
-  const [filteredRecords, setFilteredRecords] = useState([]); // State to store filtered user records
-  const [governorates, setGovernorates] = useState([]); // State to store governorates
-  const [offices, setOffices] = useState([]); // State to store offices
-  const [loading, setLoading] = useState(false); // State to track loading status
-  const [addModalVisible, setAddModalVisible] = useState(false); // State to control visibility of the add user modal
-  const [form] = Form.useForm(); // Ant Design Form instance for managing form inputs
+  const [userRecords, setUserRecords] = useState([]);
+  const [filteredRecords, setFilteredRecords] = useState([]);
+  const [governorates, setGovernorates] = useState([]);
+  const [offices, setOffices] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [addModalVisible, setAddModalVisible] = useState(false);
+  const [form] = Form.useForm();
+  const { accessToken } = useAuthStore(); // Access token from Zustand store
 
-  // Fetch data from APIs when the component mounts
+  // Fetch data from APIs
   useEffect(() => {
     const fetchInitialData = async () => {
-      setLoading(true); // Set loading to true while fetching data
+      setLoading(true);
       try {
-        // Fetch offices and governorates in parallel
         const [officesResponse, governoratesResponse] = await Promise.all([
-          axios.get("http://localhost:5214/api/office"), // Fetch offices
-          axios.get("http://localhost:5214/api/Governorate"), // Fetch governorates
+          axios.get("http://localhost:5214/api/office"),
+          axios.get("http://localhost:5214/api/Governorate"),
         ]);
 
-        // Update state with fetched data
         setOffices(Array.isArray(officesResponse.data) ? officesResponse.data : []);
         setGovernorates(Array.isArray(governoratesResponse.data) ? governoratesResponse.data : []);
       } catch (error) {
-        console.error("Error fetching data:", error); // Log any errors
-        message.error("فشل تحميل البيانات"); // Show error message to the user
+        console.error("Error fetching data:", error);
+        message.error("فشل تحميل البيانات");
       } finally {
-        setLoading(false); // Set loading to false after data fetching is complete
+        setLoading(false);
       }
     };
 
-    fetchInitialData(); // Call the data fetching function
-  }, []); // Empty dependency array means this runs only once, after the component mounts
+    fetchInitialData();
+  }, []);
 
-  // Apply filters to the user records based on the provided filters
   const applyFilters = (filters) => {
-    const { username, role, governorate, officeName } = filters; // Destructure filters
+    const { username, role, governorate, officeName } = filters;
 
-    // Filter user records based on the provided criteria
     const filtered = userRecords.filter((record) => {
       const matchesUsername =
         !username || record.username.toLowerCase().includes(username.toLowerCase());
@@ -64,55 +61,74 @@ const AdminUserManagment = () => {
       );
     });
 
-    setFilteredRecords(filtered.length > 0 ? filtered : []); // Update filtered records state
+    setFilteredRecords(filtered.length > 0 ? filtered : []);
   };
 
-  // Reset filters to show all user records
   const resetFilters = () => {
-    setFilteredRecords(userRecords); // Reset to all user records
+    setFilteredRecords(userRecords);
   };
 
-  // Handle adding a new user
   const handleAddUser = async (values) => {
     try {
-      // Send a POST request to the API to add the user
-      const response = await axios.post("http://localhost:5214/api/account/register", values);
-      setUserRecords((prev) => [...prev, response.data]); // Add the new user to the user records
-      setFilteredRecords((prev) => [...prev, response.data]); // Add the new user to the filtered records
-      message.success("تمت إضافة المستخدم بنجاح"); // Show success message
-      setAddModalVisible(false); // Close the modal
-      form.resetFields(); // Reset the form fields
+      const payload = {
+        userName: values.username,
+        password: values.password,
+        roles: [values.role],
+        fullName: values.fullName,
+        // modify it to take a value from input of postion
+        position: 1,
+        officeId: parseInt(values.officeName, 10),
+        governorateId: parseInt(values.governorate, 10),
+      };
+
+      console.log("Payload being sent:", payload); // Debugging payload
+
+      const response = await axios.post(
+        "http://localhost:5214/api/account/register",
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`, // Include token in headers
+          },
+        }
+      );
+
+      setUserRecords((prev) => [...prev, response.data]);
+      setFilteredRecords((prev) => [...prev, response.data]);
+
+      message.success("تمت إضافة المستخدم بنجاح");
+      setAddModalVisible(false);
+      form.resetFields();
     } catch (error) {
-      console.error("Error adding user:", error); // Log any errors
-      message.error("فشل إضافة المستخدم"); // Show error message to the user
+      console.error("Error adding user:", error.response?.data || error.message);
+      message.error("فشل إضافة المستخدم");
     }
   };
 
-  // Define the columns for the Ant Design Table
   const columns = [
     {
-      title: "اسم المستخدم", // Table column header
-      dataIndex: "username", // Key to access the username from user records
-      key: "username", // Unique key for this column
+      title: "اسم المستخدم",
+      dataIndex: "username",
+      key: "username",
     },
     {
-      title: "الصلاحية", // Table column header
-      dataIndex: "role", // Key to access the role from user records
-      key: "role", // Unique key for this column
+      title: "الصلاحية",
+      dataIndex: "role",
+      key: "role",
     },
     {
-      title: "المحافظة", // Table column header
-      dataIndex: "governorate", // Key to access the governorate from user records
-      key: "governorate", // Unique key for this column
+      title: "المحافظة",
+      dataIndex: "governorate",
+      key: "governorate",
     },
     {
-      title: "اسم المكتب", // Table column header
-      dataIndex: "officeName", // Key to access the office name from user records
-      key: "officeName", // Unique key for this column
+      title: "اسم المكتب",
+      dataIndex: "officeName",
+      key: "officeName",
     },
     {
-      title: "الإجراءات", // Table column header for actions
-      key: "actions", // Unique key for this column
+      title: "الإجراءات",
+      key: "actions",
       render: (_, record) => (
         <Button
           type="primary"
@@ -122,7 +138,7 @@ const AdminUserManagment = () => {
             color: "#fff",
             borderRadius: "4px",
           }}
-          onClick={() => console.log("Edit:", record)} // Handle edit action
+          onClick={() => console.log("Edit:", record)}
         >
           تعديل
         </Button>
@@ -132,163 +148,92 @@ const AdminUserManagment = () => {
 
   return (
     <>
-      <Dashboard /> {/* Include the Dashboard component */}
+      <Dashboard />
       <div className="admin-user-management-container" dir="rtl">
-        <h1 className="admin-header">إدارة المستخدمين</h1> {/* Page header */}
+        <h1 className="admin-header">إدارة المستخدمين</h1>
 
-        {/* Filter Section */}
         <div className="filter-section">
           <TextFieldForm
             fields={[
-              {
-                name: "username",
-                label: "اسم المستخدم",
-                type: "text",
-              },
-              {
-                name: "role",
-                label: "الصلاحية",
-                type: "dropdown",
-                options: [
-                  { value: "1", label: "Admin" },
-                  { value: "manager", label: "مدير قسم" },
-                  { value: "employee", label: "موظف" },
-                ],
-              },
-              {
-                name: "governorate",
-                label: "المحافظة",
-                type: "dropdown",
-                options: governorates.map((gov) => ({
-                  value: gov.name,
-                  label: gov.name,
-                })),
-              },
-              {
-                name: "officeName",
-                label: "اسم المكتب",
-                type: "dropdown",
-                options: offices.map((office) => ({
-                  value: office.name,
-                  label: office.name,
-                })),
-              },
+              { name: "username", label: "اسم المستخدم", type: "text" },
+              { name: "role", label: "الصلاحية", type: "dropdown", options: [{ value: "Supervisor", label: "مشرف" }, { value: "Manager", label: "مدير" }, { value: "Employee", label: "موظف" }] },
+              { name: "governorate", label: "المحافظة", type: "dropdown", options: governorates.map((gov) => ({ value: gov.id, label: gov.name })) },
+              { name: "officeName", label: "اسم المكتب", type: "dropdown", options: offices.map((office) => ({ value: office.id, label: office.name })) },
             ]}
-            onFormSubmit={applyFilters} // Call applyFilters on form submission
-            onReset={resetFilters} // Call resetFilters on reset
-            formClassName="filter-row"
-            inputClassName="filter-input"
-            dropdownClassName="filter-dropdown"
-            fieldWrapperClassName="filter-field-wrapper"
-            buttonClassName="filter-button"
+            onFormSubmit={applyFilters}
+            onReset={resetFilters}
           />
         </div>
 
-        {/* Data Table Section */}
         <div className="data-table-container">
-          <div className="add-button-container">
-            <Button
-              type="primary"
-              style={{
-                marginBottom: "15px",
-                backgroundColor: "#1890ff",
-                border: "none",
-              }}
-              onClick={() => setAddModalVisible(true)} // Show add user modal
-            >
-              + إضافة
-            </Button>
-          </div>
-          <Spin spinning={loading}> {/* Show loading spinner while fetching data */}
+          <Button
+            type="primary"
+            style={{
+              marginBottom: "15px",
+              backgroundColor: "#1890ff",
+              border: "none",
+            }}
+            onClick={() => setAddModalVisible(true)}
+          >
+            + إضافة
+          </Button>
+          <Spin spinning={loading}>
             <Table
-              dataSource={filteredRecords} // Data for the table
-              columns={columns} // Columns for the table
-              rowKey="id" // Unique key for rows
+              dataSource={filteredRecords}
+              columns={columns}
+              rowKey="id"
               bordered
-              pagination={{ pageSize: 5 }} // Pagination settings
+              pagination={{ pageSize: 5 }}
             />
           </Spin>
         </div>
       </div>
 
-      {/* Add User Modal */}
       <Modal
-        title="إضافة مستخدم جديد" // Modal title
-        visible={addModalVisible} // Modal visibility
-        onCancel={() => setAddModalVisible(false)} // Close modal on cancel
-        footer={null} // Remove footer buttons
+        title="إضافة مستخدم جديد"
+        open={addModalVisible}
+        onCancel={() => setAddModalVisible(false)}
+        footer={null}
       >
-        <Form form={form} onFinish={handleAddUser} layout="vertical"> {/* Form for adding a new user */}
-          <Form.Item
-            name="username"
-            label="اسم المستخدم"
-            rules={[{ required: true, message: "يرجى إدخال اسم المستخدم" }]}
-          >
+        <Form form={form} onFinish={handleAddUser} layout="vertical">
+          <Form.Item name="username" label="اسم المستخدم" rules={[{ required: true, message: "يرجى إدخال اسم المستخدم" }]}>
             <Input placeholder="اسم المستخدم" />
           </Form.Item>
-          <Form.Item
-            name="role"
-            label="الصلاحية"
-            rules={[{ required: true, message: "يرجى اختيار الصلاحية" }]}
-          >
+          <Form.Item name="fullName" label="الاسم الكامل" rules={[{ required: true, message: "يرجى إدخال الاسم الكامل" }]}>
+            <Input placeholder="الاسم الكامل" />
+          </Form.Item>
+          <Form.Item name="role" label="الصلاحية" rules={[{ required: true, message: "يرجى اختيار الصلاحية" }]}>
             <Select placeholder="اختر الصلاحية">
-              <Option value="1">Admin</Option>
-              <Option value="manager">مدير قسم</Option>
-              <Option value="employee">موظف</Option>
+              <Option value="Supervisor">مشرف</Option>
+              <Option value="Manager">مدير</Option>
+              <Option value="Employee">موظف</Option>
             </Select>
           </Form.Item>
-          <Form.Item
-            name="governorate"
-            label="المحافظة"
-            rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
-          >
+          <Form.Item name="position" label="المنصب" rules={[{ required: true, message: "يرجى إدخال المنصب" }]}>
+            <Input placeholder="المنصب" value={1} />
+          </Form.Item>
+          <Form.Item name="governorate" label="المحافظة" rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
             <Select placeholder="اختر المحافظة">
               {governorates.map((gov) => (
-                <Option key={gov.id} value={gov.name}>
+                <Option key={gov.id} value={gov.id}>
                   {gov.name}
                 </Option>
               ))}
             </Select>
           </Form.Item>
-          <Form.Item
-            name="officeName"
-            label="اسم المكتب"
-            rules={[{ required: true, message: "يرجى إدخال اسم المكتب" }]}
-          >
+          <Form.Item name="officeName" label="اسم المكتب" rules={[{ required: true, message: "يرجى إدخال اسم المكتب" }]}>
             <Select placeholder="اختر المكتب">
               {offices.map((office) => (
-                <Option key={office.id} value={office.name}>
+                <Option key={office.id} value={office.id}>
                   {office.name}
                 </Option>
               ))}
             </Select>
           </Form.Item>
-          <Form.Item
-            name="password"
-            label="كلمة السر"
-            rules={[{ required: true, message: "يرجى إدخال كلمة السر" }]}
-          >
+          <Form.Item name="password" label="كلمة السر" rules={[{ required: true, message: "يرجى إدخال كلمة السر" }]}>
             <Input.Password placeholder="كلمة السر" />
           </Form.Item>
-          <Form.Item
-            name="confirmPassword"
-            label="تأكيد كلمة السر"
-            dependencies={["password"]}
-            rules={[
-              {
-                required: true,
-                message: "يرجى تأكيد كلمة السر",
-              },
-              ({ getFieldValue }) => ({
-                validator(_, value) {
-                  if (!value || getFieldValue("password") === value) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error("كلمات السر غير متطابقة!"));
-                },
-              }),
-            ]}
-          >
+          <Form.Item name="confirmPassword" label="تأكيد كلمة السر" dependencies={["password"]} rules={[({ getFieldValue }) => ({ validator(_, value) { if (!value || getFieldValue("password") === value) { return Promise.resolve(); } return Promise.reject(new Error("كلمات السر غير متطابقة!")); }, }),]}>
             <Input.Password placeholder="تأكيد كلمة السر" />
           </Form.Item>
           <Button type="primary" htmlType="submit" block>
