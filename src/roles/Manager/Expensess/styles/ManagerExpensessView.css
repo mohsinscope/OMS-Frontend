@@ -1,0 +1,23 @@
+.manager-expenses-view-container{
+        /* Limit the width */
+        margin-top: 6%;
+        margin-right: 20px;
+        margin-left: 20px;
+        padding: 20px;
+        
+        border-radius: 8px;
+        /* Smooth rounded corners */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: start;
+}
+
+.manager-expenses-view-print-button{
+    width: 300px;
+    height: 60px;
+    background-color: #f3f4f6;
+    border: #9095a0 1px solid;
+    border-radius: 8px;
+    cursor: pointer;
+}

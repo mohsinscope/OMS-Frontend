@@ -5,51 +5,61 @@ import "./styles/settings.css";
 
 export default function Settings() {
   const { user } = useAuthStore(); // Access user data from the store
-  const userRole = user?.role || "user"; // Get user role, defaulting to "user"
-  const isAdmin = userRole === "admin"; // Determine if the user is an admin
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // Initialize form state with user data
   const [formData, setFormData] = useState({
-    fullName: user?.email || "محمد علي",
-    username: user?.username || "mohamed123",
-    governorate: user?.governorate || "بغداد",
-    office: user?.office || "الرصافة",
+    fullName: user?.fullName || "محمد علي",
+    username: user?.username || "ali", // Correctly mapped from the body
+    governorate: user?.governorateName || "Basra", // Correctly mapped from the body
+    office: user?.officeName || "Karadah", // Correctly mapped from the body
     password: "", // Leave empty for setting a new password
-    confirmPassword:user?.Password|| "", // Leave empty for confirmation
+    confirmPassword: "", // Leave empty for confirmation
   });
 
+  // State for toggling password visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({ ...prevData, [name]: value }));
   };
 
+  // Save user data
   const handleSave = () => {
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match!");
+      alert("كلمات المرور غير متطابقة!");
       return;
     }
+
     if (formData.password === "") {
-      alert("Password cannot be empty!");
+      alert("كلمة المرور لا يمكن أن تكون فارغة!");
       return;
+      
     }
+
     // TODO: Add API call to save updated user data
     console.log("Saving user data:", formData);
-    alert("Password updated successfully!");
+    alert("تم تحديث كلمة المرور بنجاح!");
   };
+  console.log("User data:", user);
 
+
+  // Reset form data
   const handleCancel = () => {
     setFormData({
       fullName: user?.fullName || "محمد علي",
-      username: user?.username || "mohamed123",
-      governorate: user?.governorate || "بغداد",
-      office: user?.office || "الرصافة",
+      username: user?.username || "ali",
+      governorate: user?.governorateName || "Basra",
+      office: user?.officeName || "Karadah",
       password: "",
       confirmPassword: "",
     });
   };
 
   return (
+    
     <div className="settings-container" dir="rtl">
       <h1 className="settings-header">إعدادات الحساب</h1>
       <div className="settings-form">
@@ -61,7 +71,7 @@ export default function Settings() {
           name="fullName"
           value={formData.fullName}
           onChange={handleInputChange}
-          disabled={!isAdmin}
+          placeholder="أدخل اسمك الكامل"
         />
 
         {/* Username Field */}
@@ -72,7 +82,8 @@ export default function Settings() {
           name="username"
           value={formData.username}
           onChange={handleInputChange}
-          disabled={!isAdmin}
+          placeholder="اسم المستخدم"
+          disabled // Non-editable
         />
 
         {/* Governorate Field */}
@@ -82,8 +93,8 @@ export default function Settings() {
           id="governorate"
           name="governorate"
           value={formData.governorate}
-          onChange={handleInputChange}
-          disabled={!isAdmin}
+          placeholder="اسم المحافظة"
+          disabled // Non-editable
         />
 
         {/* Office Field */}
@@ -93,8 +104,8 @@ export default function Settings() {
           id="office"
           name="office"
           value={formData.office}
-          onChange={handleInputChange}
-          disabled={!isAdmin}
+          placeholder="اسم المكتب"
+          disabled // Non-editable
         />
 
         {/* Password Field */}
@@ -106,7 +117,7 @@ export default function Settings() {
             name="password"
             value={formData.password}
             onChange={handleInputChange}
-            placeholder=""
+            placeholder="أدخل كلمة السر الجديدة"
           />
           <button
             type="button"
@@ -130,7 +141,7 @@ export default function Settings() {
             name="confirmPassword"
             value={formData.confirmPassword}
             onChange={handleInputChange}
-            placeholder=""
+            placeholder="تأكيد كلمة السر"
           />
           <button
             type="button"
