@@ -1,0 +1,75 @@
+.manager-expenses-requests-page{
+         /* Limit the width */
+         margin-top: 6%;
+         margin-right: 20px;
+         margin-left: 20px;
+         padding: 20px;
+         
+         border-radius: 8px;
+         /* Smooth rounded corners */
+         display: flex;
+         flex-direction: column;
+         justify-content: center;
+         align-items: start;
+}
+
+.manager-expenses-requests-page .filter-section{
+    display: flex;
+    justify-content: start;
+    align-items: start;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.manager-expenses-requests-page .filter-form{
+    display: flex;
+
+    justify-content: start;
+    align-items: start;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.manager-expenses-requests-page .filter-form input{
+    width: 200px;
+    height: 45px;
+    border: #bcc1ca 1px solid;
+    border-radius: 6px;
+    padding: 5px 20px;
+    font-size: large !important;
+}
+.manager-expenses-requests-page .filter-form select{
+    width: 200px;
+    height: 45px;
+    border: #bcc1ca 1px solid;
+    border-radius: 6px;
+    padding: 5px 20px;
+    font-size: large !important; 
+}
+
+.manager-expenses-requests-page .filter-form #dateFrom{
+    border: none;
+    outline: none;
+    box-shadow: none;
+    width: 150px;
+    height: 35px;
+}
+.manager-expenses-requests-page .filter-form #dateTo{
+    border: none;
+    outline: none;
+    box-shadow: none;
+    width: 150px;
+    height: 35px;
+}
+
+
+.manager-expenses-requests-page .filter-form div{
+    display: flex;
+    gap: 13px;
+    flex-wrap: wrap;
+
+}
+
+.manager-expenses-requests-page .filter-form .filter-buttons{
+    justify-content: start;
+}

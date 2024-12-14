@@ -21,16 +21,21 @@
       "path": "/admin/listofvalues"
     }
   ],
-  "manager": [
+  "Manager": [
     {
-      "label": "لوحة التحكم",
-      "icon": "mdi:view-dashboard",
-      "path": "/manager/dashboard"
+      "label": "المصاريف",
+      "icon": "bill",
+      "path": "/manager/expensess"
     },
     {
-      "label": "تقارير",
-      "icon": "mdi:file-document",
-      "path": "/manager/reports"
+      "label": "طلبات المصاريف",
+      "icon": "bill-request",
+      "path": "/manager/expensess/requists"
+    },
+    {
+      "label": "الحضور",
+      "icon": "attendence",
+      "path": "/manager/attendence"
     }
   ],
   "Supervisor": [

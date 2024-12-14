@@ -29,16 +29,19 @@ import SuperVisorDammagePassportAdd from "./roles/superVisor/damaggedPasports/su
 import SuperVisorDevices from "./roles/superVisor/damegedDevices/SuperVisorDevice.jsx";
 import SuperVisorDeviceShow from "./roles/superVisor/damegedDevices/SuperVisorDeviceShow.jsx";
 import SuperVisorDivecesAdd from './roles/superVisor/damegedDevices/superVisorDevicesAdd.jsx';
+import ManagerExpensessHistory from './roles/Manager/Expensess/ManagerExpensessHistory.jsx';
+import ManagerExpensessView from './roles/Manager/Expensess/ManagerExpensessView.jsx';
+import ManagerExpensessRequists from './roles/Manager/Expensess/ManagerExpensessRequists.jsx';
+import ManagerExpensessRequistView from './roles/Manager/Expensess/ManagerExpensessRequistView.jsx';
+import ManagerAttendenceHistory from './roles/Manager/attendence/ManagerAttendenceHistory.jsx';
+import ManagerAttendenceView from './roles/Manager/attendence/ManagerAttendenceView.jsx';
 const App = () => {
-  const App = () => {
-    const { initialize, isLoggedIn } = useAuthStore();
-  
+
+    const initializeAuth = useAuthStore((state) => state.initializeAuth);
+
     useEffect(() => {
-      initialize(); // This causes the error if `initialize` doesn't exist
-    }, [initialize]);
-  
-    return <div>{isLoggedIn ? "Welcome back!" : "Please log in."}</div>;
-  };
+      initializeAuth(); // Initialize authentication state on app load
+    }, [initializeAuth]);
   return (
     <Router>
       <Routes>
@@ -107,7 +110,36 @@ const App = () => {
             path="/supervisor/damegedDevices/add"
             element={<SuperVisorDivecesAdd />}
           />
+                <Route
+            path="/manager/expensess"
+            element={<ManagerExpensessHistory />}
+          />
+                      <Route
+            path="/manager/expensess/view"
+            element={<ManagerExpensessView />}
+          />
+                        <Route
+            path="/manager/expensess/requists"
+            element={<ManagerExpensessRequists />}
+          />
+                      <Route
+            path="/manager/expensess/requists/view"
+            element={<ManagerExpensessRequistView />}
+          />
+               <Route
+            path="/manager/attendence"
+            element={<ManagerAttendenceHistory />}
+          />
+              <Route
+            path="/manager/attendence/view"
+            element={<ManagerAttendenceView />}
+          />
+
+
+
+
         </Route>
+        
       </Routes>
     </Router>
   );

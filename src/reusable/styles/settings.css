@@ -1,8 +1,5 @@
 .settings-container{
-    max-width: 1300px; /* Limit the width */
-    margin-top: 6%;
-    margin-left: 14%;
-    padding: 20px;
+
 
     border-radius: 8px; /* Smooth rounded corners */
     display: flex;
@@ -10,6 +7,17 @@
     justify-content: center;
     align-items: center;
     background-color: white;
+       /* Limit the width */
+       margin-top: 6%;
+       margin-right: 20px;
+       margin-left: 20px;
+       padding: 20px;
+       
+       border-radius: 8px;
+
+
+
+
 }
 
 .settings-form{
@@ -33,7 +41,7 @@
     margin-top: 15px;
     display: flex;
     justify-content: space-between;
-    width: 40%;
+    width: 37%;
     gap: 30px;
 }
 

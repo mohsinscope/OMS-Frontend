@@ -1,0 +1,76 @@
+{
+  "date": "2024-12-14",
+  "totalPassportAttendance": 35,
+  "totalCompanyAttendance": 50,
+  "additionalAttendance": [
+    {
+      "governorate": "بغداد",
+      "officeName": "مكتب الكرادة",
+      "totalPassportAttendance": 30,
+      "totalCompanyAttendance": 45,
+      "date": "2024-12-13",
+      "passportEmployees": [
+        { "id": 1, "name": "أحمد سعيد", "role": "موظف الاستلام", "attended": true, "date": "2024-12-13" },
+        { "id": 2, "name": "سعيد أحمد", "role": "موظف الحسابات", "attended": false, "date": "2024-12-13" },
+        { "id": 3, "name": "محمد علي", "role": "موظف الطباعة", "attended": true, "date": "2024-12-13" },
+        { "id": 4, "name": "علي محمد", "role": "موظف التسليم", "attended": true, "date": "2024-12-13" }
+      ],
+      "companyEmployees": [
+        { "id": 1, "name": "أحمد سعيد", "role": "موظف IT", "attended": true },
+        { "id": 2, "name": "سعيد أحمد", "role": "موظف خدمة", "attended": false },
+        { "id": 3, "name": "محمد علي", "role": "مشرف", "attended": true }
+      ],
+      "roleCounts": {
+        "موظف الاستلام": 10,
+        "موظف الحسابات": 2,
+        "موظف الطباعة": 1,
+        "موظف التسليم": 1,
+        "موظف IT": 1,
+        "موظف خدمة": 1,
+        "مشرف": 1
+      }
+    },
+    {
+      "governorate": "البصرة",
+      "officeName": "مكتب البصرة",
+      "totalPassportAttendance": 40,
+      "totalCompanyAttendance": 60,
+      "date": "2024-12-12",
+      "passportEmployees": [
+        { "id": 1, "name": "علي حسين", "role": "موظف الحسابات", "attended": true, "date": "2024-12-12" },
+        { "id": 2, "name": "حسين علي", "role": "موظف الطباعة", "attended": false, "date": "2024-12-12" }
+      ],
+      "companyEmployees": [
+        { "id": 1, "name": "علي حسين", "role": "موظف خدمة", "attended": true },
+        { "id": 2, "name": "حسين علي", "role": "موظف IT", "attended": true }
+      ],
+      "roleCounts": {
+        "موظف الحسابات": 10,
+        "موظف الطباعة": 1,
+        "موظف خدمة": 1,
+        "موظف IT": 1
+      }
+    },
+    {
+      "governorate": "كربلاء",
+      "officeName": "المكتب المركزي",
+      "totalPassportAttendance": 32,
+      "totalCompanyAttendance": 48,
+      "date": "2024-12-11",
+      "passportEmployees": [
+        { "id": 1, "name": "محمد خالد", "role": "موظف الاستلام", "attended": false, "date": "2024-12-11" },
+        { "id": 2, "name": "خالد محمد", "role": "موظف التسليم", "attended": true, "date": "2024-12-11" }
+      ],
+      "companyEmployees": [
+        { "id": 1, "name": "محمد خالد", "role": "موظف دعم", "attended": false },
+        { "id": 2, "name": "خالد محمد", "role": "مشرف", "attended": true }
+      ],
+      "roleCounts": {
+        "موظف الاستلام": 10,
+        "موظف التسليم": 1,
+        "موظف دعم": 1,
+        "مشرف": 1
+      }
+    }
+  ]
+}
