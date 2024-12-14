@@ -45,14 +45,25 @@ export default function ManagerAttendenceHistory() {
       name: "governorate",
       label: "المحافظة",
       placeholder: "",
-      type: "text",
+      type: "dropdown",
+      options: [
+        { value: "بغداد", label: "بغداد" },
+        { value: "ديالى", label: "ديالى" },
+        { value: "البصرة", label: "البصرة" },
+        { value: "كربلاء", label: "كربلاء" },
+      ],
       disabled: false,
     },
     {
       name: "office",
       label: "اسم المكتب",
       placeholder: "",
-      type: "text",
+      type: "dropdown",
+      options: [
+        { value: "مكتب الكرادة", label: "مكتب الكرادة" },
+        { value: "المكتب المركزي", label: "المكتب المركزي" },
+        { value: "مكتب البصرة", label: "مكتب البصرة" },
+      ],
       disabled: false,
     },
     {
@@ -149,12 +160,13 @@ export default function ManagerAttendenceHistory() {
   return (
     <div
       className={`manager-attendance-history-container ${
-        isSidebarCollapsed ? "sidebar-collapsed" : ""
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "manager-attendance-history-container"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <div className="header-section">
-        <h1 className="page-title">نظام إدارة المكاتب - سجل الحضور</h1>
+        <h1 className="page-title">سجل الحضور</h1>
       </div>
 
       <div className="filter-section">
@@ -191,8 +203,7 @@ export default function ManagerAttendenceHistory() {
         onOk={() => setIsModalVisible(false)}
         onCancel={() => setIsModalVisible(false)}
         okText="حسناً"
-        cancelText="إغلاق"
-      >
+        cancelText="إغلاق">
         <p>لا يوجد تطابق للفلاتر</p>
       </Modal>
     </div>

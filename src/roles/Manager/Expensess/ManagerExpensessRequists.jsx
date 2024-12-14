@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { Table, Button, message ,ConfigProvider} from "antd";
+import { Table, Button, message, ConfigProvider } from "antd";
 import TextFieldForm from "../../../reusable elements/ReuseAbleTextField.jsx"; // Import reusable text field
 import { Link, useNavigate } from "react-router-dom";
-import './styles/ManagerExpensessRequists.css';
+import "./styles/ManagerExpensessRequists.css";
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 const dataSource = [
   {
     key: "1",
@@ -50,7 +51,7 @@ export default function ManagerExpensessRequists() {
   const [filteredData, setFilteredData] = useState(dataSource);
   const [filters, setFilters] = useState({});
   const navigate = useNavigate();
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   const fields = [
     {
       name: "governorate",
@@ -68,7 +69,13 @@ export default function ManagerExpensessRequists() {
       name: "officeName",
       label: "اسم المكتب",
       placeholder: "",
-      type: "text",
+      type: "dropdown",
+      options: [
+        { value: "الكرادة", label: "الكرادة" },
+        { value: "النجف المركز", label: "المكتب المركزي" },
+        { value: "بعقوبة", label: "بعقوبة" },
+        { value: "سوران", label: "سوران" },
+      ],
     },
     {
       name: "supervisor",
@@ -110,22 +117,22 @@ export default function ManagerExpensessRequists() {
   const handleFilterSubmit = (formData) => {
     const filtered = dataSource.filter((item) => {
       const matchesGovernorate =
-        !formData.governorate || item.governorate.includes(formData.governorate);
+        !formData.governorate ||
+        item.governorate.includes(formData.governorate);
       const matchesOfficeName =
         !formData.officeName || item.officeName.includes(formData.officeName);
       const matchesSupervisor =
         !formData.supervisor || item.supervisor.includes(formData.supervisor);
-      const matchesStatus =
-        !formData.status || item.status === formData.status;
+      const matchesStatus = !formData.status || item.status === formData.status;
 
       const matchesDate =
         (!formData.dateFrom ||
           new Date(item.date) >= new Date(formData.dateFrom)) &&
-        (!formData.dateTo ||
-          new Date(item.date) <= new Date(formData.dateTo));
+        (!formData.dateTo || new Date(item.date) <= new Date(formData.dateTo));
 
       const matchesRequestNumber =
-        !formData.requestNumber || item.requestNumber.includes(formData.requestNumber);
+        !formData.requestNumber ||
+        item.requestNumber.includes(formData.requestNumber);
 
       return (
         matchesGovernorate &&
@@ -194,38 +201,44 @@ export default function ManagerExpensessRequists() {
             navigate("/manager/expensess/requists/view", {
               state: { data: record },
             })
-          }
-        >
+          }>
           عرض
         </Button>
       ),
     },
   ];
 
-  return (    <ConfigProvider direction="rtl">
-    <div className="manager-expenses-requests-page" dir="rtl">
-      <h1 className="page-title">طلبات الصرفيات</h1>
-      <div className="filter-section">
-        <TextFieldForm
-          fields={fields}
-          onFormSubmit={handleFilterSubmit}
-          onReset={handleReset}
-          formClassName="filter-form"
-          inputClassName="filter-input"
-          dropdownClassName="filter-dropdown"
-          fieldWrapperClassName="filter-field-wrapper"
-          buttonClassName="filter-button"
+  return (
+    <ConfigProvider direction="rtl">
+      <div
+        className={`manager-expenses-requests-page ${
+          isSidebarCollapsed
+            ? "sidebar-collapsed"
+            : "manager-expenses-requests-page"
+        }`}
+        dir="rtl">
+        <h1 className="page-title">طلبات الصرفيات</h1>
+        <div className="filter-section">
+          <TextFieldForm
+            fields={fields}
+            onFormSubmit={handleFilterSubmit}
+            onReset={handleReset}
+            formClassName="filter-form"
+            inputClassName="filter-input"
+            dropdownClassName="filter-dropdown"
+            fieldWrapperClassName="filter-field-wrapper"
+            buttonClassName="filter-button"
+          />
+        </div>
+        <Table
+          dataSource={filteredData}
+          columns={columns}
+          rowKey="key"
+          bordered
+          pagination={{ pageSize: 5, position: ["bottomCenter"] }}
+          locale={{ emptyText: "لا توجد بيانات" }}
         />
       </div>
-      <Table
-        dataSource={filteredData}
-        columns={columns}
-        rowKey="key"
-        bordered
-        pagination={{ pageSize: 5 , position: ["bottomCenter"],}}
-        locale={{ emptyText: "لا توجد بيانات" }}
-      />
-    </div>
     </ConfigProvider>
   );
 }

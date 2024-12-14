@@ -4,6 +4,7 @@ import { Modal, Button, Form, Input, DatePicker, message } from "antd";
 import TextFieldForm from "../../../reusable elements/ReuseAbleTextField.jsx";
 import "./dammagedPasportsShow.css";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 const DammagedPasportsShow = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ const DammagedPasportsShow = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editedData, setEditedData] = useState({ ...data }); // Store editable data
   const [form] = Form.useForm();
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   // Handle Back Button
   const handleBack = () => {
     navigate(-1); // Go back to the previous page
@@ -74,7 +75,13 @@ const DammagedPasportsShow = () => {
   ];
 
   return (
-    <div className="supervisor-passport-damage-show-container" dir="rtl">
+    <div
+      className={`supervisor-passport-damage-show-container ${
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-passport-damage-show-container"
+      }`}
+      dir="rtl">
       <h1>الجواز التالف</h1>
 
       <div className="details-container">
