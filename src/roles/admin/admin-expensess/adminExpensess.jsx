@@ -28,7 +28,7 @@ const AdminExpenses = () => {
       governorate: "البصرة",
       office: "الزبير",
       status: "ملغى",
-      cost: "100,000 دينار",
+      cost: "1000,000 دينار",
       date: "2024-11-28",
     },
   ]);
