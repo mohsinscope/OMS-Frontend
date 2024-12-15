@@ -1,12 +1,12 @@
 import React from "react";
-import { useLocation,Link } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { Table, Checkbox } from "antd"; // Ant Design Table and Checkbox components
 import "./attendenceView.css";
-
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 export default function ViewAttendance() {
   const location = useLocation();
   const data = location.state?.data; // Retrieve data passed via the "عرض" button
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   if (!data) {
     return <div className="error-message">لم يتم العثور على بيانات الحضور</div>;
   }
@@ -39,16 +39,25 @@ export default function ViewAttendance() {
   ];
 
   return (
-    <div className="attendence-view-container" dir="rtl">
+    <div
+      className={`attendence-view-container ${
+        isSidebarCollapsed ? "sidebar-collapsed" : "attendence-view-container"
+      }`}
+      dir="rtl">
       {/* Date Section */}
-      <div style={{display:"flex", justifyContent:"space-between",alignItems:"start",width:"100%"}}>
-             <h1>التاريخ : {data.date}</h1>
-             <Link to="supervisor/editattendence">
-             
-        <button className="edit-button">التعديل</button>
-             </Link>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "start",
+          width: "100%",
+        }}>
+        <h1>التاريخ : {data.date}</h1>
+        <Link to="supervisor/editattendence">
+          <button className="edit-button">التعديل</button>
+        </Link>
       </div>
- 
+
       {/* Passport Attendance Section */}
       <h1>حضور الجوازات</h1>
       <div className="attendence-passport-container">

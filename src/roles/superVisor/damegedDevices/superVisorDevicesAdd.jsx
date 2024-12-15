@@ -1,15 +1,15 @@
-import React, {useEffect} from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Button, message } from "antd";
 import TextFieldForm from "../../../reusable elements/ReuseAbleTextField.jsx";
 import ImagePreviewer from "../../../reusable/ImagePreViewer"; // Import your image previewer component
 import axios from "axios";
 import "./superVisorDevicesAdd.css"; // Use unique styles for devices
-
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 const SuperVisorDevicesAdd = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   // Handle Back Button
   const handleBack = () => {
     navigate(-1); // Go back to the previous page
@@ -36,7 +36,9 @@ const SuperVisorDevicesAdd = () => {
     const fetchGovernorates = async () => {
       try {
         // Make a GET request using axios
-        const response = await axios.get("http://localhost:5214/api/Governorate");
+        const response = await axios.get(
+          "http://localhost:5214/api/Governorate"
+        );
         // Log the response data to the console
         console.log("Governorates Response:", response.data);
       } catch (error) {
@@ -82,7 +84,13 @@ const SuperVisorDevicesAdd = () => {
   ];
 
   return (
-    <div className="supervisor-devices-add-container" dir="rtl">
+    <div
+      className={`supervisor-devices-add-container ${
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-devices-add-container"
+      }`}
+      dir="rtl">
       <h1>إضافة جهاز جديد</h1>
 
       <div className="devices-add-details-container">
@@ -91,8 +99,7 @@ const SuperVisorDevicesAdd = () => {
           form={form}
           onFinish={handleFormSubmit}
           layout="vertical"
-          style={{ direction: "rtl" }}
-        >
+          style={{ direction: "rtl" }}>
           <TextFieldForm
             fields={fields}
             formClassName="device-details-form"
@@ -114,8 +121,7 @@ const SuperVisorDevicesAdd = () => {
         <Button
           type="primary"
           htmlType="submit"
-          className="device-submit-button"
-        >
+          className="device-submit-button">
           الإرسال
         </Button>
         <Button onClick={handleBack} className="device-back-button">

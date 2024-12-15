@@ -13,7 +13,7 @@ const SuperVisorDeviceShow = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [editedData, setEditedData] = useState({ ...data });
   const [form] = Form.useForm();
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   const handleBack = () => {
     navigate(-1);
   };
@@ -71,7 +71,13 @@ const SuperVisorDeviceShow = () => {
   ];
 
   return (
-    <div className="supervisor-device-show-container" dir="rtl">
+    <div
+      className={`supervisor-device-show-container ${
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-device-show-container"
+      }`}
+      dir="rtl">
       <h1>عرض الجهاز</h1>
 
       <div className="device-details-container">

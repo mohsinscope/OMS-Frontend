@@ -3,11 +3,11 @@ import { useLocation, Link } from "react-router-dom";
 import { Table, Checkbox } from "antd";
 import "./ManagerAttendenceView.css";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
-
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 export default function ManagerAttendenceView() {
   const location = useLocation();
   const data = location.state?.data || {};
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   if (!data || Object.keys(data).length === 0) {
     return (
       <div className="error-message">
@@ -81,7 +81,13 @@ export default function ManagerAttendenceView() {
   ];
 
   return (
-    <div className="manager-attendance-view-container" dir="rtl">
+    <div
+      className={`manager-attendance-view-container ${
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "manager-attendance-view-container"
+      }`}
+      dir="rtl">
       {/* Header Section */}
       <div className="header-section">
         <h1>التاريخ: {data.date}</h1>
@@ -108,7 +114,12 @@ export default function ManagerAttendenceView() {
           {data.roleCounts &&
             Object.entries(data.roleCounts)
               .filter(([role]) =>
-                ["موظف الاستلام", "موظف الحسابات", "موظف الطباعة", "موظف التسليم"].includes(role)
+                [
+                  "موظف الاستلام",
+                  "موظف الحسابات",
+                  "موظف الطباعة",
+                  "موظف التسليم",
+                ].includes(role)
               )
               .map(([role, count]) => (
                 <div key={role} className="role-card">
@@ -127,7 +138,12 @@ export default function ManagerAttendenceView() {
             Object.entries(data.roleCounts)
               .filter(
                 ([role]) =>
-                  !["موظف الاستلام", "موظف الحسابات", "موظف الطباعة", "موظف التسليم"].includes(role)
+                  ![
+                    "موظف الاستلام",
+                    "موظف الحسابات",
+                    "موظف الطباعة",
+                    "موظف التسليم",
+                  ].includes(role)
               )
               .map(([role, count]) => (
                 <div key={role} className="role-card">

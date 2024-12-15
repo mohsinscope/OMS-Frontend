@@ -2,14 +2,16 @@ import React, { useState } from "react";
 import { Table, Button, Modal, ConfigProvider } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./styles/ManagerExpensessRequistView.css";
-
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 export default function ManagerExpensessRequistView() {
   const location = useLocation();
   const navigate = useNavigate();
   const data = location.state?.data;
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   if (!data) {
-    return <div className="error-message">لم يتم العثور على بيانات الصرفيات</div>;
+    return (
+      <div className="error-message">لم يتم العثور على بيانات الصرفيات</div>
+    );
   }
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -94,8 +96,7 @@ export default function ManagerExpensessRequistView() {
         <Button
           type="primary"
           style={{ backgroundColor: "#1890ff", border: "none" }}
-          onClick={() => showModal(record)}
-        >
+          onClick={() => showModal(record)}>
           عرض
         </Button>
       ),
@@ -103,31 +104,66 @@ export default function ManagerExpensessRequistView() {
   ];
 
   const detailedData = [
-    { key: "1", expenseType: "الصيانة", price: "1,250,000", quantity: 1, date: "2024-11-01" },
-    { key: "2", expenseType: "الأدوات", price: "400,000", quantity: 5, date: "2024-11-01" },
-    { key: "3", expenseType: "الدورات", price: "300,000", quantity: 8, date: "2024-11-01" },
-    { key: "4", expenseType: "نوع اخر", price: "1,250,000", quantity: 1, date: "2024-11-01" },
-    { key: "5", expenseType: "نوع اخر", price: "700,000", quantity: 2, date: "2024-11-01" },
+    {
+      key: "1",
+      expenseType: "الصيانة",
+      price: "1,250,000",
+      quantity: 1,
+      date: "2024-11-01",
+    },
+    {
+      key: "2",
+      expenseType: "الأدوات",
+      price: "400,000",
+      quantity: 5,
+      date: "2024-11-01",
+    },
+    {
+      key: "3",
+      expenseType: "الدورات",
+      price: "300,000",
+      quantity: 8,
+      date: "2024-11-01",
+    },
+    {
+      key: "4",
+      expenseType: "نوع اخر",
+      price: "1,250,000",
+      quantity: 1,
+      date: "2024-11-01",
+    },
+    {
+      key: "5",
+      expenseType: "نوع اخر",
+      price: "700,000",
+      quantity: 2,
+      date: "2024-11-01",
+    },
   ];
 
   return (
     <ConfigProvider direction="rtl">
-      <div className="manager-expenses-view-container" dir="rtl">
+      <div
+        className={`manager-expenses-view-container ${
+          isSidebarCollapsed
+            ? "sidebar-collapsed"
+            : "manager-expenses-view-container"
+        }`}
+        dir="rtl">
         {/* Header Section */}
         <div className="header-section">
-            <Button
-              type="primary"
-              style={{
-                backgroundColor: "#22CCB2",
-                color: "#fff",
-                border: "none",
-                fontWeight: "bold",
-                width:"200px",
-                height:"45px"
-              }}
-            >
-              موافقة
-            </Button>
+          <Button
+            type="primary"
+            style={{
+              backgroundColor: "#22CCB2",
+              color: "#fff",
+              border: "none",
+              fontWeight: "bold",
+              width: "200px",
+              height: "45px",
+            }}>
+            موافقة
+          </Button>
           <Button
             type="primary"
             onClick={() => navigate(-1)}
@@ -136,10 +172,9 @@ export default function ManagerExpensessRequistView() {
               color: "#fff",
               border: "none",
               fontWeight: "bold",
-              width:"200px",
-                height:"45px"
-            }}
-          >
+              width: "200px",
+              height: "45px",
+            }}>
             ارجاع
           </Button>
         </div>
@@ -161,7 +196,7 @@ export default function ManagerExpensessRequistView() {
           columns={columns}
           rowKey="key"
           bordered
-            pagination={{
+          pagination={{
             position: ["bottomCenter"], // Center the pagination
           }}
           locale={{ emptyText: "لا توجد بيانات" }}
@@ -173,8 +208,7 @@ export default function ManagerExpensessRequistView() {
           visible={isModalVisible}
           onCancel={handleCancel}
           footer={null}
-          className="expense-details-modal"
-        >
+          className="expense-details-modal">
           {modalData && (
             <div>
               <p>
