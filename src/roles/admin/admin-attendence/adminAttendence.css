@@ -1,57 +1,45 @@
-.attendance-container {
-  margin-top: 6%;
-  margin-right: 20px;
-  margin-left: 20px;
-  padding: 20px;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: start;
+.attendance-container{
+    /* Limit the width */
+    margin-top: 6%;
+    margin-right: 20px;
+    margin-left: 20px;
+    padding: 20px;
+    
+    border-radius: 8px;
+    /* Smooth rounded corners */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
 }
 
-.attendance-filters {
-  padding: 20px 0px 0px 0px;
+.attendance-filters{
+  
+  background-color: white;
+  padding: 20px;
   border-radius: 10px;
   width: 100%;
   display: flex;
   justify-content: start;
   align-items: center;
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-  transition: all 0.5s ease-in-out;
 }
 
-.attendance-filters.search-visible {
-  opacity: 1;
-  max-height: 300px; /* Adjust based on content size */
-}
-
-.attendance-filters.search-hidden {
-  opacity: 0;
-  max-height: 0;
-}
-
-.attendance-filter-form {
+.attendance-filter-form{
   display: flex;
   align-items: end;
-  gap: 10px;
+  gap: 30px;
 }
-
-.attendance-filter-form div {
+.attendance-filter-form div{
   display: flex;
   justify-content: start;
   align-items: start;
   gap: 10px;
 }
-
-.attendance-filter-field-wrapper {
+.attendance-filter-field-wrapper{
   display: flex;
   flex-direction: column;
 }
-
-.attendance-filter-field-wrapper select {
+.attendance-filter-field-wrapper select{
   height: 45px;
   width: 220px;
   border: #bcc1ca 1px solid;
@@ -59,30 +47,21 @@
   padding: 10px;
 }
 
-.attendance-filter-field-wrapper select:hover {
-  border: #1677ff 1px solid;
-  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+.attendance-filter-field-wrapper select:hover{
+  border:#1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
   outline: 0;
 }
-
-.attendance-filter-field-wrapper select:focus {
-  border: #1677ff 1px solid;
-  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+.attendance-filter-field-wrapper select:focus{
+  border:#1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
   outline: 0;
 }
-
-.attendance-filter-field-wrapper #toDate,
-.attendance-filter-field-wrapper #fromDate {
+.attendance-filter-field-wrapper #toDate , .attendance-filter-field-wrapper #fromDate{
   height: 35px;
   width: 160px;
 }
 
-.attendance-data-table-container {
+.attendance-data-table-container{
   width: 100%;
-}
-
-.toggle-search-button {
-  margin-bottom: 10px;
-  margin-top: 20px;
-  text-align: center;
 }
