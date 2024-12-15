@@ -1,74 +1,69 @@
-.manager-attendance-history-container{
-           
-    /* Limit the width */
-    margin-top: 6%;
-    margin-right: 20px;
-    margin-left: 20px;
-    padding: 20px;
-    
-    border-radius: 8px;
-    /* Smooth rounded corners */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: start;
+.manager-attendance-history-container {
+  margin-top: 6%;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  margin-right: 20px;
+  margin-left: 20px;
 }
 
-.manager-attendance-history-container .table-section{
-    width: 100%;
+.manager-attendance-history-container .table-section {
+  width: 100%;
 }
 
-.manager-attendance-history-container .attendance-form{
-    display: flex;
-    justify-content: start;
-    align-items: end;
-    width: 100%;
+.manager-attendance-history-container .attendance-form {
+  display: flex;
+  justify-content: start;
+  align-items: end;
+  width: 100%;
 }
-.manager-attendance-history-container .attendance-form input{
-    width: 200px;
-    height: 40px;
+.manager-attendance-history-container .attendance-form input {
+  width: 200px;
+  height: 40px;
 }
-.manager-attendance-history-container .attendance-form select{
-    width: 200px;
-    height: 40px;
-    padding: 5px;
+.manager-attendance-history-container .attendance-form select {
+  width: 200px;
+  height: 40px;
+  padding: 5px;
 }
-.manager-attendance-history-container .attendance-form div{
-    justify-content: start;
-}
-
-.manager-attendance-history-container .attendance-form input:hover{
-    border: #1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
-    outline: 0;
-}
-.manager-attendance-history-container .attendance-form select:hover{
-    border: #1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
-    outline: 0;
+.manager-attendance-history-container .attendance-form div {
+  justify-content: start;
 }
 
-.manager-attendance-history-container .attendance-form input:focus{
-    border: #1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
-    outline: 0;
+.manager-attendance-history-container .attendance-form input:hover {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
 }
-.manager-attendance-history-container .attendance-form select:focus{
-    border: #1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
-    outline: 0;
-}
-
-
-.manager-attendance-history-container #date{
-    width: 140px;
-    height: 31px;
-    border: none;
-    outline: none;
-    box-shadow: none;
+.manager-attendance-history-container .attendance-form select:hover {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
 }
 
-.manager-attendance-history-container .attendance-form button{
-    width: 100px;
-    height: 40px;
+.manager-attendance-history-container .attendance-form input:focus {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
+}
+.manager-attendance-history-container .attendance-form select:focus {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
+}
+
+.manager-attendance-history-container #date {
+  width: 140px;
+  height: 31px;
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.manager-attendance-history-container .attendance-form button {
+  width: 100px;
+  height: 40px;
 }

@@ -2,82 +2,97 @@ import React, { useState } from "react";
 import { Table, Button, message, ConfigProvider } from "antd";
 import { Link } from "react-router-dom"; // Correct import
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
-import './styles/ManagerExpensessHistory.css';
+import "./styles/ManagerExpensessHistory.css";
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 const expensesData = [
   {
     "الرقم التسلسلي": "001",
-    "التاريخ": "2023-03-05",
-    "الحالة": "قُدمت للمصير",
+    التاريخ: "2023-03-05",
+    الحالة: "قُدمت للمصير",
     "الكلفة الكلية": "1,000,000",
     "اسم المكتب": "كرادة",
-    "المحافظة": "بغداد",
+    المحافظة: "بغداد",
   },
   {
     "الرقم التسلسلي": "002",
-    "التاريخ": "2023-10-01",
-    "الحالة": "قُدمت للمصير",
+    التاريخ: "2023-10-01",
+    الحالة: "قُدمت للمصير",
     "الكلفة الكلية": "150,000",
     "اسم المكتب": "الناصرية",
-    "المحافظة": "ذي قار",
+    المحافظة: "ذي قار",
   },
   {
     "الرقم التسلسلي": "003",
-    "التاريخ": "2023-10-02",
-    "الحالة": "قُدمت للمصير",
+    التاريخ: "2023-10-02",
+    الحالة: "قُدمت للمصير",
     "الكلفة الكلية": "300,000",
     "اسم المكتب": "سماوة",
-    "المحافظة": "المثنى",
+    المحافظة: "المثنى",
   },
   {
     "الرقم التسلسلي": "004",
-    "التاريخ": "2023-10-25",
-    "الحالة": "قُدمت للمشرف",
+    التاريخ: "2023-10-25",
+    الحالة: "قُدمت للمشرف",
     "الكلفة الكلية": "500,000",
     "اسم المكتب": "الزبير",
-    "المحافظة": "البصرة",
+    المحافظة: "البصرة",
   },
   {
     "الرقم التسلسلي": "005",
-    "التاريخ": "2023-04-01",
-    "الحالة": "قُدمت للحسابات",
+    التاريخ: "2023-04-01",
+    الحالة: "قُدمت للحسابات",
     "الكلفة الكلية": "10,000",
     "اسم المكتب": "سوران",
-    "المحافظة": "أربيل",
+    المحافظة: "أربيل",
   },
   {
     "الرقم التسلسلي": "006",
-    "التاريخ": "2024-09-10",
-    "الحالة": "قُدمت للمصير",
+    التاريخ: "2024-09-10",
+    الحالة: "قُدمت للمصير",
     "الكلفة الكلية": "300,000",
     "اسم المكتب": "كربلاء المقدسة",
-    "المحافظة": "كربلاء المقدسة",
+    المحافظة: "كربلاء المقدسة",
   },
   {
     "الرقم التسلسلي": "007",
-    "التاريخ": "2024-08-08",
-    "الحالة": "قُدمت للمصير",
+    التاريخ: "2024-08-08",
+    الحالة: "قُدمت للمصير",
     "الكلفة الكلية": "30,000",
     "اسم المكتب": "النجف المركز",
-    "المحافظة": "النجف الاشرف",
+    المحافظة: "النجف الاشرف",
   },
 ];
 
 export default function ManagerExpensesHistory() {
   const [filterData, setFilterData] = useState({});
   const [expensesList, setExpensesList] = useState(expensesData);
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   const fields = [
     {
       name: "المحافظة",
       label: "المحافظة",
       placeholder: "",
-      type: "text",
+      type: "dropdown",
+      options: [
+        { value: "بغداد", label: "بغداد" },
+        { value: "ذي قار", label: "ذي قار" },
+        { value: "المثنى", label: "المثنى" },
+        { value: "اربيل", label: "اربيل" },
+        { value: "البصرة", label: "البصرة" },
+      ],
     },
     {
       name: "اسم المكتب",
       label: "اسم المكتب",
       placeholder: "",
-      type: "text",
+      type: "dropdown",
+      options: [
+        { value: "كرادة", label: "كرادة" },
+        { value: "الناصرية", label: "الناصرية" },
+        { value: "سماوة", label: "سماوة" },
+        { value: "الزبير", label: "الزبير" },
+        { value: "سوران", label: "سوران" },
+      ],
     },
     {
       name: "الرقم التسلسلي",
@@ -114,10 +129,14 @@ export default function ManagerExpensesHistory() {
     const filteredExpenses = expensesData.filter((expense) => {
       const matchesGovernorate =
         !formData["المحافظة"] ||
-        expense["المحافظة"].toLowerCase().includes(formData["المحافظة"].toLowerCase());
+        expense["المحافظة"]
+          .toLowerCase()
+          .includes(formData["المحافظة"].toLowerCase());
       const matchesOffice =
         !formData["اسم المكتب"] ||
-        expense["اسم المكتب"].toLowerCase().includes(formData["اسم المكتب"].toLowerCase());
+        expense["اسم المكتب"]
+          .toLowerCase()
+          .includes(formData["اسم المكتب"].toLowerCase());
       const matchesId =
         !formData["الرقم التسلسلي"] ||
         expense["الرقم التسلسلي"]
@@ -127,10 +146,18 @@ export default function ManagerExpensesHistory() {
       const matchesStatus =
         !formData["الحالة"] || expense["الحالة"] === formData["الحالة"];
       const matchesDateRange =
-        (!formData["dateFrom"] || new Date(expense["التاريخ"]) >= new Date(formData["dateFrom"])) &&
-        (!formData["dateTo"] || new Date(expense["التاريخ"]) <= new Date(formData["dateTo"]));
+        (!formData["dateFrom"] ||
+          new Date(expense["التاريخ"]) >= new Date(formData["dateFrom"])) &&
+        (!formData["dateTo"] ||
+          new Date(expense["التاريخ"]) <= new Date(formData["dateTo"]));
 
-      return matchesGovernorate && matchesOffice && matchesId && matchesStatus && matchesDateRange;
+      return (
+        matchesGovernorate &&
+        matchesOffice &&
+        matchesId &&
+        matchesStatus &&
+        matchesDateRange
+      );
     });
 
     if (filteredExpenses.length === 0) {
@@ -196,13 +223,11 @@ export default function ManagerExpensesHistory() {
               backgroundColor: "#1890ff",
               color: "#fff",
               border: "none",
-            }}
-          >
+            }}>
             <Link
               to="/manager/expensess/view"
               state={{ data: record }}
-              style={{ color: "#fff" }}
-            >
+              style={{ color: "#fff" }}>
               عرض
             </Link>
           </Button>
@@ -213,8 +238,7 @@ export default function ManagerExpensesHistory() {
               border: "1px solid #1890ff",
               color: "#1890ff",
             }}
-            onClick={() => console.log("تعديل clicked:", record)}
-          >
+            onClick={() => console.log("تعديل clicked:", record)}>
             تعديل
           </Button>
         </div>
@@ -223,35 +247,41 @@ export default function ManagerExpensesHistory() {
   ];
 
   return (
-        <ConfigProvider direction="rtl">
-    <div className="manager-expenses-history-page" dir="rtl">
-      <h1 className="manager-expenses-history-title">سجل الصرفيات</h1>
+    <ConfigProvider direction="rtl">
+      <div
+        className={`manager-expenses-history-page ${
+          isSidebarCollapsed
+            ? "sidebar-collapsed"
+            : "manager-expenses-history-page"
+        }`}
+        dir="rtl">
+        <h1 className="manager-expenses-history-title">سجل الصرفيات</h1>
 
-      <div className="manager-expenses-history-filters">
-        <TextFieldForm
-          fields={fields}
-          onFormSubmit={handleFilterSubmit}
-          onReset={handleReset}
-          formClassName="manager-expenses-history-form"
-          inputClassName="manager-expenses-history-input"
-          dropdownClassName="manager-expenses-history-dropdown"
-          fieldWrapperClassName="manager-expenses-history-field-wrapper"
-          buttonClassName="manager-expenses-history-button"
-        />
-      </div>
+        <div className="manager-expenses-history-filters">
+          <TextFieldForm
+            fields={fields}
+            onFormSubmit={handleFilterSubmit}
+            onReset={handleReset}
+            formClassName="manager-expenses-history-form"
+            inputClassName="manager-expenses-history-input"
+            dropdownClassName="manager-expenses-history-dropdown"
+            fieldWrapperClassName="manager-expenses-history-field-wrapper"
+            buttonClassName="manager-expenses-history-button"
+          />
+        </div>
 
-      <div className="manager-expenses-history-table-container">
-        <Table
-          dataSource={expensesList}
-          columns={columns}
-          rowKey="الرقم التسلسلي"
-          bordered
-          pagination={{ pageSize: 5, position: ["bottomCenter"], }}
-          locale={{ emptyText: "لا توجد بيانات" }}
-          className="manager-expenses-history-table"
-        />
+        <div className="manager-expenses-history-table-container">
+          <Table
+            dataSource={expensesList}
+            columns={columns}
+            rowKey="الرقم التسلسلي"
+            bordered
+            pagination={{ pageSize: 5, position: ["bottomCenter"] }}
+            locale={{ emptyText: "لا توجد بيانات" }}
+            className="manager-expenses-history-table"
+          />
+        </div>
       </div>
-    </div>
     </ConfigProvider>
   );
 }

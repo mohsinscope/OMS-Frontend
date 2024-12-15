@@ -4,11 +4,11 @@ import { Table, Checkbox } from "antd";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import "./ManagerAttendenceView.css";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
-
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 export default function ManagerAttendenceView() {
   const location = useLocation();
   const data = location.state?.data || {};
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   if (!data || Object.keys(data).length === 0) {
     return (
       <div className="error-message">
@@ -131,7 +131,13 @@ export default function ManagerAttendenceView() {
   };
 
   return (
-    <div className="manager-attendance-view-container" dir="rtl">
+    <div
+      className={`manager-attendance-view-container ${
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "manager-attendance-view-container"
+      }`}
+      dir="rtl">
       {/* Header Section */}
       <div className="header-section">
         <h1>التاريخ: {data.date}</h1>

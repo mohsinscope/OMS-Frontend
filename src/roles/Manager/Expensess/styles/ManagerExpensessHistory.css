@@ -1,109 +1,107 @@
-.manager-expenses-history-page{
-    /* Limit the width */
-    margin-top: 6%;
-    margin-right: 20px;
-    margin-left: 20px;
-    padding: 20px;
-    
-    border-radius: 8px;
-    /* Smooth rounded corners */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: start;
+.manager-expenses-history-page {
+  /* Limit the width */
+  margin-top: 6%;
+  margin-right: 20px;
+  margin-left: 20px;
+  padding: 20px;
+
+  border-radius: 8px;
+  /* Smooth rounded corners */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
 }
 
-.manager-expenses-history-filters{
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 100%;
-    
+.manager-expenses-history-filters {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 100%;
 }
-.manager-expenses-history-form{
-    display: flex;
-    align-items: end;
-    flex-wrap: wrap;
-    justify-content: start;
-}
-
-.manager-expenses-history-form div{
-    display: flex;
-    gap: 20px;
-    text-align: right;
-    flex-wrap: wrap;
-    justify-content: start;
-    margin-bottom: 10px;
-}
-.manager-expenses-history-form input{
-    width: 200px;
-    height: 47px;
-    padding: 0 20px;
-    border-radius: 8px;
-    outline: none;
-    border: #bcc1ca 1px solid;
-    text-align: right;
-    font-size: large;
-}
-.manager-expenses-history-form input:hover{
-    border: #1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
-    outline: 0;
-}
-.manager-expenses-history-form input:focus{
-    border: #1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
-    outline: 0;
+.manager-expenses-history-form {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  justify-content: start;
 }
 
-
-.manager-expenses-history-form select:hover{
-    border: #1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
-    outline: 0; 
+.manager-expenses-history-form div {
+  display: flex;
+  gap: 20px;
+  text-align: right;
+  flex-wrap: wrap;
+  justify-content: start;
+  margin-bottom: 10px;
+}
+.manager-expenses-history-form input {
+  width: 200px;
+  height: 47px;
+  padding: 0 20px;
+  border-radius: 8px;
+  outline: none;
+  border: #bcc1ca 1px solid;
+  text-align: right;
+  font-size: large;
+}
+.manager-expenses-history-form input:hover {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
+}
+.manager-expenses-history-form input:focus {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
 }
 
-.manager-expenses-history-form select:focus{
-    border: #1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
-    outline: 0; 
+.manager-expenses-history-form select:hover {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
 }
 
-.manager-expenses-history-form select{
-    width: 200px;
-    height: 47px;
-    padding: 0 20px;
-    border-radius: 8px;
-    outline: none;
-    border: #bcc1ca 1px solid;
-    text-align: right;
-    font-size: large;
+.manager-expenses-history-form select:focus {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
 }
 
-.manager-expenses-history-field-wrapper{
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    justify-content: start;
-    text-align: right;
+.manager-expenses-history-form select {
+  width: 200px;
+  height: 47px;
+  padding: 0 20px;
+  border-radius: 8px;
+  outline: none;
+  border: #bcc1ca 1px solid;
+  text-align: right;
+  font-size: large;
 }
-.manager-expenses-history-field-wrapper label{
-    text-align: right;
+
+.manager-expenses-history-field-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: start;
+  text-align: right;
 }
-.manager-expenses-history-field-wrapper #dateTo{
-    width: 140px;
-    height: 27px;
-    border: none;
-    outline: none;
-    box-shadow: none;
+.manager-expenses-history-field-wrapper label {
+  text-align: right;
 }
-.manager-expenses-history-field-wrapper #dateFrom{
-    width: 140px;
-    height: 27px;
-    border: none;
-    outline: none;
-    box-shadow: none;
+.manager-expenses-history-field-wrapper #dateTo {
+  width: 140px;
+  height: 27px;
+  border: none;
+  outline: none;
+  box-shadow: none;
 }
-.manager-expenses-history-table-container{
-    width: 100%;
+.manager-expenses-history-field-wrapper #dateFrom {
+  width: 140px;
+  height: 27px;
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+.manager-expenses-history-table-container {
+  width: 100%;
 }

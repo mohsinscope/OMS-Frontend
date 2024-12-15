@@ -1,13 +1,18 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Table, Modal, ConfigProvider } from "antd";
-import './styles/ManagerExpensessView.css';
+import "./styles/ManagerExpensessView.css";
+import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 export default function ManagerExpensessView() {
   const location = useLocation();
   const data = location.state?.data; // Retrieve data passed via the "عرض" button
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   if (!data) {
-    return <div className="manager-expenses-view-error">لم يتم العثور على بيانات الصرفيات</div>;
+    return (
+      <div className="manager-expenses-view-error">
+        لم يتم العثور على بيانات الصرفيات
+      </div>
+    );
   }
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -98,8 +103,7 @@ export default function ManagerExpensessView() {
             borderRadius: "5px",
             cursor: "pointer",
           }}
-          onClick={() => showDetails(record)}
-        >
+          onClick={() => showDetails(record)}>
           عرض
         </button>
       ),
@@ -118,70 +122,75 @@ export default function ManagerExpensessView() {
 
   return (
     <ConfigProvider direction="rtl">
-    <div className="manager-expenses-view-container" dir="rtl">
-      {/* Header Section */}
-      <div className="manager-expenses-view-header">
-        <h1 className="manager-expenses-view-date">التاريخ : {data["التاريخ"]}</h1>
+      <div
+        className={`manager-expenses-view-container ${
+          isSidebarCollapsed
+            ? "sidebar-collapsed"
+            : "manager-expenses-view-container"
+        }`}
+        dir="rtl">
+        {/* Header Section */}
+        <div className="manager-expenses-view-header">
+          <h1 className="manager-expenses-view-date">
+            التاريخ : {data["التاريخ"]}
+          </h1>
+        </div>
+
+        {/* General Information Table */}
+        <Table
+          className="manager-expenses-view-general-table"
+          dataSource={generalInfoData}
+          columns={generalInfoColumns}
+          pagination={false}
+          bordered
+          locale={{ emptyText: "لا توجد بيانات" }}
+        />
+        <button
+          className="manager-expenses-view-print-button"
+          onClick={() => console.log("طباعة clicked")}>
+          طباعة
+        </button>
+        <hr style={{ width: "100%", marginTop: "10px" }} />
+
+        {/* Expense Details Section */}
+        <Table
+          className="manager-expenses-view-details-table"
+          dataSource={detailsData}
+          columns={detailsColumns}
+          rowKey="key"
+          bordered
+          pagination={{
+            pageSize: 5,
+            position: ["bottomCenter"],
+          }}
+          locale={{ emptyText: "لا توجد بيانات" }}
+        />
+
+        {/* Modal for Details */}
+        <Modal
+          title="تفاصيل المصروف"
+          visible={isModalVisible}
+          onCancel={handleCancel}
+          footer={null}
+          className="manager-expenses-view-modal">
+          {modalData && (
+            <div>
+              <p>
+                <strong>نوع المصروف:</strong> {modalData.expenseType}
+              </p>
+              <p>
+                <strong>الكمية:</strong> {modalData.quantity}
+              </p>
+              <p>
+                <strong>السعر:</strong> {modalData.price} دينار
+              </p>
+              <p>
+                <strong>التاريخ:</strong> {modalData.date}
+              </p>
+            </div>
+          )}
+        </Modal>
       </div>
-
-      {/* General Information Table */}
-      <Table
-        className="manager-expenses-view-general-table"
-        dataSource={generalInfoData}
-        columns={generalInfoColumns}
-        pagination={false}
-        bordered
-        locale={{ emptyText: "لا توجد بيانات" }}
-      />
-      <button
-       className="manager-expenses-view-print-button"
-        onClick={() => console.log("طباعة clicked")}
-      >
-        طباعة
-      </button>
-      <hr style={{ width: "100%", marginTop: "10px" }} />
-
-      {/* Expense Details Section */}
-      <Table
-        className="manager-expenses-view-details-table"
-        dataSource={detailsData}
-        columns={detailsColumns}
-        rowKey="key"
-        bordered
-        pagination={{
-          pageSize: 5,
-          position: ["bottomCenter"],
-        }}
-        
-        locale={{ emptyText: "لا توجد بيانات" }}
-      />
-
-      {/* Modal for Details */}
-      <Modal
-        title="تفاصيل المصروف"
-        visible={isModalVisible}
-        onCancel={handleCancel}
-        footer={null}
-        className="manager-expenses-view-modal"
-      >
-        {modalData && (
-          <div>
-            <p>
-              <strong>نوع المصروف:</strong> {modalData.expenseType}
-            </p>
-            <p>
-              <strong>الكمية:</strong> {modalData.quantity}
-            </p>
-            <p>
-              <strong>السعر:</strong> {modalData.price} دينار
-            </p>
-            <p>
-              <strong>التاريخ:</strong> {modalData.date}
-            </p>
-          </div>
-        )}
-      </Modal>
-    </div>
     </ConfigProvider>
   );
 }
