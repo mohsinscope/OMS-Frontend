@@ -1,0 +1,30 @@
+{
+    "ListOfValues": [
+      {
+        "label": "اضافة مكتب",
+        "icon": "office",
+        "path": "/admin/add-office"
+      },
+      {
+        "label": "اضافة محافظة",
+        "icon": "iraq",
+        "path": "/admin/add-governorate"
+      },
+      {
+        "label": "انواع التلف",
+        "icon": "broken",
+        "path": "/admin/damage-types"
+      },
+      {
+        "label": "انواع الاجهزة",
+        "icon": "add-device",
+        "path": "/admin/device-types"
+      },
+      {
+        "label": "انواع المصاريف",
+        "icon": "money-add",
+        "path": "/admin/expense-types"
+      }
+    ]
+  }
+  
