@@ -69,7 +69,10 @@
     
 }
 .role-card{
-    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
     background-color: white;
     margin: 10px;
     padding: 20px;

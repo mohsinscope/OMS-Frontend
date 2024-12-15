@@ -1,6 +1,7 @@
 import React from "react";
 import { useLocation, Link } from "react-router-dom";
 import { Table, Checkbox } from "antd";
+import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import "./ManagerAttendenceView.css";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
@@ -53,32 +54,81 @@ export default function ManagerAttendenceView() {
     {
       name: "governorate",
       label: "المحافظة",
-      placeholder: data.governorate || "لا توجد بيانات", // Use placeholder for value
+      placeholder: data.governorate || "لا توجد بيانات",
       type: "text",
       disabled: true,
     },
     {
       name: "officeName",
       label: "اسم المكتب",
-      placeholder: data.officeName || "لا توجد بيانات", // Use placeholder for value
+      placeholder: data.officeName || "لا توجد بيانات",
       type: "text",
       disabled: true,
     },
     {
       name: "totalPassportAttendance",
       label: "عدد موظفي الجوازات",
-      placeholder: data.totalPassportAttendance?.toString() || "لا توجد بيانات", // Convert to string
+      placeholder: data.totalPassportAttendance?.toString() || "لا توجد بيانات",
       type: "text",
       disabled: true,
     },
     {
       name: "totalCompanyAttendance",
       label: "عدد موظفي الشركة",
-      placeholder: data.totalCompanyAttendance?.toString() || "لا توجد بيانات", // Convert to string
+      placeholder: data.totalCompanyAttendance?.toString() || "لا توجد بيانات",
       type: "text",
       disabled: true,
     },
   ];
+
+  const renderCircularChart = (role, count, total) => {
+    const chartData = [
+      { name: "حاضر", value: count, color: "#81c784" }, // Darker green
+      { name: "غائب", value: total - count, color: "#e57373" }, // Darker red
+    ];
+
+    return (
+      <PieChart width={120} height={120}>
+        <Pie
+          data={chartData}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          innerRadius={30}
+          outerRadius={50}
+          paddingAngle={5}
+        >
+          {chartData.map((entry, index) => (
+            <Cell key={`cell-${index}`} fill={entry.color} />
+          ))}
+        </Pie>
+        <Tooltip formatter={(value, name) => [`${value}`, `${name}`]} />
+      </PieChart>
+    );
+  };
+
+  const calculateTotalForSection = (roles) => {
+    return Object.values(roles || {}).reduce((total, count) => total + count, 0);
+  };
+
+  const renderRoleCards = (roles) => {
+    const totalEmployees = calculateTotalForSection(roles);
+
+    return Object.entries(roles || {}).map(([role, count]) => (
+      <div key={role} className="role-card">
+        <div className="role-card-header">
+          <h3>{role}</h3>
+        </div>
+        <div className="role-card-body">
+          {renderCircularChart(role, count, totalEmployees)}
+          <p>
+            {count} من {totalEmployees} موظفين
+          </p>
+        </div>
+      </div>
+    ));
+  };
 
   return (
     <div
@@ -108,49 +158,33 @@ export default function ManagerAttendenceView() {
       </div>
 
       {/* Passport Employees Section */}
-      <h2>موظفين الجوازات</h2>
+      <h2>حضور موظفي جوازات مكتب الدوجة</h2>
       <div className="role-summary-section">
         <div className="role-cards">
-          {data.roleCounts &&
-            Object.entries(data.roleCounts)
-              .filter(([role]) =>
-                [
-                  "موظف الاستلام",
-                  "موظف الحسابات",
-                  "موظف الطباعة",
-                  "موظف التسليم",
-                ].includes(role)
+          {renderRoleCards(
+            Object.fromEntries(
+              Object.entries(data.roleCounts || {}).filter(([role]) =>
+                ["موظف الاستلام", "موظف الحسابات", "موظف الطباعة", "موظف التسليم"].includes(
+                  role
+                )
               )
-              .map(([role, count]) => (
-                <div key={role} className="role-card">
-                  <h3>{role}</h3>
-                  <p>عدد الموظفين: {count}</p>
-                </div>
-              ))}
+            )
+          )}
         </div>
       </div>
 
       {/* Company Employees Section */}
-      <h2>موظفين الشركة</h2>
+      <h2>حضور موظفين الشركة</h2>
       <div className="role-summary-section">
         <div className="role-cards">
-          {data.roleCounts &&
-            Object.entries(data.roleCounts)
-              .filter(
+          {renderRoleCards(
+            Object.fromEntries(
+              Object.entries(data.roleCounts || {}).filter(
                 ([role]) =>
-                  ![
-                    "موظف الاستلام",
-                    "موظف الحسابات",
-                    "موظف الطباعة",
-                    "موظف التسليم",
-                  ].includes(role)
+                  !["موظف الاستلام", "موظف الحسابات", "موظف الطباعة", "موظف التسليم"].includes(role)
               )
-              .map(([role, count]) => (
-                <div key={role} className="role-card">
-                  <h3>{role}</h3>
-                  <p>عدد الموظفين: {count}</p>
-                </div>
-              ))}
+            )
+          )}
         </div>
       </div>
 
