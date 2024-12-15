@@ -190,6 +190,7 @@ const AdminExpenses = () => {
             buttonClassName="admin-expenses-button"
           />
         </div>
+        <br/>
 
         {/* Ant Design Table for displaying filtered data */}
         <div className="admin-expenses-table-field">
