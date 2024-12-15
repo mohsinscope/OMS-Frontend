@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Modal, Form, Input, Select, message, Spin } from "antd";
+import {
+  Table,
+  Button,
+  Modal,
+  Form,
+  Input,
+  ConfigProvider,
+  Select,
+  message,
+  Spin,
+} from "antd";
 import axios from "axios";
 import Dashboard from "./../../../pages/dashBoard.jsx";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
@@ -17,7 +27,7 @@ const AdminUserManagment = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [form] = Form.useForm();
   const { accessToken } = useAuthStore(); // Access token from Zustand store
-
+  const { isSidebarCollapsed } = useAuthStore();
   // Fetch profiles with users and roles
   useEffect(() => {
     const fetchProfilesWithUsersAndRoles = async () => {
@@ -67,14 +77,20 @@ const AdminUserManagment = () => {
 
     const filtered = userRecords.filter((record) => {
       const matchesUsername =
-        !username || record.username.toLowerCase().includes(username.toLowerCase());
+        !username ||
+        record.username.toLowerCase().includes(username.toLowerCase());
       const matchesRole = !role || record.roles.includes(role);
       const matchesGovernorate =
         !governorate || record.governorateName.includes(governorate);
       const matchesOfficeName =
         !officeName || record.officeName.includes(officeName);
 
-      return matchesUsername && matchesRole && matchesGovernorate && matchesOfficeName;
+      return (
+        matchesUsername &&
+        matchesRole &&
+        matchesGovernorate &&
+        matchesOfficeName
+      );
     });
 
     setFilteredRecords(filtered.length > 0 ? filtered : []);
@@ -112,7 +128,10 @@ const AdminUserManagment = () => {
       setAddModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.error("Error adding user:", error.response?.data || error.message);
+      console.error(
+        "Error adding user:",
+        error.response?.data || error.message
+      );
       message.error("Failed to add user");
     }
   };
@@ -156,8 +175,7 @@ const AdminUserManagment = () => {
             color: "#fff",
             borderRadius: "4px",
           }}
-          onClick={() => console.log("Edit:", record)}
-        >
+          onClick={() => console.log("Edit:", record)}>
           تعديل
         </Button>
       ),
@@ -167,7 +185,14 @@ const AdminUserManagment = () => {
   return (
     <>
       <Dashboard />
-      <div className="admin-user-management-container" dir="rtl">
+
+      <div
+        className={`admin-user-management-container ${
+          isSidebarCollapsed
+            ? "sidebar-collapsed"
+            : "admin-user-management-container"
+        }`}
+        dir="rtl">
         <h1 className="admin-header">إدارة المستخدمين</h1>
 
         {/* Filter Section */}
@@ -214,8 +239,7 @@ const AdminUserManagment = () => {
             backgroundColor: "#1890ff",
             border: "none",
           }}
-          onClick={() => setAddModalVisible(true)}
-        >
+          onClick={() => setAddModalVisible(true)}>
           + إضافة
         </Button>
 
@@ -233,105 +257,104 @@ const AdminUserManagment = () => {
         </div>
 
         {/* Add User Modal */}
-        <Modal
-          title="إضافة مستخدم جديد"
-          open={addModalVisible}
-          onCancel={() => setAddModalVisible(false)}
-          footer={null}
-        >
-          <Form form={form} onFinish={handleAddUser} layout="vertical">
-            <Form.Item
-              name="username"
-              label="اسم المستخدم"
-              rules={[{ required: true, message: "يرجى إدخال اسم المستخدم" }]}
-            >
-              <Input placeholder="اسم المستخدم" />
-            </Form.Item>
-            <Form.Item
-              name="fullName"
-              label="الاسم الكامل"
-              rules={[{ required: true, message: "يرجى إدخال الاسم الكامل" }]}
-            >
-              <Input placeholder="الاسم الكامل" />
-            </Form.Item>
-            <Form.Item
-              name="role"
-              label="الصلاحية"
-              rules={[{ required: true, message: "يرجى اختيار الصلاحية" }]}
-            >
-              <Select placeholder="اختر الصلاحية">
-                <Option value="Supervisor">مشرف</Option>
-                <Option value="Manager">مدير</Option>
-                <Option value="Employee">موظف</Option>
-              </Select>
-            </Form.Item>
-            <Form.Item
-              name="position"
-              label="المنصب"
-              rules={[{ required: true, message: "يرجى اختيار المنصب" }]}
-            >
-              <Select placeholder="اختر المنصب">
-                <Option value={1}>مدير</Option>
-                <Option value={2}>مشرف</Option>
-                <Option value={3}>موظف</Option>
-                <Option value={4}>مساعد</Option>
-              </Select>
-            </Form.Item>
-            <Form.Item
-              name="governorate"
-              label="المحافظة"
-              rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
-            >
-              <Select placeholder="اختر المحافظة">
-                {governorates.map((gov) => (
-                  <Option key={gov.id} value={gov.id}>
-                    {gov.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item
-              name="officeName"
-              label="اسم المكتب"
-              rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}
-            >
-              <Select placeholder="اختر المكتب">
-                {offices.map((office) => (
-                  <Option key={office.id} value={office.id}>
-                    {office.name}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item
-              name="password"
-              label="كلمة السر"
-              rules={[{ required: true, message: "يرجى إدخال كلمة السر" }]}
-            >
-              <Input.Password placeholder="كلمة السر" />
-            </Form.Item>
-            <Form.Item
-              name="confirmPassword"
-              label="تأكيد كلمة السر"
-              dependencies={["password"]}
-              rules={[
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || getFieldValue("password") === value) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(new Error("كلمات السر غير متطابقة!"));
-                  },
-                }),
-              ]}
-            >
-              <Input.Password placeholder="تأكيد كلمة السر" />
-            </Form.Item>
-            <Button type="primary" htmlType="submit" block>
-              إضافة
-            </Button>
-          </Form>
-        </Modal>
+        <ConfigProvider direction="rtl">
+          <Modal
+            title="إضافة مستخدم جديد"
+            open={addModalVisible}
+            onCancel={() => setAddModalVisible(false)}
+            footer={null}>
+            <Form form={form} onFinish={handleAddUser} layout="vertical">
+              <Form.Item
+                name="username"
+                label="اسم المستخدم"
+                rules={[
+                  { required: true, message: "يرجى إدخال اسم المستخدم" },
+                ]}>
+                <Input placeholder="اسم المستخدم" />
+              </Form.Item>
+              <Form.Item
+                name="fullName"
+                label="الاسم الكامل"
+                rules={[
+                  { required: true, message: "يرجى إدخال الاسم الكامل" },
+                ]}>
+                <Input placeholder="الاسم الكامل" />
+              </Form.Item>
+              <Form.Item
+                name="role"
+                label="الصلاحية"
+                rules={[{ required: true, message: "يرجى اختيار الصلاحية" }]}>
+                <Select placeholder="اختر الصلاحية">
+                  <Option value="Supervisor">مشرف</Option>
+                  <Option value="Manager">مدير</Option>
+                  <Option value="Employee">موظف</Option>
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="position"
+                label="المنصب"
+                rules={[{ required: true, message: "يرجى اختيار المنصب" }]}>
+                <Select placeholder="اختر المنصب">
+                  <Option value={1}>مدير</Option>
+                  <Option value={2}>مشرف</Option>
+                  <Option value={3}>موظف</Option>
+                  <Option value={4}>مساعد</Option>
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="governorate"
+                label="المحافظة"
+                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
+                <Select placeholder="اختر المحافظة">
+                  {governorates.map((gov) => (
+                    <Option key={gov.id} value={gov.id}>
+                      {gov.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="officeName"
+                label="اسم المكتب"
+                rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}>
+                <Select placeholder="اختر المكتب">
+                  {offices.map((office) => (
+                    <Option key={office.id} value={office.id}>
+                      {office.name}
+                    </Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                name="password"
+                label="كلمة السر"
+                rules={[{ required: true, message: "يرجى إدخال كلمة السر" }]}>
+                <Input.Password placeholder="كلمة السر" />
+              </Form.Item>
+              <Form.Item
+                name="confirmPassword"
+                label="تأكيد كلمة السر"
+                dependencies={["password"]}
+                rules={[
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue("password") === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(
+                        new Error("كلمات السر غير متطابقة!")
+                      );
+                    },
+                  }),
+                ]}>
+                <Input.Password placeholder="تأكيد كلمة السر" />
+              </Form.Item>
+              <Button type="primary" htmlType="submit" block>
+                إضافة
+              </Button>
+            </Form>
+          </Modal>
+        </ConfigProvider>
       </div>
     </>
   );

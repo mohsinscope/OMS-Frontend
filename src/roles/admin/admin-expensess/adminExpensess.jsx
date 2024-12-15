@@ -1,13 +1,11 @@
 import React, { useState } from "react";
-import { useLocation } from "react-router-dom";
 import { Table, Button } from "antd"; // Import Ant Design Table and Button
 import TextFieldForm from "../../../reusable elements/ReuseAbleTextField.jsx";
 import "./adminExpensess.css";
+import useAuthStore from "./../../../store/store.js";
 
 const AdminExpenses = () => {
-  const location = useLocation();
-
-  // Sample expense records
+  const { isSidebarCollapsed } = useAuthStore();
   const [originalData] = useState([
     {
       key: "1",
@@ -35,9 +33,9 @@ const AdminExpenses = () => {
     },
   ]);
 
-  const [filteredData, setFilteredData] = useState(originalData); // State for filtered data
+  const [filteredData, setFilteredData] = useState(originalData);
+  const [searchVisible, setSearchVisible] = useState(false); // State to toggle search visibility
 
-  // Define table columns
   const columns = [
     {
       title: "المحافظة",
@@ -75,16 +73,13 @@ const AdminExpenses = () => {
       align: "center",
       render: (text, record) => (
         <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-          {/* عرض button */}
           <Button type="primary" onClick={() => console.log("عرض", record)}>
             عرض
           </Button>
-          {/* التعديل button */}
           <Button
             type="default"
             style={{ color: "blue", borderColor: "blue" }}
-            onClick={() => console.log("التعديل", record)}
-          >
+            onClick={() => console.log("التعديل", record)}>
             التعديل
           </Button>
         </div>
@@ -92,7 +87,6 @@ const AdminExpenses = () => {
     },
   ];
 
-  // Define the fields for the filter form
   const formFields = [
     {
       name: "governorate",
@@ -142,7 +136,6 @@ const AdminExpenses = () => {
   const handleFormSubmit = (formData) => {
     const { governorate, office, status, dateFrom, dateTo } = formData;
 
-    // Filter data based on the form inputs
     const filtered = originalData.filter((record) => {
       const matchesGovernorate = governorate
         ? record.governorate === governorate
@@ -165,20 +158,30 @@ const AdminExpenses = () => {
       );
     });
 
-    setFilteredData(filtered); // Update the filtered data state
+    setFilteredData(filtered);
   };
 
   const handleFormReset = () => {
-    setFilteredData(originalData); // Reset the table data to the original data
+    setFilteredData(originalData);
+  };
+
+  const toggleSearch = () => {
+    setSearchVisible((prev) => !prev);
   };
 
   return (
     <>
-      <div className="expenses-container" dir="rtl">
+      <div
+        className={`expenses-container ${
+          isSidebarCollapsed ? "sidebar-collapsed" : "expenses-container"
+        }`}
+        dir="rtl">
         <h1 className="expenses-header">قائمة المصاريف</h1>
-
-        {/* TextFieldForm for filtering */}
-        <div className="admin-expenses-text-fields">
+        {/* Search Fields */}
+        <div
+          className={`admin-expenses-text-fields ${
+            searchVisible ? "search-visible" : "search-hidden"
+          }`}>
           <TextFieldForm
             fields={formFields}
             onFormSubmit={handleFormSubmit}
@@ -190,9 +193,13 @@ const AdminExpenses = () => {
             buttonClassName="admin-expenses-button"
           />
         </div>
-        <br/>
-
-        {/* Ant Design Table for displaying filtered data */}
+        {/* Toggle Search Visibility to make visible and un visible */}
+        <div className="toggle-search-button">
+          <Button type="primary" onClick={toggleSearch}>
+            {searchVisible ? "إخفاء البحث" : "إظهار البحث"}
+          </Button>
+        </div>
+        {/* Table    */}
         <div className="admin-expenses-table-field">
           <Table
             columns={columns}

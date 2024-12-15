@@ -2,8 +2,10 @@ import React, { useState } from "react";
 import { Table, Button } from "antd"; // Import Ant Design Table and Button
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import "./adminAttendence.css";
+import useAuthStore from "./../../../store/store.js";
 
 const AdminAttendance = () => {
+  const { isSidebarCollapsed } = useAuthStore();
   const [attendanceRecords] = useState([
     {
       key: "1",
@@ -29,7 +31,7 @@ const AdminAttendance = () => {
       name: "governorate",
       label: "المحافظة",
       type: "dropdown",
-      placeholder: "اختر المحافظة",
+      placeholder: "",
       options: [
         { value: "بغداد", label: "بغداد" },
         { value: "نينوى", label: "نينوى" },
@@ -39,7 +41,7 @@ const AdminAttendance = () => {
       name: "office",
       label: "المكتب",
       type: "dropdown",
-      placeholder: "اختر المكتب",
+      placeholder: "",
       options: [
         { value: "مدير", label: "مدير" },
         { value: "محاسب", label: "محاسب" },
@@ -89,17 +91,13 @@ const AdminAttendance = () => {
       align: "center",
       render: (text, record) => (
         <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-          <Button
-            type="primary"
-            onClick={() => console.log("Edit:", record)}
-          >
+          <Button type="primary" onClick={() => console.log("Edit:", record)}>
             تعديل
           </Button>
           <Button
             type="default"
             danger
-            onClick={() => handleDelete(record.key)}
-          >
+            onClick={() => handleDelete(record.key)}>
             حذف
           </Button>
         </div>
@@ -136,13 +134,25 @@ const AdminAttendance = () => {
     setFilteredRecords(attendanceRecords); // Reset to original data
   };
 
+  const [searchVisible, setSearchVisible] = useState(false); // State to toggle search visibility
+  const toggleSearch = () => {
+    setSearchVisible((prev) => !prev);
+  };
+
   return (
     <>
-      <div className="attendance-container" dir="rtl">
+      <div
+        className={`attendance-container ${
+          isSidebarCollapsed ? "sidebar-collapsed" : "attendance-container"
+        }`}
+        dir="rtl">
         <h1 className="attendance-header">إدارة الحضور</h1>
 
         {/* Filters Section */}
-        <div className="attendance-filters">
+        <div
+          className={`attendance-filters ${
+            searchVisible ? "search-visible" : "search-hidden"
+          }`}>
           <TextFieldForm
             fields={getFilterFields()} // Use the extracted function to get fields
             onFormSubmit={applyFilters}
@@ -154,7 +164,12 @@ const AdminAttendance = () => {
             buttonClassName="attendance-filter-button"
           />
         </div>
-
+        {/* Toggle Search Visibility */}
+        <div className="toggle-search-button">
+          <Button type="primary" onClick={toggleSearch}>
+            {searchVisible ? "إخفاء البحث" : "إظهار البحث"}
+          </Button>
+        </div>
         {/* Data Table Section */}
         <div className="attendance-data-table-container">
           <Table
