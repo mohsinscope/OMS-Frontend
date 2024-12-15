@@ -1,13 +1,13 @@
 {
   "date": "2024-12-14",
   "totalPassportAttendance": 35,
-  "totalCompanyAttendance": 50,
+  "totalCompanyAttendance": 40,
   "additionalAttendance": [
     {
       "governorate": "بغداد",
       "officeName": "مكتب الكرادة",
       "totalPassportAttendance": 30,
-      "totalCompanyAttendance": 45,
+      "totalCompanyAttendance": 20,
       "date": "2024-12-13",
       "passportEmployees": [
         { "id": 1, "name": "أحمد سعيد", "role": "موظف الاستلام", "attended": true, "date": "2024-12-13" },
@@ -22,12 +22,12 @@
       ],
       "roleCounts": {
         "موظف الاستلام": 10,
-        "موظف الحسابات": 2,
-        "موظف الطباعة": 1,
-        "موظف التسليم": 1,
-        "موظف IT": 1,
-        "موظف خدمة": 1,
-        "مشرف": 1
+        "موظف الحسابات": 8,
+        "موظف الطباعة": 13,
+        "موظف التسليم": 9,
+        "موظف IT": 12,
+        "موظف خدمة": 20,
+        "مشرف": 17
       }
     },
     {
