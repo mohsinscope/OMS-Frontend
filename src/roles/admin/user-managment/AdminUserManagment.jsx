@@ -18,7 +18,7 @@ const AdminUserManagment = () => {
   const [form] = Form.useForm();
   const { accessToken } = useAuthStore(); // Access token from Zustand store
   const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   // Fetch profiles with users and roles
   useEffect(() => {
     const fetchProfilesWithUsersAndRoles = async () => {
@@ -78,12 +78,6 @@ const AdminUserManagment = () => {
       const matchesOfficeName =
         !officeName || record.officeName.includes(officeName);
 
-      return (
-        matchesUsername &&
-        matchesRole &&
-        matchesGovernorate &&
-        matchesOfficeName
-      );
       return (
         matchesUsername &&
         matchesRole &&
@@ -189,7 +183,13 @@ const AdminUserManagment = () => {
   return (
     <>
       <Dashboard />
-      <div className="admin-user-management-container" dir="rtl">
+      <div
+        className={`admin-user-management-container ${
+          isSidebarCollapsed
+            ? "sidebar-collapsed"
+            : "admin-user-management-container"
+        }`}
+        dir="rtl">
         <h1 className="admin-header">إدارة المستخدمين</h1>
         {/* Filter Section */}
         <div
@@ -285,9 +285,10 @@ const AdminUserManagment = () => {
               <Select placeholder="اختر الصلاحية">
                 <Option value="Supervisor">مشرف</Option>
                 <Option value="Manager">مدير</Option>
-                <Option value="EmployeeOfDamageFollowUp">موظف متابعة التلف</Option>
+                <Option value="EmployeeOfDamageFollowUp">
+                  موظف متابعة التلف
+                </Option>
                 <Option value="FollowUpEmployee">موظف المتابعة</Option>
-                
               </Select>
             </Form.Item>
             <Form.Item

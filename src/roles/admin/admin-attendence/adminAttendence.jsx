@@ -20,7 +20,7 @@ const AdminAttendance = () => {
       status: "غائب",
     },
   ]);
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   const [filteredRecords, setFilteredRecords] = useState(attendanceRecords);
 
   // Function to get fields for the filter form
@@ -134,7 +134,11 @@ const AdminAttendance = () => {
   const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   return (
     <>
-      <div className="attendance-container" dir="rtl">
+      <div
+        className={`attendance-container ${
+          isSidebarCollapsed ? "sidebar-collapsed" : "attendance-container"
+        }`}
+        dir="rtl">
         <h1 className="attendance-header">إدارة الحضور</h1>
 
         {/* Filters Section */}

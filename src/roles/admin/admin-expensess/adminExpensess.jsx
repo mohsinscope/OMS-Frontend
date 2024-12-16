@@ -6,6 +6,7 @@ import "./adminExpensess.css";
 import useAuthStore from "./../../../store/store.js";
 const AdminExpenses = () => {
   const location = useLocation();
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   // Sample expense records
   const [originalData] = useState([
@@ -173,7 +174,11 @@ const AdminExpenses = () => {
 
   return (
     <>
-      <div className="expenses-container" dir="rtl">
+      <div
+        className={`expenses-container ${
+          isSidebarCollapsed ? "sidebar-collapsed" : "expenses-container"
+        }`}
+        dir="rtl">
         <h1 className="expenses-header">قائمة المصاريف</h1>
 
         {/* TextFieldForm for filtering */}
