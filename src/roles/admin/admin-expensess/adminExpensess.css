@@ -12,6 +12,20 @@
   justify-content: center;
   align-items: start;
 }
+.expenses-container {
+  /* Limit the width */
+  margin-top: 6%;
+  margin-right: 20px;
+  margin-left: 20px;
+  padding: 20px;
+
+  border-radius: 8px;
+  /* Smooth rounded corners */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+}
 
 .admin-expenses-text-fields {
   /* background-color: white; */
@@ -57,7 +71,29 @@
 
 .admin-expenses-form div {
 }
+.admin-expenses-text-fields div {
+  display: flex;
+  justify-content: start;
+  align-items: start;
+  gap: 10px;
+}
 
+.admin-expenses-form {
+  display: flex;
+  align-items: end;
+  gap: 30px;
+}
+
+.admin-expenses-form div {
+}
+
+.admin-expenses-field-wrapper select {
+  height: 45px;
+  width: 220px;
+  border: #bcc1ca 1px solid;
+  border-radius: 6px;
+  padding: 10px;
+}
 .admin-expenses-field-wrapper select {
   height: 45px;
   width: 220px;
@@ -85,7 +121,39 @@
   height: 35px;
   width: 90px;
 }
+.admin-expenses-field-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+.admin-expenses-field-wrapper select:hover {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
+}
+.admin-expenses-field-wrapper select:focus {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
+}
+.admin-expenses-field-wrapper #dateTo,
+.admin-expenses-field-wrapper #dateFrom {
+  height: 35px;
+  width: 90px;
+}
 
+.filter-buttons button {
+  width: 100px;
+  height: 45px;
+  background-color: #4880ff;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
 .filter-buttons button {
   width: 100px;
   height: 45px;

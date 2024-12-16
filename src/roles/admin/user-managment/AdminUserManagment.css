@@ -206,7 +206,35 @@
   outline: none; /* Remove focus outline */
   box-shadow: 0 0 3px #0056b3; /* Add blue shadow on focus */
 }
+.add-button {
+  background-color: #007bff; /* Blue background */
+  color: white; /* White text */
+  border: none; /* Remove border */
+  padding: 8px 16px; /* Padding for button */
+  font-size: 14px; /* Font size */
+  border-radius: 4px; /* Rounded corners */
+  cursor: pointer; /* Pointer cursor on hover */
+  margin-bottom: 16px; /* Space below the button */
+  display: inline-block; /* Align inline */
+}
 
+.add-button:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.add-button:focus {
+  outline: none; /* Remove focus outline */
+  box-shadow: 0 0 3px #0056b3; /* Add blue shadow on focus */
+}
+
+.filter-buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin-top: 2%;
+  width: 100%;
+}
 .filter-buttons {
   display: flex;
   justify-content: center;
@@ -228,6 +256,26 @@
   justify-content: center;
   align-items: center;
   gap: 10px;
+}
+.filter-buttons button {
+  width: 110px;
+  height: 45px;
+  background-color: #4880ff;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.data-table-container div {
+  overflow: hidden !important;
+}
+.data-table-container svg {
+  display: none;
 }
 
 .data-table-container div {
