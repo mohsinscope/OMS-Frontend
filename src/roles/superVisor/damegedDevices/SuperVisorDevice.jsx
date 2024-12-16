@@ -1,7 +1,7 @@
 import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store";
 import React, { useState } from "react";
-import { Table, message } from "antd";
+import { Table, message, Button } from "antd";
 import { Link } from "react-router-dom";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import devicesData from "./../../../data/devices.json";
@@ -16,7 +16,7 @@ export default function SuperVisorDevices() {
     ...damagedDevice.generalInfo,
   }));
   const [devicesList, setdevicesList] = useState(generalInfoList);
-
+  const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   const fields = [
     {
       name: "سبب التلف",
@@ -45,7 +45,6 @@ export default function SuperVisorDevices() {
       placeholder: "",
       type: "date",
     },
-    
   ];
 
   const handleFilterSubmit = (formData) => {
@@ -127,7 +126,10 @@ export default function SuperVisorDevices() {
       }`}
       dir="rtl">
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
-      <div className="supervisor-devices-dameged-filters">
+      <div
+        className={`supervisor-devices-dameged-filters ${
+          searchVisible ? "animate-show" : "animate-hide"
+        }`}>
         <TextFieldForm
           fields={fields}
           onFormSubmit={handleFilterSubmit}
@@ -139,9 +141,15 @@ export default function SuperVisorDevices() {
           buttonClassName="supervisor-devices-dameged-button"
         />
         <Link to="/supervisor/damegedDevices/add">
-        
-        <button className="supervisor-passport-dameged-button">اضافة جهاز تالف</button>
+          <button className="supervisor-passport-dameged-button">
+            اضافة جهاز تالف
+          </button>
         </Link>
+      </div>
+      <div className="toggle-search-button">
+        <Button type="primary" onClick={toggleSearch}>
+          {searchVisible ? " بحث" : " بحث"}
+        </Button>
       </div>
       <div className="supervisor-devices-dameged-table-container">
         <Table

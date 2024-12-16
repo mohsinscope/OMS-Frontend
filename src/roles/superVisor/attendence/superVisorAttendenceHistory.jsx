@@ -13,7 +13,7 @@ export default function SupervisorAttendanceHistory() {
   const [isModalVisible, setIsModalVisible] = useState(false); // Modal visibility for no match
   const { isSidebarCollapsed } = useAuthStore();
   const navigate = useNavigate(); // Initialize navigate function
-
+  const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   // Fetch attendance data from imported JSON
   useEffect(() => {
     try {
@@ -25,12 +25,14 @@ export default function SupervisorAttendanceHistory() {
         totalCompanyAttendance: attendenceData.totalCompanyAttendance,
       };
 
-      const additionalData = attendenceData.additionalAttendance.map((item, index) => ({
-        id: index + 2, // Ensure unique IDs start from 2
-        date: item.date,
-        totalPassportAttendance: item.totalPassportAttendance,
-        totalCompanyAttendance: item.totalCompanyAttendance,
-      }));
+      const additionalData = attendenceData.additionalAttendance.map(
+        (item, index) => ({
+          id: index + 2, // Ensure unique IDs start from 2
+          date: item.date,
+          totalPassportAttendance: item.totalPassportAttendance,
+          totalCompanyAttendance: item.totalCompanyAttendance,
+        })
+      );
 
       const combinedData = [mainData, ...additionalData];
 
@@ -66,7 +68,9 @@ export default function SupervisorAttendanceHistory() {
       return;
     }
 
-    const filtered = attendanceData.filter((item) => item.date === selectedDate);
+    const filtered = attendanceData.filter(
+      (item) => item.date === selectedDate
+    );
     if (filtered.length > 0) {
       setFilteredData(filtered); // Update filtered data
     } else {
@@ -104,8 +108,7 @@ export default function SupervisorAttendanceHistory() {
             type="primary"
             size="small"
             onClick={() => handleView(record)}
-            style={{ marginLeft: "5px" }}
-          >
+            style={{ marginLeft: "5px" }}>
             عرض
           </Button>
         </div>
@@ -124,13 +127,15 @@ export default function SupervisorAttendanceHistory() {
           ? "sidebar-collapsed"
           : "supervisor-expenses-history-page"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <div className="supervisor-attendance-history-title">
         <h1>الحضور</h1>
       </div>
 
-      <div className="supervisor-attendance-history-fields">
+      <div
+        className={`supervisor-attendance-history-fields ${
+          searchVisible ? "animate-show" : "animate-hide"
+        }`}>
         <TextFields
           fields={fields}
           formClassName="attendance-form"
@@ -164,7 +169,11 @@ export default function SupervisorAttendanceHistory() {
           <button>اضافة حضور</button>
         </Link>
       </div>
-
+      <div className="toggle-search-button">
+        <Button type="primary" onClick={toggleSearch}>
+          {searchVisible ? " بحث" : " بحث"}
+        </Button>
+      </div>
       <div className="supervisor-attendance-history-table">
         <Table
           dataSource={filteredData}
@@ -182,11 +191,9 @@ export default function SupervisorAttendanceHistory() {
         onOk={() => setIsModalVisible(false)}
         onCancel={() => setIsModalVisible(false)}
         okText="حسناً"
-        cancelText="إغلاق"
-      >
+        cancelText="إغلاق">
         <p>لا يوجد تطابق للفلاتر</p>
       </Modal>
     </div>
   );
 }
-  
