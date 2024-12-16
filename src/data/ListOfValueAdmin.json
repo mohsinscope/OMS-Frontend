@@ -1,12 +1,12 @@
 {
     "ListOfValues": [
       {
-        "label": "المكاتب",
+        "label": "اضافة مكتب",
         "icon": "office",
         "path": "/admin/add-office"
       },
       {
-        "label": "المحافظات",
+        "label": "اضافة محافظة",
         "icon": "iraq",
         "path": "/admin/add-governorate"
       },
