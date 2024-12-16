@@ -179,7 +179,8 @@ const AdminUserManagment = () => {
             borderRadius: "4px",
           }}
           onClick={() => console.log("Edit:", record)}>
-          onClick={() => console.log("Edit:", record)}> تعديل
+          {" "}
+          تعديل
         </Button>
       ),
     },
@@ -264,12 +265,10 @@ const AdminUserManagment = () => {
           open={addModalVisible}
           onCancel={() => setAddModalVisible(false)}
           footer={null}>
-          footer={null}>
           <Form form={form} onFinish={handleAddUser} layout="vertical">
             <Form.Item
               name="username"
               label="اسم المستخدم"
-              rules={[{ required: true, message: "يرجى إدخال اسم المستخدم" }]}>
               rules={[{ required: true, message: "يرجى إدخال اسم المستخدم" }]}>
               <Input placeholder="اسم المستخدم" />
             </Form.Item>
@@ -277,13 +276,11 @@ const AdminUserManagment = () => {
               name="fullName"
               label="الاسم الكامل"
               rules={[{ required: true, message: "يرجى إدخال الاسم الكامل" }]}>
-              rules={[{ required: true, message: "يرجى إدخال الاسم الكامل" }]}>
               <Input placeholder="الاسم الكامل" />
             </Form.Item>
             <Form.Item
               name="role"
               label="الصلاحية"
-              rules={[{ required: true, message: "يرجى اختيار الصلاحية" }]}>
               rules={[{ required: true, message: "يرجى اختيار الصلاحية" }]}>
               <Select placeholder="اختر الصلاحية">
                 <Option value="Supervisor">مشرف</Option>
@@ -295,7 +292,6 @@ const AdminUserManagment = () => {
               name="position"
               label="المنصب"
               rules={[{ required: true, message: "يرجى اختيار المنصب" }]}>
-              rules={[{ required: true, message: "يرجى اختيار المنصب" }]}>
               <Select placeholder="اختر المنصب">
                 <Option value={1}>مدير</Option>
                 <Option value={2}>مشرف</Option>
@@ -306,7 +302,6 @@ const AdminUserManagment = () => {
             <Form.Item
               name="governorate"
               label="المحافظة"
-              rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
               rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
               <Select placeholder="اختر المحافظة">
                 {governorates.map((gov) => (
@@ -320,7 +315,6 @@ const AdminUserManagment = () => {
               name="officeName"
               label="اسم المكتب"
               rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}>
-              rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}>
               <Select placeholder="اختر المكتب">
                 {offices.map((office) => (
                   <Option key={office.id} value={office.id}>
@@ -332,7 +326,6 @@ const AdminUserManagment = () => {
             <Form.Item
               name="password"
               label="كلمة السر"
-              rules={[{ required: true, message: "يرجى إدخال كلمة السر" }]}>
               rules={[{ required: true, message: "يرجى إدخال كلمة السر" }]}>
               <Input.Password placeholder="كلمة السر" />
             </Form.Item>
@@ -349,7 +342,6 @@ const AdminUserManagment = () => {
                     return Promise.reject(new Error("كلمات السر غير متطابقة!"));
                   },
                 }),
-              ]}>
               ]}>
               <Input.Password placeholder="تأكيد كلمة السر" />
             </Form.Item>
