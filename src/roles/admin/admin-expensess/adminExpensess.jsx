@@ -3,10 +3,10 @@ import { useLocation } from "react-router-dom";
 import { Table, Button } from "antd"; // Import Ant Design Table and Button
 import TextFieldForm from "../../../reusable elements/ReuseAbleTextField.jsx";
 import "./adminExpensess.css";
-
+import useAuthStore from "./../../../store/store.js";
 const AdminExpenses = () => {
   const location = useLocation();
-
+  const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   // Sample expense records
   const [originalData] = useState([
     {
@@ -83,8 +83,7 @@ const AdminExpenses = () => {
           <Button
             type="default"
             style={{ color: "blue", borderColor: "blue" }}
-            onClick={() => console.log("التعديل", record)}
-          >
+            onClick={() => console.log("التعديل", record)}>
             التعديل
           </Button>
         </div>
@@ -178,7 +177,10 @@ const AdminExpenses = () => {
         <h1 className="expenses-header">قائمة المصاريف</h1>
 
         {/* TextFieldForm for filtering */}
-        <div className="admin-expenses-text-fields">
+        <div
+          className={`admin-expenses-text-fields ${
+            searchVisible ? "animate-show" : "animate-hide"
+          }`}>
           <TextFieldForm
             fields={formFields}
             onFormSubmit={handleFormSubmit}
@@ -190,7 +192,11 @@ const AdminExpenses = () => {
             buttonClassName="admin-expenses-button"
           />
         </div>
-
+        <div className="toggle-search-button">
+          <Button type="primary" onClick={toggleSearch}>
+            {searchVisible ? " البحث" : " البحث"}
+          </Button>
+        </div>
         {/* Ant Design Table for displaying filtered data */}
         <div className="admin-expenses-table-field">
           <Table

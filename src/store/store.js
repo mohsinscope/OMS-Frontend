@@ -5,7 +5,7 @@ const useAuthStore = create((set) => ({
   isLoggedIn: false, // Tracks the user's login status
   accessToken: null, // Stores the JWT token
   isSidebarCollapsed: false, // Tracks the state of the sidebar
-
+  searchVisible: false,
   // Initialize the store from localStorage on app load
   initializeAuth: () => {
     const token = localStorage.getItem("accessToken");
@@ -82,6 +82,8 @@ const useAuthStore = create((set) => ({
       accessToken: null,
     });
   },
+  // Add the action to toggle the visibility of search
+  toggleSearch: () => set((state) => ({ searchVisible: !state.searchVisible })),
 }));
 
 export default useAuthStore;
