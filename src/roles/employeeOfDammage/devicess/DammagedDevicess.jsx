@@ -75,7 +75,8 @@ export default function DammagedDevicess() {
       const matchesReason =
         !formData["سبب التلف"] || device.damageReason === formData["سبب التلف"];
       const matchesType =
-        !formData["نوع الجهاز"] || device.deviceTypeName === formData["نوع الجهاز"];
+        !formData["نوع الجهاز"] ||
+        device.deviceTypeName === formData["نوع الجهاز"];
       const matchesDate =
         !formData["date"] || device.date.startsWith(formData["date"]);
 
@@ -128,8 +129,7 @@ export default function DammagedDevicess() {
         <Link
           to="/damaged-devices/details"
           state={{ device: record }}
-          className="damaged-devices-details-link"
-        >
+          className="damaged-devices-details-link">
           عرض
         </Link>
       ),
@@ -137,13 +137,11 @@ export default function DammagedDevicess() {
   ];
 
   return (
-    
     <div
       className={`damaged-devices-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : "damaged-devices-page"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <h1 className="damaged-devices-title">الأجهزة التالفة</h1>
 
       {/* Filter Section */}

@@ -5,7 +5,7 @@ import "./styles/settings.css";
 
 export default function Settings() {
   const { user } = useAuthStore(); // Access user data from the store
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   // Initialize form state with user data
   const [formData, setFormData] = useState({
     fullName: user?.fullName || "محمد علي",
@@ -36,7 +36,6 @@ export default function Settings() {
     if (formData.password === "") {
       alert("كلمة المرور لا يمكن أن تكون فارغة!");
       return;
-      
     }
 
     // TODO: Add API call to save updated user data
@@ -44,7 +43,6 @@ export default function Settings() {
     alert("تم تحديث كلمة المرور بنجاح!");
   };
   console.log("User data:", user);
-
 
   // Reset form data
   const handleCancel = () => {
@@ -59,8 +57,11 @@ export default function Settings() {
   };
 
   return (
-    
-    <div className="settings-container" dir="rtl">
+    <div
+      className={`settings-container ${
+        isSidebarCollapsed ? "sidebar-collapsed" : "settings-container"
+      }`}
+      dir="rtl">
       <h1 className="settings-header">إعدادات الحساب</h1>
       <div className="settings-form">
         {/* Full Name Field */}
@@ -122,8 +123,7 @@ export default function Settings() {
           <button
             type="button"
             className="toggle-password"
-            onClick={() => setShowPassword(!showPassword)}
-          >
+            onClick={() => setShowPassword(!showPassword)}>
             <Icons
               type={showPassword ? "eye-off" : "eye"}
               width={24}
@@ -146,8 +146,7 @@ export default function Settings() {
           <button
             type="button"
             className="toggle-password"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          >
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
             <Icons
               type={showConfirmPassword ? "eye-off" : "eye"}
               width={24}

@@ -100,11 +100,14 @@ export default function FollowUpEmployeeExpensess() {
   const handleFilterSubmit = (formData) => {
     const filtered = expensesList.filter((expense) => {
       const matchesSupervisor =
-        !formData["اسم المشرف"] || expense.supervisorName === formData["اسم المشرف"];
+        !formData["اسم المشرف"] ||
+        expense.supervisorName === formData["اسم المشرف"];
       const matchesGovernorate =
-        !formData["المحافظة"] || expense.governorateName === formData["المحافظة"];
+        !formData["المحافظة"] ||
+        expense.governorateName === formData["المحافظة"];
       const matchesOffice =
-        !formData["اسم المكتب"] || expense.officeName === formData["اسم المكتب"];
+        !formData["اسم المكتب"] ||
+        expense.officeName === formData["اسم المكتب"];
       const matchesStatus =
         !formData["الحالة"] || expense.status === formData["الحالة"];
       const matchesRequestId =
@@ -181,8 +184,7 @@ export default function FollowUpEmployeeExpensess() {
       render: (_, record) => (
         <Link
           to={`/expenses/details/${record.requestId}`}
-          className="expenses-details-link"
-        >
+          className="expenses-details-link">
           عرض
         </Link>
       ),
@@ -194,8 +196,7 @@ export default function FollowUpEmployeeExpensess() {
       className={`follow-up-expenses-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       {/* Page Title */}
       <h1 className="follow-up-expenses-title">سجل الصرفيات</h1>
 
@@ -220,7 +221,7 @@ export default function FollowUpEmployeeExpensess() {
           columns={columns}
           rowKey="requestId"
           bordered
-          pagination={{ pageSize: 10 }}
+          pagination={{ position: ["bottomCenter"], pageSize: 10 }}
           locale={{ emptyText: "لا توجد بيانات" }}
           loading={loading}
           className="follow-up-expenses-table"

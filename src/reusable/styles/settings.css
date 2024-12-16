@@ -1,85 +1,72 @@
-.settings-container{
-
-
-    border-radius: 8px; /* Smooth rounded corners */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: white;
-       /* Limit the width */
-       margin-top: 6%;
-       margin-right: 20px;
-       margin-left: 20px;
-       padding: 20px;
-       
-       border-radius: 8px;
-
-
-
-
+.settings-container {
+  margin-top: 6%;
+  margin-right: 20px;
+  margin-left: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
 }
 
-.settings-form{
-    display: flex;
-    justify-content: center;
-    align-items: start;
-    flex-direction: column;
+.settings-form {
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  flex-direction: column;
 }
 
-.settings-form input{
-    padding: 10px 12px;
-    width: 600px;
-    height: 52px;
-    border-radius: 2px;
-    outline: none;
-    border: #bcc1ca 1px solid;
-    font-size: 16px;
+.settings-form input {
+  padding: 10px 12px;
+  width: 600px;
+  height: 52px;
+  border-radius: 2px;
+  outline: none;
+  border: #bcc1ca 1px solid;
+  font-size: 16px;
 }
 
-.settings-buttons-container{
-    margin-top: 15px;
-    display: flex;
-    justify-content: space-between;
-    width: 37%;
-    gap: 30px;
+.settings-buttons-container {
+  margin-top: 15px;
+  display: flex;
+  justify-content: space-between;
+  width: 37%;
+  gap: 30px;
 }
 
-.settings-buttons-container button{
-    width: 180px;
-    height: 42px;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 18px;
+.settings-buttons-container button {
+  width: 180px;
+  height: 42px;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
 }
 
-.save-button{
-    background-color: #22ccb2;
-
+.save-button {
+  background-color: #22ccb2;
 }
 
-.cancel-button{
-    background-color: #de3b40;
+.cancel-button {
+  background-color: #de3b40;
 }
 
-.password-field{
-    border: #bcc1ca 1px solid;
-    width: 600px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-   
-
+.password-field {
+  border: #bcc1ca 1px solid;
+  width: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.password-field input{
-    border: none;
+.password-field input {
+  border: none;
 }
-.password-field button{
-    background-color: white;
-    border: none;
-    padding-left: 10px;
-
+.password-field button {
+  background-color: white;
+  border: none;
+  padding-left: 10px;
 }

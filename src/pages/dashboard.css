@@ -1,86 +1,80 @@
 /* navbar */
 
 .navbar-container {
-    
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 10%; /* Fixed height */
-    padding: 0 20px;
-    background-color: #fff; /* White background */
-    border-bottom: 1px solid #ddd; /* Light border for separation */
-    position: fixed; /* Fixed to the top */
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 10; /* Ensure it stays above the sidebar */
-    color: (--bg-color  );
-
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 10%; /* Fixed height */
+  padding: 0 20px;
+  background-color: #fff; /* White background */
+  border-bottom: 1px solid #ddd; /* Light border for separation */
+  position: fixed; /* Fixed to the top */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10; /* Ensure it stays above the sidebar */
+  color: (--bg-color);
 }
-  
-  .navbar-left {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    color: #636AE8;
-  }
-  
-  .notification {
-    position: relative;
-    margin-top: 10px;
-  }
-  
-  .notification-badge {
-    position: absolute;
-    top: 1px;
-    right: 4px;
-    width: 10px;
-    height: 10px;
-    background-color: red;
-    border-radius: 50%;
-  }
-  
-  .user-info {
-    text-align: right;
-    display: flex;
-    flex-direction: column;
-    align-items: end;
-  }
-  
-  .user-info h3 {
-    margin: 0;
-    font-size: 1rem;
-    font-weight: bold;
-  }
-  
-  .user-info h4 {
-    margin: 0;
-    font-size: 0.85rem;
-    
-  }
-  
-  .user-avatar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
-    
-    border-radius: 50%;
-  }
-  
-  .navbar-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-  
-  .navbar-logo {
-    max-height: 100px;
-      }
-  
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #636ae8;
+}
 
+.notification {
+  position: relative;
+  margin-top: 10px;
+}
 
-      /* sidebar  */
+.notification-badge {
+  position: absolute;
+  top: 1px;
+  right: 4px;
+  width: 10px;
+  height: 10px;
+  background-color: red;
+  border-radius: 50%;
+}
+
+.user-info {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+}
+
+.user-info h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.user-info h4 {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.user-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+}
+
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.navbar-logo {
+  max-height: 100px;
+}
+
+/* sidebar  */
 /* Sidebar Container */
 .sidebar {
   width: 200px; /* Slightly wider for better spacing */
@@ -96,7 +90,6 @@
   top: 8%;
   transition: all 0.3s ease; /* Smooth transition for hover effect */
   right: 0; /* Align to the right */
-
 }
 
 /* Sidebar Top Section */
@@ -135,8 +128,6 @@
 .menu-item:hover {
   /* Highlighted border color */
   transform: translateY(-2px); /* Subtle lift effect */
-
-  
 }
 
 /* Logout Button Styles */
@@ -155,17 +146,14 @@
   font-weight: 500; /* Medium font weight */
 }
 
-.logout:hover{
-
-
+.logout:hover {
   transform: translateY(-2px); /* Subtle lift effect */
- 
 }
-.sidebar.collapsed .logout{
+.sidebar.collapsed .logout {
   background-color: white;
   color: red;
   margin-left: 3px;
-  
+
   padding: 10px 0;
 }
 
@@ -190,19 +178,17 @@
   }
 }
 
-.sidebar-bottom h3{
+.sidebar-bottom h3 {
   font-size: 12px;
 }
-.sidebar-top .menu-item h3{
+.sidebar-top .menu-item h3 {
   font-size: 14px;
   color: #565e6c;
 }
 
-
-.sidebar-top .menu-item svg{
-    color: #4880ff;
+.sidebar-top .menu-item svg {
+  color: #4880ff;
 }
-
 
 /* collapse the sidebar */
 
@@ -220,12 +206,11 @@
 .sidebar.collapsed .menu-item h3 {
   display: none; /* Hide the text */
 }
-.sidebar.collapsed .logout h3{
- 
+.sidebar.collapsed .logout h3 {
   display: none;
 }
 
-.sidebar.collapsed .logout :hover{
+.sidebar.collapsed .logout :hover {
   box-shadow: 0;
   border: 0;
   background-color: white;
@@ -247,9 +232,7 @@
   justify-content: center;
 }
 
-
 /* notifecation adjusment */
-
 
 .notification-content {
   position: absolute;
@@ -293,7 +276,6 @@
 .sidebar.collapsed .logout {
   justify-content: center;
   margin-bottom: 70px;
-
 }
 
 /* Dashboard Content Adjustment */
@@ -307,21 +289,11 @@
   transition: margin-right 0.3s ease;
 }
 
-
-
-
-
-
-
 .menu-item-active {
   border-right: 4px solid #007bff; /* Highlight active item */
-
 }
 
-
 /* chat gpt bullshit */
-
-
 
 .navbar-container {
   position: fixed;
@@ -330,40 +302,26 @@
   width: 100%;
   height: 90px; /* Adjust based on your NavBar height */
   background-color: #ffffff;
-
-
 }
 
 .main-layout {
   height: 100%;
- 
 }
 
 .dashboard-content {
-
-  
 }
-
 
 /* conditional sideba styling */
 
-
-.content-expanded{
-
-
-  
+.content-expanded {
 }
 
-.content-shrunk{
-
-  
+.content-shrunk {
 }
-
-
 
 /* latest */
 
-.icons-sidebar-adjusment-for-mohsen{
+.icons-sidebar-adjusment-for-mohsen {
   display: flex;
   align-items: center;
   justify-content: center;
