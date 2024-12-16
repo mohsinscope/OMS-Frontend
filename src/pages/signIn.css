@@ -86,7 +86,7 @@
 
 /* Button styling */
 .login-btn {
-  width: 75%;
+  width: 50%;
   padding: 15px;
   margin-top: 20px;
   background: linear-gradient(133.27deg, #007e78 11.78%, #00197d 50.49%, #003d84 100%);
@@ -165,11 +165,9 @@
 
 
 .input-wrapper {
-  width: 192%; /* Matches button width */
+  width: 100%; /* Matches button width */
 
 }
-
-
 
 
 .right-side form div{
@@ -181,4 +179,41 @@
   gap: 10px;
   
 
+}
+
+.password-field-login{
+  border: #bcc1ca 1px solid;
+  width: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: white;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 5px;
+
+}
+
+
+.password-field-login button{
+  background: none;
+  outline: none;
+  border: none;
+  margin-left: 10px;
+
+}
+
+.input-field-password{
+  width: 100%;
+  padding: 15px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.3s ease, box-shadow 0.3s ease;
+  border: none;
+}
+
+.password-field-login:focus-within{
+  border: 1px solid #007e78;
+  box-shadow: 0 0 5px #007e78;
+  
+  transition: border 0.3s ease, box-shadow 0.3s ease;
 }
