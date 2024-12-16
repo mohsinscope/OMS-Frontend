@@ -20,9 +20,8 @@
 
 /* Page Title Styling */
 .supervisor-devices-dameged-title {
-  font-size: 24px;
+  font-size: 2em;
   font-weight: bold;
-  margin-bottom: 20px;
 }
 
 /* Filter Section */
@@ -31,6 +30,20 @@
   justify-content: start;
   align-items: end;
   gap: 20px;
+  padding: 20px 0px 20px 20px;
+  transition: all 0.6s ease-in-out;
+  overflow: hidden;
+}
+.supervisor-devices-dameged-filters.animate-show {
+  max-height: 300px;
+  opacity: 1;
+  transition: max-height 0.6s ease, opacity 0.6s ease;
+}
+
+.supervisor-devices-dameged-filters.animate-hide {
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.6s ease, opacity 0.6s ease;
 }
 .supervisor-devices-dameged-filters #date {
   width: 200px;
@@ -57,7 +70,7 @@
 /* Input and Dropdown Styling */
 .supervisor-devices-dameged-input,
 .supervisor-devices-dameged-dropdown {
-  width: 250px; /* Consistent width for inputs and dropdowns */
+  width: 267px; /* Consistent width for inputs and dropdowns */
   height: 45px; /* Slightly smaller height for better proportion */
   padding: 0 15px; /* Adjust padding for cleaner design */
   border-radius: 6px; /* Rounded corners for a modern look */
@@ -101,7 +114,6 @@
 /* Table Container */
 .supervisor-devices-dameged-table-container {
   width: 100%;
-  margin-top: 20px;
 }
 .supervisor-devices-dameged-table-container table {
   text-align: center;
@@ -147,10 +159,10 @@
   /* flex-wrap: wrap;  */
   justify-content: flex-start; /* Align filters to the start */
   align-items: flex-end; /* Align fields at the bottom for a consistent look */
-  gap: 20px; /* Space between fields */
+  gap: 10px; /* Space between fields */
 }
 .supervisor-devices-dameged-filters button {
-  height: 40px;
+  height: 45px;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 .supervisor-devices-dameged-filters button:hover {
@@ -159,7 +171,7 @@
 }
 .supervisor-devices-dameged-form div {
   display: flex;
-  gap: 8px; /* Space between label and input */
+  gap: 10px; /* Space between label and input */
 }
 
 /* Filter Button Container */

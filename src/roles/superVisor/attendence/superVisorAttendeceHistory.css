@@ -1,154 +1,152 @@
-.supervisor-attendance-history-main-container{
-   
-    /* Limit the width */
-    margin-top: 6%;
-    margin-right: 20px;
-    margin-left: 20px;
-    padding: 20px;
-    
-    border-radius: 8px;
-    /* Smooth rounded corners */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: start;
+.supervisor-attendance-history-main-container {
+  margin-top: 6%;
+  margin-right: 20px;
+  margin-left: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
 }
-.supervisor-attendance-history-fields{
-    display: flex
-    ;
-        justify-content: space-between;
-        align-items: end;
-        gap: 10px;
+.supervisor-attendance-history-fields {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 10px;
+  padding: 20px 0px 20px 20px;
+  transition: all 0.6s ease-in-out;
+  overflow: hidden;
 }
-.supervisor-attendance-history-table{
-    width: 100%;
-    display: flex   ;
-    justify-content: center;
-    text-align: center;
-}
-.supervisor-attendance-history-table div{
-   text-align: center;
-    width: 100%;
+.supervisor-attendance-history-fields.animate-show {
+  max-height: 300px;
+  opacity: 1;
+  display: flex;
+  justify-content: flex-start;
+  transition: max-height 0.6s ease, opacity 0.6s ease;
 }
 
-.ant-table-cell  {
-    text-align: center !important;
+.supervisor-attendance-history-fields.animate-hide {
+  max-height: 0;
+  opacity: 0;
+  justify-content: flex-start;
+  transition: max-height 0.6s ease, opacity 0.6s ease;
 }
-.supervisor-attendance-history-table button{
-    padding: 20px;
-  
+.supervisor-attendance-history-table {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  text-align: center;
 }
-
-.supervisor-attendance-history-fields button{
-    width: 100px;
-    height: 50px;
-    background-color: #4880ff;
-    border-radius: 8px;
-    border: none;
-    color: white;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-   
-    
-
-}
-.supervisor-attendance-history-fields a{
-    text-decoration: none;
+.supervisor-attendance-history-table div {
+  text-align: center;
+  width: 100%;
 }
 
-.attendance-button{
-
-    margin-left: 20px;
-    font-size: large;
+.ant-table-cell {
+  text-align: center !important;
+}
+.supervisor-attendance-history-table button {
+  padding: 20px;
 }
 
-.attendance-form{
-
-    display: flex;
-    gap: 20px;
-    align-items: end;
+.supervisor-attendance-history-fields button {
+  width: 100px;
+  height: 45px;
+  background-color: #4880ff;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
-.attendance-form div{
-    display: flex;
-    gap: 20px;
-    align-items: start;
-
-    justify-content: end;
-}
-
-.attendance-form button{
-    width: 100px;
-    height: 50px;
-    background-color: #4880ff;
-    border-radius: 8px;
-    border: none;
-    color: white;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
+.supervisor-attendance-history-fields a {
+  text-decoration: none;
 }
 
-
-
-
-.attendance-form input{
-    width: 300px;
-    height: 50px;
-    padding: 10px 10px;
-    text-align: start;
-    border: #bcc1ca 1px solid;
-    border-radius: 6px;
-}
-.attendance-field-wrapper{
-    display: flex;
-    flex-direction: column;
+.attendance-button {
+  margin-left: 10px;
+  font-size: large;
 }
 
-
-.supervisor-attendance-history-charts{
-    display: flex;
-    justify-content: start;
-    align-items: center;
-    gap: 20px;
-    margin-top: 50px;
-    flex-wrap: wrap;
+.attendance-form {
+  display: flex;
+  align-items: end;
 }
-.supervisor-attendance-chart-box{
-   
-    width: 500px;
-    height: 200px;
-    background-color: white;
-    border-radius: 10px;
-    margin-left: 20px;
-    padding: 20px;
+.attendance-form div {
+  display: flex;
+  gap: 10px;
+  align-items: start;
+  justify-content: end;
 }
 
-
-.attendance-field-wrapper #date{
-    height: 40px;
-    width: 200px;
+.attendance-form button {
+  width: 100px;
+  height: 45px;
+  background-color: #4880ff;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
 }
 
-#searchDate{
-    height: 40px;
-    width: 200px;
-    padding: 10px 20px;
+.attendance-form input {
+  width: 267px;
+  height: 45px;
+  padding: 10px 10px;
+  text-align: start;
+  border: #bcc1ca 1px solid;
+  border-radius: 6px;
+}
+.attendance-field-wrapper {
+  display: flex;
+  flex-direction: column;
 }
 
-.date-attendence-histore{
-    display: flex;
-    flex-direction: column;
-    align-items: start;
-    justify-content: end;
-    width: 100%;
-    gap: 15px;
+.supervisor-attendance-history-charts {
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  gap: 20px;
+  margin-top: 50px;
+  flex-wrap: wrap;
+}
+.supervisor-attendance-chart-box {
+  width: 500px;
+  height: 200px;
+  background-color: white;
+  border-radius: 10px;
+  margin-left: 20px;
+  padding: 20px;
 }
 
-.attendance-add-button{
- padding: 20px;
+.attendance-field-wrapper #date {
+  height: 45px;
+  width: 200px;
+}
+
+#searchDate {
+  height: 35px;
+  width: 200px;
+  padding: 10px 20px;
+}
+
+.date-attendence-histore {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: end;
+  width: 100%;
+  gap: 15px;
+}
+
+.attendance-add-button {
+  padding: 20px;
 }

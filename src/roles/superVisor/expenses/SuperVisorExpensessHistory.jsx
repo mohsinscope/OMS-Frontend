@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, message } from "antd"; // Import Ant Design components
+import { Table, message, Button } from "antd"; // Import Ant Design components
 import { Link } from "react-router-dom"; // Import Link
 import "./SuperVisorExpensesHistory.css"; // Import CSS for styling
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx"; // Reusable form component
@@ -9,6 +9,7 @@ import expensesData from "./../../../data/singleExpense.json";
 export default function SuperVisorExpensesHistory() {
   const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   const [filterData, setFilterData] = useState({});
+  const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   const [expensesList, setExpensesList] = useState(
     expensesData.map((expense) => expense.generalInfo)
   ); // Use `generalInfo` from new structure
@@ -106,14 +107,14 @@ export default function SuperVisorExpensesHistory() {
       className: "table-column-details",
       render: (_, record) => {
         const expense = expensesData.find(
-          (exp) => exp.generalInfo["الرقم التسلسلي"] === record["الرقم التسلسلي"]
+          (exp) =>
+            exp.generalInfo["الرقم التسلسلي"] === record["الرقم التسلسلي"]
         );
         return (
           <Link
             to="/expenses-view"
             state={{ expense }}
-            className="supervisor-expenses-history-details-link"
-          >
+            className="supervisor-expenses-history-details-link">
             عرض
           </Link>
         );
@@ -128,13 +129,15 @@ export default function SuperVisorExpensesHistory() {
           ? "sidebar-collapsed"
           : "supervisor-expenses-history-page"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       {/* Page Title */}
       <h1 className="supervisor-expenses-history-title">سجل الصرفيات</h1>
 
       {/* Filter Form */}
-      <div className="supervisor-expenses-history-filters">
+      <div
+        className={`supervisor-expenses-history-filters ${
+          searchVisible ? "animate-show" : "animate-hide"
+        }`}>
         <TextFieldForm
           fields={fields}
           onFormSubmit={handleFilterSubmit}
@@ -148,6 +151,11 @@ export default function SuperVisorExpensesHistory() {
       </div>
 
       {/* Expenses Table */}
+      <div className="toggle-search-button">
+        <Button type="primary" onClick={toggleSearch}>
+          {searchVisible ? " بحث" : " بحث"}
+        </Button>
+      </div>
       <div className="supervisor-expenses-history-table-container">
         <Table
           dataSource={expensesList}

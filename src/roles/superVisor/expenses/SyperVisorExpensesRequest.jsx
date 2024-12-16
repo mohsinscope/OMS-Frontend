@@ -100,7 +100,8 @@ export default function SuperVisorExpensesRequest() {
       if (response.status === 200 || response.status === 204) {
         setDataSource((prev) =>
           prev.filter(
-            (item) => item["الرقم التسلسلي"] !== deletingRecord["الرقم التسلسلي"]
+            (item) =>
+              item["الرقم التسلسلي"] !== deletingRecord["الرقم التسلسلي"]
           )
         );
         setIsDeleting(false);
@@ -172,7 +173,11 @@ export default function SuperVisorExpensesRequest() {
     { title: "رقم الطلب", dataIndex: "الرقم التسلسلي", key: "id" }, // Request ID
     { title: "التاريخ", dataIndex: "التاريخ", key: "date" }, // Date
     { title: "الحالة", dataIndex: "الحالة", key: "status" }, // Status
-    { title: "المبلغ الإجمالي", dataIndex: "الكلفة الكلية", key: "totalAmount" }, // Total amount
+    {
+      title: "المبلغ الإجمالي",
+      dataIndex: "الكلفة الكلية",
+      key: "totalAmount",
+    }, // Total amount
     {
       title: "الإجراءات", // Actions column
       key: "actions",
@@ -184,8 +189,7 @@ export default function SuperVisorExpensesRequest() {
           <Button
             type="primary"
             size="small"
-            onClick={() => handleEdit(record)}
-          >
+            onClick={() => handleEdit(record)}>
             تعديل
           </Button>
         </Space>
@@ -200,12 +204,9 @@ export default function SuperVisorExpensesRequest() {
           ? "sidebar-collapsed"
           : "supervisor-expenses-history-page"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       {/* Form Section */}
-      <Title level={3} className="supervisor-request-title">
-        إضافة المصاريف
-      </Title>
+      <h1 className="supervisor-request-title">إضافة المصاريف</h1>
       <Card className="supervisor-request-form-card">
         <TextFieldForm
           fields={fields}
@@ -219,19 +220,14 @@ export default function SuperVisorExpensesRequest() {
           showImagePreviewer={true}
           onFormSubmit={(data) => setFormData(data)}
         />
-        <button
-          className="add-expensses-button"
-          onClick={handleAddExpense}
-        >
+        <button className="add-expensses-button" onClick={handleAddExpense}>
           إضافة مصروف
           <Icons type="add" />
         </button>
       </Card>
 
       {/* Table Section */}
-      <Title level={3} className="supervisor-request-title-2">
-        جدول المصاريف
-      </Title>
+      <h1 className="supervisor-request-title-2">جدول المصاريف</h1>
       <Card className="supervisor-request-table-card">
         <Table
           dataSource={dataSource}

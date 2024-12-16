@@ -1,14 +1,15 @@
-import './dammagedPasportsHistory.css';
-import passportData from './../../../data/pasport.json'; // Local JSON file
+import "./dammagedPasportsHistory.css";
+import passportData from "./../../../data/pasport.json"; // Local JSON file
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 import React, { useState } from "react";
-import { Table, message } from "antd"; // Import Ant Design components
+import { Table, message, Button } from "antd"; // Import Ant Design components
 import { Link } from "react-router-dom"; // Import Link
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx"; // Reusable form component
 
 export default function SuperVisorPassport() {
   const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   const [filterData, setFilterData] = useState({});
+  const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   const [originalPassportList] = useState(
     passportData.map((damagedPp) => damagedPp.generalInfo)
   ); // Keep the original data
@@ -46,7 +47,8 @@ export default function SuperVisorPassport() {
 
     const filteredDamagedPps = originalPassportList.filter((generalInfo) => {
       const matchesStatus =
-        !formData["سبب التلف"] || generalInfo["سبب التلف"] === formData["سبب التلف"];
+        !formData["سبب التلف"] ||
+        generalInfo["سبب التلف"] === formData["سبب التلف"];
       const matchesId =
         !formData["رقم الجواز"] ||
         generalInfo["رقم الجواز"]
@@ -99,8 +101,7 @@ export default function SuperVisorPassport() {
         <Link
           to="DammagedPasportsShow"
           state={{ passport: record }}
-          className="supervisor-passport-dameged-details-link"
-        >
+          className="supervisor-passport-dameged-details-link">
           عرض
         </Link>
       ),
@@ -114,13 +115,15 @@ export default function SuperVisorPassport() {
           ? "sidebar-collapsed"
           : "supervisor-passport-dameged-page"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       {/* Page Title */}
       <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
 
       {/* Filter Form */}
-      <div className="supervisor-passport-dameged-filters">
+      <div
+        className={`supervisor-passport-dameged-filters ${
+          searchVisible ? "animate-show" : "animate-hide"
+        }`}>
         <TextFieldForm
           fields={fields}
           onFormSubmit={handleFilterSubmit}
@@ -132,11 +135,19 @@ export default function SuperVisorPassport() {
           buttonClassName="supervisor-passport-dameged-button"
         />
         <Link to="/supervisor/damagedpasportshistory/supervisordammagepasportadd">
-        <button className="supervisor-passport-dameged-button"> اضافة جواز تالف</button>
+          <button className="supervisor-passport-dameged-button">
+            {" "}
+            اضافة جواز تالف
+          </button>
         </Link>
       </div>
 
       {/* Passport Damaged Table */}
+      <div className="toggle-search-button">
+        <Button type="primary" onClick={toggleSearch}>
+          {searchVisible ? " بحث" : " بحث"}
+        </Button>
+      </div>
       <div className="supervisor-passport-dameged-table-container">
         <Table
           dataSource={passportList}
