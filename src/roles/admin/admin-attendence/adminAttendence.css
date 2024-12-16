@@ -12,9 +12,7 @@
   align-items: start;
 }
 
-.attendance-filters {
-  /* background-color: white; */
-  padding: 20px 0px 20px 20px;
+
   border-radius: 10px;
   width: 100%;
   display: flex;

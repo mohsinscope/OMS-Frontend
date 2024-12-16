@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "./ListOfValueAdmin.css";
 import Icons from "./../../../reusable elements/icons.jsx";
 import listOfValuesData from "./../../../data/ListOfValueAdmin.json";
-import { Table, Modal, Form, Input, Button, message } from "antd"; // Import Ant Design components
+import { Table, Modal, Form, Input, Button, message,ConfigProvider } from "antd"; // Import Ant Design components
 import axios from "axios"; // Import Axios for API calls
 import Url from "./../../../store/url.js"; // Base API URL
 
@@ -10,18 +10,18 @@ export default function ListOfValueAdmin() {
   const { ListOfValues } = listOfValuesData; // Destructure the JSON data
 
   // State for selected data
-  const [selectedData, setSelectedData] = useState([]);
-  const [loading, setLoading] = useState(false); // Loading state for API calls
-  const [columns, setColumns] = useState([]); // Dynamic columns based on endpoint
-  const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
-  const [selectedEndpoint, setSelectedEndpoint] = useState(""); // Selected API endpoint
-  const [formFields, setFormFields] = useState([]); // Dynamic form fields
+  const [selectedData, setSelectedData] = useState([]); // Stores table data
+  const [loading, setLoading] = useState(false); // Controls the loading spinner
+  const [columns, setColumns] = useState([]); // Stores table columns dynamically
+  const [isModalOpen, setIsModalOpen] = useState(false); // Controls modal visibility
+  const [selectedEndpoint, setSelectedEndpoint] = useState(""); // Stores selected API endpoint
+  const [formFields, setFormFields] = useState([]); // Stores form fields dynamically
   const [form] = Form.useForm(); // Ant Design form instance
 
   // Map label or path to API endpoint and table columns
   const endpointConfig = {
     "/admin/add-office": {
-      endpoint: "/api/office",
+      endpoint: "/api/office", // API endpoint for offices
       columns: [
         { title: "اسم المكتب", dataIndex: "name", key: "name" },
         { title: "الكود", dataIndex: "code", key: "code" },
@@ -44,7 +44,7 @@ export default function ListOfValueAdmin() {
       ],
     },
     "/admin/add-governorate": {
-      endpoint: "/api/Governorate",
+      endpoint: "/api/Governorate", // API endpoint for governorates
       columns: [
         { title: "اسم المحافظة", dataIndex: "name", key: "name" },
         { title: "الكود", dataIndex: "code", key: "code" },
@@ -54,108 +54,128 @@ export default function ListOfValueAdmin() {
         { name: "code", label: "الكود", type: "text" },
       ],
     },
+    "/admin/device-types": {
+      endpoint: "/api/DamagedDevice",
+      columns: [
+        { title: "رقم الجهاز", dataIndex: "serialNumber", key: "serialNumber" },
+        { title: "التاريخ", dataIndex: "date", key: "date" },
+        { title: "نوع الجهاز", dataIndex: "deviceTypeName", key: "deviceTypeName" },
+        { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
+        { title: "المحافظة", dataIndex: "governorateName", key: "governorateName" },
+      ],
+      formFields: [
+        { name: "serialNumber", label: "رقم الجهاز", type: "text" },
+        { name: "date", label: "التاريخ", type: "date" },
+        { name: "deviceTypeId", label: "نوع الجهاز", type: "number" },
+        { name: "officeId", label: "اسم المكتب", type: "number" },
+        { name: "governorateId", label: "المحافظة", type: "number" },
+      ],
+    },
   };
 
   // Configure Axios instance
   const api = axios.create({
-    baseURL: Url, // Use base URL from `Url.js`
+    baseURL: Url, // Base URL for API
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`, // Retrieve JWT token from localStorage
+      Authorization: `Bearer ${localStorage.getItem("token")}`, // Include JWT token
     },
   });
 
-  // Handle item click
+  // Handle sidebar item click
   const handleItemClick = async (item) => {
-    const config = endpointConfig[item.path];
+    const config = endpointConfig[item.path]; // Get configuration for the selected item
     if (!config) {
       console.error("No endpoint configuration found for this item.");
       return;
     }
 
-    setSelectedEndpoint(config.endpoint); // Set the selected endpoint for the modal
-    setColumns(config.columns); // Set the table columns
-    setFormFields(config.formFields); // Set form fields dynamically
-    setLoading(true); // Set loading to true before making the API call
+    setSelectedEndpoint(config.endpoint); // Set the selected API endpoint
+    setColumns(config.columns); // Set table columns
+    setFormFields(config.formFields); // Set form fields
+    setLoading(true); // Show loading spinner
     try {
-      // Fetch table data
-      const response = await api.get(config.endpoint);
-      setSelectedData(response.data); // Set the data received from the API
+      const response = await api.get(config.endpoint); // Fetch data from the endpoint
+      setSelectedData(response.data); // Populate the table with data
     } catch (error) {
       console.error("Error fetching data:", error);
-      setSelectedData([]); // Clear data if the API call fails
+      setSelectedData([]); // Clear table if an error occurs
     } finally {
-      setLoading(false); // Set loading to false after API call finishes
+      setLoading(false); // Hide loading spinner
     }
   };
 
-  // Handle form submission
   const handleFormSubmit = async (values) => {
-    setLoading(true); // Set loading to true
+    setLoading(true); // Show loading spinner
     try {
-      await api.post(selectedEndpoint, values); // Make a POST request to the selected endpoint
+      // Submit data
+      await api.post(selectedEndpoint, values);
+  
       message.success("تمت الإضافة بنجاح!"); // Success message
-      setIsModalOpen(false); // Close the modal
+      setIsModalOpen(false); // Close modal
       form.resetFields(); // Reset form fields
-      // Refresh the data in the table
-      const response = await api.get(selectedEndpoint);
-      setSelectedData(response.data);
+  
+      // Refresh table data
+      const updatedResponse = await api.get(selectedEndpoint);
+      setSelectedData(updatedResponse.data);
     } catch (error) {
-      console.error("Error adding new entry:", error);
-      message.error(
-        `حدث خطأ أثناء الإضافة: ${
-          error.response?.data?.message || "تفاصيل غير متوفرة"
-        }`
-      );
+      console.error("Error adding new entry:", error); // Log error
+      message.error("حدث خطأ أثناء الإضافة."); // Error message
     } finally {
-      setLoading(false); // Set loading to false
+      setLoading(false); // Hide loading spinner
     }
   };
 
   return (
     <>
-      <div className="list-of-value-container" dir="rtl">
-        <div className="list-of-value-bar">
-          <ul className="list-of-value-items">
-            {ListOfValues.map((item, index) => (
-              <li
-                key={index}
-                className="list-of-value-item"
-                onClick={() => handleItemClick(item)} // Handle item click
-                style={{ cursor: "pointer" }} // Add pointer cursor for clickable items
-              >
-                <a className="list-of-value-link">
-                  <Icons type={item.icon} />
-                  <span>{item.label}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <div className="list-of-value-container" dir="rtl">
+          <div className="list-of-value-bar">
+            <ul className="list-of-value-items">
+              {ListOfValues.map((item, index) => (
+                <li
+                  key={index}
+                  className="list-of-value-item"
+                  onClick={() => handleItemClick(item)} // Handle item click
+                  style={{ cursor: "pointer", }}
+                >
+                  <a className="list-of-value-link">
+                    <Icons type={item.icon} />
+                    <span>{item.label}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
 
         <div className="list-of-value-details-section-left">
           <div className="top-list-of-value-details-section-left">
             <h2>تفاصيل القيمة</h2>
             <Button
               type="primary"
-              onClick={() => setIsModalOpen(true)} // Open the modal for adding new entry
+              onClick={() => setIsModalOpen(true)} // Open the modal
             >
               إضافة <Icons type="add" />
             </Button>
           </div>
           <div className="table-list-of-value-bottom">
-            {/* Render the Ant Design Table */}
+          <ConfigProvider direction="rtl">
             <Table
-              columns={columns}
-              dataSource={selectedData}
-              loading={loading} // Show loading spinner while fetching data
-              pagination={true} // Enable pagination
+              columns={columns} // Dynamic columns
+              dataSource={selectedData} // Data for the table
+              loading={loading} // Loading spinner
+              pagination={{
+                pageSize: 5,
+                position: ["bottomCenter"],
+              }}
               bordered
             />
+             </ConfigProvider>
           </div>
         </div>
       </div>
 
       {/* Modal for adding a new entry */}
+
+      <ConfigProvider direction="rtl">
       <Modal
         title="إضافة قيمة جديدة"
         open={isModalOpen}
@@ -180,6 +200,7 @@ export default function ListOfValueAdmin() {
           </Form.Item>
         </Form>
       </Modal>
+      </ConfigProvider>
     </>
   );
 }
