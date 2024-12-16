@@ -17,6 +17,7 @@ const AdminUserManagment = () => {
   const [addModalVisible, setAddModalVisible] = useState(false);
   const [form] = Form.useForm();
   const { accessToken } = useAuthStore(); // Access token from Zustand store
+  const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
 
   // Fetch profiles with users and roles
   useEffect(() => {
@@ -67,14 +68,28 @@ const AdminUserManagment = () => {
 
     const filtered = userRecords.filter((record) => {
       const matchesUsername =
-        !username || record.username.toLowerCase().includes(username.toLowerCase());
+        !username ||
+        record.username.toLowerCase().includes(username.toLowerCase());
+      !username ||
+        record.username.toLowerCase().includes(username.toLowerCase());
       const matchesRole = !role || record.roles.includes(role);
       const matchesGovernorate =
         !governorate || record.governorateName.includes(governorate);
       const matchesOfficeName =
         !officeName || record.officeName.includes(officeName);
 
-      return matchesUsername && matchesRole && matchesGovernorate && matchesOfficeName;
+      return (
+        matchesUsername &&
+        matchesRole &&
+        matchesGovernorate &&
+        matchesOfficeName
+      );
+      return (
+        matchesUsername &&
+        matchesRole &&
+        matchesGovernorate &&
+        matchesOfficeName
+      );
     });
 
     setFilteredRecords(filtered.length > 0 ? filtered : []);
@@ -112,7 +127,14 @@ const AdminUserManagment = () => {
       setAddModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.error("Error adding user:", error.response?.data || error.message);
+      console.error(
+        "Error adding user:",
+        error.response?.data || error.message
+      );
+      console.error(
+        "Error adding user:",
+        error.response?.data || error.message
+      );
       message.error("Failed to add user");
     }
   };
@@ -156,9 +178,8 @@ const AdminUserManagment = () => {
             color: "#fff",
             borderRadius: "4px",
           }}
-          onClick={() => console.log("Edit:", record)}
-        >
-          تعديل
+          onClick={() => console.log("Edit:", record)}>
+          onClick={() => console.log("Edit:", record)}> تعديل
         </Button>
       ),
     },
@@ -169,9 +190,11 @@ const AdminUserManagment = () => {
       <Dashboard />
       <div className="admin-user-management-container" dir="rtl">
         <h1 className="admin-header">إدارة المستخدمين</h1>
-
         {/* Filter Section */}
-        <div className="filter-section">
+        <div
+          className={`filter-section ${
+            searchVisible ? "animate-show" : "animate-hide"
+          }`}>
           <TextFieldForm
             fields={[
               { name: "username", label: "اسم المستخدم", type: "text" },
@@ -206,18 +229,21 @@ const AdminUserManagment = () => {
           />
         </div>
 
-        {/* Add Button */}
-        <Button
-          type="primary"
-          style={{
-            marginBottom: "15px",
-            backgroundColor: "#1890ff",
-            border: "none",
-          }}
-          onClick={() => setAddModalVisible(true)}
-        >
-          + إضافة
-        </Button>
+        <div className="toggle-search-button">
+          {/* Add Button */}
+          <Button
+            type="primary"
+            style={{
+              backgroundColor: "#1890ff",
+              border: "none",
+            }}
+            onClick={() => setAddModalVisible(true)}>
+            + إضافة
+          </Button>
+          <Button type="primary" onClick={toggleSearch}>
+            {searchVisible ? " البحث" : " البحث"}
+          </Button>
+        </div>
 
         {/* Data Table Section */}
         <div className="data-table-container">
@@ -237,28 +263,28 @@ const AdminUserManagment = () => {
           title="إضافة مستخدم جديد"
           open={addModalVisible}
           onCancel={() => setAddModalVisible(false)}
-          footer={null}
-        >
+          footer={null}>
+          footer={null}>
           <Form form={form} onFinish={handleAddUser} layout="vertical">
             <Form.Item
               name="username"
               label="اسم المستخدم"
-              rules={[{ required: true, message: "يرجى إدخال اسم المستخدم" }]}
-            >
+              rules={[{ required: true, message: "يرجى إدخال اسم المستخدم" }]}>
+              rules={[{ required: true, message: "يرجى إدخال اسم المستخدم" }]}>
               <Input placeholder="اسم المستخدم" />
             </Form.Item>
             <Form.Item
               name="fullName"
               label="الاسم الكامل"
-              rules={[{ required: true, message: "يرجى إدخال الاسم الكامل" }]}
-            >
+              rules={[{ required: true, message: "يرجى إدخال الاسم الكامل" }]}>
+              rules={[{ required: true, message: "يرجى إدخال الاسم الكامل" }]}>
               <Input placeholder="الاسم الكامل" />
             </Form.Item>
             <Form.Item
               name="role"
               label="الصلاحية"
-              rules={[{ required: true, message: "يرجى اختيار الصلاحية" }]}
-            >
+              rules={[{ required: true, message: "يرجى اختيار الصلاحية" }]}>
+              rules={[{ required: true, message: "يرجى اختيار الصلاحية" }]}>
               <Select placeholder="اختر الصلاحية">
                 <Option value="Supervisor">مشرف</Option>
                 <Option value="Manager">مدير</Option>
@@ -268,8 +294,8 @@ const AdminUserManagment = () => {
             <Form.Item
               name="position"
               label="المنصب"
-              rules={[{ required: true, message: "يرجى اختيار المنصب" }]}
-            >
+              rules={[{ required: true, message: "يرجى اختيار المنصب" }]}>
+              rules={[{ required: true, message: "يرجى اختيار المنصب" }]}>
               <Select placeholder="اختر المنصب">
                 <Option value={1}>مدير</Option>
                 <Option value={2}>مشرف</Option>
@@ -280,8 +306,8 @@ const AdminUserManagment = () => {
             <Form.Item
               name="governorate"
               label="المحافظة"
-              rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
-            >
+              rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
+              rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
               <Select placeholder="اختر المحافظة">
                 {governorates.map((gov) => (
                   <Option key={gov.id} value={gov.id}>
@@ -293,8 +319,8 @@ const AdminUserManagment = () => {
             <Form.Item
               name="officeName"
               label="اسم المكتب"
-              rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}
-            >
+              rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}>
+              rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}>
               <Select placeholder="اختر المكتب">
                 {offices.map((office) => (
                   <Option key={office.id} value={office.id}>
@@ -306,8 +332,8 @@ const AdminUserManagment = () => {
             <Form.Item
               name="password"
               label="كلمة السر"
-              rules={[{ required: true, message: "يرجى إدخال كلمة السر" }]}
-            >
+              rules={[{ required: true, message: "يرجى إدخال كلمة السر" }]}>
+              rules={[{ required: true, message: "يرجى إدخال كلمة السر" }]}>
               <Input.Password placeholder="كلمة السر" />
             </Form.Item>
             <Form.Item
@@ -323,8 +349,8 @@ const AdminUserManagment = () => {
                     return Promise.reject(new Error("كلمات السر غير متطابقة!"));
                   },
                 }),
-              ]}
-            >
+              ]}>
+              ]}>
               <Input.Password placeholder="تأكيد كلمة السر" />
             </Form.Item>
             <Button type="primary" htmlType="submit" block>
