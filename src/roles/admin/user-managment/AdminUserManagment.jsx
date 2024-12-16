@@ -28,6 +28,10 @@ const AdminUserManagment = () => {
   const [form] = Form.useForm();
   const { accessToken } = useAuthStore(); // Access token from Zustand store
   const { isSidebarCollapsed } = useAuthStore();
+  const [searchVisible, setSearchVisible] = useState(false); // State to toggle search visibility
+  const toggleSearch = () => {
+    setSearchVisible((prev) => !prev);
+  };
   // Fetch profiles with users and roles
   useEffect(() => {
     const fetchProfilesWithUsersAndRoles = async () => {
@@ -196,7 +200,10 @@ const AdminUserManagment = () => {
         <h1 className="admin-header">إدارة المستخدمين</h1>
 
         {/* Filter Section */}
-        <div className="filter-section">
+        <div
+          className={`filter-section ${
+            searchVisible ? "search-visible" : "search-hidden"
+          }`}>
           <TextFieldForm
             fields={[
               { name: "username", label: "اسم المستخدم", type: "text" },
@@ -231,18 +238,23 @@ const AdminUserManagment = () => {
           />
         </div>
 
-        {/* Add Button */}
-        <Button
-          type="primary"
-          style={{
-            marginBottom: "15px",
-            backgroundColor: "#1890ff",
-            border: "none",
-          }}
-          onClick={() => setAddModalVisible(true)}>
-          + إضافة
-        </Button>
-
+        {/* Toggle Search Visibility */}
+        <div className="toggle-search-button">
+          {/* Add Button */}
+          <Button
+            type="primary"
+            style={{
+              marginBottom: "15px",
+              backgroundColor: "#1890ff",
+              border: "none",
+            }}
+            onClick={() => setAddModalVisible(true)}>
+            + إضافة
+          </Button>
+          <Button type="primary" onClick={toggleSearch}>
+            {searchVisible ? "إخفاء البحث" : "إظهار البحث"}
+          </Button>
+        </div>
         {/* Data Table Section */}
         <div className="data-table-container">
           <Spin spinning={loading}>
