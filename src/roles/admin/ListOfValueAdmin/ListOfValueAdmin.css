@@ -35,6 +35,10 @@
     margin-left: 10px;
 }
 
+.list-of-value-item:active{
+    color: #4880ff;
+}
+
 
 .list-of-value-details-section-left{
     display: flex;

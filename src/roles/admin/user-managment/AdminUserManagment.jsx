@@ -262,7 +262,9 @@ const AdminUserManagment = () => {
               <Select placeholder="اختر الصلاحية">
                 <Option value="Supervisor">مشرف</Option>
                 <Option value="Manager">مدير</Option>
-                <Option value="Employee">موظف</Option>
+                <Option value="EmployeeOfDamageFollowUp">موظف متابعة التلف</Option>
+                <Option value="FollowUpEmployee">موظف المتابعة</Option>
+                
               </Select>
             </Form.Item>
             <Form.Item
@@ -271,10 +273,10 @@ const AdminUserManagment = () => {
               rules={[{ required: true, message: "يرجى اختيار المنصب" }]}
             >
               <Select placeholder="اختر المنصب">
-                <Option value={1}>مدير</Option>
-                <Option value={2}>مشرف</Option>
-                <Option value={3}>موظف</Option>
-                <Option value={4}>مساعد</Option>
+                <Option value={2}>مدير</Option>
+                <Option value={3}>مشرف</Option>
+                <Option value={4}>موظف متابعة التلف</Option>
+                <Option value={5}>موظف المتابعة</Option>
               </Select>
             </Form.Item>
             <Form.Item

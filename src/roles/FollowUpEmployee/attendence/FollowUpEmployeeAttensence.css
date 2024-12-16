@@ -1,0 +1,53 @@
+.followup-attendance-container{
+    margin-top: 6%;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    margin-right: 20px;
+    margin-left: 20px;
+}
+
+.followup-attendance-filters{
+    display: flex;
+    justify-content: start;
+    align-items: end;
+    width: 100%;
+    gap: 20px;
+}
+
+.followup-attendance-form{
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 10px;
+}
+.followup-attendance-filters div{
+    display: flex;
+    justify-content: start;
+    align-items: start;
+    gap: 10px;
+}
+.followup-attendance-field-wrapper{
+    display: flex;
+    flex-direction: column;
+}
+
+.followup-attendance-field-wrapper select{
+    height: 45px;
+    width: 220px;
+    border: #bcc1ca 1px solid;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.followup-attendance-field-wrapper #date{
+    width: 150px;
+    height: 37px;
+    }
+
+    .followup-attendance-table{
+        width: 100%;
+    }
