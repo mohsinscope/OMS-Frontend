@@ -1,0 +1,63 @@
+.list-of-value-container{
+           
+    /* Limit the width */
+    margin-top: 6%;
+    margin-right: 20px;
+    margin-left: 20px;
+    padding: 20px;
+    
+    border-radius: 8px;
+    /* Smooth rounded corners */
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+}
+
+.list-of-value-bar{
+    background-color: white;
+    height: 80vh;
+    width: 300px;
+    border-radius: 42px;
+    border: #bcc1ca 1px solid;
+    padding: 30px;
+}
+.list-of-value-items{
+    list-style-type: none; /* Removes the dots */
+    padding: 0; /* Removes default padding */
+    margin: 0; /* Removes default margin */
+}
+.list-of-value-items li{
+    margin: 20px 2px;
+    font-size: x-large;
+
+}
+.list-of-value-items li span{
+    margin-left: 10px;
+}
+
+
+.list-of-value-details-section-left{
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    width: 70%;
+    height: 80vh;
+    border: #bcc1ca 1px solid;
+    border-radius: 42px;
+    padding: 30px;
+}
+
+.top-list-of-value-details-section-left{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+.top-list-of-value-details-section-left button{
+    background-color: #4880ff;
+    color: white;
+    cursor: pointer;
+    width: 132px;
+    height: 52px;
+    border: none;
+    border-radius: 8px;
+}

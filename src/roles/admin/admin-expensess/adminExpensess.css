@@ -1,9 +1,12 @@
 .expenses-container {
+  /* Limit the width */
   margin-top: 6%;
   margin-right: 20px;
   margin-left: 20px;
   padding: 20px;
+
   border-radius: 8px;
+  /* Smooth rounded corners */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -11,20 +14,39 @@
 }
 
 .admin-expenses-text-fields {
-  /* background-color: white; */
-  padding: 20px 0px 0px 0px;
+  background-color: white;
+  padding: 20px;
   border-radius: 10px;
   width: 100%;
-  opacity: 0;
-  max-height: 0;
-  overflow: hidden;
-  transition: all 0.5s ease-in-out;
 }
+
 .admin-expenses-text-fields div {
   display: flex;
   justify-content: start;
   align-items: start;
   gap: 10px;
+}
+
+.admin-expenses-form {
+  display: flex;
+  align-items: end;
+  gap: 30px;
+}
+
+.admin-expenses-form div {
+}
+
+.admin-expenses-field-wrapper select {
+  height: 45px;
+  width: 220px;
+  border: #bcc1ca 1px solid;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.admin-expenses-field-wrapper {
+  display: flex;
+  flex-direction: column;
 }
 .admin-expenses-field-wrapper select:hover {
   border: #1677ff 1px solid;
@@ -36,37 +58,8 @@
   box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
   outline: 0;
 }
-
-.admin-expenses-text-fields.search-visible {
-  opacity: 1;
-  max-height: 500px; /* Adjust based on content size */
-}
-
-.admin-expenses-text-fields.search-hidden {
-  opacity: 0;
-  max-height: 0;
-}
-
-.admin-expenses-form {
-  display: flex;
-  align-items: end;
-  gap: 10px;
-}
-
-.admin-expenses-field-wrapper select {
-  height: 45px;
-  width: 220px;
-  border: #bcc1ca 1px solid;
-  border-radius: 6px;
-  padding: 10px;
-}
-.admin-expenses-field-wrapper {
-  display: flex;
-  flex-direction: column;
-}
-
-.admin-expenses-field-wrapper #dateFrom,
-.admin-expenses-field-wrapper #dateTo {
+.admin-expenses-field-wrapper #dateTo,
+.admin-expenses-field-wrapper #dateFrom {
   height: 35px;
   width: 90px;
 }
@@ -88,6 +81,7 @@
 .admin-expenses-table-field {
   width: 100%;
 }
+
 .toggle-search-button {
   margin-bottom: 10px;
   margin-top: 20px;
