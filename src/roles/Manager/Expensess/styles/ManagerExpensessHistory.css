@@ -23,13 +23,13 @@
 .manager-expenses-history-filters.animate-show {
   max-height: 300px;
   opacity: 1;
-  transition: max-height 0.6s ease, opacity 0.6s ease;
+  transition: all 0.6s ease, opacity 0.6s ease;
 }
 
 .manager-expenses-history-filters.animate-hide {
   max-height: 0;
   opacity: 0;
-  transition: max-height 0.6s ease, opacity 0.6s ease;
+  transition: all 0.6s ease, opacity 0.6s ease;
 }
 .manager-expenses-history-form {
   display: flex;
