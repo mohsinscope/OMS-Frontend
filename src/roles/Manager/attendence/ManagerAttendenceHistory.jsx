@@ -149,8 +149,15 @@ export default function ManagerAttendenceHistory() {
           }}
           state={{ data: record }} // Pass selected record data
         >
-          <Button type="primary" size="middle">
-            عرض
+          <Button type="primary" size="large">
+            <span
+              style={{
+                padding: "10px",
+                fontWeight: "bold",
+                alignContent: "start",
+              }}>
+              عرض
+            </span>
           </Button>
         </Link>
       ),
