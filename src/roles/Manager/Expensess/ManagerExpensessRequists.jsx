@@ -52,7 +52,14 @@ export default function ManagerExpensessRequists() {
   const [filters, setFilters] = useState({});
   const navigate = useNavigate();
   const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
+  const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   const fields = [
+    {
+      name: "requestNumber",
+      label: "رقم الطلب",
+      placeholder: "",
+      type: "text",
+    },
     {
       name: "governorate",
       label: "المحافظة",
@@ -105,12 +112,6 @@ export default function ManagerExpensessRequists() {
       label: "التاريخ الى",
       placeholder: "",
       type: "date",
-    },
-    {
-      name: "requestNumber",
-      label: "رقم الطلب",
-      placeholder: "",
-      type: "text",
     },
   ];
 
@@ -181,15 +182,16 @@ export default function ManagerExpensessRequists() {
       key: "expense",
     },
     {
-      title: "التاريخ",
-      dataIndex: "date",
-      key: "date",
-    },
-    {
       title: "الحالة",
       dataIndex: "status",
       key: "status",
     },
+    {
+      title: "التاريخ",
+      dataIndex: "date",
+      key: "date",
+    },
+
     {
       title: "الإجراءات",
       key: "actions",
@@ -218,7 +220,11 @@ export default function ManagerExpensessRequists() {
         }`}
         dir="rtl">
         <h1 className="page-title">طلبات الصرفيات</h1>
-        <div className="filter-section">
+
+        <div
+          className={`filter-section ${
+            searchVisible ? "animate-show" : "animate-hide"
+          }`}>
           <TextFieldForm
             fields={fields}
             onFormSubmit={handleFilterSubmit}
@@ -229,6 +235,11 @@ export default function ManagerExpensessRequists() {
             fieldWrapperClassName="filter-field-wrapper"
             buttonClassName="filter-button"
           />
+        </div>
+        <div className="toggle-search-button">
+          <Button type="primary" onClick={toggleSearch}>
+            {searchVisible ? " البحث" : " البحث"}
+          </Button>
         </div>
         <Table
           dataSource={filteredData}

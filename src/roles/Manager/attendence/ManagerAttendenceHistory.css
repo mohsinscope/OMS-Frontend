@@ -9,7 +9,36 @@
   margin-right: 20px;
   margin-left: 20px;
 }
+.attendance-form {
+  gap: 10px;
+  border-radius: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: start;
+  align-items: center;
+  transition: all 0.6s ease-in-out;
+  overflow: hidden;
+}
+.attendance-form.animate-show {
+  max-height: 300px;
+  opacity: 1;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: flex-start;
+  transition: max-height 0.6s ease, opacity 0.6s ease;
+}
 
+.attendance-form.animate-hide {
+  max-height: 0;
+  opacity: 0;
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+  justify-content: flex-start;
+  transition: max-height 0.6s ease, opacity 0.6s ease;
+}
 .manager-attendance-history-container .table-section {
   width: 100%;
 }
@@ -22,11 +51,11 @@
 }
 .manager-attendance-history-container .attendance-form input {
   width: 200px;
-  height: 40px;
+  height: 45px;
 }
 .manager-attendance-history-container .attendance-form select {
   width: 200px;
-  height: 40px;
+  height: 45px;
   padding: 5px;
 }
 .manager-attendance-history-container .attendance-form div {
@@ -57,7 +86,7 @@
 
 .manager-attendance-history-container #date {
   width: 140px;
-  height: 31px;
+  height: 35px;
   border: none;
   outline: none;
   box-shadow: none;
@@ -65,5 +94,5 @@
 
 .manager-attendance-history-container .attendance-form button {
   width: 100px;
-  height: 40px;
+  height: 45px;
 }
