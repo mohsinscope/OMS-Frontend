@@ -16,21 +16,21 @@
   display: flex;
   justify-content: start;
   align-items: start;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   gap: 10px;
 }
 
 .manager-expenses-requests-page .filter-form {
   display: flex;
-
+  width: 100%;
   justify-content: start;
   align-items: start;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   gap: 10px;
 }
 
 .manager-expenses-requests-page .filter-form input {
-  width: 200px;
+  width: 175px;
   height: 45px;
   border: #bcc1ca 1px solid;
   border-radius: 6px;
@@ -38,7 +38,7 @@
   font-size: large !important;
 }
 .manager-expenses-requests-page .filter-form select {
-  width: 200px;
+  width: 175px;
   height: 45px;
   border: #bcc1ca 1px solid;
   border-radius: 6px;
@@ -64,9 +64,11 @@
 .manager-expenses-requests-page .filter-form div {
   display: flex;
   gap: 10px;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
 }
 
 .manager-expenses-requests-page .filter-form .filter-buttons {
+  display: flex;
   justify-content: start;
+  margin-top: 39px;
 }
