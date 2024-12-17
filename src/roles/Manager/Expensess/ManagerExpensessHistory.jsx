@@ -8,7 +8,7 @@ const expensesData = [
   {
     "الرقم التسلسلي": "001",
     التاريخ: "2023-03-05",
-    الحالة: "قُدمت للمصير",
+    الحالة: "قُدمت للمدير",
     "الكلفة الكلية": "1,000,000",
     "اسم المكتب": "كرادة",
     المحافظة: "بغداد",
@@ -16,7 +16,7 @@ const expensesData = [
   {
     "الرقم التسلسلي": "002",
     التاريخ: "2023-10-01",
-    الحالة: "قُدمت للمصير",
+    الحالة: "قُدمت للمدير",
     "الكلفة الكلية": "150,000",
     "اسم المكتب": "الناصرية",
     المحافظة: "ذي قار",
@@ -24,7 +24,7 @@ const expensesData = [
   {
     "الرقم التسلسلي": "003",
     التاريخ: "2023-10-02",
-    الحالة: "قُدمت للمصير",
+    الحالة: "قُدمت للمدير",
     "الكلفة الكلية": "300,000",
     "اسم المكتب": "سماوة",
     المحافظة: "المثنى",
@@ -48,7 +48,7 @@ const expensesData = [
   {
     "الرقم التسلسلي": "006",
     التاريخ: "2024-09-10",
-    الحالة: "قُدمت للمصير",
+    الحالة: "قُدمت للمدير",
     "الكلفة الكلية": "300,000",
     "اسم المكتب": "كربلاء المقدسة",
     المحافظة: "كربلاء المقدسة",
@@ -56,7 +56,7 @@ const expensesData = [
   {
     "الرقم التسلسلي": "007",
     التاريخ: "2024-08-08",
-    الحالة: "قُدمت للمصير",
+    الحالة: "قُدمت للمدير",
     "الكلفة الكلية": "30,000",
     "اسم المكتب": "النجف المركز",
     المحافظة: "النجف الاشرف",
@@ -67,20 +67,15 @@ export default function ManagerExpensesHistory() {
   const [filterData, setFilterData] = useState({});
   const [expensesList, setExpensesList] = useState(expensesData);
   const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
+  const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   const fields = [
     {
-      name: "المحافظة",
-      label: "المحافظة",
+      name: "الرقم التسلسلي",
+      label: "رقم الطلب",
       placeholder: "",
-      type: "dropdown",
-      options: [
-        { value: "بغداد", label: "بغداد" },
-        { value: "ذي قار", label: "ذي قار" },
-        { value: "المثنى", label: "المثنى" },
-        { value: "اربيل", label: "اربيل" },
-        { value: "البصرة", label: "البصرة" },
-      ],
+      type: "text",
     },
+
     {
       name: "اسم المكتب",
       label: "اسم المكتب",
@@ -95,10 +90,17 @@ export default function ManagerExpensesHistory() {
       ],
     },
     {
-      name: "الرقم التسلسلي",
-      label: "رقم الطلب",
+      name: "المحافظة",
+      label: "المحافظة",
       placeholder: "",
-      type: "text",
+      type: "dropdown",
+      options: [
+        { value: "بغداد", label: "بغداد" },
+        { value: "ذي قار", label: "ذي قار" },
+        { value: "المثنى", label: "المثنى" },
+        { value: "اربيل", label: "اربيل" },
+        { value: "البصرة", label: "البصرة" },
+      ],
     },
     {
       name: "الحالة",
@@ -106,7 +108,7 @@ export default function ManagerExpensesHistory() {
       placeholder: "",
       type: "dropdown",
       options: [
-        { value: "قُدمت للمصير", label: "قُدمت للمدير" },
+        { value: "قُدمت للمدير", label: "قُدمت للمدير" },
         { value: "قُدمت للمشرف", label: "قُدمت للمشرف" },
         { value: "قُدمت للحسابات", label: "قُدمت للحسابات" },
       ],
@@ -180,18 +182,7 @@ export default function ManagerExpensesHistory() {
       key: "id",
       className: "manager-expenses-history-column-id",
     },
-    {
-      title: "التاريخ",
-      dataIndex: "التاريخ",
-      key: "date",
-      className: "manager-expenses-history-column-date",
-    },
-    {
-      title: "الحالة",
-      dataIndex: "الحالة",
-      key: "status",
-      className: "manager-expenses-history-column-status",
-    },
+
     {
       title: "الموال المنفقة",
       dataIndex: "الكلفة الكلية",
@@ -209,6 +200,18 @@ export default function ManagerExpensesHistory() {
       dataIndex: "المحافظة",
       key: "governorateName",
       className: "manager-expenses-history-column-governorate-name",
+    },
+    {
+      title: "الحالة",
+      dataIndex: "الحالة",
+      key: "status",
+      className: "manager-expenses-history-column-status",
+    },
+    {
+      title: "التاريخ",
+      dataIndex: "التاريخ",
+      key: "date",
+      className: "manager-expenses-history-column-date",
     },
     {
       title: "الإجراءات",
@@ -257,7 +260,10 @@ export default function ManagerExpensesHistory() {
         dir="rtl">
         <h1 className="manager-expenses-history-title">سجل الصرفيات</h1>
 
-        <div className="manager-expenses-history-filters">
+        <div
+          className={`manager-expenses-history-filters ${
+            searchVisible ? "animate-show" : "animate-hide"
+          }`}>
           <TextFieldForm
             fields={fields}
             onFormSubmit={handleFilterSubmit}
@@ -269,7 +275,11 @@ export default function ManagerExpensesHistory() {
             buttonClassName="manager-expenses-history-button"
           />
         </div>
-
+        <div className="toggle-search-button">
+          <Button type="primary" onClick={toggleSearch}>
+            {searchVisible ? " البحث" : " البحث"}
+          </Button>
+        </div>
         <div className="manager-expenses-history-table-container">
           <Table
             dataSource={expensesList}

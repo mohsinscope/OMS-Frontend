@@ -12,7 +12,7 @@ export default function ManagerAttendenceHistory() {
   const [filters, setFilters] = useState({});
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { isSidebarCollapsed } = useAuthStore();
-
+  const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   useEffect(() => {
     try {
       const combinedData = [
@@ -169,7 +169,10 @@ export default function ManagerAttendenceHistory() {
         <h1 className="page-title">سجل الحضور</h1>
       </div>
 
-      <div className="filter-section">
+      <div
+        className={`filter-section ${
+          searchVisible ? "animate-show" : "animate-hide"
+        }`}>
         <TextFields
           fields={fields}
           onFormSubmit={handleSearch}
@@ -181,7 +184,11 @@ export default function ManagerAttendenceHistory() {
           buttonClassName="attendance-button"
         />
       </div>
-
+      <div className="toggle-search-button">
+        <Button type="primary" onClick={toggleSearch}>
+          {searchVisible ? " البحث" : " البحث"}
+        </Button>
+      </div>
       <div className="table-section">
         <ConfigProvider direction="rtl">
           <Table
