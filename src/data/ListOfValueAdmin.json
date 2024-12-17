@@ -11,7 +11,7 @@
         "path": "/admin/add-governorate"
       },
       {
-        "label": "انواع التلف",
+        "label": "نوع تلف الجهاز",
         "icon": "broken",
         "path": "/admin/damage-types"
       },
@@ -21,9 +21,20 @@
         "path": "/admin/device-types"
       },
       {
-        "label": "انواع المصاريف",
-        "icon": "money-add",
-        "path": "/admin/expense-types"
+        "label": "انواع تلف الجوازات",
+        "icon": "passport",
+        "path": "/admin/passport-dammage-types"
+      }
+      ,
+      {
+        "label": "الاجهزة التالفة",
+        "icon": "add-device",
+        "path": "/admin/device-dammage-types"
+      } ,
+      {
+        "label": "الجوازات التالفة",
+        "icon": "passport",
+        "path": "/admin/passport-dammage"
       }
     ]
   }
