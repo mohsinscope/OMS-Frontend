@@ -15,7 +15,6 @@ import Dashboard from "./../../../pages/dashBoard.jsx";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import "./AdminUserManagment.css";
 import useAuthStore from "./../../../store/store.js";
-import Url from "./../../../store/url.js";
 
 const { Option } = Select;
 

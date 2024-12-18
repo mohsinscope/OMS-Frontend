@@ -32,6 +32,94 @@ export default function ListOfValueAdmin() {
   const [governorates, setGovernorates] = useState([]);
   const [damagedTypes, setDamagedTypes] = useState([]);
 
+ // Centralized Configuration
+ const config = {
+  "/admin/add-office": {
+    getEndpoint: "/api/office",
+    postEndpoint: "/api/office",
+    columns: [
+      { title: "اسم المكتب", dataIndex: "name", key: "name" },
+      { title: "الكود", dataIndex: "code", key: "code" },
+      { title: "موظفو الاستلام", dataIndex: "receivingStaff", key: "receivingStaff" },
+      { title: "موظفو الحسابات", dataIndex: "accountStaff", key: "accountStaff" },
+      { title: "موظفو الطباعة", dataIndex: "printingStaff", key: "printingStaff" },
+      { title: "موظفوا الجودة", dataIndex: "qualityStaff", key: "qualityStaff" },
+      { title: "موظفو التوصيل", dataIndex: "deliveryStaff", key: "deliveryStaff" },
+    
+    ],
+    formFields: [
+      { name: "name", label: "اسم المكتب", type: "text" },
+      { name: "code", label: "الكود", type: "number" },
+      { name: "receivingStaff", label: "موظفو الاستلام",  type: "number" },
+      {  name: "accountStaff", label: "موظفو الحسابات", type: "number" },
+      
+      { name: "printingStaff", label: "موظفو الطباعة",  type: "number" },
+      { name: "qualityStaff", label: "موظفوا الجودة",  type: "number" },
+      { name: "deliveryStaff", label: "موظفو التوصيل",  type: "number" },
+      { name: "governorateId", label: "رقم المحافظة",  type: "number" },
+    ],
+  },
+  "/admin/add-governorate": {
+    getEndpoint: "/api/Governorate",
+    postEndpoint: "/api/Governorate",
+    columns: [
+      { title: "اسم المحافظة", dataIndex: "name", key: "name" },
+      { title: "الكود", dataIndex: "code", key: "code" },
+    ],
+    formFields: [
+      { name: "name", label: "اسم المحافظة", type: "text" },
+      { name: "code", label: "الكود", type: "text" },
+    ],
+  },
+  "/admin/device-types": {
+    getEndpoint: "/api/devicetype",
+    postEndpoint: "/api/devicetype",
+    columns: [
+      { title: "اسم الجهاز", dataIndex: "name", key: "name" },
+      { title: "التفاصيل", dataIndex: "description", key: "description" },
+    ],
+    formFields: [
+      { name: "name", label: "اسم الجهاز", type: "text" },
+      { name: "description", label: "التفاصيل", type: "text" },
+    ],
+  },
+   "/admin/damage-types": {
+    getEndpoint: "/api/damageddevicetype/all",
+    postEndpoint: "/api/damageddevicetype/add",
+    columns: [
+      { title: "اسم تلف الجهاز", dataIndex: "name", key: "name" },
+      { title: "التفاصيل", dataIndex: "description", key: "description" },
+    ],
+    formFields: [
+      { name: "name", label: "اسم تلف الجهاز", type: "text" },
+      { name: "description", label: "التفاصيل", type: "text" },
+    ],
+  },
+  "/admin/passport-dammage-types": {
+    getEndpoint: "/api/damagedtype/all",
+    postEndpoint: "/api/damagedtype/add",
+    columns: [
+      { title: "اسم تلف الجواز", dataIndex: "name", key: "name" },
+      { title: "التفاصيل", dataIndex: "description", key: "description" },
+    ],
+    formFields: [
+      { name: "name", label: "اسم تلف الجواز", type: "text" },
+      { name: "description", label: "التفاصيل", type: "text" },
+    ],
+  },
+  "/admin/device-dammage-types": {
+    getEndpoint: "/api/DamagedDevice",
+    postEndpoint: "/api/damagedtype/add",
+    columns: [
+      { title: "التاريخ", dataIndex: "date", key: "date" },
+      { title: "اسم الجهاز", dataIndex: "deviceTypeName", key: "deviceTypeName" },
+      { title: "المحافظة", dataIndex: "governorateName", key: "governorateName" },
+      { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
+      { title: "اسم المستخدم", dataIndex: "profileFullName", key: "profileFullName" },],
+      formFields: [
+        { name: "date", label: "اسم تلف الجواز", type: "date" },
+        { name: "damagedDeviceTypeId", label: "اسم الجهاز", type: "dropdown" },
+
   // Centralized Configuration
   const config = {
     "/admin/add-office": {
@@ -152,6 +240,7 @@ export default function ListOfValueAdmin() {
       formFields: [
         { name: "date", label: "التاريخ", type: "date" },
         { name: "deviceTypeName", label: "اسم الجهاز", type: "dropdown" },
+
         { name: "governorateName", label: "اسم المحافظة", type: "dropdown" },
         { name: "officeName", label: "اسم المكتب", type: "dropdown" },
         { name: "profileFullName", label: "اسم المستخدم", type: "dropdown" },
