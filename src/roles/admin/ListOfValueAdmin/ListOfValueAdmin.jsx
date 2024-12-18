@@ -2,7 +2,16 @@ import React, { useState, useEffect } from "react";
 import "./ListOfValueAdmin.css";
 import Icons from "./../../../reusable elements/icons.jsx";
 import listOfValuesData from "./../../../data/ListOfValueAdmin.json";
-import { Table, Modal, Form, Input, Button, message, ConfigProvider, Select } from "antd";
+import {
+  Table,
+  Modal,
+  Form,
+  Input,
+  Button,
+  message,
+  ConfigProvider,
+  Select,
+} from "antd";
 import axios from "axios";
 import Url from "./../../../store/url.js";
 
@@ -23,92 +32,125 @@ export default function ListOfValueAdmin() {
   const [governorates, setGovernorates] = useState([]);
   const [damagedTypes, setDamagedTypes] = useState([]);
 
- // Centralized Configuration
- const config = {
-  "/admin/add-office": {
-    getEndpoint: "/api/office",
-    postEndpoint: "/api/office",
-    columns: [
-      { title: "اسم المكتب", dataIndex: "name", key: "name" },
-      { title: "الكود", dataIndex: "code", key: "code" },
-      { title: "موظفو الاستلام", dataIndex: "receivingStaff", key: "receivingStaff" },
-      { title: "موظفو الحسابات", dataIndex: "accountStaff", key: "accountStaff" },
-      
-      { title: "موظفو الطباعة", dataIndex: "printingStaff", key: "printingStaff" },
-      { title: "موظفوا الجودة", dataIndex: "qualityStaff", key: "qualityStaff" },
-      { title: "موظفو التوصيل", dataIndex: "deliveryStaff", key: "deliveryStaff" },
-    
-    ],
-    formFields: [
-      { name: "name", label: "اسم المكتب", type: "text" },
-      { name: "code", label: "الكود", type: "number" },
-      { name: "receivingStaff", label: "موظفو الاستلام",  type: "number" },
-      {  name: "accountStaff", label: "موظفو الحسابات", type: "number" },
-      
-      { name: "printingStaff", label: "موظفو الطباعة",  type: "number" },
-      { name: "qualityStaff", label: "موظفوا الجودة",  type: "number" },
-      { name: "deliveryStaff", label: "موظفو التوصيل",  type: "number" },
-    ],
-  },
-  "/admin/add-governorate": {
-    getEndpoint: "/api/Governorate",
-    postEndpoint: "/api/Governorate",
-    columns: [
-      { title: "اسم المحافظة", dataIndex: "name", key: "name" },
-      { title: "الكود", dataIndex: "code", key: "code" },
-    ],
-    formFields: [
-      { name: "name", label: "اسم المحافظة", type: "text" },
-      { name: "code", label: "الكود", type: "text" },
-    ],
-  },
-  "/admin/device-types": {
-    getEndpoint: "/api/devicetype",
-    postEndpoint: "/api/devicetype",
-    columns: [
-      { title: "اسم الجهاز", dataIndex: "name", key: "name" },
-      { title: "التفاصيل", dataIndex: "description", key: "description" },
-    ],
-    formFields: [
-      { name: "name", label: "اسم الجهاز", type: "text" },
-      { name: "description", label: "التفاصيل", type: "text" },
-    ],
-  },
-   "/admin/damage-types": {
-    getEndpoint: "/api/damageddevicetype/all",
-    postEndpoint: "/api/damageddevicetype/add",
-    columns: [
-      { title: "اسم تلف الجهاز", dataIndex: "name", key: "name" },
-      { title: "التفاصيل", dataIndex: "description", key: "description" },
-    ],
-    formFields: [
-      { name: "name", label: "اسم تلف الجهاز", type: "text" },
-      { name: "description", label: "التفاصيل", type: "text" },
-    ],
-  },
-  "/admin/passport-dammage-types": {
-    getEndpoint: "/api/damagedtype/all",
-    postEndpoint: "/api/damagedtype/add",
-    columns: [
-      { title: "اسم تلف الجواز", dataIndex: "name", key: "name" },
-      { title: "التفاصيل", dataIndex: "description", key: "description" },
-    ],
-    formFields: [
-      { name: "name", label: "اسم تلف الجواز", type: "text" },
-      { name: "description", label: "التفاصيل", type: "text" },
-    ],
-  },
-  "/admin/device-dammage-types": {
-    getEndpoint: "/api/DamagedDevice",
-    postEndpoint: "/api/damagedtype/add",
-    columns: [
-      { title: "التاريخ", dataIndex: "date", key: "date" },
-      { title: "اسم الجهاز", dataIndex: "deviceTypeName", key: "deviceTypeName" },
-      { title: "المحافظة", dataIndex: "governorateName", key: "governorateName" },
-      { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
-      { title: "اسم المستخدم", dataIndex: "profileFullName", key: "profileFullName" },],
+  // Centralized Configuration
+  const config = {
+    "/admin/add-office": {
+      getEndpoint: "/api/office",
+      postEndpoint: "/api/office",
+      columns: [
+        { title: "اسم المكتب", dataIndex: "name", key: "name" },
+        { title: "الكود", dataIndex: "code", key: "code" },
+        {
+          title: "موظفو الاستلام",
+          dataIndex: "receivingStaff",
+          key: "receivingStaff",
+        },
+        {
+          title: "موظفو الحسابات",
+          dataIndex: "accountStaff",
+          key: "accountStaff",
+        },
+
+        {
+          title: "موظفو الطباعة",
+          dataIndex: "printingStaff",
+          key: "printingStaff",
+        },
+        {
+          title: "موظفوا الجودة",
+          dataIndex: "qualityStaff",
+          key: "qualityStaff",
+        },
+        {
+          title: "موظفو التوصيل",
+          dataIndex: "deliveryStaff",
+          key: "deliveryStaff",
+        },
+      ],
       formFields: [
-        { name: "date", label: "اسم تلف الجواز", type: "date" },
+        { name: "name", label: "اسم المكتب", type: "text" },
+        { name: "code", label: "الكود", type: "number" },
+        { name: "receivingStaff", label: "موظفو الاستلام", type: "number" },
+        { name: "accountStaff", label: "موظفو الحسابات", type: "number" },
+
+        { name: "printingStaff", label: "موظفو الطباعة", type: "number" },
+        { name: "qualityStaff", label: "موظفوا الجودة", type: "number" },
+        { name: "deliveryStaff", label: "موظفو التوصيل", type: "number" },
+        { name: "governorateId", label: "|رقم المحافظة", type: "number" },
+      ],
+    },
+    "/admin/add-governorate": {
+      getEndpoint: "/api/Governorate",
+      postEndpoint: "/api/Governorate",
+      columns: [
+        { title: "اسم المحافظة", dataIndex: "name", key: "name" },
+        { title: "الكود", dataIndex: "code", key: "code" },
+      ],
+      formFields: [
+        { name: "name", label: "اسم المحافظة", type: "text" },
+        { name: "code", label: "الكود", type: "text" },
+      ],
+    },
+    "/admin/device-types": {
+      getEndpoint: "/api/devicetype",
+      postEndpoint: "/api/devicetype",
+      columns: [
+        { title: "اسم الجهاز", dataIndex: "name", key: "name" },
+        { title: "التفاصيل", dataIndex: "description", key: "description" },
+      ],
+      formFields: [
+        { name: "name", label: "اسم الجهاز", type: "text" },
+        { name: "description", label: "التفاصيل", type: "text" },
+      ],
+    },
+    "/admin/damage-types": {
+      getEndpoint: "/api/damageddevicetype/all",
+      postEndpoint: "/api/damageddevicetype/add",
+      columns: [
+        { title: "اسم تلف الجهاز", dataIndex: "name", key: "name" },
+        { title: "التفاصيل", dataIndex: "description", key: "description" },
+      ],
+      formFields: [
+        { name: "name", label: "اسم تلف الجهاز", type: "text" },
+        { name: "description", label: "التفاصيل", type: "text" },
+      ],
+    },
+    "/admin/passport-dammage-types": {
+      getEndpoint: "/api/damagedtype/all",
+      postEndpoint: "/api/damagedtype/add",
+      columns: [
+        { title: "اسم تلف الجواز", dataIndex: "name", key: "name" },
+        { title: "التفاصيل", dataIndex: "description", key: "description" },
+      ],
+      formFields: [
+        { name: "name", label: "اسم تلف الجواز", type: "text" },
+        { name: "description", label: "التفاصيل", type: "text" },
+      ],
+    },
+    "/admin/device-dammage-types": {
+      getEndpoint: "/api/DamagedDevice",
+      postEndpoint: "/api/damagedtype/add",
+      columns: [
+        { title: "التاريخ", dataIndex: "date", key: "date" },
+        {
+          title: "اسم الجهاز",
+          dataIndex: "deviceTypeName",
+          key: "deviceTypeName",
+        },
+        {
+          title: "المحافظة",
+          dataIndex: "governorateName",
+          key: "governorateName",
+        },
+        { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
+        {
+          title: "اسم المستخدم",
+          dataIndex: "profileFullName",
+          key: "profileFullName",
+        },
+      ],
+      formFields: [
+        { name: "date", label: "التاريخ", type: "date" },
         { name: "deviceTypeName", label: "اسم الجهاز", type: "dropdown" },
         { name: "governorateName", label: "اسم المحافظة", type: "dropdown" },
         { name: "officeName", label: "اسم المكتب", type: "dropdown" },
@@ -120,12 +162,27 @@ export default function ListOfValueAdmin() {
       postEndpoint: "/api/DamagedPassport",
       columns: [
         { title: "التاريخ", dataIndex: "date", key: "date" },
-        { title: "رقم الجواز", dataIndex: "passportNumber", key: "passportNumber" },
-        { title: "نوع تلف الجواز", dataIndex: "damagedTypeName", key: "damagedTypeName" },
-        { title: "المحافظة", dataIndex: "governorateName", key: "governorateName" },
+        {
+          title: "رقم الجواز",
+          dataIndex: "passportNumber",
+          key: "passportNumber",
+        },
+        {
+          title: "نوع تلف الجواز",
+          dataIndex: "damagedTypeName",
+          key: "damagedTypeName",
+        },
+        {
+          title: "المحافظة",
+          dataIndex: "governorateName",
+          key: "governorateName",
+        },
         { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
-        { title: "اسم المستخدم", dataIndex: "profileFullName", key: "profileFullName" },
-
+        {
+          title: "اسم المستخدم",
+          dataIndex: "profileFullName",
+          key: "profileFullName",
+        },
       ],
       formFields: [
         { name: "date", label: "التاريخ", type: "text" },
@@ -149,11 +206,12 @@ export default function ListOfValueAdmin() {
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const [officesResponse, governoratesResponse, damagedTypesResponse] = await Promise.all([
-          api.get("/api/office"),
-          api.get("/api/Governorate"),
-          api.get("/api/damagedtype/all"),
-        ]);
+        const [officesResponse, governoratesResponse, damagedTypesResponse] =
+          await Promise.all([
+            api.get("/api/office"),
+            api.get("/api/Governorate"),
+            api.get("/api/damagedtype/all"),
+          ]);
         setOffices(officesResponse.data);
         setGovernorates(governoratesResponse.data);
         setDamagedTypes(damagedTypesResponse.data);
@@ -214,7 +272,10 @@ export default function ListOfValueAdmin() {
         <div className="list-of-value-bar">
           <ul className="list-of-value-items">
             {ListOfValues.map((item, index) => (
-              <li key={index} className="list-of-value-item" onClick={() => handleItemClick(item)}>
+              <li
+                key={index}
+                className="list-of-value-item"
+                onClick={() => handleItemClick(item)}>
                 <a className="list-of-value-link">
                   <Icons type={item.icon} />
                   <span>{item.label}</span>
@@ -236,7 +297,7 @@ export default function ListOfValueAdmin() {
               columns={columns}
               dataSource={selectedData}
               loading={loading}
-              pagination={{ pageSize: 5, position: ["bottomCenter"] }}
+              pagination={{ pageSize: 10, position: ["bottomCenter"] }}
               bordered
             />
           </ConfigProvider>
@@ -244,15 +305,20 @@ export default function ListOfValueAdmin() {
       </div>
 
       {/* Modal */}
-      <Modal title="إضافة قيمة جديدة" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={null}>
+      <Modal
+        title="إضافة قيمة جديدة"
+        open={isModalOpen}
+        onCancel={() => setIsModalOpen(false)}
+        footer={null}>
         <Form form={form} onFinish={handleFormSubmit}>
           {formFields.map((field) => (
             <Form.Item
               key={field.name}
               name={field.name}
               label={field.label}
-              rules={[{ required: true, message: `يرجى إدخال ${field.label}` }]}
-            >
+              rules={[
+                { required: true, message: `يرجى إدخال ${field.label}` },
+              ]}>
               {field.type === "dropdown" ? (
                 <Select placeholder={`اختر ${field.label}`}>
                   {(field.name === "governorateName"

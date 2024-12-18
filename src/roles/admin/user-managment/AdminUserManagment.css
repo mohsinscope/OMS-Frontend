@@ -284,3 +284,14 @@
 .data-table-container svg {
   display: none;
 }
+.Admin-user-add-model-conatiner-form input {
+  height: 45px;
+}
+
+.model-container label {
+  font-size: large !important;
+}
+.model-container h1 {
+  padding-bottom: 10px;
+  font-size: large !important;
+}
