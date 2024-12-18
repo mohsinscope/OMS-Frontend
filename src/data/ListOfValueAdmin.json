@@ -1,41 +1,39 @@
 {
-    "ListOfValues": [
-      {
-        "label": "اضافة مكتب",
-        "icon": "office",
-        "path": "/admin/add-office"
-      },
-      {
-        "label": "اضافة محافظة",
-        "icon": "iraq",
-        "path": "/admin/add-governorate"
-      },
-      {
-        "label": "نوع تلف الجهاز",
-        "icon": "broken",
-        "path": "/admin/damage-types"
-      },
-      {
-        "label": "انواع الاجهزة",
-        "icon": "add-device",
-        "path": "/admin/device-types"
-      },
-      {
-        "label": "انواع تلف الجوازات",
-        "icon": "passport",
-        "path": "/admin/passport-dammage-types"
-      }
-      ,
-      {
-        "label": "الاجهزة التالفة",
-        "icon": "add-device",
-        "path": "/admin/device-dammage-types"
-      } ,
-      {
-        "label": "الجوازات التالفة",
-        "icon": "passport",
-        "path": "/admin/passport-dammage"
-      }
-    ]
-  }
-  
+  "ListOfValues": [
+    {
+      "label": "المكاتب",
+      "icon": "office",
+      "path": "/admin/add-office"
+    },
+    {
+      "label": "المحافظات",
+      "icon": "iraq",
+      "path": "/admin/add-governorate"
+    },
+    {
+      "label": "نوع تلف الجهاز",
+      "icon": "broken",
+      "path": "/admin/damage-types"
+    },
+    {
+      "label": "انواع الاجهزة",
+      "icon": "add-device",
+      "path": "/admin/device-types"
+    },
+    {
+      "label": "انواع تلف الجوازات",
+      "icon": "passport",
+      "path": "/admin/passport-dammage-types"
+    },
+    {
+      "label": "الاجهزة التالفة",
+      "icon": "add-device",
+      "path": "/admin/device-dammage-types"
+    },
+    {
+      "label": "الجوازات التالفة",
+      "icon": "passport",
+      "path": "/admin/passport-dammage"
+    }
+  ]
+}

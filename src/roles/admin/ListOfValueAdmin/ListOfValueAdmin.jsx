@@ -14,6 +14,7 @@ import {
 } from "antd";
 import axios from "axios";
 import Url from "./../../../store/url.js";
+import useAuthStore from "./../../../store/store.js";
 
 const { Option } = Select;
 
@@ -31,7 +32,8 @@ export default function ListOfValueAdmin() {
   const [offices, setOffices] = useState([]);
   const [governorates, setGovernorates] = useState([]);
   const [damagedTypes, setDamagedTypes] = useState([]);
-
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
+  const [activeIndex, setActiveIndex] = useState(null); // Track active index
 
   // Centralized Configuration
   const config = {
@@ -51,7 +53,6 @@ export default function ListOfValueAdmin() {
           dataIndex: "accountStaff",
           key: "accountStaff",
         },
-
         {
           title: "موظفو الطباعة",
           dataIndex: "printingStaff",
@@ -225,7 +226,8 @@ export default function ListOfValueAdmin() {
   }, []);
 
   // Handle sidebar click
-  const handleItemClick = async (item) => {
+  const handleItemClick = async (item, index) => {
+    setActiveIndex(index); // Set active index
     const selected = config[item.path];
     if (!selected) {
       console.error("No configuration found for path:", item.path);
@@ -270,14 +272,21 @@ export default function ListOfValueAdmin() {
 
   return (
     <>
-      <div className="list-of-value-container" dir="rtl">
+      <div
+        className={`list-of-value-container ${
+          isSidebarCollapsed ? "sidebar-collapsed" : "list-of-value-container"
+        }`}
+        dir="rtl">
         <div className="list-of-value-bar">
           <ul className="list-of-value-items">
             {ListOfValues.map((item, index) => (
               <li
                 key={index}
-                className="list-of-value-item"
-                onClick={() => handleItemClick(item)}>
+                className={`list-of-value-item ${
+                  activeIndex === index ? "active" : ""
+                }`} // Apply active class
+                onClick={() => handleItemClick(item, index)} // Pass index to handle active state
+              >
                 <a className="list-of-value-link">
                   <Icons type={item.icon} />
                   <span>{item.label}</span>
@@ -307,43 +316,69 @@ export default function ListOfValueAdmin() {
       </div>
 
       {/* Modal */}
-      <Modal
-        title="إضافة قيمة جديدة"
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={null}>
-        <Form form={form} onFinish={handleFormSubmit}>
-          {formFields.map((field) => (
-            <Form.Item
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              rules={[
-                { required: true, message: `يرجى إدخال ${field.label}` },
-              ]}>
-              {field.type === "dropdown" ? (
-                <Select placeholder={`اختر ${field.label}`}>
-                  {(field.name === "governorateName"
-                    ? governorates
-                    : field.name === "officeName"
-                    ? offices
-                    : damagedTypes
-                  ).map((option) => (
-                    <Option key={option.id} value={option.id}>
-                      {option.name}
-                    </Option>
-                  ))}
-                </Select>
-              ) : (
-                <Input type={field.type} />
-              )}
-            </Form.Item>
-          ))}
-          <Button type="primary" htmlType="submit" block>
-            إضافة
-          </Button>
-        </Form>
-      </Modal>
+      <ConfigProvider direction="rtl">
+        <Modal
+          title="إضافة قيمة جديدة"
+          open={isModalOpen}
+          onCancel={() => setIsModalOpen(false)}
+          footer={null}>
+          <Form form={form} onFinish={handleFormSubmit}>
+            {formFields.map((field) => (
+              <Form.Item
+                key={field.name}
+                name={field.name}
+                labelCol={{ span: 24 }} // Ensures the label takes full width
+                wrapperCol={{ span: 24 }} // Ensures the field takes full width below the label
+                labelAlign="right" // Aligns the label to the right in RTL
+                rules={[
+                  { required: true, message: `يرجى إدخال ${field.label}` },
+                ]}
+                style={{ marginBottom: "16px" }} // Optional: To add space below the entire item
+              >
+                <label
+                  style={{
+                    fontSize: "18px",
+                    fontWeight: "bold",
+                    marginBottom: "8px", // Adjusts space between label and input field
+                    display: "block", // Ensures label is a block element
+                  }}>
+                  {field.label}
+                </label>
+                {field.type === "dropdown" ? (
+                  <Select
+                    placeholder={""}
+                    style={{ height: "45px", lineHeight: "45px" }} // Set height for Select
+                  >
+                    {(field.name === "governorateName"
+                      ? governorates
+                      : field.name === "officeName"
+                      ? offices
+                      : damagedTypes
+                    ).map((option) => (
+                      <Option
+                        key={option.id}
+                        value={option.id}
+                        style={{
+                          fontSize: "16px",
+                        }}>
+                        {option.name}
+                      </Option>
+                    ))}
+                  </Select>
+                ) : (
+                  <Input
+                    type={field.type}
+                    style={{ height: "45px", lineHeight: "45px" }} // Set height for Input
+                  />
+                )}
+              </Form.Item>
+            ))}
+            <Button type="primary" htmlType="submit" block>
+              إضافة
+            </Button>
+          </Form>
+        </Modal>
+      </ConfigProvider>
     </>
   );
 }

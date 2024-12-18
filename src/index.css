@@ -24,6 +24,7 @@ textarea {
 table thead tr th {
   background-color: #f3f4f6 !important;
 }
-table thead {
+table thead,
+table {
   font-size: large !important;
 }
