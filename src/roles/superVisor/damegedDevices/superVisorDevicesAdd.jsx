@@ -1,17 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Form, Input, Button, DatePicker, message, Upload } from "antd";
+import { Form, Input, Button, DatePicker, message, Upload, Select } from "antd";
 import axios from "axios";
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store"; // Import the store to access JWT
 import moment from "moment";
 
 const { Dragger } = Upload;
+const { Option } = Select;
 
 const SuperVisorDevicesAdd = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]); // State to track uploaded files
+  const [damagedDeviceTypes, setDamagedDeviceTypes] = useState([]); // State for damaged device types
+  const [deviceTypes, setDeviceTypes] = useState([]); // State for device types
   const [isSubmitting, setIsSubmitting] = useState(false); // Submission state tracker
 
   const { accessToken } = useAuthStore(); // Access JWT token from the store
@@ -25,6 +28,34 @@ const SuperVisorDevicesAdd = () => {
   const handleBack = () => {
     navigate(-1);
   };
+
+  // Fetch damaged device types and device types on component mount
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        // Fetch damaged device types
+        const damagedDeviceTypeResponse = await axios.get(`${Url}/api/damageddevicetype/all`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`, // Add JWT token
+          },
+        });
+        setDamagedDeviceTypes(damagedDeviceTypeResponse.data);
+
+        // Fetch device types
+        const deviceTypeResponse = await axios.get(`${Url}/api/devicetype`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`, // Add JWT token
+          },
+        });
+        setDeviceTypes(deviceTypeResponse.data);
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error.response?.data || error.message);
+        message.error("حدث خطأ أثناء جلب البيانات");
+      }
+    };
+
+    fetchDropdownData();
+  }, [accessToken]); // Fetch data only when the accessToken is available
 
   // Function to attach files to the entity
   const attachFiles = async (entityId) => {
@@ -57,12 +88,12 @@ const SuperVisorDevicesAdd = () => {
     try {
       // Step 1: Submit the form to create a new damaged device
       const payload = {
-        deviceNumber: values.deviceNumber, // Device number
+        serialNumber: values.serialNumber, // Serial number
         date: values.date
           ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ") // Format the date
           : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"), // Default to current date
-        damageReason: values.damageReason, // Reason for the damage
-        notes: values.notes || "", // Additional notes (optional)
+        damagedDeviceTypeId: values.damagedDeviceTypeId, // ID of the damaged device type
+        deviceTypeId: values.deviceTypeId, // ID of the device type
         officeId: staticOfficeId, // Static office ID
         governorateId: staticGovernorateId, // Static governorate ID
         profileId: staticProfileId, // Static profile ID
@@ -121,22 +152,43 @@ const SuperVisorDevicesAdd = () => {
           layout="vertical"
           style={{ direction: "rtl" }}
         >
-          {/* Device Number Input */}
+          {/* Serial Number Input */}
           <Form.Item
-            name="deviceNumber"
-            label="رقم الجهاز"
-            rules={[{ required: true, message: "يرجى إدخال رقم الجهاز" }]}
+            name="serialNumber"
+            label="الرقم التسلسلي"
+            rules={[{ required: true, message: "يرجى إدخال الرقم التسلسلي" }]}
           >
-            <Input placeholder="أدخل رقم الجهاز" />
+            <Input placeholder="أدخل الرقم التسلسلي" />
           </Form.Item>
 
-          {/* Damage Reason Input */}
+          {/* Device Type ID Input */}
           <Form.Item
-            name="damageReason"
-            label="سبب العطل"
-            rules={[{ required: true, message: "يرجى إدخال سبب العطل" }]}
+            name="deviceTypeId"
+            label="نوع الجهاز"
+            rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}
           >
-            <Input placeholder="أدخل سبب العطل" />
+            <Select placeholder="اختر نوع الجهاز">
+              {deviceTypes.map((type) => (
+                <Option key={type.id} value={type.id}>
+                  {type.name}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          {/* Damaged Device Type ID Input */}
+          <Form.Item
+            name="damagedDeviceTypeId"
+            label="نوع العطل"
+            rules={[{ required: true, message: "يرجى اختيار نوع العطل" }]}
+          >
+            <Select placeholder="اختر نوع العطل">
+              {damagedDeviceTypes.map((type) => (
+                <Option key={type.id} value={type.id}>
+                  {type.name}
+                </Option>
+              ))}
+            </Select>
           </Form.Item>
 
           {/* Date Picker */}
@@ -146,15 +198,6 @@ const SuperVisorDevicesAdd = () => {
             rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
           >
             <DatePicker placeholder="اختر التاريخ" style={{ width: "100%" }} />
-          </Form.Item>
-
-          {/* Notes Input */}
-          <Form.Item
-            name="notes"
-            label="الملاحظات"
-            rules={[{ required: false }]} // Notes are optional
-          >
-            <Input.TextArea placeholder="أدخل الملاحظات" rows={4} />
           </Form.Item>
 
           {/* File Uploader for Attachments */}
