@@ -1,22 +1,48 @@
 import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Table, message, Button } from "antd";
 import { Link } from "react-router-dom";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
-import devicesData from "./../../../data/devices.json";
+import axios from "axios";
+import Url from "./../../../store/url";
+import moment from "moment";
 
 export default function SuperVisorDevices() {
-  const { isSidebarCollapsed } = useAuthStore();
+  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
+  const [devicesList, setDevicesList] = useState([]);
   const [filterData, setFilterData] = useState({});
-
-  // Map the devicesData and ensure each record has a unique ID
-  const generalInfoList = devicesData.map((damagedDevice, index) => ({
-    id: index + 1, // Add a unique ID based on the index
-    ...damagedDevice.generalInfo,
-  }));
-  const [devicesList, setdevicesList] = useState(generalInfoList);
+  const [loading, setLoading] = useState(true);
   const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
+
+  // Fetch devices for the user's office and filter by profileId
+  useEffect(() => {
+    const fetchDevices = async () => {
+      if (!profile || !profile.officeId) {
+        message.error("Office ID is missing from the user profile.");
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${Url}/api/DamagedDevice/office/${profile.officeId}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        const devices = response.data.filter((device) => device.profileId === profile.profileId);
+        setDevicesList(devices);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching devices:", error.response?.data || error.message);
+        message.error("حدث خطأ أثناء جلب البيانات");
+        setLoading(false);
+      }
+    };
+
+    fetchDevices();
+  }, [accessToken, profile]);
+
   const fields = [
     {
       name: "سبب التلف",
@@ -24,9 +50,8 @@ export default function SuperVisorDevices() {
       placeholder: "",
       type: "dropdown",
       options: [
-        { value: "البطارية", label: "البطارية" },
-        { value: "حرق", label: "حرق" },
-        { value: "الواير", label: "الواير" },
+        { value: "Broken Screen", label: "Broken Screen" },
+        { value: "تلف مصنعي", label: "تلف مصنعي" },
       ],
     },
     {
@@ -35,7 +60,7 @@ export default function SuperVisorDevices() {
       placeholder: "",
       type: "dropdown",
       options: [
-        { value: "Lenovo", label: "Lenovo" },
+        { value: "Smartphone", label: "Smartphone" },
         { value: "Scanner", label: "Scanner" },
       ],
     },
@@ -51,16 +76,16 @@ export default function SuperVisorDevices() {
     setFilterData(formData);
 
     // Filter the devices based on the form data
-    const filteredDevices = generalInfoList.filter((generalInfo) => {
+    const filteredDevices = devicesList.filter((device) => {
       const matchesReason =
         !formData["سبب التلف"] ||
-        generalInfo["سبب التلف"] === formData["سبب التلف"];
+        device.damagedDeviceTypesName === formData["سبب التلف"];
       const matchesType =
         !formData["نوع الجهاز"] ||
-        generalInfo["نوع الجهاز"] === formData["نوع الجهاز"];
+        device.deviceTypeName === formData["نوع الجهاز"];
       const matchesDate =
         !formData["التاريخ"] ||
-        generalInfo["التاريخ"].startsWith(formData["التاريخ"]);
+        device.date.startsWith(formData["التاريخ"]);
 
       return matchesReason && matchesType && matchesDate;
     });
@@ -69,51 +94,73 @@ export default function SuperVisorDevices() {
       message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
     }
 
-    setdevicesList(filteredDevices);
+    setDevicesList(filteredDevices);
   };
 
   const handleReset = () => {
     setFilterData({});
-    setdevicesList(generalInfoList);
+    setLoading(true);
+    // Reload devices from the API
+    const fetchDevices = async () => {
+      if (!profile || !profile.officeId) {
+        message.error("Office ID is missing from the user profile.");
+        return;
+      }
+
+      try {
+        const response = await axios.get(`${Url}/api/DamagedDevice/office/${profile.officeId}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        const devices = response.data.filter((device) => device.profileId === profile.profileId);
+        setDevicesList(devices);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching devices:", error.response?.data || error.message);
+        message.error("حدث خطأ أثناء جلب البيانات");
+        setLoading(false);
+      }
+    };
+
+    fetchDevices();
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
   const columns = [
     {
       title: "نوع الجهاز",
-      dataIndex: "نوع الجهاز",
-      key: "deviceType",
+      dataIndex: "deviceTypeName",
+      key: "deviceTypeName",
       className: "table-column-device-type",
     },
     {
       title: "سبب التلف",
-      dataIndex: "سبب التلف",
-      key: "damageReason",
+      dataIndex: "damagedDeviceTypesName",
+      key: "damagedDeviceTypesName",
       className: "table-column-damage-reason",
     },
     {
       title: "التاريخ",
-      dataIndex: "التاريخ",
+      dataIndex: "date",
       key: "date",
       className: "table-column-date",
+      render: (text) => moment(text).format("YYYY-MM-DD"), // Format the date using moment
     },
     {
       title: "التفاصيل",
       key: "details",
       className: "table-column-details",
-      render: (_, record) => {
-        const device = devicesData.find(
-          (exp) => exp.generalInfo["نوع الجهاز"] === record["نوع الجهاز"]
-        );
-        return (
-          <Link
-            to="/supervisor/damegedDevices/show"
-            state={{ device }}
-            className="supervisor-devices-dameged-details-link">
-            عرض
-          </Link>
-        );
-      },
+      render: (_, record) => (
+        <Link
+          to="/supervisor/damegedDevices/show"
+          state={{ device: record }}
+          className="supervisor-devices-dameged-details-link"
+        >
+          عرض
+        </Link>
+      ),
     },
   ];
 
@@ -124,12 +171,14 @@ export default function SuperVisorDevices() {
           ? "sidebar-collapsed"
           : "supervisor-devices-dameged-page"
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
       <div
         className={`supervisor-devices-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
-        }`}>
+        }`}
+      >
         <TextFieldForm
           fields={fields}
           onFormSubmit={handleFilterSubmit}
@@ -157,7 +206,11 @@ export default function SuperVisorDevices() {
           columns={columns}
           rowKey={(record) => record.id} // Unique rowKey based on ID
           bordered
-          pagination={{ pageSize: 15 }}
+          loading={loading}
+          pagination={{
+            pageSize: 15,
+            position: ["bottomCenter"], // Center the pagination controls
+          }}
           locale={{ emptyText: "لا توجد بيانات" }}
           className="supervisor-devices-dameged-table"
         />

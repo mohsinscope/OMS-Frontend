@@ -9,12 +9,11 @@ import moment from "moment";
 const { Dragger } = Upload;
 const { Option } = Select;
 
-const SuperVisorDevicesAdd = () => {
+const SuperVisorDammagePassportAdd = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [fileList, setFileList] = useState([]); // State to track uploaded files
-  const [damagedDeviceTypes, setDamagedDeviceTypes] = useState([]); // State for damaged device types
-  const [deviceTypes, setDeviceTypes] = useState([]); // State for device types
+  const [fileList, setFileList] = useState([]); // File list for attachments
+  const [damagedTypes, setDamagedTypes] = useState([]); // State for damaged passport types
   const [isSubmitting, setIsSubmitting] = useState(false); // Submission state tracker
 
   const { accessToken } = useAuthStore(); // Access JWT token from the store
@@ -29,33 +28,24 @@ const SuperVisorDevicesAdd = () => {
     navigate(-1);
   };
 
-  // Fetch damaged device types and device types on component mount
+  // Fetch damaged types on component mount
   useEffect(() => {
-    const fetchDropdownData = async () => {
+    const fetchDamagedTypes = async () => {
       try {
-        // Fetch damaged device types
-        const damagedDeviceTypeResponse = await axios.get(`${Url}/api/damageddevicetype/all`, {
+        const response = await axios.get(`${Url}/api/damagedtype/all`, {
           headers: {
             Authorization: `Bearer ${accessToken}`, // Add JWT token
           },
         });
-        setDamagedDeviceTypes(damagedDeviceTypeResponse.data);
-
-        // Fetch device types
-        const deviceTypeResponse = await axios.get(`${Url}/api/devicetype`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`, // Add JWT token
-          },
-        });
-        setDeviceTypes(deviceTypeResponse.data);
+        setDamagedTypes(response.data);
       } catch (error) {
-        console.error("Error fetching dropdown data:", error.response?.data || error.message);
-        message.error("حدث خطأ أثناء جلب البيانات");
+        console.error("Error fetching damaged types:", error.response?.data || error.message);
+        message.error("حدث خطأ أثناء جلب بيانات أسباب التلف");
       }
     };
 
-    fetchDropdownData();
-  }, [accessToken]); // Fetch data only when the accessToken is available
+    fetchDamagedTypes();
+  }, [accessToken]);
 
   // Function to attach files to the entity
   const attachFiles = async (entityId) => {
@@ -63,7 +53,7 @@ const SuperVisorDevicesAdd = () => {
       const formData = new FormData();
       formData.append("file", file.originFileObj); // Attach file
       formData.append("entityId", entityId); // Add entity ID from response
-      formData.append("EntityType", "DamagedDevice"); // Entity type for devices
+      formData.append("EntityType", "DamagedPassport"); // Entity type for passports
 
       try {
         const response = await axios.post(`${Url}/api/Attachment/add-attachment`, formData, {
@@ -86,14 +76,13 @@ const SuperVisorDevicesAdd = () => {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Submit the form to create a new damaged device
+      // Step 1: Submit the form to create a new damaged passport
       const payload = {
-        serialNumber: values.serialNumber, // Serial number
+        passportNumber: values.passportNumber, // Passport number
         date: values.date
           ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ") // Format the date
           : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"), // Default to current date
-        damagedDeviceTypeId: values.damagedDeviceTypeId, // ID of the damaged device type
-        deviceTypeId: values.deviceTypeId, // ID of the device type
+        damagedTypeId: values.damagedTypeId, // ID of the damaged type
         officeId: staticOfficeId, // Static office ID
         governorateId: staticGovernorateId, // Static governorate ID
         profileId: staticProfileId, // Static profile ID
@@ -101,20 +90,20 @@ const SuperVisorDevicesAdd = () => {
 
       console.log("Submitting Payload:", payload);
 
-      const damagedDeviceResponse = await axios.post(`${Url}/api/DamagedDevice`, payload, {
+      const damagedPassportResponse = await axios.post(`${Url}/api/DamagedPassport`, payload, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`, // Add JWT token
         },
       });
 
-      console.log("Damaged Device Response:", damagedDeviceResponse);
+      console.log("Damaged Passport Response:", damagedPassportResponse);
 
       // Extract entity ID from the response
-      const entityId = damagedDeviceResponse.data?.id || damagedDeviceResponse.data;
+      const entityId = damagedPassportResponse.data?.id || damagedPassportResponse.data;
 
       if (!entityId) {
-        console.error("DamagedDevice response does not contain 'id'. Full response:", damagedDeviceResponse.data);
+        console.error("DamagedPassport response does not contain 'id'. Full response:", damagedPassportResponse.data);
         throw new Error("Failed to retrieve entity ID from the response.");
       }
 
@@ -143,47 +132,32 @@ const SuperVisorDevicesAdd = () => {
   };
 
   return (
-    <div className="supervisor-devices-add-container" dir="rtl">
-      <h1>إضافة جهاز تالف</h1> {/* Page title in Arabic */}
-      <div className="devices-add-details-container">
+    <div className="supervisor-damaged-passport-add-container" dir="rtl">
+      <h1>إضافة جواز تالف</h1> {/* Page title in Arabic */}
+      <div className="add-details-container">
         <Form
           form={form}
           onFinish={handleFormSubmit}
           layout="vertical"
           style={{ direction: "rtl" }}
         >
-          {/* Serial Number Input */}
+          {/* Passport Number Input */}
           <Form.Item
-            name="serialNumber"
-            label="الرقم التسلسلي"
-            rules={[{ required: true, message: "يرجى إدخال الرقم التسلسلي" }]}
+            name="passportNumber"
+            label="رقم الجواز"
+            rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}
           >
-            <Input placeholder="أدخل الرقم التسلسلي" />
+            <Input placeholder="أدخل رقم الجواز" />
           </Form.Item>
 
-          {/* Device Type ID Input */}
+          {/* Damaged Type ID Input */}
           <Form.Item
-            name="deviceTypeId"
-            label="نوع الجهاز"
-            rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}
+            name="damagedTypeId"
+            label="سبب التلف"
+            rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}
           >
-            <Select placeholder="اختر نوع الجهاز">
-              {deviceTypes.map((type) => (
-                <Option key={type.id} value={type.id}>
-                  {type.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          {/* Damaged Device Type ID Input */}
-          <Form.Item
-            name="damagedDeviceTypeId"
-            label="نوع العطل"
-            rules={[{ required: true, message: "يرجى اختيار نوع العطل" }]}
-          >
-            <Select placeholder="اختر نوع العطل">
-              {damagedDeviceTypes.map((type) => (
+            <Select placeholder="اختر سبب التلف">
+              {damagedTypes.map((type) => (
                 <Option key={type.id} value={type.id}>
                   {type.name}
                 </Option>
@@ -232,4 +206,4 @@ const SuperVisorDevicesAdd = () => {
   );
 };
 
-export default SuperVisorDevicesAdd;
+export default SuperVisorDammagePassportAdd;
