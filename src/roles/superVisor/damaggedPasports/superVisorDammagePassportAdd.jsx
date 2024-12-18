@@ -14,13 +14,11 @@ const SuperVisorDammagePassportAdd = () => {
   const [fileList, setFileList] = useState([]); // File list for attachments
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Access the accessToken from the store
-  const { accessToken } = useAuthStore();
+  // Access user details and token from the store
+  const { accessToken, profile } = useAuthStore();
 
-  // Static values for officeId, governorateId, and profileId
-  const staticOfficeId = 1;
-  const staticGovernorateId = 1;
-  const staticProfileId = 2;
+  // Destructure the necessary fields from the profile
+  const { profileId, governorateId, officeId } = profile || {};
 
   // Handle Back Button
   const handleBack = () => {
@@ -57,16 +55,20 @@ const SuperVisorDammagePassportAdd = () => {
     setIsSubmitting(true);
 
     try {
+      if (!profileId || !governorateId || !officeId) {
+        throw new Error("Missing user profile details. Please log in again.");
+      }
+
       // Step 1: Create Damaged Passport
       const payload = {
-        passportNumber: values.passportNumber, // رقم الجواز
+        passportNumber: values.passportNumber, // Passport number
         date: values.date
           ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
-          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-        damagedTypeId: values.damagedTypeId, // Numeric value for damage type
-        officeId: staticOfficeId,
-        governorateId: staticGovernorateId,
-        profileId: staticProfileId,
+          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"), // Default to current date
+        damagedTypeId: values.damagedTypeId, // Damage type ID
+        officeId, // Dynamic office ID from user profile
+        governorateId, // Dynamic governorate ID from user profile
+        profileId, // Dynamic profile ID from user profile
       };
 
       console.log("Submitting Damaged Passport Payload:", payload);

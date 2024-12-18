@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./signIn.css";
 import Logo from "../assets/Asset 2.png";
-import useAuthStore from "./../store/store.js";
+import useAuthStore from "./../store/store.js"; // Custom store for managing auth state
 import axios from "axios";
 import Icons from "../reusable elements/icons.jsx";
+import BASE_URL from "../store/url.js"; // Import the base URL
 
 const SignInPage = () => {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ const SignInPage = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility
+
+  // Access global store functions and state
   const { login, isLoggedIn } = useAuthStore();
 
   const navigateToDashboard = useCallback(() => {
@@ -26,6 +29,29 @@ const SignInPage = () => {
     }
   }, [isLoggedIn, navigateToDashboard]);
 
+  const fetchUserProfile = async (token) => {
+    try {
+      const response = await axios.get(`${BASE_URL}/api/profiles/user-profile`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Pass the token as a Bearer token
+        },
+      });
+
+      const userProfile = response.data;
+
+      console.log("User Profile Response:", userProfile);
+
+      // Save profile data to the global store
+      login(token, userProfile);
+
+      // Navigate to dashboard
+      navigateToDashboard();
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error);
+      setLoginError("فشل استرداد ملف تعريف المستخدم.");
+    }
+  };
+
   const handleSubmit = async () => {
     if (!username || !password) {
       setLoginError("يرجى إدخال اسم المستخدم وكلمة السر");
@@ -33,18 +59,18 @@ const SignInPage = () => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5214/api/account/login",
-        { username, password }
-      );
+      // Call login API
+      const response = await axios.post(`${BASE_URL}/api/account/login`, {
+        username,
+        password,
+      });
 
       const { token } = response.data;
 
-      console.log(response.data); // Log the API response to inspect its structure
+      console.log("Login Response:", response.data);
 
-      login(token); // Pass the token to the login function
-
-      navigateToDashboard();
+      // Fetch user profile data with the token
+      await fetchUserProfile(token);
     } catch (error) {
       console.error("Login failed:", error);
       const errorMessage =
