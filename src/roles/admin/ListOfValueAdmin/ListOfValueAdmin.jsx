@@ -33,7 +33,6 @@ export default function ListOfValueAdmin() {
       { title: "الكود", dataIndex: "code", key: "code" },
       { title: "موظفو الاستلام", dataIndex: "receivingStaff", key: "receivingStaff" },
       { title: "موظفو الحسابات", dataIndex: "accountStaff", key: "accountStaff" },
-      
       { title: "موظفو الطباعة", dataIndex: "printingStaff", key: "printingStaff" },
       { title: "موظفوا الجودة", dataIndex: "qualityStaff", key: "qualityStaff" },
       { title: "موظفو التوصيل", dataIndex: "deliveryStaff", key: "deliveryStaff" },
@@ -48,6 +47,7 @@ export default function ListOfValueAdmin() {
       { name: "printingStaff", label: "موظفو الطباعة",  type: "number" },
       { name: "qualityStaff", label: "موظفوا الجودة",  type: "number" },
       { name: "deliveryStaff", label: "موظفو التوصيل",  type: "number" },
+      { name: "governorateId", label: "رقم المحافظة",  type: "number" },
     ],
   },
   "/admin/add-governorate": {
@@ -109,7 +109,7 @@ export default function ListOfValueAdmin() {
       { title: "اسم المستخدم", dataIndex: "profileFullName", key: "profileFullName" },],
       formFields: [
         { name: "date", label: "اسم تلف الجواز", type: "date" },
-        { name: "deviceTypeName", label: "اسم الجهاز", type: "dropdown" },
+        { name: "damagedDeviceTypeId", label: "اسم الجهاز", type: "dropdown" },
         { name: "governorateName", label: "اسم المحافظة", type: "dropdown" },
         { name: "officeName", label: "اسم المكتب", type: "dropdown" },
         { name: "profileFullName", label: "اسم المستخدم", type: "dropdown" },

@@ -5,7 +5,7 @@ import Dashboard from "./../../../pages/dashBoard.jsx";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import "./AdminUserManagment.css";
 import useAuthStore from "./../../../store/store.js";
-
+import Url from './../../../store/url.js';
 const { Option } = Select;
 
 const AdminUserManagment = () => {
@@ -106,7 +106,7 @@ const AdminUserManagment = () => {
       };
 
       const response = await axios.post(
-        "http://localhost:5214/api/account/register",
+        `${Url}/api/account/register`,
         payload,
         {
           headers: {

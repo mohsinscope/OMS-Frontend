@@ -5,7 +5,8 @@ const useAuthStore = create((set) => ({
   isLoggedIn: false, // Tracks the user's login status
   accessToken: null, // Stores the JWT token
   isSidebarCollapsed: false, // Tracks the state of the sidebar
-  searchVisible: false,
+  searchVisible: false, // Tracks search visibility
+
   // Initialize the store from localStorage on app load
   initializeAuth: () => {
     const token = localStorage.getItem("accessToken");
@@ -17,11 +18,9 @@ const useAuthStore = create((set) => ({
 
         set({
           user: {
-            username: payload.unique_name || "Guest",
-            role: payload.role || "Unknown Role",
-            fullName: payload.fullName || "Unknown Name",
-            governorateName: payload.governorateName || "Unknown Governorate",
-            officeName: payload.officeName || "Unknown Office",
+            id: payload.nameid || null, // User ID from the token
+            username: payload.unique_name || "Guest", // Username
+            role: payload.role || "Unknown Role", // Role
           },
           isLoggedIn: true,
           accessToken: token,
@@ -44,30 +43,24 @@ const useAuthStore = create((set) => ({
       const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
       const payload = JSON.parse(atob(base64)); // Decode the token payload
 
-      // Save token to localStorage
-      localStorage.setItem("accessToken", token);
+      localStorage.setItem("accessToken", token); // Save token to localStorage
 
       set({
         user: {
+          id: payload.nameid || null,
           username: payload.unique_name || "Guest",
           role: payload.role || "Unknown Role",
-          fullName: payload.fullName || "Unknown Name",
-          governorateName: payload.governorateName || "Unknown Governorate",
-          officeName: payload.officeName || "Unknown Office",
         },
         isLoggedIn: true,
         accessToken: token,
       });
     } catch (error) {
       console.error("Failed to decode token:", error);
-
-      // Reset state if decoding fails
       set({
         user: null,
         isLoggedIn: false,
         accessToken: null,
       });
-
       localStorage.removeItem("accessToken");
     }
   },
@@ -75,14 +68,14 @@ const useAuthStore = create((set) => ({
   // Logout function to clear user data and token
   logout: () => {
     localStorage.removeItem("accessToken"); // Clear token from localStorage
-
     set({
       user: null,
       isLoggedIn: false,
       accessToken: null,
     });
   },
-  // Add the action to toggle the visibility of search
+
+  // Toggle search visibility
   toggleSearch: () => set((state) => ({ searchVisible: !state.searchVisible })),
 }));
 
