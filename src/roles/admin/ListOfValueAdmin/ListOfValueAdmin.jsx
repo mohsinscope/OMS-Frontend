@@ -1,384 +1,217 @@
-import React, { useState, useEffect } from "react";
-import "./ListOfValueAdmin.css";
-import Icons from "./../../../reusable elements/icons.jsx";
-import listOfValuesData from "./../../../data/ListOfValueAdmin.json";
+// Importing necessary libraries and components
+import React, { useState, useEffect } from "react"; // React hooks for state management and lifecycle
+import "./ListOfValueAdmin.css"; // Styles for the component
+import Icons from "./../../../reusable elements/icons.jsx"; // Custom icon components
+import listOfValuesData from "./../../../data/ListOfValueAdmin.json"; // JSON data for the list of values
 import {
-  Table,
-  Modal,
-  Form,
-  Input,
-  Button,
-  message,
-  ConfigProvider,
-  Select,
+  Table, // Ant Design Table component for displaying data
+  Modal, // Ant Design Modal for pop-up dialogs
+  Form, // Ant Design Form for form handling
+  Input, // Ant Design Input component for text input
+  Button, // Ant Design Button component
+  message, // Ant Design message for notifications
+  ConfigProvider, // Ant Design ConfigProvider for localization
+  Select, // Ant Design Select component for dropdowns
+  Space, // Ant Design Space for spacing components
 } from "antd";
-import axios from "axios";
-import Url from "./../../../store/url.js";
-import useAuthStore from "./../../../store/store.js";
 
-const { Option } = Select;
 
-export default function ListOfValueAdmin() {
-  const { ListOfValues } = listOfValuesData;
+  const [selectedData, setSelectedData] = useState([]); // Holds data to display in the table
+  const [loading, setLoading] = useState(false); // Loading state for API requests
+  const [columns, setColumns] = useState([]); // Table columns configuration
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal visibility state
+  const [isEditMode, setIsEditMode] = useState(false); // Determines if modal is in edit or add mode
+  const [selectedConfig, setSelectedConfig] = useState(null); // Holds the configuration for the selected item
+  const [formFields, setFormFields] = useState([]); // Holds form fields for the selected item
+  const [form] = Form.useForm(); // Ant Design form instance
+  const [editingId, setEditingId] = useState(null); // ID of the record being edited
+  const [currentPath, setCurrentPath] = useState(null); // Current selected item's path
+  const [currentLabel, setCurrentLabel] = useState("تفاصيل القيمة"); // Current label displayed as the section title
 
-  // State
-  const [selectedData, setSelectedData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [columns, setColumns] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedConfig, setSelectedConfig] = useState(null);
-  const [formFields, setFormFields] = useState([]);
-  const [form] = Form.useForm();
-  const [offices, setOffices] = useState([]);
-  const [governorates, setGovernorates] = useState([]);
-  const [damagedTypes, setDamagedTypes] = useState([]);
-  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
-  const [activeIndex, setActiveIndex] = useState(null); // Track active index
-
-  // Centralized Configuration
-  const config = {
-    "/admin/add-office": {
-      getEndpoint: "/api/office",
-      postEndpoint: "/api/office",
-      columns: [
-        { title: "اسم المكتب", dataIndex: "name", key: "name" },
-        { title: "الكود", dataIndex: "code", key: "code" },
-        {
-          title: "موظفو الاستلام",
-          dataIndex: "receivingStaff",
-          key: "receivingStaff",
-        },
-        {
-          title: "موظفو الحسابات",
-          dataIndex: "accountStaff",
-          key: "accountStaff",
-        },
-        {
-          title: "موظفو الطباعة",
-          dataIndex: "printingStaff",
-          key: "printingStaff",
-        },
-        {
-          title: "موظفوا الجودة",
-          dataIndex: "qualityStaff",
-          key: "qualityStaff",
-        },
-        {
-          title: "موظفو التوصيل",
-          dataIndex: "deliveryStaff",
-          key: "deliveryStaff",
-        },
-      ],
-      formFields: [
-        { name: "name", label: "اسم المكتب", type: "text" },
-        { name: "code", label: "الكود", type: "number" },
-        { name: "receivingStaff", label: "موظفو الاستلام", type: "number" },
-        { name: "accountStaff", label: "موظفو الحسابات", type: "number" },
-
-        { name: "printingStaff", label: "موظفو الطباعة", type: "number" },
-        { name: "qualityStaff", label: "موظفوا الجودة", type: "number" },
-        { name: "deliveryStaff", label: "موظفو التوصيل", type: "number" },
-        { name: "governorateId", label: "|رقم المحافظة", type: "number" },
-      ],
-    },
-    "/admin/add-governorate": {
-      getEndpoint: "/api/Governorate",
-      postEndpoint: "/api/Governorate",
-      columns: [
-        { title: "اسم المحافظة", dataIndex: "name", key: "name" },
-        { title: "الكود", dataIndex: "code", key: "code" },
-      ],
-      formFields: [
-        { name: "name", label: "اسم المحافظة", type: "text" },
-        { name: "code", label: "الكود", type: "text" },
-      ],
-    },
-    "/admin/device-types": {
-      getEndpoint: "/api/devicetype",
-      postEndpoint: "/api/devicetype",
-      columns: [
-        { title: "اسم الجهاز", dataIndex: "name", key: "name" },
-        { title: "التفاصيل", dataIndex: "description", key: "description" },
-      ],
-      formFields: [
-        { name: "name", label: "اسم الجهاز", type: "text" },
-        { name: "description", label: "التفاصيل", type: "text" },
-      ],
-    },
-    "/admin/damage-types": {
-      getEndpoint: "/api/damageddevicetype/all",
-      postEndpoint: "/api/damageddevicetype/add",
-      columns: [
-        { title: "اسم تلف الجهاز", dataIndex: "name", key: "name" },
-        { title: "التفاصيل", dataIndex: "description", key: "description" },
-      ],
-      formFields: [
-        { name: "name", label: "اسم تلف الجهاز", type: "text" },
-        { name: "description", label: "التفاصيل", type: "text" },
-      ],
-    },
-    "/admin/passport-dammage-types": {
-      getEndpoint: "/api/damagedtype/all",
-      postEndpoint: "/api/damagedtype/add",
-      columns: [
-        { title: "اسم تلف الجواز", dataIndex: "name", key: "name" },
-        { title: "التفاصيل", dataIndex: "description", key: "description" },
-      ],
-      formFields: [
-        { name: "name", label: "اسم تلف الجواز", type: "text" },
-        { name: "description", label: "التفاصيل", type: "text" },
-      ],
-    },
-    "/admin/device-dammage-types": {
-      getEndpoint: "/api/DamagedDevice",
-      postEndpoint: "/api/damagedtype/add",
-      columns: [
-        { title: "التاريخ", dataIndex: "date", key: "date" },
-        {
-          title: "اسم الجهاز",
-          dataIndex: "deviceTypeName",
-          key: "deviceTypeName",
-        },
-        {
-          title: "المحافظة",
-          dataIndex: "governorateName",
-          key: "governorateName",
-        },
-        { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
-        {
-          title: "اسم المستخدم",
-          dataIndex: "profileFullName",
-          key: "profileFullName",
-        },
-      ],
-      formFields: [
-        { name: "date", label: "التاريخ", type: "date" },
-        { name: "deviceTypeName", label: "اسم الجهاز", type: "dropdown" },
-
-        { name: "governorateName", label: "اسم المحافظة", type: "dropdown" },
-        { name: "officeName", label: "اسم المكتب", type: "dropdown" },
-        { name: "profileFullName", label: "اسم المستخدم", type: "dropdown" },
-      ],
-    },
-    "/admin/passport-dammage": {
-      getEndpoint: "/api/DamagedPassport",
-      postEndpoint: "/api/DamagedPassport",
-      columns: [
-        { title: "التاريخ", dataIndex: "date", key: "date" },
-        {
-          title: "رقم الجواز",
-          dataIndex: "passportNumber",
-          key: "passportNumber",
-        },
-        {
-          title: "نوع تلف الجواز",
-          dataIndex: "damagedTypeName",
-          key: "damagedTypeName",
-        },
-        {
-          title: "المحافظة",
-          dataIndex: "governorateName",
-          key: "governorateName",
-        },
-        { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
-        {
-          title: "اسم المستخدم",
-          dataIndex: "profileFullName",
-          key: "profileFullName",
-        },
-      ],
-      formFields: [
-        { name: "date", label: "التاريخ", type: "text" },
-        { name: "passportNumber", label: "رقم الجواز", type: "text" },
-        { name: "damagedTypeName", label: "نوع تلف الجواز", type: "dropdown" },
-        { name: "governorateName", label: "المحافظة", type: "dropdown" },
-        { name: "officeName", label: "اسم المكتب", type: "dropdown" },
-        { name: "profileFullName", label: "اسم المستخدم", type: "text" },
-      ],
-    },
-  };
-
+  // Axios instance with base URL and authorization header
   const api = axios.create({
     baseURL: Url,
     headers: {
-      Authorization: `Bearer ${localStorage.getItem("token")}`,
+      Authorization: `Bearer ${localStorage.getItem("token")}`, // Token retrieved from localStorage
     },
   });
 
-  // Fetch dropdown data for offices, governorates, and damaged types
+  // Runs whenever `currentPath` changes to fetch data and set up columns/form fields
   useEffect(() => {
-    const fetchDropdownData = async () => {
-      try {
-        const [officesResponse, governoratesResponse, damagedTypesResponse] =
-          await Promise.all([
-            api.get("/api/office"),
-            api.get("/api/Governorate"),
-            api.get("/api/damagedtype/all"),
-          ]);
-        setOffices(officesResponse.data);
-        setGovernorates(governoratesResponse.data);
-        setDamagedTypes(damagedTypesResponse.data);
-      } catch (error) {
-        console.error("Error fetching dropdown data:", error);
-      }
-    };
-    fetchDropdownData();
-  }, []);
+    if (currentPath && selectedConfig) {
+      fetchData(selectedConfig.getEndpoint); // Fetch data for the selected path
+      setupColumnsAndFormFields(); // Configure table columns and form fields
+    }
+  }, [currentPath]); // Dependency array to track changes to `currentPath`
 
-  // Handle sidebar click
-  const handleItemClick = async (item, index) => {
-    setActiveIndex(index); // Set active index
-    const selected = config[item.path];
+
     if (!selected) {
-      console.error("No configuration found for path:", item.path);
+      message.error("لم يتم العثور على التكوين المطلوب"); // Error message if config is not found
+      return;
+    }
+    setCurrentPath(item.path); // Update the current path
+    setSelectedConfig(selected); // Set the selected configuration
+    setCurrentLabel(item.label); // Update the label displayed at the top
+  };
+
+  // Fetches data from the API for the selected item
+  const fetchData = async (endpoint) => {
+    setLoading(true); // Set loading to true while fetching
+    try {
+      const response = await api.get(endpoint); // Make GET request
+      const formattedData = response.data.map((item) => ({
+        ...item,
+        key: item.id?.toString() || Math.random().toString(), // Add a unique key for each record
+      }));
+      setSelectedData(formattedData); // Update state with fetched data
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      message.error("فشل تحميل البيانات"); // Error message
+      setSelectedData([]); // Reset data on failure
+    } finally {
+      setLoading(false); // Set loading to false after completion
+    }
+  };
+
+  // Handles adding a new record
+  const handleAdd = async (values) => {
+    if (!selectedConfig) {
+      message.error("الرجاء اختيار نوع البيانات أولاً"); // Error message if no item is selected
       return;
     }
 
-    setSelectedConfig(selected);
-    setColumns(selected.columns);
-    setFormFields(selected.formFields);
-
     setLoading(true);
     try {
-      const response = await api.get(selected.getEndpoint);
-      setSelectedData(response.data);
+      const endpoint = selectedConfig.postEndpoint; // POST endpoint from config
+      await api.post(endpoint, values); // Make POST request with form values
+
+      message.success("تمت إضافة البيانات بنجاح"); // Success message
+      setIsModalOpen(false); // Close modal
+      form.resetFields(); // Reset form
+      await fetchData(selectedConfig.getEndpoint); // Refresh table data
     } catch (error) {
-      console.error("Error fetching data:", error);
-      setSelectedData([]);
+      console.error("Error adding record:", error);
+      message.error("حدث خطأ أثناء الإضافة"); // Error message
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle form submission
-  const handleFormSubmit = async (values) => {
+  // Handles updating an existing record
+  const handleUpdate = async (values) => {
+    if (!selectedConfig || !editingId) {
+      message.error("بيانات التحديث غير مكتملة"); // Error message if data is incomplete
+      return;
+    }
+
     setLoading(true);
     try {
-      await api.post(selectedConfig.postEndpoint, values);
-      message.success("تمت الإضافة بنجاح!");
-      setIsModalOpen(false);
-      form.resetFields();
+      let endpoint = selectedConfig.putEndpoint(editingId); // PUT endpoint from config
+      let payload = { id: editingId, ...values }; // Default payload structure
 
-      // Fetch updated data for the table
-      const updatedResponse = await api.get(selectedConfig.getEndpoint);
-      setSelectedData(updatedResponse.data);
+      switch (currentPath) {
+        case "/admin/add-office": // Special handling for offices
+          endpoint = `/api/office/${editingId}`; // Custom endpoint
+          payload = {
+            officeId: parseInt(editingId),
+            ...values,
+            code: parseInt(values.code), // Ensure integers for certain fields
+            receivingStaff: parseInt(values.receivingStaff),
+            accountStaff: parseInt(values.accountStaff),
+            printingStaff: parseInt(values.printingStaff),
+            qualityStaff: parseInt(values.qualityStaff),
+            deliveryStaff: parseInt(values.deliveryStaff),
+            governorateId: parseInt(values.governorateId),
+          };
+          break;
+        // Other case-specific adjustments here if needed
+      }
+
+      console.log("Updating record at:", endpoint);
+      console.log("Payload:", payload);
+
+      const response = await api.put(endpoint, payload); // Make PUT request
+
+      if (response.status === 200 || response.status === 204) {
+        message.success("تم تحديث البيانات بنجاح"); // Success message
+        setIsModalOpen(false); // Close modal
+        form.resetFields(); // Reset form
+        await fetchData(selectedConfig.getEndpoint); // Refresh data
+        setIsEditMode(false);
+        setEditingId(null);
+      } else {
+        throw new Error("Failed to update record."); // Throw error if response is invalid
+      }
     } catch (error) {
-      console.error("Error adding new entry:", error);
-      message.error("حدث خطأ أثناء الإضافة");
+      console.error("Error updating record:", error);
+      message.error("فشل تحديث السجل. تحقق من البيانات أو الاتصال بالخادم."); // Error message
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <>
-      <div
-        className={`list-of-value-container ${
-          isSidebarCollapsed ? "sidebar-collapsed" : "list-of-value-container"
-        }`}
-        dir="rtl">
-        <div className="list-of-value-bar">
-          <ul className="list-of-value-items">
-            {ListOfValues.map((item, index) => (
-              <li
-                key={index}
-                className={`list-of-value-item ${
-                  activeIndex === index ? "active" : ""
-                }`} // Apply active class
-                onClick={() => handleItemClick(item, index)} // Pass index to handle active state
-              >
-                <a className="list-of-value-link">
-                  <Icons type={item.icon} />
-                  <span>{item.label}</span>
-                </a>
-              </li>
+
             ))}
-          </ul>
-        </div>
+          </Select>
+        );
+      case "date":
+        return <Input type="date" />;
+      case "number":
+        return <Input type="number" />;
+      default:
+        return <Input type={field.type || "text"} />;
+    }
+  };
 
-        <div className="list-of-value-details-section-left">
-          <div className="top-list-of-value-details-section-left">
-            <h2>تفاصيل القيمة</h2>
-            <Button type="primary" onClick={() => setIsModalOpen(true)}>
-              إضافة <Icons type="add" />
-            </Button>
-          </div>
-          <ConfigProvider direction="rtl">
-            <Table
-              columns={columns}
-              dataSource={selectedData}
-              loading={loading}
-              pagination={{ pageSize: 10, position: ["bottomCenter"] }}
-              bordered
-            />
-          </ConfigProvider>
-        </div>
+  // Render the component
+  return (
+    <div className="list-of-value-container" dir="rtl">
+      <div className="list-of-value-bar">
+        <ul className="list-of-value-items">
+          {ListOfValues.map((item, index) => (
+            <li
+              key={index}
+              className={`list-of-value-item ${
+                currentPath === item.path ? "active" : ""
+              }`}
+              onClick={() => handleItemClick(item)}
+            >
+              <a className="list-of-value-link">
+                <Icons type={item.icon} />
+                <span>{item.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
       </div>
 
-      {/* Modal */}
-      <ConfigProvider direction="rtl">
-        <Modal
-          title="إضافة قيمة جديدة"
-          open={isModalOpen}
-          onCancel={() => setIsModalOpen(false)}
-          footer={null}>
-          <Form form={form} onFinish={handleFormSubmit}>
-            {formFields.map((field) => (
-              <Form.Item
-                key={field.name}
-                name={field.name}
-                labelCol={{ span: 24 }} // Ensures the label takes full width
-                wrapperCol={{ span: 24 }} // Ensures the field takes full width below the label
-                labelAlign="right" // Aligns the label to the right in RTL
-                rules={[
-                  { required: true, message: `يرجى إدخال ${field.label}` },
-                ]}
-                style={{ marginBottom: "16px" }} // Optional: To add space below the entire item
-              >
-                <label
-                  style={{
-                    fontSize: "18px",
-                    fontWeight: "bold",
-                    marginBottom: "8px", // Adjusts space between label and input field
-                    display: "block", // Ensures label is a block element
-                  }}>
-                  {field.label}
-                </label>
-                {field.type === "dropdown" ? (
-                  <Select
-                    placeholder={""}
-                    style={{ height: "45px", lineHeight: "45px" }} // Set height for Select
-                  >
-                    {(field.name === "governorateName"
-                      ? governorates
-                      : field.name === "officeName"
-                      ? offices
-                      : damagedTypes
-                    ).map((option) => (
-                      <Option
-                        key={option.id}
-                        value={option.id}
-                        style={{
-                          fontSize: "16px",
-                        }}>
-                        {option.name}
-                      </Option>
-                    ))}
-                  </Select>
-                ) : (
-                  <Input
-                    type={field.type}
-                    style={{ height: "45px", lineHeight: "45px" }} // Set height for Input
-                  />
-                )}
-              </Form.Item>
-            ))}
-            <Button type="primary" htmlType="submit" block>
-              إضافة
-            </Button>
-          </Form>
-        </Modal>
-      </ConfigProvider>
-    </>
-  );
-}
+      <div className="list-of-value-details-section-left">
+        <div className="top-list-of-value-details-section-left">
+          <h2>{currentLabel}</h2>
+          <Button
+            type="primary"
+            onClick={handleAddNew}
+            disabled={!selectedConfig || loading}
+          >
+            إضافة <Icons type="add" />
+          </Button>
+        </div>
+
+        <ConfigProvider direction="rtl">
+          <Table
+            columns={columns}
+            dataSource={selectedData}
+            loading={loading}
+            pagination={{
+              pageSize: 10,
+              position: ["bottomCenter"],
+              showSizeChanger: true,
+              showTotal: (total) => `إجمالي السجلات: ${total}`,
+            }}
+            bordered
+            locale={{ emptyText: "لا توجد بيانات" }}
+          />
+        </ConfigProvider>
+      </div>
+
+
