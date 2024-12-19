@@ -1,116 +1,81 @@
-import React, { useState } from "react";
-import { Image, Button, Upload } from "antd"; // Importing Ant Design components
-import { LeftOutlined, RightOutlined, UploadOutlined } from "@ant-design/icons"; // Icons for controls
-import './styles/imagePreViewer.css';
+import React, { useState, useEffect } from "react";
+import { Image, Button } from "antd"; // Importing Ant Design components
+import { LeftOutlined, RightOutlined, DeleteOutlined } from "@ant-design/icons"; // Icons for controls
+import "./styles/imagePreViewer.css";
 
-export default function ImagePreviewer() {
-  const [uploadedImages, setUploadedImages] = useState([]); // State to store uploaded image URLs
+export default function ImagePreviewer({ uploadedImages, onDeleteImage }) {
   const [currentIndex, setCurrentIndex] = useState(0); // State to track the currently displayed image index
 
-  // Function to handle image uploads
-  const handleImageUpload = ({ file }) => {
-    const reader = new FileReader(); // Create a new FileReader to read the file
-    reader.onload = (e) => {
-      // Once the file is read, update the uploaded images state
-      setUploadedImages((prev) => [...prev, e.target.result]);
-    };
-    reader.readAsDataURL(file); // Read the uploaded file as a data URL
-  };
+  useEffect(() => {
+    // Reset the index if uploaded images change
+    setCurrentIndex(0);
+  }, [uploadedImages]);
 
-  // Function to go to the next image
   const handleNext = () => {
     if (currentIndex < uploadedImages.length - 1) {
       setCurrentIndex((prev) => prev + 1);
     }
   };
 
-  // Function to go to the previous image
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
     }
   };
 
-  // Function to delete the current image
   const handleDelete = () => {
-    setUploadedImages((prev) =>
-      prev.filter((_, index) => index !== currentIndex)
-    );
-
-    // Adjust the current index after deletion
-    if (currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
-    } else if (currentIndex === 0 && uploadedImages.length === 1) {
-      setCurrentIndex(0); // Reset to 0 if there are no images left
+    if (uploadedImages && uploadedImages.length > 0) {
+      onDeleteImage(currentIndex); // Call the parent delete function with the current index
+      // Adjust the index if it's out of bounds after deletion
+      setCurrentIndex((prev) => (prev > 0 ? prev - 1 : 0));
     }
   };
 
+  if (!uploadedImages || uploadedImages.length === 0) {
+    return <p></p>; // Show a message if no images are available
+  }
+
   return (
     <div className="image-previewer-container">
-      {/* Label Section */}
-      <label className="upload-label">اختر المرفقات</label> {/* Label for image uploader */}
-
-      {/* Upload Section */}
-      <div className="upload-section">
-        <Upload
-          accept="image/*" // Accept only image files
-          customRequest={handleImageUpload} // Handle file upload manually
-          showUploadList={false} // Hide the default upload list from Ant Design
-        >
-          <Button icon={<UploadOutlined />} className="upload-button">
-            رفع الصور {/* Upload button label */}
-          </Button>
-        </Upload>
+      <div className="image-display">
+        <Image
+          width={800}
+          height={400}
+          src={uploadedImages[currentIndex]}
+          alt={`Image ${currentIndex + 1}`}
+          className="image-preview-item"
+        />
       </div>
 
-      {/* Display Uploaded Image */}
-      {uploadedImages.length > 0 && (
-        <>
-          <div className="image-display">
-            <Image
-              width={300} // Set the image width
-              height={300} // Set the image height
-              src={uploadedImages[currentIndex]} // Display the current image
-              alt={`Image ${currentIndex + 1}`} // Alt text for accessibility
-              className="image-preview-item" // Class for styling
-            />
-          </div>
+      <div className="image-pagination-controls">
+        <Button
+          icon={<LeftOutlined />}
+          onClick={handlePrevious}
+          disabled={currentIndex === 0}
+          className="pagination-button previous-button">
+          السابق
+        </Button>
+        <span className="pagination-info">
+          {currentIndex + 1} / {uploadedImages.length}
+        </span>
+        <Button
+          icon={<RightOutlined />}
+          onClick={handleNext}
+          disabled={currentIndex === uploadedImages.length - 1}
+          className="pagination-button next-button">
+          التالي
+        </Button>
+      </div>
 
-          {/* Pagination Controls */}
-          <div className="image-pagination-controls">
-            <Button
-              icon={<LeftOutlined />} // Left arrow icon
-              onClick={handlePrevious} // Function to go to the previous image
-              disabled={currentIndex === 0} // Disable if on the first image
-              className="pagination-button previous-button"
-            >
-              السابق {/* Label for previous button */}
-            </Button>
-            <span className="pagination-info">
-              {currentIndex + 1} / {uploadedImages.length} {/* Display the current image index */}
-            </span>
-            <Button
-              icon={<RightOutlined />} // Right arrow icon
-              onClick={handleNext} // Function to go to the next image
-              disabled={currentIndex === uploadedImages.length - 1} // Disable if on the last image
-              className="pagination-button next-button"
-            >
-              التالي {/* Label for next button */}
-            </Button>
-          </div>
-
-          {/* Delete Button */}
-          <div className="delete-button-container">
-            <Button
-              onClick={handleDelete} // Delete the current image
-              danger
-              className="delete-button"
-            >
-              حذف {/* Label for delete button */}
-            </Button>
-          </div>
-        </>
-      )}
+      <div className="image-delete-button-container">
+        <Button
+          icon={<DeleteOutlined />}
+          onClick={handleDelete}
+          danger
+          className="delete-button">
+          حذف
+        </Button>
+      </div>
     </div>
   );
 }
