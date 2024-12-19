@@ -14,14 +14,7 @@ import {
   Select, // Ant Design Select component for dropdowns
   Space, // Ant Design Space for spacing components
 } from "antd";
-import axios from "axios"; // Axios for API requests
-import Url from "./../../../store/url.js"; // Base URL configuration
-import Config from "./../../../store/configrationOfListOfValue.js"; // Configuration for each list of value item
 
-// Main functional component
-export default function ListOfValueAdmin() {
-  // Initializing states
-  const { ListOfValues } = listOfValuesData; // Extracting list of values from JSON
 
   const [selectedData, setSelectedData] = useState([]); // Holds data to display in the table
   const [loading, setLoading] = useState(false); // Loading state for API requests
@@ -51,42 +44,7 @@ export default function ListOfValueAdmin() {
     }
   }, [currentPath]); // Dependency array to track changes to `currentPath`
 
-  // Configures table columns and form fields based on the selected configuration
-  const setupColumnsAndFormFields = () => {
-    const enhancedColumns = [
-      ...selectedConfig.columns, // Adding columns from the selected configuration
-      {
-        title: "إجراءات", // Title for actions column
-        key: "actions", // Key for the column
-        render: (_, record) => (
-          <Space>
-            <Button
-              type="link"
-              onClick={() => handleEdit(record)} // Opens modal for editing
-              disabled={loading} // Disables button while loading
-            >
-              تعديل
-            </Button>
-            <Button
-              type="link"
-              danger
-              onClick={() => handleDelete(record.id)} // Deletes the record
-              disabled={loading} // Disables button while loading
-            >
-              حذف
-            </Button>
-          </Space>
-        ),
-      },
-    ];
 
-    setColumns(enhancedColumns); // Update table columns
-    setFormFields(selectedConfig.formFields); // Update form fields
-  };
-
-  // Handles clicking on a list item to load its data
-  const handleItemClick = (item) => {
-    const selected = Config[item.path]; // Fetch configuration based on the path
     if (!selected) {
       message.error("لم يتم العثور على التكوين المطلوب"); // Error message if config is not found
       return;
@@ -192,76 +150,7 @@ export default function ListOfValueAdmin() {
     }
   };
 
-  // Handles deleting a record
-  const handleDelete = async (id) => {
-    if (!id || !selectedConfig) {
-      message.error("معرف السجل غير متوفر");
-      return;
-    }
 
-    Modal.confirm({
-      title: "تأكيد الحذف",
-      content: "هل أنت متأكد من حذف هذا السجل؟",
-      okText: "نعم",
-      cancelText: "لا",
-      onOk: async () => {
-        setLoading(true);
-        try {
-          const endpoint = selectedConfig.deleteEndpoint(id);
-          const response = await api.delete(endpoint);
-
-          if (response.status === 200 || response.status === 204) {
-            message.success("تم حذف السجل بنجاح");
-            await fetchData(selectedConfig.getEndpoint);
-          } else {
-            throw new Error("Failed to delete record.");
-          }
-        } catch (error) {
-          console.error("Error deleting record:", error);
-          message.error("فشل حذف السجل. تحقق من الاتصال بالخادم.");
-        } finally {
-          setLoading(false);
-        }
-      },
-    });
-  };
-
-  // Opens modal with data for editing
-  const handleEdit = (record) => {
-    if (!record.id) {
-      message.error("معرف السجل غير متوفر");
-      return;
-    }
-
-    setIsEditMode(true);
-    setEditingId(record.id); // Set the ID of the record being edited
-    setIsModalOpen(true); // Open the modal
-    form.setFieldsValue(record); // Populate the form with record data
-  };
-
-  // Opens modal for adding a new record
-  const handleAddNew = () => {
-    if (!selectedConfig) {
-      message.error("الرجاء اختيار نوع البيانات أولاً");
-      return;
-    }
-
-    setIsEditMode(false);
-    setEditingId(null);
-    form.resetFields(); // Clear the form
-    setIsModalOpen(true); // Open the modal
-  };
-
-  // Renders individual form fields based on configuration
-  const renderFormField = (field) => {
-    switch (field.type) {
-      case "dropdown":
-        return (
-          <Select>
-            {(field.options || []).map((option) => (
-              <Select.Option key={option.value} value={option.value}>
-                {option.label}
-              </Select.Option>
             ))}
           </Select>
         );
@@ -325,52 +214,4 @@ export default function ListOfValueAdmin() {
         </ConfigProvider>
       </div>
 
-      <Modal
-        title={isEditMode ? "تعديل القيمة" : "إضافة قيمة جديدة"}
-        open={isModalOpen}
-        onCancel={() => {
-          setIsModalOpen(false);
-          setEditingId(null);
-          setIsEditMode(false);
-          form.resetFields();
-        }}
-        footer={null}
-        maskClosable={false}
-      >
-        <Form
-          form={form}
-          onFinish={isEditMode ? handleUpdate : handleAdd}
-          layout="vertical"
-        >
-          {formFields.map((field) => (
-            <Form.Item
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              rules={[{ required: true, message: `الرجاء إدخال ${field.label}` }]}
-            >
-              {renderFormField(field)}
-            </Form.Item>
-          ))}
-          <Form.Item>
-            <Space style={{ width: "100%", justifyContent: "flex-end" }}>
-              <Button
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setEditingId(null);
-                  setIsEditMode(false);
-                  form.resetFields();
-                }}
-              >
-                إلغاء
-              </Button>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                {isEditMode ? "تحديث" : "إضافة"}
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
-    </div>
-  );
-}
+
