@@ -1,5 +1,13 @@
-.delete-button-container{
-    display: flex;
-    justify-content: center;
-    margin: 10px 10px 10px 0;
+.delete-button-container {
+  display: flex;
+  justify-content: center;
+  margin: auto;
+}
+.image-delete-button-container {
+  display: flex;
+  justify-content: center;
+  margin: auto;
+}
+.delete-button {
+  margin-top: 20px;
 }

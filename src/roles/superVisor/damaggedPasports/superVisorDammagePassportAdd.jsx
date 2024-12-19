@@ -2,56 +2,51 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Input, Button, DatePicker, message, Upload } from "antd";
 import axios from "axios";
+import "./superVisorDammagePassportAdd.css";
 import Url from "./../../../store/url.js";
-import useAuthStore from "../../../store/store"; // Import the store
+import useAuthStore from "../../../store/store";
 import moment from "moment";
+import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 
 const { Dragger } = Upload;
 
 const SuperVisorDammagePassportAdd = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [fileList, setFileList] = useState([]); // File list for attachments
+  const [fileList, setFileList] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]); // State for image previews
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Access user details and token from the store
+  const { isSidebarCollapsed } = useAuthStore();
   const { accessToken, profile } = useAuthStore();
 
-  // Destructure the necessary fields from the profile
   const { profileId, governorateId, officeId } = profile || {};
 
-  // Handle Back Button
   const handleBack = () => {
     navigate(-1);
   };
 
-  // Function to attach files
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
       const formData = new FormData();
       formData.append("file", file.originFileObj);
       formData.append("entityId", entityId);
-      formData.append("EntityType", "DamagedPassport"); // Entity type
+      formData.append("EntityType", "DamagedPassport");
 
       try {
-        console.log("Sending Attachment Payload:", formData);
-        const response = await axios.post(`${Url}/api/Attachment/add-attachment`, formData, {
+        await axios.post(`${Url}/api/Attachment/add-attachment`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${accessToken}`,
           },
         });
-        console.log("Attachment Response:", response.data);
       } catch (error) {
-        console.error("Attachment Error Details:", error.response?.data || error.message);
         throw new Error("Failed to attach files. Operation aborted.");
       }
     }
   };
 
-  // Handle Form Submit
   const handleFormSubmit = async (values) => {
-    if (isSubmitting) return; // Prevent duplicate submissions
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
@@ -59,123 +54,150 @@ const SuperVisorDammagePassportAdd = () => {
         throw new Error("Missing user profile details. Please log in again.");
       }
 
-      // Step 1: Create Damaged Passport
       const payload = {
-        passportNumber: values.passportNumber, // Passport number
+        passportNumber: values.passportNumber,
         date: values.date
           ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
-          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"), // Default to current date
-        damagedTypeId: values.damagedTypeId, // Damage type ID
-        officeId, // Dynamic office ID from user profile
-        governorateId, // Dynamic governorate ID from user profile
-        profileId, // Dynamic profile ID from user profile
+          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
+        damagedTypeId: values.damagedTypeId,
+        officeId,
+        governorateId,
+        profileId,
       };
 
-      console.log("Submitting Damaged Passport Payload:", payload);
+      const damagedPassportResponse = await axios.post(
+        `${Url}/api/DamagedPassport`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
-      const damagedPassportResponse = await axios.post(`${Url}/api/DamagedPassport`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      console.log("Damaged Passport Response:", damagedPassportResponse);
-
-      // Extract entityId from the response
-      const entityId = damagedPassportResponse.data?.id || damagedPassportResponse.data;
+      const entityId =
+        damagedPassportResponse.data?.id || damagedPassportResponse.data;
 
       if (!entityId) {
-        console.error("DamagedPassport response does not contain 'id'. Full response:", damagedPassportResponse.data);
         throw new Error("Failed to retrieve entity ID from the response.");
       }
 
-      console.log("Entity ID:", entityId);
-
-      // Step 2: Attach Images
       if (fileList.length > 0) {
         try {
           await attachFiles(entityId);
           message.success("تم إرسال البيانات والمرفقات بنجاح");
         } catch (attachmentError) {
-          console.error("Attachment Error:", attachmentError);
           throw new Error("Failed to attach files. Operation aborted.");
         }
       } else {
         message.success("تم إرسال البيانات بنجاح بدون مرفقات");
       }
 
-      navigate(-1); // Redirect back after successful submission
+      navigate(-1);
     } catch (error) {
-      console.error("Submission Error:", error);
-      message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات");
+      message.error(
+        error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const handleFileChange = (info) => {
+    const updatedFiles = info.fileList;
+    setFileList(updatedFiles);
+
+    const previews = updatedFiles.map((file) =>
+      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
+    );
+    setPreviewUrls(previews);
+  };
+  const handleDeleteImage = (index) => {
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index)); // Remove the selected image from preview
+    setFileList((prev) => prev.filter((_, i) => i !== index)); // Remove the corresponding file from fileList
+  };
+
   return (
-    <div className="supervisor-damaged-passport-add-container" dir="rtl">
-      <h1>إضافة جواز تالف</h1>
+    <div
+      className={`supervisor-damaged-passport-add-containe ${
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
+      }`}
+      dir="rtl">
+      <h1 className="SuperVisor-title-conatiner">إضافة جواز تالف</h1>
       <div className="add-details-container">
         <Form
           form={form}
           onFinish={handleFormSubmit}
           layout="vertical"
-          style={{ direction: "rtl" }}
-        >
-          {/* Passport Number */}
-          <Form.Item
-            name="passportNumber"
-            label="رقم الجواز"
-            rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}
-          >
-            <Input placeholder="أدخل رقم الجواز" />
-          </Form.Item>
+          style={{ direction: "rtl", display: "flex", gap: "30px" }}>
+          <div className="add-damegedpassport-section-container">
+            <div className="add-passport-fields-container">
+              <Form.Item
+                name="passportNumber"
+                label="رقم الجواز"
+                rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
+                <Input placeholder="أدخل رقم الجواز" />
+              </Form.Item>
 
-          {/* Damage Type ID */}
-          <Form.Item
-            name="damagedTypeId"
-            label="سبب التلف"
-            rules={[{ required: true, message: "يرجى إدخال سبب التلف كرقم" }]}
-          >
-            <Input placeholder="أدخل سبب التلف (رقم)" type="number" />
-          </Form.Item>
+              <Form.Item
+                name="damagedTypeId"
+                label="سبب التلف"
+                rules={[{ required: true, message: "يرجى إدخال سبب التلف" }]}>
+                <Input placeholder="أدخل سبب التلف (رقم)" type="number" />
+              </Form.Item>
 
-          {/* Date */}
-          <Form.Item
-            name="date"
-            label="التاريخ"
-            rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
-          >
-            <DatePicker placeholder="اختر التاريخ" style={{ width: "100%" }} />
-          </Form.Item>
-
-          {/* File Uploader for Attachments */}
-          <Dragger
-            fileList={fileList}
-            onChange={(info) => setFileList(info.fileList)}
-            beforeUpload={() => false} // Prevent automatic upload
-            multiple
-          >
-            <p className="ant-upload-drag-icon">📂</p>
-            <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
-          </Dragger>
-
-          {/* Action Buttons */}
-          <div className="image-previewer-section">
-            <Button
-              type="primary"
-              htmlType="submit"
-              className="submit-button"
-              loading={isSubmitting}
-              disabled={isSubmitting}
-            >
-              الإرسال
-            </Button>
-            <Button onClick={handleBack} className="add-back-button" disabled={isSubmitting}>
-              الرجوع
-            </Button>
+              <Form.Item
+                name="date"
+                label="التاريخ"
+                rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
+                <DatePicker
+                  placeholder="اختر التاريخ"
+                  style={{ width: "267px", height: "45px" }}
+                />
+              </Form.Item>
+            </div>
+            <h1 className="SuperVisor-title-conatiner">
+              اضافة صورة الجواز التالف
+            </h1>
+            <div className="add-image-section">
+              <div className="dragger-container">
+                <Dragger
+                  fileList={fileList}
+                  onChange={handleFileChange}
+                  beforeUpload={() => false}
+                  multiple
+                  showUploadList={false} // Hide the default file name/path list
+                >
+                  <p className="ant-upload-drag-icon">📂</p>
+                  <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
+                </Dragger>
+              </div>
+              {/* Pass uploaded images to ImagePreviewer */}
+              <div className="image-preivwer-container">
+                <ImagePreviewer
+                  uploadedImages={previewUrls}
+                  onDeleteImage={handleDeleteImage}
+                />
+              </div>
+            </div>
+            <div className="image-previewer-section">
+              <Button
+                type="primary"
+                htmlType="submit"
+                className="submit-button"
+                loading={isSubmitting}
+                disabled={isSubmitting}>
+                حفظ
+              </Button>
+              <Button
+                danger
+                onClick={handleBack}
+                className="add-back-button"
+                disabled={isSubmitting}>
+                رجوع
+              </Button>
+            </div>
           </div>
         </Form>
       </div>

@@ -1,58 +1,144 @@
-.supervisor-damaged-passport-add-container{
-    margin-top: 6%;
-    padding: 20px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: start;
-    margin-right: 20px;
-    margin-left: 20px;
-    transition: all 0.3s ease-in-out;
+.supervisor-damaged-passport-add-containe {
+  margin-top: 6%;
+  margin-right: 20px;
+  margin-left: 20px;
+  margin-bottom: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  /* background-color: orange; */
+}
+.add-damegedpassport-section-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100%;
+}
+.add-passport-fields-container {
+  background-color: #ffff;
+  padding: 40px;
+  border-radius: 15px;
+  display: flex;
+  gap: 50px;
+}
+.add-image-section {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  background-color: #ffff;
+  gap: 30px;
+  padding: 40px;
+  width: 100%;
+}
+.dragger-container {
+  width: 40%;
+  height: 200px;
+}
+.image-preivwer-container {
+  width: 50%;
+}
+.supervisor-form-inputfield-container {
+  display: "flex";
+}
+.add-details-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+.add-details-container input {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 267px;
+  height: 45px;
 }
 
-.add-details-container{
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    width: 100%;
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-    margin-bottom: 20px;
+.supervisor-damaged-passport-add-containe h1 {
+  font-size: 24px;
+  font-weight: bold;
+  text-align: start;
+  width: 100%;
+  color: #333;
+}
+.SuperVisor-title-conatiner {
+  font-size: 24px;
+  margin-bottom: 10px;
+  margin-top: 10px;
+  font-weight: bold;
+  text-align: start;
+  width: 100%;
+  color: #333;
+}
+.submit-button {
+  width: 150px;
+  height: 45px;
+  background-color: #4880ff;
+  border-radius: 8px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.passport-field-wrapper input {
-
-    border: #bcc1ca 1px solid;
-    border-radius: 6px;
-    padding: 10px;
-    height: 50px;
-
-}
-.passport-field-wrapper label{
-    font-size: large;
-}
-.passport-field-wrapper textarea{
-    border: #bcc1ca 1px solid;
-    border-radius: 6px;
-    padding: 10px;
-    max-width:500px;
-    max-height: 300px;
+.add-back-button {
+  width: 150px;
+  height: 45px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.image-previewer-section{
-    margin-top: 30px;
+.ant-upload-drag-icon {
+  font-size: 24px;
+  color: #4880ff;
 }
 
-.image-previewer-section{
-    display: flex;
-    justify-content: center;
-    align-items: start;
-    gap: 20px;
+.ant-upload.ant-upload-drag {
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px dashed #333;
+  background-color: #fafafa;
+  border-radius: 8px;
+  transition: all 0.3s ease;
 }
 
-.image-previewer-section button{
-    padding: 20px;
+.ant-upload.ant-upload-drag:hover {
+  border-color: #0056b3;
+}
+
+.image-previewer-section {
+  display: flex !important;
+  justify-content: space-between;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  gap: 30px;
+}
+
+input,
+textarea,
+select {
+  width: 100%;
+  height: 45px;
+  padding: 10px;
+  border: 1px solid #bcc1ca;
+  border-radius: 6px;
+  box-sizing: border-box;
+}
+
+.add-details-container Form label {
+  font-size: large !important;
+  font-family: "Cairo", sans-serif;
+}
+.add-details-container form {
+  width: 100%;
 }

@@ -1,76 +1,49 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Form, Input, Button, DatePicker, message, Upload, Select } from "antd";
+import { Form, Input, Button, DatePicker, message, Upload } from "antd";
 import axios from "axios";
+import "./superVisorDevicesAdd.css";
 import Url from "./../../../store/url.js";
-import useAuthStore from "../../../store/store"; // Import the store to access JWT
+import useAuthStore from "../../../store/store"; // Import the store
 import moment from "moment";
+import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 
 const { Dragger } = Upload;
-const { Option } = Select;
 
 const SuperVisorDammagePassportAdd = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [fileList, setFileList] = useState([]); // File list for attachments
-  const [damagedTypes, setDamagedTypes] = useState([]); // State for damaged passport types
-  const [isSubmitting, setIsSubmitting] = useState(false); // Submission state tracker
+  const [fileList, setFileList] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]); // State for image previews
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { accessToken, profile } = useAuthStore();
+  const { profileId, governorateId, officeId } = profile || {};
+  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
 
-  const { accessToken } = useAuthStore(); // Access JWT token from the store
-
-  // Static IDs for office, governorate, and profile (could be replaced with dynamic values)
-  const staticOfficeId = 1; // Placeholder office ID
-  const staticGovernorateId = 1; // Placeholder governorate ID
-  const staticProfileId = 2; // Placeholder profile ID
-
-  // Function to navigate back
   const handleBack = () => {
     navigate(-1);
   };
 
-  // Fetch damaged types on component mount
-  useEffect(() => {
-    const fetchDamagedTypes = async () => {
-      try {
-        const response = await axios.get(`${Url}/api/damagedtype/all`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`, // Add JWT token
-          },
-        });
-        setDamagedTypes(response.data);
-      } catch (error) {
-        console.error("Error fetching damaged types:", error.response?.data || error.message);
-        message.error("حدث خطأ أثناء جلب بيانات أسباب التلف");
-      }
-    };
-
-    fetchDamagedTypes();
-  }, [accessToken]);
-
-  // Function to attach files to the entity
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
       const formData = new FormData();
-      formData.append("file", file.originFileObj); // Attach file
-      formData.append("entityId", entityId); // Add entity ID from response
-      formData.append("EntityType", "DamagedPassport"); // Entity type for passports
+      formData.append("file", file.originFileObj);
+      formData.append("entityId", entityId);
+      formData.append("EntityType", "DamagedDevice"); // Updated entity type
 
       try {
-        const response = await axios.post(`${Url}/api/Attachment/add-attachment`, formData, {
+        await axios.post(`${Url}/api/Attachment/add-attachment`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${accessToken}`, // Add JWT token
+            Authorization: `Bearer ${accessToken}`,
           },
         });
-        console.log("Attachment Response:", response.data);
       } catch (error) {
-        console.error("Attachment Error:", error.response?.data || error.message);
         throw new Error("Failed to attach files. Operation aborted.");
       }
     }
   };
 
-  // Function to handle form submission
   const handleFormSubmit = async (values) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -83,27 +56,35 @@ const SuperVisorDammagePassportAdd = () => {
           ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ") // Format the date
           : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"), // Default to current date
         damagedTypeId: values.damagedTypeId, // ID of the damaged type
-        officeId: staticOfficeId, // Static office ID
-        governorateId: staticGovernorateId, // Static governorate ID
-        profileId: staticProfileId, // Static profile ID
+        officeId: officeId, // Static office ID
+        governorateId: governorateId, // Static governorate ID
+        profileId: profileId, // Static profile ID
       };
 
       console.log("Submitting Payload:", payload);
 
-      const damagedPassportResponse = await axios.post(`${Url}/api/DamagedPassport`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`, // Add JWT token
-        },
-      });
+      const damagedPassportResponse = await axios.post(
+        `${Url}/api/DamagedPassport`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`, // Add JWT token
+          },
+        }
+      );
 
       console.log("Damaged Passport Response:", damagedPassportResponse);
 
       // Extract entity ID from the response
-      const entityId = damagedPassportResponse.data?.id || damagedPassportResponse.data;
+      const entityId =
+        damagedPassportResponse.data?.id || damagedPassportResponse.data;
 
       if (!entityId) {
-        console.error("DamagedPassport response does not contain 'id'. Full response:", damagedPassportResponse.data);
+        console.error(
+          "DamagedPassport response does not contain 'id'. Full response:",
+          damagedPassportResponse.data
+        );
         throw new Error("Failed to retrieve entity ID from the response.");
       }
 
@@ -125,79 +106,101 @@ const SuperVisorDammagePassportAdd = () => {
       navigate(-1); // Navigate back on successful submission
     } catch (error) {
       console.error("Submission Error:", error);
-      message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"); // Show error message
+      message.error(
+        error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"
+      ); // Show error message
     } finally {
       setIsSubmitting(false); // Reset submission state
     }
   };
 
+  const handleFileChange = (info) => {
+    const updatedFiles = info.fileList;
+    setFileList(updatedFiles);
+
+    const previews = updatedFiles.map((file) =>
+      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
+    );
+    setPreviewUrls(previews);
+  };
+
+  const handleDeleteImage = (index) => {
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index)); // Remove the selected image from preview
+    setFileList((prev) => prev.filter((_, i) => i !== index)); // Remove the corresponding file from fileList
+  };
+
   return (
-    <div className="supervisor-damaged-passport-add-container" dir="rtl">
-      <h1>إضافة جواز تالف</h1> {/* Page title in Arabic */}
+    <div
+      className={`supervisor-damaged-passport-add-containe ${
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
+      }`}
+      dir="rtl">
+      <h1 className="SuperVisor-title-conatiner">إضافة جهاز تالف</h1>
       <div className="add-details-container">
         <Form
           form={form}
           onFinish={handleFormSubmit}
           layout="vertical"
-          style={{ direction: "rtl" }}
-        >
-          {/* Passport Number Input */}
-          <Form.Item
-            name="passportNumber"
-            label="رقم الجواز"
-            rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}
-          >
-            <Input placeholder="أدخل رقم الجواز" />
-          </Form.Item>
+          className="add-details-form">
+          <div className="add-passport-fields-container">
+            <Form.Item
+              name="passportNumber"
+              label="رقم الجهاز"
+              rules={[{ required: true, message: "يرجى إدخال رقم الجهاز" }]}>
+              <Input placeholder="أدخل رقم الجهاز" />
+            </Form.Item>
+            <Form.Item
+              name="damagedTypeId"
+              label="سبب التلف"
+              rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}>
+              <Input placeholder="أدخل سبب التلف (رقم)" type="number" />
+            </Form.Item>
+            <Form.Item
+              name="date"
+              label="التاريخ"
+              rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
+              <DatePicker style={{ width: "267px", height: "45px" }} />
+            </Form.Item>
+          </div>
+          <h1 className="SuperVisor-title-conatiner">
+            إضافة صورة الجهاز التالف
+          </h1>
+          <div className="add-image-section">
+            <div className="dragger-container">
+              <Dragger
+                fileList={fileList}
+                onChange={handleFileChange}
+                beforeUpload={() => false}
+                multiple
+                showUploadList={false} // Hide default file list
+              >
+                <p className="ant-upload-drag-icon">📂</p>
+                <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
+              </Dragger>
+            </div>
 
-          {/* Damaged Type ID Input */}
-          <Form.Item
-            name="damagedTypeId"
-            label="سبب التلف"
-            rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}
-          >
-            <Select placeholder="اختر سبب التلف">
-              {damagedTypes.map((type) => (
-                <Option key={type.id} value={type.id}>
-                  {type.name}
-                </Option>
-              ))}
-            </Select>
-          </Form.Item>
-
-          {/* Date Picker */}
-          <Form.Item
-            name="date"
-            label="التاريخ"
-            rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
-          >
-            <DatePicker placeholder="اختر التاريخ" style={{ width: "100%" }} />
-          </Form.Item>
-
-          {/* File Uploader for Attachments */}
-          <Dragger
-            fileList={fileList}
-            onChange={(info) => setFileList(info.fileList)} // Update file list on change
-            beforeUpload={() => false} // Prevent automatic upload
-            multiple // Allow multiple file uploads
-          >
-            <p className="ant-upload-drag-icon">📂</p>
-            <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p> {/* Instructions in Arabic */}
-          </Dragger>
-
-          {/* Action Buttons */}
+            <div className="image-previewer-container">
+              <ImagePreviewer
+                uploadedImages={previewUrls}
+                onDeleteImage={handleDeleteImage}
+              />
+            </div>
+          </div>
           <div className="image-previewer-section">
             <Button
               type="primary"
               htmlType="submit"
               className="submit-button"
-              loading={isSubmitting} // Show loading spinner during submission
-              disabled={isSubmitting} // Disable button during submission
-            >
-              الإرسال
+              loading={isSubmitting}
+              disabled={isSubmitting}>
+              حفظ
             </Button>
-            <Button onClick={handleBack} className="add-back-button" disabled={isSubmitting}>
-              الرجوع
+            <Button
+              danger
+              onClick={handleBack}
+              className="add-back-button"
+              disabled={isSubmitting}>
+              رجوع
             </Button>
           </div>
         </Form>

@@ -71,6 +71,8 @@ button {
 .image-display {
   margin-top: 10px;
   margin-bottom: 10px;
+  display: flex;
+  justify-content: center;
 }
 .image-pagination-controls {
   display: flex;

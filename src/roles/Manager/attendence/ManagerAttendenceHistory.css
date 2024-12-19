@@ -17,7 +17,7 @@
   justify-content: start;
   align-items: center;
   transition: all 0.6s ease-in-out;
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 .attendance-form.animate-show {
   max-height: 300px;
