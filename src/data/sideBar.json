@@ -59,6 +59,11 @@
       "label": "الاجهزة التالفة",
       "icon": "devices",
       "path": "/supervisor/damegedDevices"
+    },
+    {
+      "label": "المحاضر",
+      "icon": "Lecturer",
+      "path": "/supervisor/lecturer/history"
     }
   ],
   "FollowUpEmployee": [
