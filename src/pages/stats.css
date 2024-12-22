@@ -31,7 +31,6 @@
 
 .stats-main-section{
     display: flex;
-    justify-content: space-around;
     margin: 20px 20px;
 }
 .chart-container{
@@ -59,4 +58,13 @@
     align-items: center;
     border-radius: 10px;
     box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+}
+.small-stats-navbar-warber li:hover {
+    cursor: pointer;
+}
+.active{
+    color: #636AE8;
+    border-bottom: 2px #636AE8 solid;
+    transition: 0.1s;
+    
 }

@@ -1,0 +1,56 @@
+.attendance-card-container-stats{
+    display: flex;
+    gap: 20px;
+}
+.attendance-filters-stats{
+    display: flex;
+    gap: 20px;
+    justify-content: start;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    
+}
+.attendance-filters-stats input{
+    width: 200px;
+}
+.attendance-filters-stats select{
+    width: 200px;
+}
+.attendance-filters-stats button{
+
+}
+
+
+.card-attendence-stats-container{
+    width: 300px;
+    height: 100px;
+    background-color: white;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    
+}
+
+.attendance-charts-stats{
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-around;
+}
+
+.attendance-additional-info{
+    width: 200px;
+    height: 100px;
+    background-color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    border-radius: 8px;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+
+}
