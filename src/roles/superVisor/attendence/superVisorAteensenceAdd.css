@@ -17,6 +17,12 @@
     background-color: white;
     padding: 20px;
     border-radius: 10px;
+    display: flex;
+    justify-content: start;
+    align-items: start;
+    flex-wrap: wrap;
+    gap: 20px;
+
 }
 .attendance-input-group div{
     display: flex;
@@ -40,32 +46,6 @@
     padding: 20px;
 
 }
-.attendance-field-wrapper-add input:hover{
-    border:#1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
-    outline: 0;
-
-}
-.attendance-field-wrapper-add input:focus{
-    border:#1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
-    outline: 0;
-}
-
-
-
-.attendance-field-wrapper-add textarea:hover{
-    border:#1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
-    outline: 0;
-
-}
-.attendance-field-wrapper-add textarea:focus{
-    border:#1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
-    outline: 0;
-}
-
 
 
 .attendance-field-wrapper-add textarea{
@@ -73,17 +53,19 @@
     border: #bcc1ca 1px solid;
     border-radius: 6px;
     padding: 20px;
+    min-width: 300px;
     max-width: 400px;
-    max-height: 400px;
+    min-height: 50px;
+    max-height: 200px;
 }
 
 .attendance-input-group div input{
 
 }
 
-.attendance-input-group #date{
-    height: 35px;
-    width: 150px;
+.ant-picker-input input{
+    height: 37px !important;
+    width: 150px !important;
     
 }
 .attendance-input-group #date:hover{
@@ -120,4 +102,7 @@
     border:#1677ff 1px solid;
     box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
     outline: 0;
+}
+.attendance-dropdown {
+    padding: 10px;
 }

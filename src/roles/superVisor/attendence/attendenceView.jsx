@@ -1,107 +1,130 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
-import { Table, Checkbox } from "antd"; // Ant Design Table and Checkbox components
+import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import "./attendenceView.css";
-import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
+import useAuthStore from "./../../../store/store";
+import Url from "./../../../store/url.js";
+
 export default function ViewAttendance() {
   const location = useLocation();
-  const data = location.state?.data; // Retrieve data passed via the "عرض" button
-  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
-  if (!data) {
-    return <div className="error-message">لم يتم العثور على بيانات الحضور</div>;
-  }
+  const id = location.state?.id;
+  const { isSidebarCollapsed } = useAuthStore();
+  const [attendanceData, setAttendanceData] = useState(null);
 
-  // Define columns for the attendance table
-  const tableColumns = [
-    {
-      title: "الرقم التسلسلي",
-      dataIndex: "id",
-      key: "id",
-    },
-    {
-      title: "الاسم",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "الدور الوظيفي",
-      dataIndex: "role",
-      key: "role",
-    },
-    {
-      title: "الحضور",
-      dataIndex: "attended",
-      key: "attended",
-      render: (attended) => (
-        <Checkbox checked={attended} disabled style={{ color: "#4880ff" }} />
-      ),
-    },
-  ];
+  useEffect(() => {
+    const fetchAttendanceDetails = async () => {
+      try {
+        const response = await fetch(`${Url}/api/Attendance/${id}`);
+        const data = await response.json();
+        setAttendanceData(data);
+      } catch (error) {
+        console.error("Error fetching attendance details:", error);
+      }
+    };
+
+    if (id) fetchAttendanceDetails();
+  }, [id]);
+
+  const renderChart = (title, count) => {
+    const data = [
+      { name: "حاضر", value: count },
+      { name: "غائب", value: 10 - count },
+    ];
+
+    const COLORS = ["#0088FE", "#FF8042"];
+
+    return (
+      <div className="chart-card">
+        <h3>{title}</h3>
+        <PieChart width={120} height={120}>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={30}
+            outerRadius={50}
+            paddingAngle={5}
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip />
+        </PieChart>
+        <p>{`${count} موظفين`}</p>
+      </div>
+    );
+  };
+
+  const renderTotalChart = () => {
+    if (!attendanceData) return null;
+
+    const totalPresent =
+      attendanceData.receivingStaff +
+      attendanceData.accountStaff +
+      attendanceData.printingStaff +
+      attendanceData.qualityStaff +
+      attendanceData.deliveryStaff;
+
+    const data = [
+      { name: "حاضر", value: totalPresent },
+      { name: "غائب", value: 50 - totalPresent }, // Assuming max capacity of 50 employees
+    ];
+
+    const COLORS = ["#4CAF50", "#F44336"]; // Green for present, red for absent
+
+    return (
+      <div className="total-chart-container">
+        <h2>إجمالي الحضور</h2>
+        <PieChart width={400} height={400}>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={100}
+            outerRadius={150}
+            paddingAngle={5}
+            dataKey="value"
+          >
+            {data.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip />
+        </PieChart>
+        <p>{`الحاضرون: ${totalPresent} موظفين`}</p>
+      </div>
+    );
+  };
+
+  if (!attendanceData) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div
       className={`attendence-view-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : "attendence-view-container"
       }`}
-      dir="rtl">
-      {/* Date Section */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "start",
-          width: "100%",
-        }}>
-        <h1>التاريخ : {data.date}</h1>
-        <Link to="supervisor/editattendence">
-          <button className="edit-button">التعديل</button>
+      dir="rtl"
+    >
+      <div className="header">
+        <h1>التاريخ: {new Date(attendanceData.date).toLocaleDateString("en-GB")}</h1>
+        <Link to="/supervisor/attendence/history">
+          <button className="edit-button">العودة</button>
         </Link>
       </div>
 
-      {/* Passport Attendance Section */}
-      <h1>حضور الجوازات</h1>
-      <div className="attendence-passport-container">
-        {data.passportEmployees && data.passportEmployees.length > 0 ? (
-          data.passportEmployees.map((employee, index) => (
-            <div key={index} className="employee-details">
-              <h3>{employee.title}</h3>
-              <p>{employee.details}</p>
-            </div>
-          ))
-        ) : (
-          <p>لا توجد بيانات لموظفي الجوازات</p>
-        )}
-      </div>
+      {/* Total Attendance Chart */}
+      {renderTotalChart()}
 
-      <hr />
-
-      {/* Company Attendance Section */}
-      <h1>حضور الشركة</h1>
-      <div className="attendence-company-container">
-        {data.companyEmployees && data.companyEmployees.length > 0 ? (
-          data.companyEmployees.map((employee, index) => (
-            <div key={index} className="employee-details">
-              <h3>{employee.title}</h3>
-              <p>{employee.details}</p>
-            </div>
-          ))
-        ) : (
-          <p>لا توجد بيانات لموظفي الشركة</p>
-        )}
-      </div>
-
-      <hr />
-
-      {/* Attendance Table */}
-      <div className="attendence-view-table-data">
-        <h2>جدول الحضور</h2>
-        <Table
-          dataSource={data.attendanceTable || []} // Ensure data is passed as an array
-          columns={tableColumns}
-          rowKey="id"
-          bordered
-          pagination={false} // Disable pagination if showing only one record
-        />
+      <div className="charts-section">
+        {renderChart("موظفي الاستلام", attendanceData.receivingStaff)}
+        {renderChart("موظفي الحسابات", attendanceData.accountStaff)}
+        {renderChart("موظفي الطباعة", attendanceData.printingStaff)}
+        {renderChart("موظفي الجودة", attendanceData.qualityStaff)}
+        {renderChart("موظفي التسليم", attendanceData.deliveryStaff)}
       </div>
     </div>
   );

@@ -48,8 +48,16 @@ const useAuthStore = create((set) => ({
       const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
       const payload = JSON.parse(atob(base64)); // Decode the token payload
 
+      const parsedProfile = {
+        ...userProfile,
+        governorateId: userProfile.governorateId || null,
+        governorateName: userProfile.governorateName || "غير معروف",
+        officeId: userProfile.officeId || null,
+        officeName: userProfile.officeName || "غير معروف",
+      };
+
       localStorage.setItem("accessToken", token); // Save token to localStorage
-      localStorage.setItem("userProfile", JSON.stringify(userProfile)); // Save user profile to localStorage
+      localStorage.setItem("userProfile", JSON.stringify(parsedProfile)); // Save user profile to localStorage
 
       set({
         user: {
@@ -57,7 +65,7 @@ const useAuthStore = create((set) => ({
           username: payload.unique_name || "Guest",
           role: payload.role || "Unknown Role",
         },
-        profile: userProfile, // Include additional user profile data
+        profile: parsedProfile, // Include additional user profile data
         isLoggedIn: true,
         accessToken: token,
       });

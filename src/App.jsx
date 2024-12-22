@@ -8,6 +8,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./pages/LayOut.jsx";
 import useAuthStore from "./store/store.js";
 import SignInPage from "./pages/signIn.jsx";
+import Stats from './pages/stats.jsx';
+
+
 
 // Import all components
 import Dashboard from "./pages/dashBoard.jsx";
@@ -61,7 +64,7 @@ const App = () => {
   // Centralized routes configuration
   const routes = [
     { path: "dashboard", element: <Dashboard /> },
-
+    { path: "Stats", element: <Stats /> },
     // Admin Routes
     { path: "admin/expenses", element: <AdminExpenses /> },
     { path: "admin/attendence", element: <AdminAttendance /> },

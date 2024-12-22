@@ -189,3 +189,11 @@
 }
 #date {
 }
+.filter-field .ant-picker input{
+  width: 200px !important;
+}
+.filter-field .ant-select
+{
+  width: 200px !important;
+  height: 47px !important;
+}
