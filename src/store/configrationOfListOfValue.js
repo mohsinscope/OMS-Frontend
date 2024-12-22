@@ -7,11 +7,31 @@ const Config = {
     columns: [
       { title: "اسم المكتب", dataIndex: "name", key: "name" },
       { title: "الكود", dataIndex: "code", key: "code" },
-      { title: "موظفو الاستلام", dataIndex: "receivingStaff", key: "receivingStaff" },
-      { title: "موظفو الحسابات", dataIndex: "accountStaff", key: "accountStaff" },
-      { title: "موظفو الطباعة", dataIndex: "printingStaff", key: "printingStaff" },
-      { title: "موظفوا الجودة", dataIndex: "qualityStaff", key: "qualityStaff" },
-      { title: "موظفو التوصيل", dataIndex: "deliveryStaff", key: "deliveryStaff" },
+      {
+        title: "موظفو الاستلام",
+        dataIndex: "receivingStaff",
+        key: "receivingStaff",
+      },
+      {
+        title: "موظفو الحسابات",
+        dataIndex: "accountStaff",
+        key: "accountStaff",
+      },
+      {
+        title: "موظفو الطباعة",
+        dataIndex: "printingStaff",
+        key: "printingStaff",
+      },
+      {
+        title: "موظفوا الجودة",
+        dataIndex: "qualityStaff",
+        key: "qualityStaff",
+      },
+      {
+        title: "موظفو التوصيل",
+        dataIndex: "deliveryStaff",
+        key: "deliveryStaff",
+      },
     ],
     formFields: [
       { name: "name", label: "اسم المكتب", type: "text" },
@@ -92,10 +112,22 @@ const Config = {
     deleteEndpoint: (id) => `/api/damageddevice/${id}`,
     columns: [
       { title: "التاريخ", dataIndex: "date", key: "date" },
-      { title: "اسم الجهاز", dataIndex: "deviceTypeName", key: "deviceTypeName" },
-      { title: "المحافظة", dataIndex: "governorateName", key: "governorateName" },
+      {
+        title: "اسم الجهاز",
+        dataIndex: "deviceTypeName",
+        key: "deviceTypeName",
+      },
+      {
+        title: "المحافظة",
+        dataIndex: "governorateName",
+        key: "governorateName",
+      },
       { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
-      { title: "اسم المستخدم", dataIndex: "profileFullName", key: "profileFullName" },
+      {
+        title: "اسم المستخدم",
+        dataIndex: "profileFullName",
+        key: "profileFullName",
+      },
     ],
     formFields: [
       { name: "serialNumber", label: "الرقم التسلسلي", type: "text" },
@@ -139,11 +171,27 @@ const Config = {
     deleteEndpoint: (id) => `/api/damagedpassport/${id}`,
     columns: [
       { title: "التاريخ", dataIndex: "date", key: "date" },
-      { title: "رقم الجواز", dataIndex: "passportNumber", key: "passportNumber" },
-      { title: "نوع تلف الجواز", dataIndex: "damagedTypeName", key: "damagedTypeName" },
-      { title: "المحافظة", dataIndex: "governorateName", key: "governorateName" },
+      {
+        title: "رقم الجواز",
+        dataIndex: "passportNumber",
+        key: "passportNumber",
+      },
+      {
+        title: "نوع تلف الجواز",
+        dataIndex: "damagedTypeName",
+        key: "damagedTypeName",
+      },
+      {
+        title: "المحافظة",
+        dataIndex: "governorateName",
+        key: "governorateName",
+      },
       { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
-      { title: "اسم المستخدم", dataIndex: "profileFullName", key: "profileFullName" },
+      {
+        title: "اسم المستخدم",
+        dataIndex: "profileFullName",
+        key: "profileFullName",
+      },
     ],
     formFields: [
       { name: "date", label: "التاريخ", type: "date" },
@@ -171,7 +219,6 @@ const Config = {
         label: "اسم المستخدم",
         type: "text",
         optionsEndpoint: "/api/profile?PageNumber=1&PageSize=100",
-        
       },
     ],
   },

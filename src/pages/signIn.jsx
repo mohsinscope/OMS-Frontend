@@ -31,7 +31,7 @@ const SignInPage = () => {
 
   const fetchUserProfile = async (token) => {
     try {
-      const response = await axios.get(`${BASE_URL}/api/profiles/user-profile`, {
+      const response = await axios.get(`${BASE_URL}/api/profile/user-profile`, {
         headers: {
           Authorization: `Bearer ${token}`, // Pass the token as a Bearer token
         },
@@ -120,8 +120,7 @@ const SignInPage = () => {
             <button
               type="button"
               className="toggle-password"
-              onClick={() => setPasswordVisible(!passwordVisible)}
-            >
+              onClick={() => setPasswordVisible(!passwordVisible)}>
               <Icons
                 type={passwordVisible ? "eye-off" : "eye"}
                 width={24}
