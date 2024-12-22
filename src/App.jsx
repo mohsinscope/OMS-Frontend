@@ -1,9 +1,5 @@
 import { useEffect } from "react";
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-} from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./pages/LayOut.jsx";
 import useAuthStore from "./store/store.js";
@@ -43,16 +39,13 @@ import ManagerExpensesRequestView from "./roles/Manager/Expensess/ManagerExpense
 import ManagerAttendenceHistory from "./roles/Manager/attendence/ManagerAttendenceHistory.jsx";
 import ManagerAttendenceView from "./roles/Manager/attendence/ManagerAttendenceView.jsx";
 
-
 import DammagedDevicess from "./roles/employeeOfDammage/devicess/DammagedDevicess.jsx";
-import DammagedPasports from './roles/employeeOfDammage/pasports/DammagedPasports.jsx';
-
+import DammagedPasports from "./roles/employeeOfDammage/pasports/DammagedPasports.jsx";
 
 import FollowUpEmployeeExpensess from "./roles/FollowUpEmployee/expensess/FollowUpEmployeeExpensess.jsx";
-import FollowUpEmployeeAttensence from './roles/FollowUpEmployee/attendence/FollowUpEmployeeAttensence.jsx';
-
-
-
+import FollowUpEmployeeAttensence from "./roles/FollowUpEmployee/attendence/FollowUpEmployeeAttensence.jsx";
+import SuperVisorLecturerhistory from "./roles/superVisor/lecturer/SuperVisorLecturerhistory.jsx";
+import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecturerAdd.jsx";
 
 const App = () => {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
@@ -72,35 +65,79 @@ const App = () => {
     { path: "admin/listofvalues", element: <ListOfValueAdmin /> },
 
     // Supervisor Routes
-    { path: "supervisor/ExpensesRequests", element: <SuperVisorExpensesRequest /> },
+    {
+      path: "supervisor/ExpensesRequests",
+      element: <SuperVisorExpensesRequest />,
+    },
     { path: "supervisor/Expensess", element: <SuperVisorExpensesHistory /> },
     { path: "supervisor/Attendence", element: <SuperVisorAttendenceHistory /> },
-    { path: "supervisor/Attendence/AttendenceAdd", element: <SuperVisorAttendenceAdd /> },
+    {
+      path: "supervisor/Attendence/AttendenceAdd",
+      element: <SuperVisorAttendenceAdd />,
+    },
     { path: "attendance/view", element: <ViewAttendance /> },
-    { path: "attendance/view/supervisor/editattendence", element: <SuperVisorAttendenceEdit /> },
+    {
+      path: "attendance/view/supervisor/editattendence",
+      element: <SuperVisorAttendenceEdit />,
+    },
 
-    { path: "supervisor/damagedpasportshistory", element: <SuperVisorDamagedpasportsHistory /> },
-    { path: "supervisor/damagedpasportshistory/DammagedPasportsShow", element: <DammagedPasportsShow /> },
-    { path: "supervisor/damagedpasportshistory/supervisordammagepasportadd", element: <SuperVisorDammagePassportAdd /> },
+    {
+      path: "supervisor/damagedpasportshistory",
+      element: <SuperVisorDamagedpasportsHistory />,
+    },
+    {
+      path: "supervisor/damagedpasportshistory/DammagedPasportsShow",
+      element: <DammagedPasportsShow />,
+    },
+    {
+      path: "supervisor/damagedpasportshistory/supervisordammagepasportadd",
+      element: <SuperVisorDammagePassportAdd />,
+    },
     { path: "supervisor/damegedDevices", element: <SuperVisorDevices /> },
-    { path: "supervisor/damegedDevices/show", element: <SuperVisorDeviceShow /> },
-    { path: "supervisor/damegedDevices/add", element: <SuperVisorDevicesAdd /> },
+    {
+      path: "supervisor/damegedDevices/show",
+      element: <SuperVisorDeviceShow />,
+    },
+    {
+      path: "supervisor/damegedDevices/add",
+      element: <SuperVisorDevicesAdd />,
+    },
+    {
+      path: "/supervisor/lecturer/history",
+      element: <SuperVisorLecturerhistory />,
+    },
+    {
+      path: "/supervisor/lecturerAdd/supervisorlecturerAdd",
+      element: <SuperVisorLecturerAdd />,
+    },
 
     // Manager Routes
     { path: "manager/expensess", element: <ManagerExpensesHistory /> },
     { path: "manager/expensess/view", element: <ManagerExpensesView /> },
-    { path: "manager/expensess/requists", element: <ManagerExpensesRequests /> },
-    { path: "manager/expensess/requists/view", element: <ManagerExpensesRequestView /> },
+    {
+      path: "manager/expensess/requists",
+      element: <ManagerExpensesRequests />,
+    },
+    {
+      path: "manager/expensess/requists/view",
+      element: <ManagerExpensesRequestView />,
+    },
     { path: "manager/attendence", element: <ManagerAttendenceHistory /> },
     { path: "manager/attendence/view", element: <ManagerAttendenceView /> },
 
     // dammage employee
-    { path:"/employee_damage/damage/devices", element: <DammagedDevicess/>},
-    { path:"/employee_damage/damage/pasports", element: <DammagedPasports/>},
+    { path: "/employee_damage/damage/devices", element: <DammagedDevicess /> },
+    { path: "/employee_damage/damage/pasports", element: <DammagedPasports /> },
 
     //FollowUpEmployee
-    {path:"/employee_expenses/expenses",element:<FollowUpEmployeeExpensess/>},
-    {path:"/employee_expenses/attendence" , element :<FollowUpEmployeeAttensence/>},
+    {
+      path: "/employee_expenses/expenses",
+      element: <FollowUpEmployeeExpensess />,
+    },
+    {
+      path: "/employee_expenses/attendence",
+      element: <FollowUpEmployeeAttensence />,
+    },
 
     // Common Routes
     { path: "settings", element: <Settings /> },
@@ -120,8 +157,7 @@ const App = () => {
             <ProtectedRoute>
               <Layout /> {/* Use Layout for fixed Dashboard */}
             </ProtectedRoute>
-          }
-        >
+          }>
           {routes.map(({ path, element }, index) => (
             <Route key={index} path={path} element={element} />
           ))}

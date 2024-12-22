@@ -120,8 +120,7 @@ const SignInPage = () => {
             <button
               type="button"
               className="toggle-password"
-              onClick={() => setPasswordVisible(!passwordVisible)}
-            >
+              onClick={() => setPasswordVisible(!passwordVisible)}>
               <Icons
                 type={passwordVisible ? "eye-off" : "eye"}
                 width={24}
