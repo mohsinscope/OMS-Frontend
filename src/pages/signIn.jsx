@@ -17,17 +17,17 @@ const SignInPage = () => {
   // Access global store functions and state
   const { login, isLoggedIn } = useAuthStore();
 
-  const navigateToDashboard = useCallback(() => {
-    if (window.location.pathname !== "/dashboard") {
-      navigate("/dashboard");
+  const navigateToStats = useCallback(() => {
+    if (window.location.pathname !== "/stats") {
+      navigate("/stats"); // Redirect to stats after login
     }
   }, [navigate]);
 
   useEffect(() => {
     if (isLoggedIn) {
-      navigateToDashboard();
+      navigateToStats(); // Redirect to stats if already logged in
     }
-  }, [isLoggedIn, navigateToDashboard]);
+  }, [isLoggedIn, navigateToStats]);
 
   const fetchUserProfile = async (token) => {
     try {
@@ -44,8 +44,8 @@ const SignInPage = () => {
       // Save profile data to the global store
       login(token, userProfile);
 
-      // Navigate to dashboard
-      navigateToDashboard();
+      // Navigate to stats after login
+      navigateToStats();
     } catch (error) {
       console.error("Failed to fetch user profile:", error);
       setLoginError("فشل استرداد ملف تعريف المستخدم.");
