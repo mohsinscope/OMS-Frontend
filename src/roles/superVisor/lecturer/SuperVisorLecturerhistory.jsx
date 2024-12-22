@@ -1,122 +1,158 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
 import { Table, message, Button } from "antd";
 import { Link } from "react-router-dom";
-import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import "./SuperVisorLecturerhistory.css";
-import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
+import useAuthStore from "./../../../store/store";
 import axios from "axios";
-import Url from "./../../../store/url.js"; // Assuming URL is imported for the API
+import Url from "./../../../store/url.js";
 
 const SuperVisorLecturerhistory = () => {
-  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
-  const [lectures, setLectures] = useState([]); // State to hold fetched lectures
-  const [totalLectures, setTotalLectures] = useState(0); // Total number of lectures from API
-  const [currentPage, setCurrentPage] = useState(1); // Current page for pagination
-  const { accessToken } = useAuthStore(); // Fetch the accessToken from your auth store
-  const pageSize = 10; // Page size set to 10
+  const {
+    isSidebarCollapsed,
+    accessToken,
+    profile,
+    searchVisible,
+    toggleSearch,
+  } = useAuthStore();
+  const [lectures, setLectures] = useState([]);
+  const [totalLectures, setTotalLectures] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
-  const { searchVisible, toggleSearch } = useAuthStore(); // Search visibility state from store
+  const [filterData, setFilterData] = useState({
+    title: "",
+    startDate: "",
+    endDate: "",
+  });
 
-  // Fetching lectures when component mounts or when the page number changes
-  useEffect(() => {
-    const fetchLectures = async () => {
+  const formatToISO = (date) => {
+    if (!date) return "";
+    const parsedDate = new Date(date);
+    return parsedDate.toISOString();
+  };
+
+  const fetchLectures = useCallback(
+    async (payload) => {
       try {
-        const response = await axios.get(`${Url}/api/Lecture`, {
-          params: {
-            PageSize: pageSize,
-            PageNumber: currentPage,
-          },
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = await axios.post(
+          `${Url}/api/Lecture/search`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
 
-        // Check if response contains the correct data
-        if (response.data && response.headers.pagination) {
-          setLectures(response.data); // Set the fetched data to state
-          // Extract pagination details from the response headers
-          const pagination = JSON.parse(response.headers.pagination);
-          setTotalLectures(pagination.totalItems || 0); // Set the total lectures count from the headers
+        if (response.data) {
+          setLectures(response.data);
+          setTotalLectures(response.data.length);
         }
       } catch (error) {
-        console.error("Error fetching lectures:", error);
-        message.error("حدث خطأ أثناء جلب المحاضرات");
+        message.error(
+          `حدث خطأ أثناء جلب المحاضرات: ${
+            error.response?.data?.message || error.message
+          }`
+        );
       }
-    };
+    },
+    [accessToken]
+  );
 
-    fetchLectures(); // Fetch lectures when page changes
-  }, [currentPage, accessToken]); // Fetch lectures when page changes
+  const fetchInitialLectures = useCallback(async () => {
+    try {
+      const response = await axios.get(`${Url}/api/Lecture`, {
+        params: {
+          PageNumber: 1,
+          PageSize: pageSize,
+        },
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.data) {
+        setLectures(response.data);
+        setTotalLectures(response.data.length);
+      }
+    } catch (error) {
+      message.error(
+        `حدث خطأ أثناء جلب المحاضرات: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+    }
+  }, [accessToken, pageSize]);
+
+  useEffect(() => {
+    fetchInitialLectures();
+  }, [fetchInitialLectures]);
 
   const handlePageChange = (page) => {
-    setCurrentPage(page); // Update current page when page changes
+    setCurrentPage(page);
+    const payload = {
+      title: filterData.title,
+      startDate: formatToISO(filterData.startDate),
+      endDate: formatToISO(filterData.endDate),
+      PaginationParams: {
+        PageNumber: page,
+        PageSize: pageSize,
+      },
+    };
+    fetchLectures(payload);
   };
 
-  const fields = [
-    {
-      name: "عنوان المحضر",
-      label: "عنوان المحضر",
-      placeholder: "",
-      type: "dropdown",
-      options: [
-        { value: "عنوان رقم 1", label: "عنوان رقم 1" },
-        { value: "عنوان رقم 2", label: "عنوان رقم 2" },
-        { value: "عنوان رقم 3", label: "عنوان رقم 3" },
-      ],
-    },
-    {
-      name: "date",
-      label: "التاريخ",
-      placeholder: "اختر التاريخ",
-      type: "date",
-      id: "date",
-    },
-  ];
-
-  const handleFilterSubmit = (formData) => {
-    setFilterData(formData);
-
-    const filteredLectures = lectures.filter((generalInfo) => {
-      const matchesTitle =
-        !formData["عنوان المحضر"] ||
-        generalInfo["عنوان المحضر"] === formData["عنوان المحضر"];
-      const matchesDate =
-        !formData["date"] || generalInfo["التاريخ"].includes(formData["date"]);
-
-      return matchesTitle && matchesDate;
-    });
-
-    if (filteredLectures.length === 0) {
-      message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
-    }
-
-    setLectures(filteredLectures);
+  const handleFormSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const payload = {
+      title: formData.get("title") || "",
+      startDate: formatToISO(formData.get("startDate")) || null,
+      endDate: formatToISO(formData.get("endDate")) || null,
+      PaginationParams: {
+        PageNumber: 1,
+        PageSize: pageSize,
+      },
+    };
+    setCurrentPage(1);
+    fetchLectures(payload);
   };
 
-  const handleReset = () => {
-    setFilterData({});
-    setLectures(lectures); // Reset to original data
+  const handleReset = async () => {
+    setFilterData({ title: "", startDate: "", endDate: "" });
+    setCurrentPage(1);
+    document.getElementById("title").value = "";
+    document.getElementById("startDate").value = "";
+    document.getElementById("endDate").value = "";
+    fetchInitialLectures();
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
   const columns = [
     {
       title: "عنوان المحاضرة",
-      dataIndex: "title", // Assuming the field returned by the API is "title"
+      dataIndex: "title",
       key: "Lectur",
       className: "table-column-Lecturer-address",
     },
     {
       title: "التاريخ",
-      dataIndex: "date", // Assuming the field returned by the API is "date"
+      dataIndex: "date",
       key: "date",
       className: "table-column-date",
-      render: (text) => new Date(text).toLocaleDateString("ar-EG"), // Format the date for display
+      render: (text) => {
+        const date = new Date(text);
+        if (isNaN(date.getTime())) {
+          return "تاريخ غير صالح";
+        }
+        return date.toLocaleDateString("ar-EG");
+      },
     },
     {
       title: "التفاصيل",
       key: "details",
       className: "table-column-details",
+      pagination: { pageSize: 10 },
       render: (_, record) => (
         <Link
           to=""
@@ -134,48 +170,81 @@ const SuperVisorLecturerhistory = () => {
         isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-Lectur-page"
       }`}
       dir="rtl">
-      {/* Page Title */}
       <h1 className="supervisor-Lectur-title">المحاضر</h1>
 
-      {/* Filter Form */}
       <div
         className={`supervisor-Lectur-filters ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
-        <TextFieldForm
-          fields={fields}
-          onFormSubmit={handleFilterSubmit}
-          onReset={handleReset}
-          formClassName="supervisor-Lectur-form"
-          inputClassName="supervisor-Lectur-input"
-          dropdownClassName="supervisor-Lectur-dropdown"
-          fieldWrapperClassName="supervisor-Lectur-field-wrapper"
-          buttonClassName="supervisor-Lectur-button"
-        />
-        {/* Add Lecturer button */}
+        <form onSubmit={handleFormSubmit} className="supervisor-Lectur-form">
+          <div className="supervisor-Lectur-field-wrapper">
+            <label htmlFor="title" className="supervisor-Lectur-label">
+              عنوان المحضر
+            </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              className="supervisor-Lectur-input"
+              placeholder=""
+            />
+          </div>
+          <div className="supervisor-Lectur-field-wrapper">
+            <label htmlFor="startDate" className="supervisor-Lectur-label">
+              التاريخ من
+            </label>
+            <input
+              type="date"
+              id="startDate"
+              name="startDate"
+              className="supervisor-Lectur-input"
+            />
+          </div>
+          <div className="supervisor-Lectur-field-wrapper">
+            <label htmlFor="endDate" className="supervisor-Lectur-label">
+              التاريخ إلى
+            </label>
+            <input
+              type="date"
+              id="endDate"
+              name="endDate"
+              className="supervisor-Lectur-input"
+            />
+          </div>
+          <div className="supervisor-Lectur-buttons">
+            <button type="submit" className="supervisor-Lectur-button">
+              تطبيق
+            </button>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="supervisor-Lectur-button">
+              إعادة تعيين
+            </button>
+          </div>
+        </form>
         <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
           <button className="supervisor-Lectur-button">اضافة محضر جديد</button>
         </Link>
       </div>
 
-      {/* Lecturer table */}
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "بحث" : "بحث"}
+          {searchVisible ? "إخفاء البحث" : "إظهار البحث"}
         </Button>
       </div>
       <div className="supervisor-Lectur-table-container">
         <Table
           dataSource={lectures}
           columns={columns}
-          rowKey="id" // Assuming the ID of each lecture is "id"
+          rowKey="id"
           bordered
           pagination={{
             current: currentPage,
             pageSize: pageSize,
             total: totalLectures,
             position: ["bottomCenter"],
-            onChange: handlePageChange, // Handle page change
+            onChange: handlePageChange,
           }}
           locale={{ emptyText: "لا توجد بيانات" }}
           className="supervisor-Lectur-table"
