@@ -130,7 +130,7 @@ const SuperVisorLecturerhistory = () => {
 
   const columns = [
     {
-      title: "عنوان المحاضرة",
+      title: "عنوان المحضر",
       dataIndex: "title",
       key: "Lectur",
       className: "table-column-Lecturer-address",
@@ -145,7 +145,7 @@ const SuperVisorLecturerhistory = () => {
         if (isNaN(date.getTime())) {
           return "تاريخ غير صالح";
         }
-        return date.toLocaleDateString("ar-EG");
+        return date.toLocaleDateString("ar-EG"); //this means Arabic-Egypt
       },
     },
     {
@@ -155,8 +155,8 @@ const SuperVisorLecturerhistory = () => {
       pagination: { pageSize: 10 },
       render: (_, record) => (
         <Link
-          to=""
-          state={{ Lectur: record }}
+          to="/supervisor/lecturer/history/LecturerShow"
+          state={{ id: record.id }}
           className="supervisor-Lectur-details-link">
           عرض
         </Link>
@@ -213,7 +213,7 @@ const SuperVisorLecturerhistory = () => {
           </div>
           <div className="supervisor-Lectur-buttons">
             <button type="submit" className="supervisor-Lectur-button">
-              تطبيق
+              ابحث
             </button>
             <button
               type="button"
@@ -230,7 +230,7 @@ const SuperVisorLecturerhistory = () => {
 
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "إخفاء البحث" : "إظهار البحث"}
+          {searchVisible ? "بحث" : "بحث"}
         </Button>
       </div>
       <div className="supervisor-Lectur-table-container">
