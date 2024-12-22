@@ -1,6 +1,11 @@
 {
   "Admin": [
     {
+      "label": "الاحصائيات",
+      "icon": "stats",
+      "path": "/stats"
+    },
+    {
       "label": "المصاريف",
       "icon": "bill",
       "path": "/admin/expenses"
@@ -23,6 +28,11 @@
   ],
   "Manager": [
     {
+      "label": "الاحصائيات",
+      "icon": "stats",
+      "path": "/stats"
+    },
+    {
       "label": "المصاريف",
       "icon": "bill",
       "path": "/manager/expensess"
@@ -39,6 +49,11 @@
     }
   ],
   "Supervisor": [
+    {
+      "label": "الاحصائيات",
+      "icon": "stats",
+      "path": "/stats"
+    },
     {
       "label": "تسجيل المصاريف",
       "icon": "bill-request",
@@ -68,6 +83,11 @@
   ],
   "FollowUpEmployee": [
     {
+      "label": "الاحصائيات",
+      "icon": "stats",
+      "path": "/stats"
+    },
+    {
       "label": "حالة المصاريف",
       "icon": "bill",
       "path": "/employee_expenses/expenses"
@@ -79,6 +99,11 @@
     }
   ],
   "EmployeeOfDamageFollowUp": [
+    {
+      "label": "الاحصائيات",
+      "icon": "stats",
+      "path": "/stats"
+    },
     {
       "label": "الاجهزة التالفة",
       "icon": "broken",

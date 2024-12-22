@@ -1,91 +1,31 @@
 import React, { useState } from "react";
-import { Table, Checkbox, Button, Modal, message } from "antd";
-import axios from "axios"; // For API requests
-import TextFields from "./../../../reusable elements/ReuseAbleTextField.jsx"; // Import your TextFields component
+import { Button, Modal, message, Input, DatePicker } from "antd";
+import axios from "axios";
 import "./superVisorAteensenceAdd.css";
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
+import Url from "./../../../store/url.js";
+
+const { TextArea } = Input;
+
 export default function SuperVisorAttendanceAdd() {
+  const { isSidebarCollapsed, profile } = useAuthStore(); // Access profile from store
   const [selectedDate, setSelectedDate] = useState(null);
+  const [workingHours, setWorkingHours] = useState(1); // Default to "صباحي"
   const [passportAttendance, setPassportAttendance] = useState({
     الاستلام: 0,
     الحسابات: 0,
     الطباعة: 0,
     الجودة: 0,
     التسليم: 0,
-  }); // Dynamic fields for passport employees attendance
-  const [tableData, setTableData] = useState([
-    { id: "001", name: "أحمد سعد", role: "موظف I.T", attended: true },
-    { id: "002", name: "سعد أحمد", role: "مشرف", attended: false },
-    { id: "003", name: "محمد علي", role: "موظف حسابات", attended: true },
-  ]);
-  const { isSidebarCollapsed } = useAuthStore();
+  });
+  const [notes, setNotes] = useState(""); // Notes for the attendance
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalAction, setModalAction] = useState(""); // Keep track of which button was clicked
-  const governorate = "بغداد"; // Example governorate
-  const officeName = "مكتب الجوازات"; // Example office name
+  const [modalAction, setModalAction] = useState(""); // Track which button is clicked
 
-  const fields = [
-    {
-      name: "governorate",
-      label: "اسم المحافظة",
-      placeholder: "بغداد",
-      type: "text",
-      value: governorate,
-      disabled: true,
-    },
-    {
-      name: "officeName",
-      label: "اسم المكتب",
-      placeholder: "الكرادة",
-      type: "text",
-      value: officeName,
-      disabled: true,
-    },{
-      name: "workShift",
-      label: "نوع الدوام",
-      placeholder: "",
-      type: "dropdown",
-      options: [
-        { value: "صباحي", label: "صباحي" },
-        { value: "مسائي", label: "مسائي" },
-      ],
-    },
-    
-    {
-      name: "date",
-      label: "التاريخ",
-      placeholder: "اختر التاريخ",
-      type: "date", // Use Ant Design's DatePicker
-      onChange: (date, dateString) => setSelectedDate(dateString),
-    },
-    ...Object.keys(passportAttendance).map((key) => ({
-      name: key,
-      label: `عدد موظفين ${key}`,
-      placeholder: "",
-      type: "number",
-      value: passportAttendance[key],
-      onChange: (e) =>
-        setPassportAttendance((prev) => ({
-          ...prev,
-          [key]: Number(e.target.value),
-        })),
-    })),
-    {
-      name: "notes",
-      label: "ملاحظات",
-      placeholder: "",
-      type: "textarea",
-    },
-  ];
-
-  // Handle attendance change in the table
-  const handleAttendanceChange = (recordId, checked) => {
-    setTableData((prevData) =>
-      prevData.map((item) =>
-        item.id === recordId ? { ...item, attended: checked } : item
-      )
-    );
-  };
+  // Governorate, Office, and Profile Data
+  const governorateId = profile?.governorateId;
+  const officeId = profile?.officeId;
+  const profileId = profile?.profileId;
 
   // Handle reset action
   const handleResetAction = () => {
@@ -94,30 +34,38 @@ export default function SuperVisorAttendanceAdd() {
       الاستلام: 0,
       التسليم: 0,
       الحسابات: 0,
+      الجودة: 0,
     });
-    setTableData((prevData) =>
-      prevData.map((item) => ({ ...item, attended: false }))
-    );
-    setSelectedDate(null);
-    message.success("تمت إعادة التعيين بنجاح");
+    setSelectedDate(null); // Reset selected date
+    setWorkingHours(1); // Reset to default "صباحي"
+    setNotes(""); // Clear notes
+    message.success("تمت إعادة التعيين بنجاح"); // Show success message
   };
 
   // Handle save and send action
   const handleSaveAndSendAction = async () => {
     try {
       const dataToSend = {
-        date: selectedDate,
-        governorate,
-        office: officeName,
-        passportAttendance,
-        companyAttendance: tableData,
+        receivingStaff: passportAttendance["الاستلام"],
+        accountStaff: passportAttendance["الحسابات"],
+        printingStaff: passportAttendance["الطباعة"],
+        qualityStaff: passportAttendance["الجودة"],
+        deliveryStaff: passportAttendance["التسليم"],
+        date: selectedDate ? `${selectedDate}T10:00:00Z` : null,
+        note: notes,
+        workingHours, // Use selected working hours
+        governorateId, // Use governorate ID from profile
+        officeId, // Use office ID from profile
+        profileId, // Use profile ID from profile
       };
 
-      // Replace this URL with your API endpoint
-      await axios.post("https://example.com/api/attendance", dataToSend);
+      console.log("Payload to be sent:", dataToSend); // Debugging payload
+
+      // Send POST request to API endpoint
+      await axios.post(`${Url}/api/Attendance`, dataToSend);
       message.success("تم حفظ الحضور وإرساله بنجاح");
     } catch (error) {
-      console.error("Error saving attendance:", error);
+      console.error("Error saving attendance:", error.response?.data || error);
       message.error("حدث خطأ أثناء حفظ الحضور");
     }
   };
@@ -143,35 +91,6 @@ export default function SuperVisorAttendanceAdd() {
     setModalVisible(false);
   };
 
-  const tableColumns = [
-    {
-      title: "الرقم التسلسلي",
-      dataIndex: "id",
-      key: "id",
-    },
-    {
-      title: "الاسم",
-      dataIndex: "name",
-      key: "name",
-    },
-    {
-      title: "الدور الوظيفي",
-      dataIndex: "role",
-      key: "role",
-    },
-    {
-      title: "الحضور",
-      dataIndex: "attended",
-      key: "attended",
-      render: (_, record) => (
-        <Checkbox
-          checked={record.attended}
-          onChange={(e) => handleAttendanceChange(record.id, e.target.checked)}
-        />
-      ),
-    },
-  ];
-
   return (
     <div
       className={`supervisor-attendence-register-container ${
@@ -179,41 +98,98 @@ export default function SuperVisorAttendanceAdd() {
           ? "sidebar-collapsed"
           : "supervisor-expenses-history-page"
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       {/* Section: Attendance Details */}
       <h2 style={{ marginTop: "20px" }}>حضور موظفين الجوازات</h2>
-      <TextFields
-        fields={fields}
-        formClassName="attendance-input-group"
-        inputClassName="attendance-input"
-        dropdownClassName="attendance-dropdown"
-        fieldWrapperClassName="attendance-field-wrapper-add"
-        buttonClassName="attendance-button"
-        hideButtons={true} // Hide buttons if not needed
-      />
+      <div className="attendance-input-group">
+        {/* Governorate */}
+        <div className="attendance-field-wrapper-add">
+          <label>اسم المحافظة</label>
+          <Input
+            className="attendance-input"
+            value={profile?.governorateName || "غير معروف"}
+            disabled
+          />
+        </div>
 
-      {/* Section: Company Employees Attendance */}
-      <h2 style={{ marginTop: "20px" }}>حضور موظفين الشركة</h2>
-      <Table
-        dataSource={tableData}
-        columns={tableColumns}
-        rowKey="id"
-        pagination={{ pageSize: 5 }}
-      />
+        {/* Office Name */}
+        <div className="attendance-field-wrapper-add">
+          <label>اسم المكتب</label>
+          <Input
+            className="attendance-input"
+            value={profile?.officeName || "غير معروف"}
+            disabled
+          />
+        </div>
+
+        {/* Work Shift */}
+        <div className="attendance-field-wrapper-add">
+          <label>نوع الدوام</label>
+          <select
+            className="attendance-dropdown"
+            value={workingHours} // Bind the current value to state
+            onChange={(e) => setWorkingHours(Number(e.target.value))}
+          >
+            <option value={1}>صباحي</option>
+            <option value={2}>مسائي</option>
+          </select>
+        </div>
+
+        {/* Date */}
+        <div className="attendance-field-wrapper-add">
+          <label>التاريخ</label>
+          <DatePicker
+            style={{ width: "100%" }}
+            onChange={(date, dateString) => setSelectedDate(dateString)}
+          />
+        </div>
+
+        {/* Passport Attendance */}
+        {Object.keys(passportAttendance).map((key) => (
+          <div className="attendance-field-wrapper-add" key={key}>
+            <label>عدد موظفي {key}</label>
+            <Input
+              type="number"
+              className="attendance-input"
+              value={passportAttendance[key]}
+              onChange={(e) =>
+                setPassportAttendance((prev) => ({
+                  ...prev,
+                  [key]: Number(e.target.value),
+                }))
+              }
+            />
+          </div>
+        ))}
+
+        {/* Notes */}
+        <div className="attendance-field-wrapper-add">
+          <label>ملاحظات</label>
+          <TextArea
+            rows={4}
+            className="attendance-input"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </div>
+      </div>
 
       {/* Buttons */}
       <div className="attendance-buttons">
         <Button
           type="default"
           danger
-          onClick={() => showModal("reset")}
-          style={{ margin: "10px" }}>
+          onClick={() => showModal("reset")} // Open confirmation modal for reset
+          style={{ margin: "10px" }}
+        >
           إعادة التعيين
         </Button>
         <Button
           type="primary"
-          onClick={() => showModal("save")}
-          style={{ margin: "10px" }}>
+          onClick={() => showModal("save")} // Open confirmation modal for save
+          style={{ margin: "10px" }}
+        >
           الحفظ والإرسال
         </Button>
       </div>
@@ -222,10 +198,11 @@ export default function SuperVisorAttendanceAdd() {
       <Modal
         title="تأكيد العملية"
         visible={modalVisible}
-        onOk={handleModalConfirm}
-        onCancel={handleModalCancel}
+        onOk={handleModalConfirm} // Confirm the modal action
+        onCancel={handleModalCancel} // Cancel and close modal
         okText="نعم"
-        cancelText="الغاء">
+        cancelText="الغاء"
+      >
         <p>
           {modalAction === "reset"
             ? "هل أنت متأكد من إعادة التعيين؟"
