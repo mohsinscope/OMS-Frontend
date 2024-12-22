@@ -4,9 +4,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./pages/LayOut.jsx";
 import useAuthStore from "./store/store.js";
 import SignInPage from "./pages/signIn.jsx";
-import Stats from './pages/stats.jsx';
-
-
+import Stats from "./pages/stats.jsx";
 
 // Import all components
 import Dashboard from "./pages/dashBoard.jsx";
@@ -46,6 +44,7 @@ import FollowUpEmployeeExpensess from "./roles/FollowUpEmployee/expensess/Follow
 import FollowUpEmployeeAttensence from "./roles/FollowUpEmployee/attendence/FollowUpEmployeeAttensence.jsx";
 import SuperVisorLecturerhistory from "./roles/superVisor/lecturer/SuperVisorLecturerhistory.jsx";
 import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecturerAdd.jsx";
+import LecturerShow from "./roles/superVisor/lecturer/SuperVisorLecturerShow.jsx";
 
 const App = () => {
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
@@ -109,6 +108,10 @@ const App = () => {
     {
       path: "/supervisor/lecturerAdd/supervisorlecturerAdd",
       element: <SuperVisorLecturerAdd />,
+    },
+    {
+      path: "/supervisor/lecturer/history/LecturerShow",
+      element: <LecturerShow />,
     },
 
     // Manager Routes

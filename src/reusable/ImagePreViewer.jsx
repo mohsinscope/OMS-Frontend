@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Image, Button } from "antd"; // Importing Ant Design components
-import { LeftOutlined, RightOutlined, DeleteOutlined } from "@ant-design/icons"; // Icons for controls
+import { Image, Button, Modal } from "antd";
+import { LeftOutlined, RightOutlined, DeleteOutlined } from "@ant-design/icons";
 import "./styles/imagePreViewer.css";
 
-export default function ImagePreviewer({ uploadedImages, onDeleteImage }) {
-  const [currentIndex, setCurrentIndex] = useState(0); // State to track the currently displayed image index
+export default function ImagePreviewer({
+  uploadedImages,
+  onDeleteImage,
+  defaultWidth = 400,
+  defaultHeight = 200,
+}) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
 
   useEffect(() => {
-    // Reset the index if uploaded images change
-    setCurrentIndex(0);
+    setCurrentIndex(0); // Reset the index when images change
   }, [uploadedImages]);
 
   const handleNext = () => {
@@ -23,24 +28,32 @@ export default function ImagePreviewer({ uploadedImages, onDeleteImage }) {
     }
   };
 
-  const handleDelete = () => {
-    if (uploadedImages && uploadedImages.length > 0) {
-      onDeleteImage(currentIndex); // Call the parent delete function with the current index
-      // Adjust the index if it's out of bounds after deletion
+  const showDeleteConfirm = () => {
+    setIsDeleteConfirmVisible(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (onDeleteImage) {
+      onDeleteImage(currentIndex);
       setCurrentIndex((prev) => (prev > 0 ? prev - 1 : 0));
     }
+    setIsDeleteConfirmVisible(false);
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteConfirmVisible(false);
   };
 
   if (!uploadedImages || uploadedImages.length === 0) {
-    return <p></p>; // Show a message if no images are available
+    return <p>لا توجد صور للعرض</p>;
   }
 
   return (
     <div className="image-previewer-container">
       <div className="image-display">
         <Image
-          width={800}
-          height={400}
+          width={defaultWidth}
+          height={defaultHeight}
           src={uploadedImages[currentIndex]}
           alt={`Image ${currentIndex + 1}`}
           className="image-preview-item"
@@ -67,15 +80,27 @@ export default function ImagePreviewer({ uploadedImages, onDeleteImage }) {
         </Button>
       </div>
 
-      <div className="image-delete-button-container">
-        <Button
-          icon={<DeleteOutlined />}
-          onClick={handleDelete}
-          danger
-          className="delete-button">
-          حذف
-        </Button>
-      </div>
+      {onDeleteImage && (
+        <div className="image-delete-button-container">
+          <Button
+            icon={<DeleteOutlined />}
+            onClick={showDeleteConfirm}
+            danger
+            className="delete-button">
+            حذف
+          </Button>
+        </div>
+      )}
+
+      <Modal
+        title="تأكيد الحذف"
+        visible={isDeleteConfirmVisible}
+        onOk={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+        okText="نعم"
+        cancelText="لا">
+        <p>هل أنت متأكد أنك تريد حذف هذه الصورة؟</p>
+      </Modal>
     </div>
   );
 }

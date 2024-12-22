@@ -77,9 +77,7 @@ const SuperVisorLecturerAdd = () => {
         officeId,
         governorateId,
         profileId,
-        officeName: "الكرادة", // Dynamically set if needed
-        governorateName: "Baghdad", // Dynamically set if needed
-        profileFullName: "brhm404", // Dynamically set if needed
+        note: values.note,
       };
 
       console.log("Payload to be sent:", payload);
@@ -130,7 +128,7 @@ const SuperVisorLecturerAdd = () => {
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
-      <h1 className="SuperVisor-title-conatiner">إضافة محاضرة جديدة</h1>
+      <h1 className="SuperVisor-title-conatiner">إضافة محضر جديد</h1>
       <div className="add-details-container">
         <Form
           form={form}
@@ -141,11 +139,11 @@ const SuperVisorLecturerAdd = () => {
             <div className="add-passport-fields-container">
               <Form.Item
                 name="title"
-                label="عنوان المحاضرة"
+                label="عنولن المحضر"
                 rules={[
-                  { required: true, message: "يرجى إدخال عنوان المحاضرة" },
+                  { required: true, message: "يرجى إدخال عنولن المحضر" },
                 ]}>
-                <Input placeholder="أدخل عنوان المحاضرة" />
+                <Input placeholder="أدخل عنولن المحضر" />
               </Form.Item>
               <Form.Item
                 name="date"
@@ -156,8 +154,17 @@ const SuperVisorLecturerAdd = () => {
                   style={{ width: "267px", height: "45px" }}
                 />
               </Form.Item>
+              <Form.Item
+                name="note"
+                label="ملاحظات"
+                rules={[{ required: true, message: "يرجى إدخال الملاحظات" }]}>
+                <Input.TextArea
+                  placeholder="أدخل الملاحظات"
+                  style={{ height: "150px" }}
+                />
+              </Form.Item>
             </div>
-            <h1 className="SuperVisor-title-conatiner">إضافة صورة المحاضرة</h1>
+            <h1 className="SuperVisor-title-conatiner">إضافة صورة محضر</h1>
             <div className="add-image-section">
               <div className="dragger-container">
                 <Dragger
