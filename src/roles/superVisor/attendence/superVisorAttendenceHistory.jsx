@@ -8,8 +8,9 @@ import Url from "./../../../store/url.js";
 export default function SupervisorAttendanceHistory() {
   const [attendanceData, setAttendanceData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [workingHours, setWorkingHours] = useState(0); // Default to "الكل"
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [workingHours, setWorkingHours] = useState(3); // Default to "الكل"
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { isSidebarCollapsed, profile } = useAuthStore();
   const navigate = useNavigate();
@@ -46,12 +47,21 @@ export default function SupervisorAttendanceHistory() {
     fetchAttendanceData();
   }, []);
 
+  const formatDateForAPI = (date) => {
+    if (!date) return undefined;
+    // Set time to 14:00:00Z for the selected date
+    const formattedDate = new Date(date);
+    formattedDate.setUTCHours(14, 0, 0, 0);
+    return formattedDate.toISOString();
+  };
+
   const handleSearch = async () => {
     const body = {
-      workingHours, // Set to 0 if "الكل" is selected
+      workingHours, // Always send the workingHours value (1, 2, or 3)
       officeId,
       governorateId,
-      date: selectedDate ? new Date(selectedDate).toISOString() : undefined, // Optional
+      startDate: formatDateForAPI(startDate),
+      endDate: formatDateForAPI(endDate),
       PaginationParams: {
         PageNumber: 1,
         PageSize: 10,
@@ -99,8 +109,9 @@ export default function SupervisorAttendanceHistory() {
   };
 
   const handleReset = () => {
-    setSelectedDate(null);
-    setWorkingHours(0); // Reset to "الكل"
+    setStartDate(null);
+    setEndDate(null);
+    setWorkingHours(3); // Reset to "الكل"
     setFilteredData(attendanceData);
     message.success("تمت إعادة التعيين بنجاح.");
   };
@@ -152,13 +163,20 @@ export default function SupervisorAttendanceHistory() {
           searchVisible ? "animate-show" : "animate-hide"
         }`}
       >
-        <div className="date-attendence-histore">
-          <label htmlFor="searchDate" style={{ display: "block" }}>
-            اختر التاريخ
-          </label>
+        <div className="filter-row">
+          <label>التاريخ من</label>
           <DatePicker
-            id="searchDate"
-            onChange={(date, dateString) => setSelectedDate(date)}
+            onChange={(date) => setStartDate(date)}
+            value={startDate}
+            style={{ width: "100%" }}
+            placeholder="اختر التاريخ"
+          />
+        </div>
+        <div className="filter-row">
+          <label>التاريخ إلى</label>
+          <DatePicker
+            onChange={(date) => setEndDate(date)}
+            value={endDate}
             style={{ width: "100%" }}
             placeholder="اختر التاريخ"
           />
@@ -170,7 +188,7 @@ export default function SupervisorAttendanceHistory() {
             value={workingHours}
             onChange={(e) => setWorkingHours(Number(e.target.value))}
           >
-            <option value={0}>الكل</option>
+            <option value={3}>الكل</option>
             <option value={1}>صباحي</option>
             <option value={2}>مسائي</option>
           </select>
@@ -182,14 +200,16 @@ export default function SupervisorAttendanceHistory() {
           إعادة التعيين
         </button>
         <Link to="AttendenceAdd">
-          <button>اضافة حضور</button>
+          <button className="attendance-add-button">اضافة حضور</button>
         </Link>
       </div>
+
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
           {searchVisible ? " إخفاء البحث" : " إظهار البحث"}
         </Button>
       </div>
+
       <div className="supervisor-attendance-history-table">
         <Table
           dataSource={filteredData}

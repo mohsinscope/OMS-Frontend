@@ -11,7 +11,7 @@
       "path": "/admin/expenses"
     },
     {
-      "label": "الحضور",
+      "label": "ادارة الحضور",
       "icon": "attendence",
       "path": "/admin/attendence"
     },
