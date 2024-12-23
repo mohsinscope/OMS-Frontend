@@ -6,7 +6,7 @@ import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
 import moment from "moment";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
-
+import "./SuperVisorLecturerAdd.css";
 const { Dragger } = Upload;
 
 const SuperVisorLecturerAdd = () => {
@@ -124,19 +124,19 @@ const SuperVisorLecturerAdd = () => {
 
   return (
     <div
-      className={`supervisor-damaged-passport-add-containe ${
+      className={`supervisor-Lecturer-add-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
-      <h1 className="SuperVisor-title-conatiner">إضافة محضر جديد</h1>
-      <div className="add-details-container">
+      <h1 className="SuperVisor-Lecturer-title-conatiner">إضافة محضر جديد</h1>
+      <div className="add-Lecturer-details-container">
         <Form
           form={form}
           onFinish={handleFormSubmit}
           layout="vertical"
           style={{ direction: "rtl", display: "flex", gap: "30px" }}>
-          <div className="add-damegedpassport-section-container">
-            <div className="add-passport-fields-container">
+          <div className="add-Lecturer-section-container">
+            <div className="add-Lecturer-fields-container">
               <Form.Item
                 name="title"
                 label="عنولن المحضر"
@@ -160,13 +160,15 @@ const SuperVisorLecturerAdd = () => {
                 rules={[{ required: true, message: "يرجى إدخال الملاحظات" }]}>
                 <Input.TextArea
                   placeholder="أدخل الملاحظات"
-                  style={{ height: "150px" }}
+                  style={{ height: "150px", width: "600px" }}
                 />
               </Form.Item>
             </div>
-            <h1 className="SuperVisor-title-conatiner">إضافة صورة محضر</h1>
-            <div className="add-image-section">
-              <div className="dragger-container">
+            <h1 className="SuperVisor-Lecturer-title-conatiner">
+              إضافة صورة محضر
+            </h1>
+            <div className="Lecturer-add-image-section">
+              <div className="Lecturer-dragger-container">
                 <Dragger
                   fileList={fileList}
                   onChange={handleFileChange}
@@ -177,14 +179,14 @@ const SuperVisorLecturerAdd = () => {
                   <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
                 </Dragger>
               </div>
-              <div className="image-preivwer-container">
+              <div className="Lecturer-image-preivwer-container">
                 <ImagePreviewer
                   uploadedImages={previewUrls}
                   onDeleteImage={handleDeleteImage}
                 />
               </div>
             </div>
-            <div className="image-previewer-section">
+            <div className="Lecturer-image-previewer-section">
               <Button
                 type="primary"
                 htmlType="submit"

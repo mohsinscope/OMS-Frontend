@@ -57,6 +57,7 @@ export default function ImagePreviewer({
           src={uploadedImages[currentIndex]}
           alt={`Image ${currentIndex + 1}`}
           className="image-preview-item"
+          style={{ objectFit: "contain" }}
         />
       </div>
 

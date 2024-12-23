@@ -32,18 +32,20 @@
   gap: 20px;
   padding: 20px 0px 20px 20px;
   transition: all 0.6s ease-in-out;
-  overflow: hidden;
+  display: none;
 }
 .supervisor-devices-dameged-filters.animate-show {
-  max-height: 300px;
+  max-height: 500px;
   opacity: 1;
-  transition: max-height 0.6s ease, opacity 0.6s ease;
+  transition: all 0.6s ease, opacity 0.6s ease;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .supervisor-devices-dameged-filters.animate-hide {
   max-height: 0;
   opacity: 0;
-  transition: max-height 0.6s ease, opacity 0.6s ease;
+  transition: all 0.6s ease, opacity 0.6s ease;
 }
 .supervisor-devices-dameged-filters #date {
   width: 200px;
@@ -59,23 +61,34 @@
   align-items: start;
   gap: 10px;
 }
-/* Filter Form Field Wrapper */
-.supervisor-devices-dameged-field-wrapper {
+.filter-field {
   display: flex;
   flex-direction: column;
   align-items: start;
   gap: 10px;
 }
+/* Filter Form Field Wrapper */
+.supervisor-devices-dameged-field-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+.filter-field input {
+  width: 200px;
+  height: 45px;
+  margin-left: 10px;
+}
 
 /* Input and Dropdown Styling */
 .supervisor-devices-dameged-input,
 .supervisor-devices-dameged-dropdown {
-  width: 267px; /* Consistent width for inputs and dropdowns */
+  width: 26.7%; /* Consistent width for inputs and dropdowns */
   height: 45px; /* Slightly smaller height for better proportion */
   padding: 0 15px; /* Adjust padding for cleaner design */
   border-radius: 6px; /* Rounded corners for a modern look */
   border: 1px solid #ccc; /* Neutral border color */
   font-size: 14px; /* Slightly smaller font for compact layout */
+  margin-left: 10px;
 }
 
 /* Hover and Focus Effects for Inputs and Dropdowns */
@@ -189,11 +202,10 @@
 }
 #date {
 }
-.filter-field .ant-picker input{
+.filter-field .ant-picker input {
   width: 200px !important;
 }
-.filter-field .ant-select
-{
+.filter-field .ant-select {
   width: 200px !important;
   height: 47px !important;
 }
