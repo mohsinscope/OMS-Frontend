@@ -31,14 +31,13 @@ const AdminUserManagment = () => {
   const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
   const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
   const [selectedUser, setSelectedUser] = useState(null); // State for selected user to edit
-
   // Fetch profiles with users and roles
   useEffect(() => {
     const fetchProfilesWithUsersAndRoles = async () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          "http://localhost:5214/api/account/profiles-with-users-and-roles",
+          `${Url}/api/account/profiles-with-users-and-roles`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -63,8 +62,8 @@ const AdminUserManagment = () => {
     const fetchInitialData = async () => {
       try {
         const [officesResponse, governoratesResponse] = await Promise.all([
-          axios.get("http://localhost:5214/api/office"),
-          axios.get("http://localhost:5214/api/Governorate"),
+          axios.get(`${Url}/api/office`),
+          axios.get(`${Url}/api/Governorate`),
         ]);
         setOffices(officesResponse.data);
         setGovernorates(governoratesResponse.data);
@@ -167,7 +166,7 @@ const AdminUserManagment = () => {
     try {
       // PUT request to update the user
       await axios.put(
-        `http://localhost:5214/api/account/${selectedUser.id}`,
+        `${Url}/api/account/${selectedUser.id}`,
         updatedUser,
         {
           headers: {
@@ -180,7 +179,7 @@ const AdminUserManagment = () => {
 
       // Fetch the updated list
       const updatedResponse = await axios.get(
-        "http://localhost:5214/api/account/profiles-with-users-and-roles",
+        `${Url}/api/account/profiles-with-users-and-roles`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

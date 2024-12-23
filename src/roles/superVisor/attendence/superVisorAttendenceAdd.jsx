@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import { Button, Modal, message, Input, DatePicker } from "antd";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./superVisorAteensenceAdd.css";
-import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
+import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 
 const { TextArea } = Input;
 
 export default function SuperVisorAttendanceAdd() {
-  const { isSidebarCollapsed, profile } = useAuthStore(); // Access profile from store
+  const navigate = useNavigate();
+  const { isSidebarCollapsed, profile } = useAuthStore();
   const [selectedDate, setSelectedDate] = useState(null);
-  const [workingHours, setWorkingHours] = useState(1); // Default to "صباحي"
+  const [workingHours, setWorkingHours] = useState(1);
   const [passportAttendance, setPassportAttendance] = useState({
     الاستلام: 0,
     الحسابات: 0,
@@ -18,16 +20,14 @@ export default function SuperVisorAttendanceAdd() {
     الجودة: 0,
     التسليم: 0,
   });
-  const [notes, setNotes] = useState(""); // Notes for the attendance
+  const [notes, setNotes] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
-  const [modalAction, setModalAction] = useState(""); // Track which button is clicked
+  const [modalAction, setModalAction] = useState("");
 
-  // Governorate, Office, and Profile Data
   const governorateId = profile?.governorateId;
   const officeId = profile?.officeId;
   const profileId = profile?.profileId;
 
-  // Handle reset action
   const handleResetAction = () => {
     setPassportAttendance({
       الطباعة: 0,
@@ -36,13 +36,12 @@ export default function SuperVisorAttendanceAdd() {
       الحسابات: 0,
       الجودة: 0,
     });
-    setSelectedDate(null); // Reset selected date
-    setWorkingHours(1); // Reset to default "صباحي"
-    setNotes(""); // Clear notes
-    message.success("تمت إعادة التعيين بنجاح"); // Show success message
+    setSelectedDate(null);
+    setWorkingHours(1);
+    setNotes("");
+    message.success("تمت إعادة التعيين بنجاح");
   };
 
-  // Handle save and send action
   const handleSaveAndSendAction = async () => {
     try {
       const dataToSend = {
@@ -53,30 +52,28 @@ export default function SuperVisorAttendanceAdd() {
         deliveryStaff: passportAttendance["التسليم"],
         date: selectedDate ? `${selectedDate}T10:00:00Z` : null,
         note: notes,
-        workingHours, // Use selected working hours
-        governorateId, // Use governorate ID from profile
-        officeId, // Use office ID from profile
-        profileId, // Use profile ID from profile
+        workingHours,
+        governorateId,
+        officeId,
+        profileId,
       };
 
-      console.log("Payload to be sent:", dataToSend); // Debugging payload
+      console.log("Payload to be sent:", dataToSend);
 
-      // Send POST request to API endpoint
       await axios.post(`${Url}/api/Attendance`, dataToSend);
       message.success("تم حفظ الحضور وإرساله بنجاح");
+      navigate(-1);
     } catch (error) {
       console.error("Error saving attendance:", error.response?.data || error);
       message.error("حدث خطأ أثناء حفظ الحضور");
     }
   };
 
-  // Open modal for confirmation
   const showModal = (action) => {
     setModalAction(action);
     setModalVisible(true);
   };
 
-  // Handle modal confirmation
   const handleModalConfirm = () => {
     if (modalAction === "reset") {
       handleResetAction();
@@ -86,7 +83,6 @@ export default function SuperVisorAttendanceAdd() {
     setModalVisible(false);
   };
 
-  // Handle modal cancellation
   const handleModalCancel = () => {
     setModalVisible(false);
   };
@@ -100,10 +96,8 @@ export default function SuperVisorAttendanceAdd() {
       }`}
       dir="rtl"
     >
-      {/* Section: Attendance Details */}
       <h2 style={{ marginTop: "20px" }}>حضور موظفين الجوازات</h2>
       <div className="attendance-input-group">
-        {/* Governorate */}
         <div className="attendance-field-wrapper-add">
           <label>اسم المحافظة</label>
           <Input
@@ -113,7 +107,6 @@ export default function SuperVisorAttendanceAdd() {
           />
         </div>
 
-        {/* Office Name */}
         <div className="attendance-field-wrapper-add">
           <label>اسم المكتب</label>
           <Input
@@ -123,12 +116,11 @@ export default function SuperVisorAttendanceAdd() {
           />
         </div>
 
-        {/* Work Shift */}
         <div className="attendance-field-wrapper-add">
           <label>نوع الدوام</label>
           <select
             className="attendance-dropdown"
-            value={workingHours} // Bind the current value to state
+            value={workingHours}
             onChange={(e) => setWorkingHours(Number(e.target.value))}
           >
             <option value={1}>صباحي</option>
@@ -136,7 +128,6 @@ export default function SuperVisorAttendanceAdd() {
           </select>
         </div>
 
-        {/* Date */}
         <div className="attendance-field-wrapper-add">
           <label>التاريخ</label>
           <DatePicker
@@ -145,7 +136,6 @@ export default function SuperVisorAttendanceAdd() {
           />
         </div>
 
-        {/* Passport Attendance */}
         {Object.keys(passportAttendance).map((key) => (
           <div className="attendance-field-wrapper-add" key={key}>
             <label>عدد موظفي {key}</label>
@@ -163,7 +153,6 @@ export default function SuperVisorAttendanceAdd() {
           </div>
         ))}
 
-        {/* Notes */}
         <div className="attendance-field-wrapper-add">
           <label>ملاحظات</label>
           <TextArea
@@ -175,31 +164,29 @@ export default function SuperVisorAttendanceAdd() {
         </div>
       </div>
 
-      {/* Buttons */}
       <div className="attendance-buttons">
         <Button
           type="default"
           danger
-          onClick={() => showModal("reset")} // Open confirmation modal for reset
+          onClick={() => showModal("reset")}
           style={{ margin: "10px" }}
         >
           إعادة التعيين
         </Button>
         <Button
           type="primary"
-          onClick={() => showModal("save")} // Open confirmation modal for save
+          onClick={() => showModal("save")}
           style={{ margin: "10px" }}
         >
           الحفظ والإرسال
         </Button>
       </div>
 
-      {/* Confirmation Modal */}
       <Modal
         title="تأكيد العملية"
         visible={modalVisible}
-        onOk={handleModalConfirm} // Confirm the modal action
-        onCancel={handleModalCancel} // Cancel and close modal
+        onOk={handleModalConfirm}
+        onCancel={handleModalCancel}
         okText="نعم"
         cancelText="الغاء"
       >

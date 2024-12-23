@@ -15,7 +15,43 @@
   z-index: 10; /* Ensure it stays above the sidebar */
   color: (--bg-color);
 }
+/* Update these styles in your existing CSS */
+.sidebar {
+  width: 200px;
+  height: 100vh;
+  background-color: white;
+  border-left: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  padding: 0px;
+  padding-top: 20px;
+  position: fixed;
+  top: 8%;
+  right: 0;
+  transition: all 0.3s ease;
+  overflow-y: auto; /* Add this line to enable vertical scrolling */
+}
 
+/* Update the sidebar-top section to allow it to grow */
+.sidebar-top {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  flex: 1; /* Add this to allow content to grow */
+  overflow-y: auto; /* Enable scrolling for this section */
+}
+
+/* Update the sidebar-bottom to stay fixed at bottom */
+.sidebar-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 16px;
+  margin-bottom: 0; /* Remove the large margin */
+  position: sticky; /* Make it stick to bottom */
+  bottom: 0;
+  background-color: white; /* Ensure it has a background */
+}
 .navbar-left {
   display: flex;
   align-items: center;
