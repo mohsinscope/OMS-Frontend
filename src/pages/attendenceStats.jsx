@@ -22,6 +22,7 @@ const AttendanceStats = () => {
   const [selectedOffice, setSelectedOffice] = useState(profile?.officeId || null);
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [governorateData, setGovernorateData] = useState({
     morning: [],
     evening: []
@@ -146,9 +147,19 @@ const AttendanceStats = () => {
     if (profile?.role === 'Supervisor') {
       fetchOffices(profile.governorateId);
     }
-    fetchAttendanceStats();
-    fetchGovernorateStats();
-  }, [selectedDate, selectedGovernorate, selectedOffice]);
+  }, []); // Only run once on component mount
+
+  const handleSearch = async () => {
+    setLoading(true);
+    try {
+      await fetchAttendanceStats();
+      await fetchGovernorateStats();
+    } catch (error) {
+      console.error("Search failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
@@ -181,7 +192,6 @@ const AttendanceStats = () => {
             tick={false}
             domain={[0, 'dataMax + 5']}
           />
-          
           <YAxis
             dataKey="name"
             type="category"
@@ -270,11 +280,12 @@ const AttendanceStats = () => {
         </div>
         <div className="attendance-filter flex-1 flex items-end">
           <button
-            onClick={fetchAttendanceStats}
-            className="attendance-search-button w-full px-6 py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors"
+            onClick={handleSearch}
+            disabled={loading}
+            className={`attendance-search-button w-full px-6 py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             <Search size={20} />
-            ابحث
+            {loading ? 'جاري البحث...' : 'ابحث'}
           </button>
         </div>
       </div>

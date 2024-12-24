@@ -34,7 +34,7 @@ export default function ListOfValueAdmin() {
   const [currentPath, setCurrentPath] = useState(null);
   const [currentLabel, setCurrentLabel] = useState("تفاصيل القيمة");
 
-  const { user } = useAuthStore();
+  const { user } = useAuthStore(); // Retrieve user information from the store
 
   const api = axios.create({
     baseURL: Url,
@@ -74,9 +74,7 @@ export default function ListOfValueAdmin() {
             }
           } catch (error) {
             console.error(`Error fetching options for ${field.name}:`, error);
-            if (field.label !== "اسم المستخدم") {
-              message.error(`فشل تحميل الخيارات لـ ${field.label}`);
-            }
+            message.error(`فشل تحميل الخيارات لـ ${field.label}`);
             return { ...field, options: [] };
           }
         }
@@ -159,7 +157,7 @@ export default function ListOfValueAdmin() {
       const endpoint = selectedConfig.postEndpoint;
       const payload = {
         ...values,
-        adminId: user?.id,
+        profileId: user.id, // Include user ID automatically
       };
 
       await api.post(endpoint, payload);
@@ -181,18 +179,21 @@ export default function ListOfValueAdmin() {
       message.error("بيانات التحديث غير مكتملة");
       return;
     }
-
+  
     setLoading(true);
     try {
       const endpoint = selectedConfig.putEndpoint(editingId);
+  
+      // Prepare payload
       const payload = {
-        id: editingId,
-        ...values,
-        adminId: user?.id,
+        id: editingId, // Include the ID if required by the endpoint
+        ...values, // Spread the form values
+        profileId: user.id, // Include profileId from the store
+        note: values.note || "", // Include the note field, defaulting to an empty string if not provided
       };
-
+  
       await api.put(endpoint, payload);
-
+  
       message.success("تم تحديث البيانات بنجاح");
       setIsModalOpen(false);
       form.resetFields();
@@ -206,7 +207,6 @@ export default function ListOfValueAdmin() {
       setLoading(false);
     }
   };
-
   const handleDelete = async (id) => {
     if (!id || !selectedConfig) {
       message.error("معرف السجل غير متوفر");
@@ -360,8 +360,6 @@ export default function ListOfValueAdmin() {
               name={field.name}
               label={field.label}
               rules={[{ required: true, message: `الرجاء إدخال ${field.label}` }]}
-              style={field.label === "اسم المستخدم" ? { display: "none" } : {}}
-
             >
               {renderFormField(field)}
             </Form.Item>
