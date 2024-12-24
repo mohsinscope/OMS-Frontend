@@ -142,3 +142,21 @@
 .supervisor-passport-dameged-table-container table thead th {
   text-align: center !important;
 }
+.supervisor-passport-dameged-add-button {
+  width: 150px;
+  height: 45px;
+  background-color: #04aa6d;
+  border: 2px solid #04aa6d;
+  color: white;
+  border: none;
+  border-radius: 8%;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 16px;
+  font-weight: bold;
+}
+.supervisor-passport-dameged-add-button:hover {
+  background-color: white !important;
+  color: #04aa6d !important;
+  border: 2px solid #04aa6d !important;
+}

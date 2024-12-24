@@ -6,7 +6,7 @@
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: start;
 }
 
 .title-container {
@@ -18,42 +18,46 @@
 .title-container h1 {
   margin-bottom: 20px;
   color: #333;
+  font-size: 24px;
 }
+
 .details-container-Lecture {
   background-color: white;
   width: 100%;
   padding: 20px;
-  gap: 10%;
+  gap: 2px;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
   border-radius: 8px;
   display: flex;
   flex-direction: row;
-  height: 70vh;
+  height: 80vh;
 }
+
 .image-lecture-container {
   width: 100%;
 }
+
 .information-lecture-container {
   margin-top: 50px;
   padding: 20px;
   width: 30%;
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
   gap: 20px;
 }
+
 .details-lecture-container {
   margin-top: 20px;
-  width: 60%;
+  margin-bottom: 20px;
+  width: 40%;
   display: flex;
   flex-direction: column;
 }
+
 .details-row {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   padding: 10px;
-  width: 100%;
   gap: 10px;
 }
 
@@ -62,31 +66,67 @@
   color: #333;
   flex: 0.4;
   margin-left: 20px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.note-details-label {
+  font-weight: bold;
+  color: #333;
+  flex: 0.4;
+  margin-left: 20px;
+  display: flex;
+  justify-content: center;
 }
 
 .details-value {
-  width: 60%;
+  width: 100%;
+  color: #555;
+  flex: 0.6;
+  direction: rtl;
+  text-align: right;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.note-details-value {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
   color: #555;
   flex: 0.6;
   direction: rtl;
   text-align: right;
 }
 
+.textarea-value {
+  height: 160px;
+  resize: none;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  direction: rtl;
+  text-align: right;
+  width: 100%;
+}
+
 .back-button-container {
   margin-top: 20px;
   display: flex;
   justify-content: flex-start;
-  width: 100%;
+  width: 80%;
 }
 
 .back-button {
   margin: 10px;
-  padding: 10px 20px;
+  padding: 20px 20px;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
   color: white;
   background-color: #4880ff;
+  border: 2px solid #4880ff !important;
   transition: background-color 0.3s;
   font-size: 16px;
 }
@@ -110,4 +150,203 @@
   border: 1px solid #ddd;
   padding: 10px;
   border-radius: 8px;
+}
+
+.edit-button-and-delete {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.edit-button-lecture {
+  margin: 10px;
+  padding: 20px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  background-color: #efb034;
+  border: 2px solid #efb034 !important;
+  transition: background-color 0.3s;
+  font-size: 16px;
+}
+.edit-button-lecture:hover {
+  color: #efb034 !important;
+  background-color: white;
+  border: 2px solid #efb034 !important;
+}
+.delete-button-lecture {
+  margin: 10px;
+  padding: 20px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  background-color: #ff4d4d;
+  border: 2px solid #ff4d4d !important;
+  transition: background-color 0.3s;
+  font-size: 16px;
+}
+.delete-button-lecture:hover {
+  color: #ff4d4d !important;
+  background-color: white;
+  border: 2px solid #ff4d4d !important;
+}
+
+/* iPad and Tablet Responsive Styles */
+@media screen and (max-width: 1024px) {
+  .supervisor-lecture-show-container {
+    margin-top: 15%;
+    margin-right: 15px;
+    margin-left: 15px;
+    padding: 15px;
+  }
+
+  .details-container-Lecture {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    gap: 20px;
+  }
+
+  .details-lecture-container {
+    width: 100%;
+    margin-top: 10px;
+    order: 1;
+  }
+
+  .image-lecture-container {
+    width: 100%;
+    order: 2;
+  }
+
+  .details-value {
+    width: 100%;
+  }
+
+  .title-container h1 {
+    font-size: 22px;
+  }
+
+  .back-button-container {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .textarea-value {
+    height: 120px;
+  }
+
+  .note-details-value {
+    margin-top: 20px;
+  }
+}
+
+/* Portrait iPad Specific Adjustments */
+@media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .supervisor-lecture-show-container {
+    margin-top: 10%;
+    margin-right: 10px;
+    margin-left: 10px;
+    padding: 10px;
+  }
+  .details-container-Lecture {
+    padding: 15px;
+  }
+
+  .details-row {
+    padding: 8px;
+  }
+
+  .details-label {
+    margin-left: 15px;
+    font-size: 15px;
+  }
+
+  .details-value {
+    padding: 10px;
+    font-size: 15px;
+  }
+}
+
+/* Landscape iPad Specific Adjustments */
+@media screen and (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .details-container-Lecture {
+    flex-direction: row;
+    height: auto;
+    min-height: 80vh;
+  }
+
+  .details-lecture-container {
+    width: 45%;
+  }
+
+  .image-lecture-container {
+    width: 55%;
+  }
+}
+
+/* Smaller tablets and larger phones */
+@media screen and (max-width: 767px) {
+  .supervisor-lecture-show-container {
+    margin-top: 10%;
+    margin-right: 10px;
+    margin-left: 10px;
+    padding: 10px;
+  }
+
+  .title-container h1 {
+    font-size: 20px;
+  }
+
+  .details-row {
+    padding: 6px;
+  }
+
+  .details-label {
+    margin-left: 10px;
+    font-size: 14px;
+  }
+
+  .details-value {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .back-button {
+    width: 100%;
+    margin: 10px 0;
+  }
+}
+@media screen and (min-width: 1280px) and (max-width: 1366px) and (max-height: 800px) {
+  .supervisor-lecture-show-container {
+    margin-top: 8%;
+  }
+
+  .details-container-Lecture {
+    height: 90vh;
+  }
+
+  .details-row {
+    padding: 6px;
+  }
+
+  .note-details-value {
+    margin-top: 8px;
+  }
+
+  .textarea-value {
+    height: 80px;
+  }
+}
+@media screen and (min-width: 1280px) and (max-width: 1366px) and (-webkit-min-device-pixel-ratio: 2),
+  screen and (min-width: 1280px) and (max-width: 1366px) and (min-resolution: 192dpi) {
+  .details-container-Lecture {
+    box-shadow: rgba(99, 99, 99, 0.15) 0px 2px 6px 0px;
+  }
+
+  .details-value,
+  .textarea-value {
+    border: 1px solid rgba(221, 221, 221, 0.8);
+  }
 }

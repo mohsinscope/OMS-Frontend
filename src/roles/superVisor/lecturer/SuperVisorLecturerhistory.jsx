@@ -224,7 +224,9 @@ const SuperVisorLecturerhistory = () => {
           </div>
         </form>
         <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
-          <button className="supervisor-Lectur-button">اضافة محضر جديد</button>
+          <button className="supervisor-add-Lectur-button">
+            اضافة محضر جديد +
+          </button>
         </Link>
       </div>
 
