@@ -123,11 +123,6 @@ const Config = {
         key: "governorateName",
       },
       { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
-      {
-        title: "اسم المستخدم",
-        dataIndex: "profileFullName",
-        key: "profileFullName",
-      },
     ],
     formFields: [
       { name: "serialNumber", label: "الرقم التسلسلي", type: "text" },
@@ -156,12 +151,7 @@ const Config = {
         type: "dropdown",
         optionsEndpoint: "/api/office?PageNumber=1&PageSize=100",
       },
-      {
-        name: "profileId",
-        label: "اسم المستخدم",
-        type: "dropdown",
-        optionsEndpoint: "/api/profile?PageNumber=1&PageSize=100",
-      },
+      { name: "note", label: "ملاحظات", type: "text" }, // Added note field
     ],
   },
   "/admin/passport-dammage": {
@@ -187,11 +177,6 @@ const Config = {
         key: "governorateName",
       },
       { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
-      {
-        title: "اسم المستخدم",
-        dataIndex: "profileFullName",
-        key: "profileFullName",
-      },
     ],
     formFields: [
       { name: "date", label: "التاريخ", type: "date" },
@@ -214,12 +199,7 @@ const Config = {
         type: "dropdown",
         optionsEndpoint: "/api/office?PageNumber=1&PageSize=100",
       },
-      {
-        name: "profileId",
-        label: "اسم المستخدم",
-        type: "text",
-        optionsEndpoint: "/api/profile?PageNumber=1&PageSize=100",
-      },
+      { name: "note", label: "ملاحظات", type: "text" }, // Added note field
     ],
   },
 };
