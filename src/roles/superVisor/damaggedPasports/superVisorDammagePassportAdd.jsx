@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Form, Input, Button, DatePicker, message, Upload } from "antd";
+import { Form, Input, Button, DatePicker, Select, message, Upload } from "antd";
 import axios from "axios";
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
@@ -14,18 +14,39 @@ const SuperVisorDammagePassportAdd = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]); // State for image previews
+  const [previewUrls, setPreviewUrls] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { isSidebarCollapsed } = useAuthStore();
   const { accessToken, profile } = useAuthStore();
-
+  const [damagedTypes, setDamagedTypes] = useState([]);
   const { profileId, governorateId, officeId } = profile || {};
+
+  useEffect(() => {
+    const fetchDamagedTypes = async () => {
+      try {
+        const response = await axios.get(`${Url}/api/damagedtype/all`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        setDamagedTypes(
+          response.data.map((type) => ({
+            value: type.id,
+            label: type.name,
+          }))
+        );
+      } catch (error) {
+        message.error("خطأ في جلب أنواع التلف للجوازات");
+      }
+    };
+
+    fetchDamagedTypes();
+  }, [accessToken]);
 
   const handleBack = () => {
     navigate(-1);
   };
 
-  // Step 1: Send damaged passport details first and get entityId
   const sendPassportDetails = async (payload) => {
     try {
       const response = await axios.post(`${Url}/api/DamagedPassport`, payload, {
@@ -34,13 +55,13 @@ const SuperVisorDammagePassportAdd = () => {
           Authorization: `Bearer ${accessToken}`,
         },
       });
+      console.log(sendPassportDetails);
       return response.data?.id || response.data;
     } catch (error) {
       throw new Error("Failed to add damaged passport.");
     }
   };
 
-  // Step 2: Attach files to the created damaged passport entity
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
       const formData = new FormData();
@@ -82,16 +103,12 @@ const SuperVisorDammagePassportAdd = () => {
         note: values.note || "",
       };
 
-      console.log("Payload to be sent:", payload);
-
-      // Step 1: Send damaged passport data and get the entity ID
       const entityId = await sendPassportDetails(payload);
 
       if (!entityId) {
         throw new Error("Failed to retrieve entity ID from the response.");
       }
 
-      // Step 2: Attach files if any
       if (fileList.length > 0) {
         await attachFiles(entityId);
         message.success("تم إرسال البيانات والمرفقات بنجاح");
@@ -149,7 +166,12 @@ const SuperVisorDammagePassportAdd = () => {
                 name="damagedTypeId"
                 label="سبب التلف"
                 rules={[{ required: true, message: "يرجى إدخال سبب التلف" }]}>
-                <Input placeholder="أدخل سبب التلف (رقم)" type="number" />
+                <Select
+                  options={damagedTypes}
+                  placeholder="اختر سبب التلف"
+                  allowClear
+                  style={{ width: "267px", height: "45px" }}
+                />
               </Form.Item>
               <Form.Item
                 name="date"

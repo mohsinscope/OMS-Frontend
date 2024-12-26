@@ -7,6 +7,7 @@ import {
   Input,
   Button,
   ConfigProvider,
+  Select,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -25,6 +26,7 @@ const DammagedPasportsShow = () => {
   const [loading, setLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [damagedTypes, setDamagedTypes] = useState([]);
   const [form] = Form.useForm();
   const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
@@ -88,8 +90,27 @@ const DammagedPasportsShow = () => {
       }
     };
 
+    const fetchDamagedTypes = async () => {
+      try {
+        const response = await axios.get(`${Url}/api/damagedtype/all`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        setDamagedTypes(
+          response.data.map((type) => ({
+            value: type.id,
+            label: type.name,
+          }))
+        );
+      } catch (error) {
+        message.error("خطأ في جلب أنواع التلف للجوازات");
+      }
+    };
+
     fetchPassportDetails();
     fetchPassportImages();
+    fetchDamagedTypes();
   }, [passportId, accessToken, navigate, form]);
 
   const handleSaveEdit = async (values) => {
@@ -101,7 +122,7 @@ const DammagedPasportsShow = () => {
           ? new Date(values.date).toISOString().slice(0, 19) + "Z"
           : passportData.date,
         note: values.notes,
-        damagedTypeId: passportData.damagedTypeId,
+        damagedTypeId: values.damagedTypeId,
         governorateId: governorateId,
         officeId: officeId,
         profileId: profileId,
@@ -264,6 +285,16 @@ const DammagedPasportsShow = () => {
               label="رقم الجواز"
               rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
               <Input placeholder="رقم الجواز" />
+            </Form.Item>
+            <Form.Item
+              name="damagedTypeId"
+              label="سبب التلف"
+              rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}>
+              <Select
+                options={damagedTypes}
+                placeholder="اختر سبب التلف"
+                allowClear
+              />
             </Form.Item>
             <Form.Item
               name="date"

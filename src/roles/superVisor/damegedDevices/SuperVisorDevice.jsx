@@ -6,19 +6,20 @@ import { Table, message, Button, Select, DatePicker } from "antd"; // Ant Design
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Url from "./../../../store/url"; // Base URL for API endpoints
+import { use } from "react";
 
 const { Option } = Select; // Ant Design Select options
 
 export default function SuperVisorDevices() {
   // Global state values from the authentication store
   const {
+    roles,
     isSidebarCollapsed, // Determines if the sidebar is collapsed
     accessToken, // JWT access token for authenticated API requests
     profile, // User profile data, including office and governorate details
     searchVisible, // Tracks visibility of the search/filter panel
     toggleSearch, // Function to toggle the search panel visibility
   } = useAuthStore();
-
   // Permission store: Check if the user has the "create" permission for devices
   const canCreate = usePermissionsStore((state) => state.canCreate);
 
@@ -31,7 +32,6 @@ export default function SuperVisorDevices() {
   const [damagedTypeId, setDamagedTypeId] = useState(null); // Selected damage reason for filtering
   const [startDate, setStartDate] = useState(null); // Selected start date for filtering
   const [endDate, setEndDate] = useState(null); // Selected end date for filtering
-
   // **Helper Function**: Convert date to local ISO format without UTC offset
   const formatToLocalISOString = (date) => {
     if (!(date instanceof Date)) date = new Date(date); // Ensure input is a Date object
@@ -71,6 +71,7 @@ export default function SuperVisorDevices() {
   // **Effect**: Fetch initial list of devices based on user's office and governorate
   useEffect(() => {
     if (profile) {
+      console.log(profile);
       fetchDevices({
         DeviceTypeId: null, // No filtering by device type initially
         damagedTypeId: null, // No filtering by damage reason initially
@@ -87,19 +88,29 @@ export default function SuperVisorDevices() {
   }, [profile]);
 
   // **Function**: Fetch the devices based on the applied filters
-  const fetchDevices = async (filters) => {
+  const fetchDevices = async (body) => {
     try {
       setLoading(true); // Show loading indicator
-      const response = await axios.post(
-        `${Url}/api/DamagedDevice/search`,
-        filters,
-        {
+      let response;
+
+      if (roles === "Supervisor") {
+        response = await axios.get(
+          `${Url}/api/DamagedDevice/office/${profile.officeId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`, // Pass token for authentication
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } else {
+        response = await axios.get(`${Url}/api/DamagedDevice`, {
           headers: {
             Authorization: `Bearer ${accessToken}`, // Pass token for authentication
             "Content-Type": "application/json",
           },
-        }
-      );
+        });
+      }
 
       setDevicesList(response.data); // Update the devices list
 
@@ -186,7 +197,7 @@ export default function SuperVisorDevices() {
       render: (_, record) => (
         <Link
           to="/supervisor/damegedDevices/show"
-          state={{ device: record }}
+          state={{ id: record.id }}
           className="supervisor-devices-dameged-details-link">
           عرض
         </Link>
@@ -203,6 +214,7 @@ export default function SuperVisorDevices() {
       }`}
       dir="rtl">
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
+
       <div
         className={`supervisor-devices-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
@@ -249,15 +261,18 @@ export default function SuperVisorDevices() {
         </div>
 
         {/* Conditionally render the create button if the user has the "create" permission */}
-        {canCreate("devices") && (
-          <Link to="/supervisor/damegedDevices/add">
-            <Button className="supervisor-devices-dameged-add-button">
-              اضافة جهاز تالف
-            </Button>
-          </Link>
-        )}
-      </div>
 
+        <Link to="/supervisor/damegedDevices/add">
+          <Button className="supervisor-devices-dameged-add-button">
+            اضافة جهاز تالف
+          </Button>
+        </Link>
+      </div>
+      <div className="toggle-search-button">
+        <Button type="primary" onClick={toggleSearch}>
+          {searchVisible ? "بحث" : "بحث"}
+        </Button>
+      </div>
       <div className="supervisor-devices-dameged-table-container">
         <Table
           dataSource={devicesList}

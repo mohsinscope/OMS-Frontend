@@ -11,7 +11,7 @@
 }
 .display-container-charts {
   display: flex;
-  justify-content: space-between;
+  justify-content: start;
   gap: 100px;
 }
 .single-total-container {
@@ -25,11 +25,17 @@
   background-color: white;
   border-radius: 8px;
 }
-.charts-section {
+.attendence-buttons {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 10px;
+  width: 100%;
+}
+.charts-section {
+  display: flex;
+  justify-content: start;
   flex-wrap: wrap;
-  gap: 30px;
+  gap: 100px;
 }
 .single-chart {
   display: flex;
