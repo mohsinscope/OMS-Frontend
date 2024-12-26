@@ -228,7 +228,7 @@ const AttendanceStats = () => {
             tick={{
               fill: '#000000',
               fontSize: 14,
-              dx: -35
+              dx: -60
             }}
             orientation="left"
             axisLine={false}

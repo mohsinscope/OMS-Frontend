@@ -63,6 +63,9 @@
     display: flex;
     justify-content: space-around;
 }
+.attendance-charts-stats text{
+    margin-right: 10px !important;
+}
 
 .attendance-additional-info{
     width: 200px;

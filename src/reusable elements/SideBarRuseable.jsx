@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/store";
 import { MENU_ITEMS, COMMON_MENU_ITEMS } from "../config/menuConfig";
 import Icons from "./icons";
+import './../pages/dashboard.css';
 
 const DynamicSidebar = ({
   onLogout,
@@ -14,29 +15,36 @@ const DynamicSidebar = ({
   logoutClassName,
 }) => {
   const navigate = useNavigate();
-  const { roles, isLoggedIn } = useAuthStore(); // Add isLoggedIn check
+  const { roles, isLoggedIn, isSidebarCollapsed } = useAuthStore();
   const [visibleMenuItems, setVisibleMenuItems] = useState([]);
   const [visibleCommonItems, setVisibleCommonItems] = useState([]);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    // Set initialized after a short delay to ensure store is hydrated
+    const timer = setTimeout(() => {
+      setIsInitialized(true);
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
     const filterMenuItems = () => {
-      // Check both roles and isLoggedIn
       if (!isLoggedIn || !roles || roles.length === 0) {
         setVisibleMenuItems([]);
         setVisibleCommonItems(COMMON_MENU_ITEMS.filter(item => item.role.length === 0));
         return;
       }
 
-      // Filter menu items based on roles
       const accessibleMenuItems = MENU_ITEMS.filter((item) => {
-        // If no roles specified for item, make it accessible to all logged-in users
         if (!item.role || item.role.length === 0) return true;
-        // Otherwise check if user has required role
         return item.role.some((role) => roles.includes(role));
       });
       setVisibleMenuItems(accessibleMenuItems);
 
-      // Filter common items
       const accessibleCommonItems = COMMON_MENU_ITEMS.filter((item) => {
         if (!item.role || item.role.length === 0) return true;
         return item.role.some((role) => roles.includes(role));
@@ -45,7 +53,7 @@ const DynamicSidebar = ({
     };
 
     filterMenuItems();
-  }, [roles, isLoggedIn]); // Add isLoggedIn to dependencies
+  }, [roles, isLoggedIn, isInitialized]);
 
   const handleMenuClick = (path, action) => {
     if (action === "logout") {
@@ -55,40 +63,44 @@ const DynamicSidebar = ({
     }
   };
 
-  // Memoize the menu item rendering to prevent unnecessary re-renders
   const renderMenuItem = React.useCallback((item, index) => {
     const isActive = currentPath === item.path;
+    const activeColor = "#1677ff";
     const itemClass = `${menuItemClassName || 'menu-item'} ${
       isActive ? activeMenuItemClassName || 'active' : ''
     }`;
 
     return (
       <div
-        key={item.path || index} // Use path as key if available
+        key={item.path || index}
         className={itemClass}
         onClick={() => handleMenuClick(item.path, item.action)}
       >
-        <Icons type={item.icon} />
-        <h3>{item.label}</h3>
+        <Icons 
+          type={item.icon} 
+          color={isActive ? activeColor : "currentColor"}
+        />
+        <h3 style={{ color: isActive ? activeColor : "" }}>{item.label}</h3>
       </div>
     );
   }, [currentPath, menuItemClassName, activeMenuItemClassName]);
 
-  // Early return if not logged in and no public items
+  if (!isInitialized) {
+    return null; // Or return a loading spinner
+  }
+
   if (!isLoggedIn && visibleCommonItems.length === 0) {
     return null;
   }
 
   return (
-    <div className={sidebarClassName || "sidebar"}>
-      {/* Main Menu Items */}
+    <div className={`${sidebarClassName || "sidebar"} ${isSidebarCollapsed ? 'collapsed' : ''}`}>
       {visibleMenuItems.length > 0 && (
         <div className="sidebar-top">
           {visibleMenuItems.map(renderMenuItem)}
         </div>
       )}
 
-      {/* Common Menu Items */}
       {visibleCommonItems.length > 0 && (
         <div className="sidebar-bottom">
           {visibleCommonItems.map(renderMenuItem)}
@@ -107,4 +119,4 @@ DynamicSidebar.propTypes = {
   logoutClassName: PropTypes.string,
 };
 
-export default React.memo(DynamicSidebar); // Memoize the entire component
+export default React.memo(DynamicSidebar);

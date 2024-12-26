@@ -19,8 +19,8 @@ const SignInPage = () => {
   const { login, isLoggedIn } = useAuthStore();
 
   const navigateToStats = useCallback(() => {
-    if (window.location.pathname !== "/stats") {
-      navigate("/stats"); // Redirect to stats after login
+    if (window.location.pathname !== "/landing-page") {
+      navigate("/landing-page"); // Redirect to stats after login
     }
   }, [navigate]);
 
@@ -37,12 +37,15 @@ const SignInPage = () => {
           Authorization: `Bearer ${token}`,
         },
       });
-
+  
       const userProfile = response.data;
       console.log("User Profile Response:", userProfile);
-
-      // Save profile data to the global store
-      login(token, userProfile);
+  
+      // Default permissions object if your API doesn't provide it
+      const permissions = userProfile.permissions || {};
+  
+      // Save profile data to the global store with all required parameters
+      login(token, userProfile, permissions);
       navigateToStats();
     } catch (error) {
       console.error("Failed to fetch user profile:", error);
