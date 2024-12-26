@@ -15,14 +15,15 @@ export default function ManagerAttendenceHistory() {
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [workingHours, setWorkingHours] = useState(0); // Default to "الكل"
+  const [workingHours, setWorkingHours] = useState(3);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
   const { isSidebarCollapsed } = useAuthStore();
   const navigate = useNavigate();
 
-  // Fetch attendance data
   const fetchAttendanceData = async () => {
     try {
+      setLoading(true);
       const response = await axios.get(`${Url}/api/Attendance`);
       const data = response.data.map((item) => ({
         id: item.id,
@@ -42,22 +43,31 @@ export default function ManagerAttendenceHistory() {
       setFilteredData(data);
     } catch (error) {
       console.error("Error fetching attendance data:", error);
+      message.error("حدث خطأ أثناء جلب البيانات");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Fetch governorate and office options
   const fetchOptions = async () => {
     try {
       const [governorates, offices] = await Promise.all([
-        axios.get(`${Url}/api/Governorate?PageNumber=1&PageSize=100`),
-        axios.get(`${Url}/api/Office?PageNumber=1&PageSize=100`),
+        axios.get(`${Url}/api/Governorate/dropdown`),
+        axios.get(`${Url}/api/Office/dropdown`)
       ]);
 
       setGovernorateOptions(
-        governorates.data.map((gov) => ({ value: gov.id, label: gov.name }))
+        governorates.data.map((gov) => ({ 
+          value: gov.id, 
+          label: gov.name 
+        }))
       );
+      
       setOfficeOptions(
-        offices.data.map((office) => ({ value: office.id, label: office.name }))
+        offices.data.map((office) => ({ 
+          value: office.id, 
+          label: office.name 
+        }))
       );
     } catch (error) {
       console.error("Error fetching options:", error);
@@ -71,21 +81,20 @@ export default function ManagerAttendenceHistory() {
   }, []);
 
   const handleSearch = async () => {
-    const body = {
-      workingHours: workingHours || undefined,
-      governorateId: selectedGovernorate || undefined,
-      officeId: selectedOffice || undefined,
-      startDate: startDate ? `${startDate.toISOString().split("T")[0]}T00:00:00+03:00` : undefined,
-      endDate: endDate ? `${endDate.toISOString().split("T")[0]}T23:59:59+03:00` : undefined,
-      PaginationParams: {
-        PageNumber: 1,
-        PageSize: 10,
-      },
-    };
-
-    console.log("Search Payload:", body); // Debugging payload
-
     try {
+      setLoading(true);
+      const body = {
+        workingHours,
+        governorateId: selectedGovernorate,
+        officeId: selectedOffice,
+        startDate: startDate ? startDate.format('YYYY-MM-DD') + 'T14:00:00Z' : undefined,
+        endDate: endDate ? endDate.format('YYYY-MM-DD') + 'T14:00:00Z' : undefined,
+        PaginationParams: {
+          PageNumber: 1,
+          PageSize: 10,
+        },
+      };
+
       const response = await axios.post(`${Url}/api/Attendance/search`, body);
       const data = response.data.map((item) => ({
         id: item.id,
@@ -105,7 +114,9 @@ export default function ManagerAttendenceHistory() {
       setIsModalVisible(!data.length);
     } catch (error) {
       console.error("Error searching attendance data:", error);
-      message.error("حدث خطأ أثناء البحث.");
+      message.error("حدث خطأ أثناء البحث");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -114,9 +125,9 @@ export default function ManagerAttendenceHistory() {
     setSelectedOffice(null);
     setStartDate(null);
     setEndDate(null);
-    setWorkingHours(0);
+    setWorkingHours(3);
     setFilteredData(attendanceData);
-    message.success("تمت إعادة التعيين بنجاح.");
+    message.success("تمت إعادة التعيين بنجاح");
   };
 
   const handleView = (record) => {
@@ -176,25 +187,28 @@ export default function ManagerAttendenceHistory() {
           <label>المحافظة</label>
           <Select
             value={selectedGovernorate}
-            options={governorateOptions}
-            onChange={setSelectedGovernorate}
+            onChange={(value) => setSelectedGovernorate(value)}
             placeholder="اختر المحافظة"
             allowClear
+            options={governorateOptions}
+            style={{ width: '100%' }}
           />
         </div>
         <div className="filter-row">
           <label>المكتب</label>
           <Select
             value={selectedOffice}
-            options={officeOptions}
-            onChange={setSelectedOffice}
+            onChange={(value) => setSelectedOffice(value)}
             placeholder="اختر المكتب"
             allowClear
+            options={officeOptions}
+            style={{ width: '100%' }}
           />
         </div>
         <div className="filter-row">
           <label>التاريخ من</label>
           <DatePicker
+            value={startDate}
             onChange={(date) => setStartDate(date)}
             placeholder="اختر التاريخ"
             style={{ width: "100%" }}
@@ -203,6 +217,7 @@ export default function ManagerAttendenceHistory() {
         <div className="filter-row">
           <label>التاريخ إلى</label>
           <DatePicker
+            value={endDate}
             onChange={(date) => setEndDate(date)}
             placeholder="اختر التاريخ"
             style={{ width: "100%" }}
@@ -210,20 +225,22 @@ export default function ManagerAttendenceHistory() {
         </div>
         <div className="filter-row">
           <label>نوع الدوام</label>
-          <select
+          <Select
             value={workingHours}
-            onChange={(e) => setWorkingHours(Number(e.target.value))}
-          >
-            <option value={0}>الكل</option>
-            <option value={1}>صباحي</option>
-            <option value={2}>مسائي</option>
-          </select>
+            onChange={(value) => setWorkingHours(value)}
+            style={{ width: '100%' }}
+            options={[
+              { value: 3, label: 'الكل' },
+              { value: 1, label: 'صباحي' },
+              { value: 2, label: 'مسائي' }
+            ]}
+          />
         </div>
         <div className="filter-actions">
-          <Button type="primary" onClick={handleSearch}>
+          <Button type="primary" onClick={handleSearch} loading={loading}>
             بحث
           </Button>
-          <Button onClick={handleReset} style={{ marginLeft: "10px" }}>
+          <Button onClick={handleReset} style={{ marginRight: "10px" }}>
             إعادة تعيين
           </Button>
         </div>
@@ -231,6 +248,7 @@ export default function ManagerAttendenceHistory() {
 
       <div className="table-section">
         <Table
+          loading={loading}
           dataSource={filteredData}
           columns={tableColumns}
           rowKey="id"
