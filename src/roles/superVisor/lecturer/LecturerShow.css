@@ -350,3 +350,43 @@
     border: 1px solid rgba(221, 221, 221, 0.8);
   }
 }
+
+/* device section */
+
+.supervisor-devices-dameged-add-button {
+  background-color: #04aa6d;
+  color: white;
+  border: 2px solid #04aa6d !important;
+  transition: all 0.1s ease-in-out;
+  font-weight: bold;
+}
+.supervisor-devices-dameged-add-button:hover {
+  background-color: white !important  ;
+  color: #04aa6d !important;
+  font-weight: bold;
+}
+.supervisor-devices-dameged-search-button {
+  background-color: #04aa6d;
+  color: white;
+  transition: all 0.1s ease-in-out;
+  font-weight: bold;
+}
+.supervisor-devices-dameged-search-button:hover {
+  background-color: #2299ff !important  ;
+  color: white !important;
+  font-weight: bold;
+}
+.supervisor-devices-dameged-reset-button {
+  background-color: #04aa6d;
+  color: white;
+  transition: all 0.1s ease-in-out;
+}
+.supervisor-devices-dameged-reset-button:hover {
+  background-color: #2299ff !important  ;
+  color: white !important;
+}
+.toggle-search-button:hover button {
+  background-color: #2299ff !important  ;
+  color: white !important;
+  transition: all 0.1s ease-in-out;
+}

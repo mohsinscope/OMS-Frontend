@@ -58,14 +58,14 @@
 }
 
 .supervisor-damaged-passport-add-containe h1 {
-  font-size: 24px;
   font-weight: bold;
   text-align: start;
+  margin-top: 20px;
+  margin-bottom: 20px;
   width: 100%;
   color: #333;
 }
 .SuperVisor-title-conatiner {
-  font-size: 24px;
   margin-bottom: 10px;
   margin-top: 10px;
   font-weight: bold;
@@ -135,7 +135,6 @@ select {
 }
 
 .add-details-container Form label {
-  font-size: large !important;
   font-family: "Cairo", sans-serif;
 }
 .add-details-container form {

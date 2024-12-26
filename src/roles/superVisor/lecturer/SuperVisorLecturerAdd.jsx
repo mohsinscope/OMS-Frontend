@@ -182,6 +182,8 @@ const SuperVisorLecturerAdd = () => {
               <div className="Lecturer-image-preivwer-container">
                 <ImagePreviewer
                   uploadedImages={previewUrls}
+                  defaultWidth={1000}
+                  defaultHeight={600}
                   onDeleteImage={handleDeleteImage}
                 />
               </div>
@@ -196,7 +198,7 @@ const SuperVisorLecturerAdd = () => {
                 حفظ
               </Button>
               <Button
-                danger
+                type="primary"
                 onClick={handleBack}
                 className="add-back-button"
                 disabled={isSubmitting}>

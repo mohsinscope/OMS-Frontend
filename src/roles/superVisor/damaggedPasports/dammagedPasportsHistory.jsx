@@ -163,7 +163,7 @@ export default function SuperVisorPassport() {
       render: (_, record) => (
         <Link
           to="DammagedPasportsShow"
-          state={{ passport: record }}
+          state={{ id: record.id }}
           className="supervisor-passport-dameged-details-link">
           عرض
         </Link>
@@ -246,7 +246,7 @@ export default function SuperVisorPassport() {
 
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? " إخفاء البحث" : " إظهار البحث"}
+          {searchVisible ? "بحث" : "بحث"}
         </Button>
       </div>
 

@@ -14,13 +14,13 @@ const SuperVisorDammageDeviceAdd = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]); // State for image previews
+  const [previewUrls, setPreviewUrls] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deviceTypes, setDeviceTypes] = useState([]); // State for device types
-  const [damagedTypes, setDamagedTypes] = useState([]); // State for damaged device types
+  const [deviceTypes, setDeviceTypes] = useState([]);
+  const [damagedTypes, setDamagedTypes] = useState([]);
   const { accessToken, profile } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
-  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
+  const { isSidebarCollapsed } = useAuthStore();
 
   useEffect(() => {
     const fetchDeviceTypes = async () => {
@@ -30,13 +30,13 @@ const SuperVisorDammageDeviceAdd = () => {
             Authorization: `Bearer ${accessToken}`,
           },
         });
-        const options = response.data.map((deviceType) => ({
-          value: deviceType.id,
-          label: deviceType.name,
-        }));
-        setDeviceTypes(options);
+        setDeviceTypes(
+          response.data.map((deviceType) => ({
+            value: deviceType.id,
+            label: deviceType.name,
+          }))
+        );
       } catch (error) {
-        console.error("Error fetching device types:", error);
         message.error("خطأ في جلب أنواع الأجهزة");
       }
     };
@@ -48,13 +48,13 @@ const SuperVisorDammageDeviceAdd = () => {
             Authorization: `Bearer ${accessToken}`,
           },
         });
-        const options = response.data.map((damagedType) => ({
-          value: damagedType.id,
-          label: damagedType.name,
-        }));
-        setDamagedTypes(options);
+        setDamagedTypes(
+          response.data.map((damagedType) => ({
+            value: damagedType.id,
+            label: damagedType.name,
+          }))
+        );
       } catch (error) {
-        console.error("Error fetching damaged device types:", error);
         message.error("خطأ في جلب أنواع التلف");
       }
     };
@@ -67,22 +67,6 @@ const SuperVisorDammageDeviceAdd = () => {
     navigate(-1);
   };
 
-  // Step 1: Send damaged device details first and get entityId
-  const sendDeviceDetails = async (payload) => {
-    try {
-      const response = await axios.post(`${Url}/api/DamagedDevice`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      return response.data?.id || response.data;
-    } catch (error) {
-      throw new Error("Failed to add damaged device.");
-    }
-  };
-
-  // Step 2: Attach files to the created damaged device entity
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
       const formData = new FormData();
@@ -108,47 +92,29 @@ const SuperVisorDammageDeviceAdd = () => {
     setIsSubmitting(true);
 
     try {
-      // Step 1: Submit the form to create a new damaged device
       const payload = {
-        serialNumber: values.serialNumber, // Use serialNumber field
+        serialNumber: values.serialNumber,
         date: values.date
-          ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ") // Format the date
-          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"), // Default to current date
-        damagedDeviceTypeId: values.damagedTypeId, // Use "damagedTypeId"
-        deviceTypeId: values.deviceTypeId, // Use selected deviceTypeId
-        officeId: officeId, // Static office ID
-        governorateId: governorateId, // Static governorate ID
-        profileId: profileId, // Static profile ID
+          ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
+          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
+        damagedDeviceTypeId: values.damagedDeviceTypeId,
+        deviceTypeId: values.deviceTypeId,
+        note: values.note,
+        officeId: officeId,
+        governorateId: governorateId,
+        profileId: profileId,
       };
 
-      console.log("Submitting Payload:", payload);
+      const response = await axios.post(`${Url}/api/DamagedDevice`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
-      const damagedDeviceResponse = await axios.post(
-        `${Url}/api/DamagedDevice`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`, // Add JWT token
-          },
-        }
-      );
+      const entityId = response.data?.id || response.data;
+      if (!entityId) throw new Error("Failed to retrieve entity ID.");
 
-      console.log("Damaged Device Response:", damagedDeviceResponse);
-
-      // Extract entity ID from the response
-      const entityId =
-        damagedDeviceResponse.data?.id || damagedDeviceResponse.data;
-
-      if (!entityId) {
-        console.error(
-          "DamagedDevice response does not contain 'id'. Full response:",
-          damagedDeviceResponse.data
-        );
-        throw new Error("Failed to retrieve entity ID from the response.");
-      }
-
-      // Step 2: Attach files if any
       if (fileList.length > 0) {
         await attachFiles(entityId);
         message.success("تم إرسال البيانات والمرفقات بنجاح");
@@ -167,13 +133,12 @@ const SuperVisorDammageDeviceAdd = () => {
   };
 
   const handleFileChange = (info) => {
-    const updatedFiles = info.fileList;
-    setFileList(updatedFiles);
-
-    const previews = updatedFiles.map((file) =>
-      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
+    setFileList(info.fileList);
+    setPreviewUrls(
+      info.fileList.map((file) =>
+        file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
+      )
     );
-    setPreviewUrls(previews);
   };
 
   const handleDeleteImage = (index) => {
@@ -190,21 +155,13 @@ const SuperVisorDammageDeviceAdd = () => {
       }`}
       dir="rtl">
       <h1 className="SuperVisor-title-container">إضافة جهاز تالف</h1>
-      <div className="devices-add-details-container">
+      <div className="superVisor-Add-field-section-container">
         <Form
           form={form}
           onFinish={handleFormSubmit}
           layout="vertical"
-          className="devices-add-details-container">
-          <div className="devices-add-details-container">
-            <Form.Item
-              name="serialNumber"
-              label="الرقم التسلسلي للجهاز"
-              rules={[
-                { required: true, message: "يرجى إدخال الرقم التسلسلي" },
-              ]}>
-              <Input placeholder="أدخل الرقم التسلسلي" />
-            </Form.Item>
+          className="superVisor-Add-form-container">
+          <div className="form-item-damaged-device-container">
             <Form.Item
               name="serialNumber"
               label="الرقم التسلسلي"
@@ -218,6 +175,7 @@ const SuperVisorDammageDeviceAdd = () => {
               label="سبب التلف"
               rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}>
               <Select
+                style={{ width: "267px", height: "45px" }}
                 options={damagedTypes}
                 placeholder="اختر سبب التلف"
                 allowClear
@@ -228,6 +186,7 @@ const SuperVisorDammageDeviceAdd = () => {
               label="نوع الجهاز"
               rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}>
               <Select
+                style={{ width: "267px", height: "45px" }}
                 options={deviceTypes}
                 placeholder="اختر نوع الجهاز"
                 allowClear
@@ -237,52 +196,66 @@ const SuperVisorDammageDeviceAdd = () => {
               name="date"
               label="التاريخ"
               rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
-              <DatePicker style={{ width: "267px", height: "45px" }} />
+              <DatePicker style={{ width: "100%" }} />
             </Form.Item>
             <Form.Item
               name="note"
               label="ملاحظات"
-              rules={[{ required: false }]}>
+              rules={[{ message: "يرجى إدخال الملاحظات" }]}>
               <Input.TextArea placeholder="أدخل الملاحظات" />
             </Form.Item>
           </div>
           <h1 className="SuperVisor-title-container">
             إضافة صورة الجهاز التالف
           </h1>
-          <div className="add-image-section">
-            <div className="dragger-container">
-              <Dragger
-                fileList={fileList}
-                onChange={handleFileChange}
-                beforeUpload={() => false}
-                multiple
-                showUploadList={false}>
-                <p className="ant-upload-drag-icon">📂</p>
-                <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
-              </Dragger>
-            </div>
-
-            <div className="image-previewer-container">
+          <div className="uplaod-item-damaged-device-container">
+            <div className="add-image-section-container">
+              <Form.Item
+                name="uploadedImages"
+                rules={[
+                  {
+                    validator: (_, value) =>
+                      fileList && fileList.length > 0
+                        ? Promise.resolve()
+                        : Promise.reject(
+                            new Error("يرجى تحميل صورة واحدة على الأقل")
+                          ),
+                  },
+                ]}>
+                <Dragger
+                  className="upload-dragger"
+                  fileList={fileList}
+                  onChange={handleFileChange}
+                  beforeUpload={() => false}
+                  multiple
+                  style={{ width: "500px", height: "200px" }}
+                  showUploadList={false}>
+                  <p className="ant-upload-drag-icon">📂</p>
+                  <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
+                </Dragger>
+              </Form.Item>
               <ImagePreviewer
                 uploadedImages={previewUrls}
+                defaultWidth={1000}
+                defaultHeight={600}
                 onDeleteImage={handleDeleteImage}
               />
             </div>
           </div>
-          <div className="image-previewer-section">
+          <div className="supervisor-add-damageddevice-button">
             <Button
               type="primary"
               htmlType="submit"
-              className="submit-button"
               loading={isSubmitting}
-              disabled={isSubmitting}>
+              disabled={isSubmitting}
+              className="submit-button">
               حفظ
             </Button>
             <Button
               danger
               onClick={handleBack}
-              className="add-back-button"
-              disabled={isSubmitting}>
+              disabled={isSubmitting}
+              className="add-back-button">
               رجوع
             </Button>
           </div>

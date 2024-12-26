@@ -21,14 +21,6 @@ export default function SuperVisorDevices() {
   const [endDate, setEndDate] = useState(null);
   const { searchVisible, toggleSearch } = useAuthStore();
 
-  function formatToLocalISOString(date) {
-    if (!(date instanceof Date)) date = new Date(date);
-    if (!date) return null;
-    const offset = date.getTimezoneOffset() * 60000;
-    const localDate = new Date(date.getTime() - offset);
-    return localDate.toISOString().slice(0, 19);
-  }
-
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
@@ -40,7 +32,7 @@ export default function SuperVisorDevices() {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
         ]);
-
+        // console.log("Device Types Response:", deviceTypeResponse.data);
         setDeviceTypes(deviceTypeResponse.data);
         setDamagedTypes(damagedTypeResponse.data);
       } catch (error) {
@@ -76,9 +68,8 @@ export default function SuperVisorDevices() {
   const fetchDevices = async (filters) => {
     try {
       setLoading(true);
-      const response = await axios.post(
-        `${Url}/api/DamagedDevice/search`,
-        filters,
+      const response = await axios.get(
+        `${Url}/api/DamagedDevice/office/${profile.officeId}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -86,7 +77,7 @@ export default function SuperVisorDevices() {
           },
         }
       );
-
+      console.log("Devices Response:", response.data);
       setDevicesList(response.data);
 
       if (response.data.length === 0) {
@@ -147,7 +138,7 @@ export default function SuperVisorDevices() {
         PageSize: 10,
       },
     };
-
+    console.log("Reset Payload:", body);
     fetchDevices(body);
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
@@ -185,8 +176,9 @@ export default function SuperVisorDevices() {
       render: (_, record) => (
         <Link
           to="/supervisor/damegedDevices/show"
-          state={{ device: record }}
+          state={{ id: record.id }}
           className="supervisor-devices-dameged-details-link">
+          {console.log("record", record)}
           عرض
         </Link>
       ),

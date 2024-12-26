@@ -1,78 +1,174 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import {
+  Spin,
+  message,
+  Modal,
+  Form,
+  Input,
+  Button,
+  ConfigProvider,
+} from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Modal, Button, Form, Input, DatePicker, message } from "antd";
-import TextFieldForm from "../../../reusable elements/ReuseAbleTextField.jsx";
-import "./dammagedPasportsShow.css";
+import axios from "axios";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
-import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
+import "./dammagedPasportsShow.css";
+import useAuthStore from "./../../../store/store";
+import Url from "./../../../store/url.js";
+import Lele from "./../../../reusable elements/icons.jsx";
+
 const DammagedPasportsShow = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const data = location.state?.data || {}; // Retrieve data from the previous page
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [editedData, setEditedData] = useState({ ...data }); // Store editable data
+  const passportId = location.state?.id;
+  const [passportData, setPassportData] = useState(null);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [form] = Form.useForm();
-  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
-  // Handle Back Button
-  const handleBack = () => {
-    navigate(-1); // Go back to the previous page
-  };
+  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
+  const { profileId, governorateId, officeId } = profile || {};
 
-  // Handle Edit Button
-  const handleEditClick = () => {
-    setIsModalVisible(true);
-    form.setFieldsValue(editedData); // Populate form with existing data
-  };
+  useEffect(() => {
+    if (!passportId) {
+      message.error("معرف الجواز غير موجود.");
+      navigate(-1);
+      return;
+    }
 
-  // Handle Modal Cancel
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
-
-  // Handle Form Submit
-  const handleFormSubmit = (values) => {
-    const updatedData = {
-      ...editedData,
-      ...values,
-      date: values.date?.format("YYYY-MM-DD") || editedData.date,
+    const fetchPassportDetails = async () => {
+      setLoading(true);
+      try {
+        console.log("Fetching Passport Details for ID:", passportId);
+        const response = await axios.get(
+          `${Url}/api/DamagedPassport/${passportId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+        const passport = response.data;
+        const formattedDate = passport.date
+          ? new Date(passport.date).toISOString().slice(0, 19) + "Z"
+          : "";
+        setPassportData({ ...passport, date: formattedDate });
+        form.setFieldsValue({ ...passport, date: formattedDate });
+      } catch (error) {
+        console.error("Error Fetching Passport Details:", error.response);
+        message.error(
+          `حدث خطأ أثناء جلب تفاصيل الجواز: ${
+            error.response?.data?.message || error.message
+          }`
+        );
+      } finally {
+        setLoading(false);
+      }
     };
-    setEditedData(updatedData);
-    message.success("تم تحديث البيانات بنجاح");
-    setIsModalVisible(false);
-    console.log("Updated Data:", updatedData); // Replace with API call to save changes
+
+    const fetchPassportImages = async () => {
+      try {
+        const response = await axios.get(
+          `${Url}/api/Attachment/DamagedPassport/${passportId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+        const imageUrls = response.data.map((image) => image.filePath);
+        setImages(imageUrls);
+      } catch (error) {
+        console.error("Error Fetching Passport Images:", error.response);
+        message.error(
+          `حدث خطأ أثناء جلب صور الجواز: ${
+            error.response?.data?.message || error.message
+          }`
+        );
+      }
+    };
+
+    fetchPassportDetails();
+    fetchPassportImages();
+  }, [passportId, accessToken, navigate, form]);
+
+  const handleSaveEdit = async (values) => {
+    try {
+      const updatedValues = {
+        id: passportId, // Ensure ID is consistent
+        passportNumber: values.passportNumber,
+        date: values.date
+          ? new Date(values.date).toISOString().slice(0, 19) + "Z"
+          : passportData.date,
+        note: values.notes,
+        damagedTypeId: passportData.damagedTypeId,
+        governorateId: governorateId,
+        officeId: officeId,
+        profileId: profileId,
+      };
+
+      console.log("Sending Updated Values:", updatedValues);
+
+      const response = await axios.put(
+        `${Url}/api/DamagedPassport/${passportId}`, // Ensure the path matches the backend API
+        updatedValues,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      console.log("Update Response:", response.data);
+
+      message.success("تم تحديث بيانات الجواز بنجاح");
+      setEditModalVisible(false);
+      setPassportData((prev) => ({ ...prev, ...updatedValues }));
+    } catch (error) {
+      console.error("Error Updating Passport Details:", error.response);
+      message.error(
+        `حدث خطأ أثناء تعديل بيانات الجواز: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+    }
   };
 
-  // Define the fields for TextFieldForm
-  const fields = [
-    {
-      name: "passportNumber",
-      label: "رقم الجواز",
-      type: "text",
-      value: editedData.passportNumber || "غير متوفر",
-      disabled: true,
-    },
-    {
-      name: "damageReason",
-      label: "سبب التلف",
-      type: "text",
-      value: editedData.damageReason || "غير متوفر",
-      disabled: true,
-    },
-    {
-      name: "date",
-      label: "التاريخ",
-      type: "date",
-      value: editedData.date || "غير متوفر",
-      disabled: true,
-    },
-    {
-      name: "notes",
-      label: "الملاحظات",
-      type: "textarea",
-      value: editedData.notes || "لا توجد ملاحظات",
-      disabled: true,
-    },
-  ];
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`${Url}/api/DamagedPassport/${passportId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      message.success("تم حذف الجواز بنجاح");
+      setDeleteModalVisible(false);
+      navigate(-1);
+    } catch (error) {
+      console.error("Error Deleting Passport:", error.response);
+      message.error(
+        `حدث خطأ أثناء حذف الجواز: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+    }
+  };
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  if (loading) {
+    return (
+      <div className="loading">
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!passportData) {
+    return <div className="loading">جاري التحميل...</div>;
+  }
 
   return (
     <div
@@ -82,92 +178,121 @@ const DammagedPasportsShow = () => {
           : "supervisor-passport-damage-show-container"
       }`}
       dir="rtl">
-      <h1>الجواز التالف</h1>
+      <div className="title-container">
+        <h1>تفاصيل الجواز التالف</h1>
+        <div className="edit-button-and-delete">
+          <Button onClick={handleBack} className="back-button">
+            <Lele type="back" />
+            الرجوع
+          </Button>
+          <Button
+            onClick={() => setDeleteModalVisible(true)}
+            className="delete-button-passport">
+            حذف <Lele type="delete" />
+          </Button>
+          <Button
+            onClick={() => setEditModalVisible(true)}
+            className="edit-button-passport">
+            تعديل <Lele type="edit" />
+          </Button>
+        </div>
+      </div>
 
       <div className="details-container">
-        {/* Text Form for Fields */}
         <div className="details-fields">
-          <TextFieldForm
-            fields={fields}
-            formClassName="passport-details-form"
-            inputClassName="passport-details-input"
-            fieldWrapperClassName="passport-field-wrapper"
-            textareaClassName="passport-notes-field"
-            hideButtons={true} // Hide buttons if not needed
-          />
-        </div>
-
-        {/* Display Passport Image */}
-        <div className="image-container">
-          <button className="edit-button" onClick={handleEditClick}>
-            التعديل
-          </button>
-          <img
-            src={editedData.image || "/placeholder.jpg"} // Default placeholder if no image is provided
-            alt="صورة الجواز التالف"
-            className="preview-image"
-          />
-          <p className="image-caption">اضغط للتكبير</p>
-        </div>
-      </div>
-
-      {/* Back Button */}
-      <div className="back-button-container">
-        <button onClick={handleBack} className="back-button">
-          الرجوع
-        </button>
-      </div>
-
-      {/* Edit Modal */}
-      <Modal
-        title="تعديل الجواز التالف"
-        visible={isModalVisible}
-        onCancel={handleCancel}
-        footer={null}
-        destroyOnClose
-        style={{ direction: "rtl" }}>
-        <Form
-          form={form}
-          onFinish={handleFormSubmit}
-          layout="vertical"
-          style={{ direction: "rtl" }}>
-          <Form.Item
-            name="passportNumber"
-            label="رقم الجواز"
-            rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
-            <Input style={{ padding: "10px" }} />
-          </Form.Item>
-          <Form.Item
-            name="damageReason"
-            label="سبب التلف"
-            rules={[{ required: true, message: "يرجى إدخال سبب التلف" }]}>
-            <Input style={{ padding: "10px" }} />
-          </Form.Item>
-          <Form.Item
-            name="date"
-            label="التاريخ"
-            rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-            <DatePicker format="YYYY-MM-DD" style={{ width: "100%" }} />
-          </Form.Item>
-          <Form.Item name="notes" label="الملاحظات">
-            <Input.TextArea rows={4} style={{ padding: "20px" }} />
-          </Form.Item>
-
-          {/* Image Previewer */}
-          <div className="image-previewer-section">
-            <h3>المرفقات</h3>
-            <ImagePreviewer />
+          <div className="details-row">
+            <span className="details-label">رقم الجواز:</span>
+            <Input
+              className="details-value"
+              value={passportData.passportNumber}
+              disabled
+            />
           </div>
+          <div className="details-row">
+            <span className="details-label">التاريخ:</span>
+            <Input
+              className="details-value"
+              value={new Date(passportData.date).toLocaleDateString("ar-EG")}
+              disabled
+            />
+          </div>
+          <div className="details-row">
+            <span className="details-label">سبب التلف:</span>
+            <Input
+              className="details-value"
+              value={passportData.damagedTypeName || "غير محدد"}
+              disabled
+            />
+          </div>
+          <div className="details-row">
+            <span className="details-label">الملاحظات:</span>
+            <Input.TextArea
+              className="textarea-value"
+              value={passportData.notes || "لا توجد ملاحظات"}
+              disabled
+            />
+          </div>
+        </div>
+        <div className="image-container">
+          {images.length > 0 && (
+            <div className="image-preview-container">
+              <span className="note-details-label">صور الجواز:</span>
+              <ImagePreviewer
+                uploadedImages={images}
+                defaultWidth={1000}
+                defaultHeight={600}
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
-          <Button
-            style={{ padding: "20px", marginTop: "20px" }}
-            type="primary"
-            htmlType="submit"
-            block>
-            حفظ التعديلات
-          </Button>
-        </Form>
-      </Modal>
+      <ConfigProvider direction="rtl">
+        <Modal
+          className="model-container"
+          open={editModalVisible}
+          onCancel={() => setEditModalVisible(false)}
+          footer={null}>
+          <h1>تعديل بيانات الجواز</h1>
+          <Form
+            form={form}
+            onFinish={handleSaveEdit}
+            layout="vertical"
+            className="Admin-user-add-model-container-form">
+            <Form.Item
+              name="passportNumber"
+              label="رقم الجواز"
+              rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
+              <Input placeholder="رقم الجواز" />
+            </Form.Item>
+            <Form.Item
+              name="date"
+              label="التاريخ"
+              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
+              <Input placeholder="التاريخ" type="datetime-local" />
+            </Form.Item>
+            <Form.Item
+              name="notes"
+              label="الملاحظات"
+              rules={[{ required: false }]}>
+              <Input.TextArea placeholder="أدخل الملاحظات" />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              حفظ التعديلات
+            </Button>
+          </Form>
+        </Modal>
+
+        <Modal
+          title="تأكيد الحذف"
+          open={deleteModalVisible}
+          onOk={handleDelete}
+          onCancel={() => setDeleteModalVisible(false)}
+          okText="حذف"
+          cancelText="إلغاء">
+          <p>هل أنت متأكد أنك تريد حذف هذا الجواز؟</p>
+        </Modal>
+      </ConfigProvider>
     </div>
   );
 };
