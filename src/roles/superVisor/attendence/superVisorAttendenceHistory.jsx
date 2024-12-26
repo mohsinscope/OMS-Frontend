@@ -34,7 +34,12 @@ export default function SupervisorAttendanceHistory() {
           item.printingStaff +
           item.qualityStaff +
           item.deliveryStaff,
-        shift: item.workingHours === 1 ? "صباحي" : item.workingHours === 2 ? "مسائي" : "الكل",
+        shift:
+          item.workingHours === 1
+            ? "صباحي"
+            : item.workingHours === 2
+            ? "مسائي"
+            : "الكل",
       }));
 
       setAttendanceData(formattedData);
@@ -93,7 +98,12 @@ export default function SupervisorAttendanceHistory() {
             item.printingStaff +
             item.qualityStaff +
             item.deliveryStaff,
-          shift: item.workingHours === 1 ? "صباحي" : item.workingHours === 2 ? "مسائي" : "الكل",
+          shift:
+            item.workingHours === 1
+              ? "صباحي"
+              : item.workingHours === 2
+              ? "مسائي"
+              : "الكل",
         }));
 
         setFilteredData(formattedData);
@@ -148,10 +158,11 @@ export default function SupervisorAttendanceHistory() {
   return (
     <div
       className={`supervisor-attendance-history-main-container ${
-        isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-expenses-history-page"
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-expenses-history-page"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <div className="supervisor-attendance-history-title">
         <h1>الحضور</h1>
       </div>
@@ -159,8 +170,7 @@ export default function SupervisorAttendanceHistory() {
       <div
         className={`supervisor-attendance-history-fields ${
           searchVisible ? "animate-show" : "animate-hide"
-        }`}
-      >
+        }`}>
         <div className="filter-row">
           <label>التاريخ من</label>
           <DatePicker
@@ -184,8 +194,7 @@ export default function SupervisorAttendanceHistory() {
           <select
             className="attendance-dropdown"
             value={workingHours}
-            onChange={(e) => setWorkingHours(Number(e.target.value))}
-          >
+            onChange={(e) => setWorkingHours(Number(e.target.value))}>
             <option value={3}>الكل</option>
             <option value={1}>صباحي</option>
             <option value={2}>مسائي</option>
@@ -207,7 +216,7 @@ export default function SupervisorAttendanceHistory() {
 
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? " إخفاء البحث" : " إظهار البحث"}
+          {searchVisible ? "بحث" : "بحث"}
         </Button>
       </div>
 
@@ -227,8 +236,7 @@ export default function SupervisorAttendanceHistory() {
         onOk={() => setIsModalVisible(false)}
         onCancel={() => setIsModalVisible(false)}
         okText="حسناً"
-        cancelText="إغلاق"
-      >
+        cancelText="إغلاق">
         <p>لا يوجد تطابق للفلاتر</p>
       </Modal>
     </div>

@@ -57,7 +57,10 @@ export default function SuperVisorDevices() {
         setDeviceTypes(deviceTypeResponse.data); // Set device types for dropdown
         setDamagedTypes(damagedTypeResponse.data); // Set damage types for dropdown
       } catch (error) {
-        console.error("Error fetching dropdown data:", error.response?.data || error.message);
+        console.error(
+          "Error fetching dropdown data:",
+          error.response?.data || error.message
+        );
         message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة"); // Show error message in Arabic
       }
     };
@@ -87,12 +90,16 @@ export default function SuperVisorDevices() {
   const fetchDevices = async (filters) => {
     try {
       setLoading(true); // Show loading indicator
-      const response = await axios.post(`${Url}/api/DamagedDevice/search`, filters, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`, // Pass token for authentication
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.post(
+        `${Url}/api/DamagedDevice/search`,
+        filters,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`, // Pass token for authentication
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       setDevicesList(response.data); // Update the devices list
 
@@ -100,7 +107,10 @@ export default function SuperVisorDevices() {
         message.warning("لا توجد نتائج تطابق الفلاتر المحددة"); // Show warning if no results
       }
     } catch (error) {
-      console.error("Error fetching devices:", error.response?.data || error.message);
+      console.error(
+        "Error fetching devices:",
+        error.response?.data || error.message
+      );
       message.error("حدث خطأ أثناء البحث"); // Show error in Arabic
     } finally {
       setLoading(false); // Hide loading indicator
@@ -177,8 +187,7 @@ export default function SuperVisorDevices() {
         <Link
           to="/supervisor/damegedDevices/show"
           state={{ device: record }}
-          className="supervisor-devices-dameged-details-link"
-        >
+          className="supervisor-devices-dameged-details-link">
           عرض
         </Link>
       ),
@@ -188,12 +197,16 @@ export default function SuperVisorDevices() {
   return (
     <div
       className={`supervisor-devices-dameged-page ${
-        isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-devices-dameged-page"
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-devices-dameged-page"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
-      <div className={`supervisor-devices-dameged-filters ${searchVisible ? "animate-show" : "animate-hide"}`}>
+      <div
+        className={`supervisor-devices-dameged-filters ${
+          searchVisible ? "animate-show" : "animate-hide"
+        }`}>
         <div className="filter-field">
           <label>نوع الجهاز</label>
           <Select
@@ -201,8 +214,7 @@ export default function SuperVisorDevices() {
             value={deviceTypeId}
             onChange={(value) => setDeviceTypeId(value)}
             allowClear
-            placeholder="اختر نوع الجهاز"
-          >
+            placeholder="اختر نوع الجهاز">
             {deviceTypes.map((type) => (
               <Option key={type.id} value={type.id}>
                 {type.name}
@@ -218,8 +230,7 @@ export default function SuperVisorDevices() {
             value={damagedTypeId}
             onChange={(value) => setDamagedTypeId(value)}
             allowClear
-            placeholder="اختر سبب التلف"
-          >
+            placeholder="اختر سبب التلف">
             {damagedTypes.map((type) => (
               <Option key={type.id} value={type.id}>
                 {type.name}

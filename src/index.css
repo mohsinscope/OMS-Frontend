@@ -6,12 +6,16 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-
+  scrollbar-width: none;
+  font-family: "Cairo", sans-serif !important;
+}
+* label {
+  font-family: "Cairo", sans-serif !important;
+  font-weight: bold;
 }
 
 :root {
   height: 100vh;
-  font-family: "Cairo", sans-serif;
   --bg-color: #171a1f;
   background-color: #f4f7fe;
 }

@@ -176,19 +176,34 @@ const SuperVisorDammagePassportAdd = () => {
             </h1>
             <div className="add-image-section">
               <div className="dragger-container">
-                <Dragger
-                  fileList={fileList}
-                  onChange={handleFileChange}
-                  beforeUpload={() => false}
-                  multiple
-                  showUploadList={false}>
-                  <p className="ant-upload-drag-icon">📂</p>
-                  <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
-                </Dragger>
+                <Form.Item
+                  name="uploadedImages"
+                  rules={[
+                    {
+                      validator: (_, value) =>
+                        fileList && fileList.length > 0
+                          ? Promise.resolve()
+                          : Promise.reject(
+                              new Error("يرجى تحميل صورة واحدة على الأقل")
+                            ),
+                    },
+                  ]}>
+                  <Dragger
+                    fileList={fileList}
+                    onChange={handleFileChange}
+                    beforeUpload={() => false}
+                    multiple
+                    showUploadList={false}>
+                    <p className="ant-upload-drag-icon">📂</p>
+                    <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
+                  </Dragger>
+                </Form.Item>
               </div>
               <div className="image-preivwer-container">
                 <ImagePreviewer
                   uploadedImages={previewUrls}
+                  defaultWidth={1000}
+                  defaultHeight={600}
                   onDeleteImage={handleDeleteImage}
                 />
               </div>

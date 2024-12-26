@@ -44,10 +44,12 @@ export default function ViewAttendance() {
             innerRadius={30}
             outerRadius={50}
             paddingAngle={5}
-            dataKey="value"
-          >
+            dataKey="value">
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell
+                key={`cell-${index}`}
+                fill={COLORS[index % COLORS.length]}
+              />
             ))}
           </Pie>
           <Tooltip />
@@ -85,10 +87,12 @@ export default function ViewAttendance() {
             innerRadius={100}
             outerRadius={150}
             paddingAngle={5}
-            dataKey="value"
-          >
+            dataKey="value">
             {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell
+                key={`cell-${index}`}
+                fill={COLORS[index % COLORS.length]}
+              />
             ))}
           </Pie>
           <Tooltip />
@@ -107,24 +111,32 @@ export default function ViewAttendance() {
       className={`attendence-view-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : "attendence-view-container"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <div className="header">
-        <h1>التاريخ: {new Date(attendanceData.date).toLocaleDateString("en-GB")}</h1>
-        <Link to="/supervisor/attendence/history">
-          <button className="edit-button">العودة</button>
-        </Link>
+        <h1>
+          التاريخ: {new Date(attendanceData.date).toLocaleDateString("en-GB")}
+        </h1>
       </div>
 
-      {/* Total Attendance Chart */}
-      {renderTotalChart()}
-
-      <div className="charts-section">
-        {renderChart("موظفي الاستلام", attendanceData.receivingStaff)}
-        {renderChart("موظفي الحسابات", attendanceData.accountStaff)}
-        {renderChart("موظفي الطباعة", attendanceData.printingStaff)}
-        {renderChart("موظفي الجودة", attendanceData.qualityStaff)}
-        {renderChart("موظفي التسليم", attendanceData.deliveryStaff)}
+      <div className="display-container-charts">
+        <div className="single-total-container">
+          {/* Total Attendance Chart */}
+          {renderTotalChart()}
+        </div>
+        <div className="charts-section">
+          <div className="single-chart">
+            {renderChart("موظفي الحسابات", attendanceData.accountStaff)}
+          </div>
+          <div className="single-chart">
+            {renderChart("موظفي الطباعة", attendanceData.printingStaff)}
+          </div>
+          <div className="single-chart">
+            {renderChart("موظفي الجودة", attendanceData.qualityStaff)}
+          </div>
+          <div className="single-chart">
+            {renderChart("موظفي التسليم", attendanceData.deliveryStaff)}
+          </div>
+        </div>
       </div>
     </div>
   );

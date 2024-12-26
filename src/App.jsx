@@ -76,7 +76,7 @@ const App = () => {
     },
     { path: "attendance/view", element: <ViewAttendance /> },
     {
-      path: "attendance/view/supervisor/editattendence",
+      path: "attendance/view/editattendence",
       element: <SuperVisorAttendenceEdit />,
     },
 
