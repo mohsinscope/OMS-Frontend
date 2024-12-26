@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Table, Button, Modal, message, DatePicker } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
+import usePermissionsStore from "./../../../store/permissionsStore"; // Import permissions store
 import "./superVisorAttendeceHistory.css";
 import Url from "./../../../store/url.js";
 
@@ -12,9 +13,9 @@ export default function SupervisorAttendanceHistory() {
   const [endDate, setEndDate] = useState(null);
   const [workingHours, setWorkingHours] = useState(3); // Default to "الكل"
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const { isSidebarCollapsed, profile } = useAuthStore();
+  const { isSidebarCollapsed, profile, searchVisible, toggleSearch } = useAuthStore();
+  const canCreate = usePermissionsStore((state) => state.canCreate); // Check if the user has create permission
   const navigate = useNavigate();
-  const { searchVisible, toggleSearch } = useAuthStore();
 
   const governorateId = profile?.governorateId || 1;
   const officeId = profile?.officeId || 1;
@@ -49,7 +50,6 @@ export default function SupervisorAttendanceHistory() {
 
   const formatDateForAPI = (date) => {
     if (!date) return undefined;
-    // Set time to 14:00:00Z for the selected date
     const formattedDate = new Date(date);
     formattedDate.setUTCHours(14, 0, 0, 0);
     return formattedDate.toISOString();
@@ -57,7 +57,7 @@ export default function SupervisorAttendanceHistory() {
 
   const handleSearch = async () => {
     const body = {
-      workingHours, // Always send the workingHours value (1, 2, or 3)
+      workingHours,
       officeId,
       governorateId,
       startDate: formatDateForAPI(startDate),
@@ -67,8 +67,6 @@ export default function SupervisorAttendanceHistory() {
         PageSize: 10,
       },
     };
-
-    console.log("Search Payload:", body); // Debugging payload
 
     try {
       const response = await fetch(`${Url}/api/Attendance/search`, {
@@ -199,9 +197,12 @@ export default function SupervisorAttendanceHistory() {
         <button className="attendance-reset-button" onClick={handleReset}>
           إعادة التعيين
         </button>
-        <Link to="AttendenceAdd">
-          <button className="attendance-add-button">اضافة حضور</button>
-        </Link>
+        {/* Conditionally render "إضافة حضور" based on permissions */}
+        {canCreate("attendance") && (
+          <Link to="AttendenceAdd">
+            <button className="attendance-add-button">اضافة حضور</button>
+          </Link>
+        )}
       </div>
 
       <div className="toggle-search-button">

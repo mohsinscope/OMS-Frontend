@@ -1,126 +1,138 @@
 import "./SuperVisorDevice.css";
-import useAuthStore from "./../../../store/store";
+import useAuthStore from "./../../../store/store"; // Custom store for user authentication and profile management
+import usePermissionsStore from "./../../../store/permissionsStore"; // Store for managing permissions
 import React, { useState, useEffect } from "react";
-import { Table, message, Button, Select, DatePicker } from "antd";
+import { Table, message, Button, Select, DatePicker } from "antd"; // Ant Design components
 import { Link } from "react-router-dom";
 import axios from "axios";
-import Url from "./../../../store/url";
+import Url from "./../../../store/url"; // Base URL for API endpoints
 
-const { Option } = Select;
+const { Option } = Select; // Ant Design Select options
 
 export default function SuperVisorDevices() {
-  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
-  const [devicesList, setDevicesList] = useState([]);
-  const [deviceTypes, setDeviceTypes] = useState([]);
-  const [damagedTypes, setDamagedTypes] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [deviceTypeId, setDeviceTypeId] = useState(null);
-  const [damagedTypeId, setDamagedTypeId] = useState(null);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const { searchVisible, toggleSearch } = useAuthStore();
+  // Global state values from the authentication store
+  const {
+    isSidebarCollapsed, // Determines if the sidebar is collapsed
+    accessToken, // JWT access token for authenticated API requests
+    profile, // User profile data, including office and governorate details
+    searchVisible, // Tracks visibility of the search/filter panel
+    toggleSearch, // Function to toggle the search panel visibility
+  } = useAuthStore();
 
-  // Helper function to format dates to ISO without UTC offset
-  function formatToLocalISOString(date) {
-    if (!(date instanceof Date)) date = new Date(date); // Ensure it's a Date object
-    if (!date) return null;
-    const offset = date.getTimezoneOffset() * 60000; // Convert minutes to milliseconds
-    const localDate = new Date(date.getTime() - offset); // Adjust to local time
-    return localDate.toISOString().slice(0, 19); // Remove the timezone offset ('Z')
-  }
+  // Permission store: Check if the user has the "create" permission for devices
+  const canCreate = usePermissionsStore((state) => state.canCreate);
 
-  // Fetch dropdown options for device type and damaged type
+  // Local state variables for managing device data, dropdowns, and filters
+  const [devicesList, setDevicesList] = useState([]); // Stores the list of damaged devices
+  const [deviceTypes, setDeviceTypes] = useState([]); // List of available device types
+  const [damagedTypes, setDamagedTypes] = useState([]); // List of damaged device reasons
+  const [loading, setLoading] = useState(false); // Tracks loading state for the table
+  const [deviceTypeId, setDeviceTypeId] = useState(null); // Selected device type for filtering
+  const [damagedTypeId, setDamagedTypeId] = useState(null); // Selected damage reason for filtering
+  const [startDate, setStartDate] = useState(null); // Selected start date for filtering
+  const [endDate, setEndDate] = useState(null); // Selected end date for filtering
+
+  // **Helper Function**: Convert date to local ISO format without UTC offset
+  const formatToLocalISOString = (date) => {
+    if (!(date instanceof Date)) date = new Date(date); // Ensure input is a Date object
+    if (!date) return null; // Return null if date is invalid
+    const offset = date.getTimezoneOffset() * 60000; // Convert timezone offset to milliseconds
+    const localDate = new Date(date.getTime() - offset); // Adjust date to local time
+    return localDate.toISOString().slice(0, 19); // Return ISO format (without timezone offset)
+  };
+
+  // **Effect**: Fetch dropdown options for device type and damage reasons
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
         const [deviceTypeResponse, damagedTypeResponse] = await Promise.all([
           axios.get(`${Url}/api/devicetype`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
+            headers: { Authorization: `Bearer ${accessToken}` }, // Pass token for authentication
           }),
           axios.get(`${Url}/api/damageddevicetype/all`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
         ]);
 
-        setDeviceTypes(deviceTypeResponse.data);
-        setDamagedTypes(damagedTypeResponse.data);
+        setDeviceTypes(deviceTypeResponse.data); // Set device types for dropdown
+        setDamagedTypes(damagedTypeResponse.data); // Set damage types for dropdown
       } catch (error) {
         console.error("Error fetching dropdown data:", error.response?.data || error.message);
-        message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة");
+        message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة"); // Show error message in Arabic
       }
     };
 
     fetchDropdownData();
   }, [accessToken]);
 
-  // Fetch initial device list based on user's office and governorate ID
+  // **Effect**: Fetch initial list of devices based on user's office and governorate
   useEffect(() => {
     if (profile) {
       fetchDevices({
-        DeviceTypeId: null,
-        damagedTypeId: null,
-        startDate: null,
-        endDate: null,
-        officeId: profile.officeId,
-        governorateId: profile.governorateId,
+        DeviceTypeId: null, // No filtering by device type initially
+        damagedTypeId: null, // No filtering by damage reason initially
+        startDate: null, // No start date filter initially
+        endDate: null, // No end date filter initially
+        officeId: profile.officeId, // Filter by user's office
+        governorateId: profile.governorateId, // Filter by user's governorate
         PaginationParams: {
-          PageNumber: 1,
-          PageSize: 10,
+          PageNumber: 1, // Start with the first page
+          PageSize: 10, // Set default page size
         },
       });
     }
   }, [profile]);
 
-  // Function to fetch devices based on filter parameters
+  // **Function**: Fetch the devices based on the applied filters
   const fetchDevices = async (filters) => {
     try {
-      setLoading(true);
+      setLoading(true); // Show loading indicator
       const response = await axios.post(`${Url}/api/DamagedDevice/search`, filters, {
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${accessToken}`, // Pass token for authentication
           "Content-Type": "application/json",
         },
       });
 
-      setDevicesList(response.data);
+      setDevicesList(response.data); // Update the devices list
 
       if (response.data.length === 0) {
-        message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
+        message.warning("لا توجد نتائج تطابق الفلاتر المحددة"); // Show warning if no results
       }
     } catch (error) {
       console.error("Error fetching devices:", error.response?.data || error.message);
-      message.error("حدث خطأ أثناء البحث");
+      message.error("حدث خطأ أثناء البحث"); // Show error in Arabic
     } finally {
-      setLoading(false);
+      setLoading(false); // Hide loading indicator
     }
   };
 
+  // **Function**: Handle search/filtering
   const handleSearch = async () => {
     const body = {
-      DeviceTypeId: deviceTypeId || undefined,
-      damagedTypeId: damagedTypeId || undefined,
-      startDate: startDate ? formatToLocalISOString(startDate) : null,
-      endDate: endDate ? formatToLocalISOString(endDate) : null,
-      officeId: profile?.officeId,
-      governorateId: profile?.governorateId,
+      DeviceTypeId: deviceTypeId || undefined, // Use selected device type
+      damagedTypeId: damagedTypeId || undefined, // Use selected damage reason
+      startDate: startDate ? formatToLocalISOString(startDate) : null, // Format start date
+      endDate: endDate ? formatToLocalISOString(endDate) : null, // Format end date
+      officeId: profile?.officeId, // User's office ID
+      governorateId: profile?.governorateId, // User's governorate ID
       PaginationParams: {
-        PageNumber: 1,
-        PageSize: 10,
+        PageNumber: 1, // Start with the first page
+        PageSize: 10, // Default page size
       },
     };
 
-    console.log("Search Payload:", body);
-
-    fetchDevices(body);
+    fetchDevices(body); // Fetch devices with the applied filters
   };
 
+  // **Function**: Reset filters and fetch all devices
   const handleReset = async () => {
-    setDeviceTypeId(null);
-    setDamagedTypeId(null);
-    setStartDate(null);
-    setEndDate(null);
+    setDeviceTypeId(null); // Reset device type filter
+    setDamagedTypeId(null); // Reset damage reason filter
+    setStartDate(null); // Reset start date filter
+    setEndDate(null); // Reset end date filter
 
-    const body = {
+    fetchDevices({
       DeviceTypeId: null,
       damagedTypeId: null,
       startDate: null,
@@ -131,12 +143,12 @@ export default function SuperVisorDevices() {
         PageNumber: 1,
         PageSize: 10,
       },
-    };
+    });
 
-    fetchDevices(body);
-    message.success("تم إعادة تعيين الفلاتر بنجاح");
+    message.success("تم إعادة تعيين الفلاتر بنجاح"); // Show success message
   };
 
+  // **Table Columns**: Define columns for the Ant Design table
   const columns = [
     {
       title: "نوع الجهاز",
@@ -181,9 +193,7 @@ export default function SuperVisorDevices() {
       dir="rtl"
     >
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
-      <div
-        className={`supervisor-devices-dameged-filters ${searchVisible ? "animate-show" : "animate-hide"}`}
-      >
+      <div className={`supervisor-devices-dameged-filters ${searchVisible ? "animate-show" : "animate-hide"}`}>
         <div className="filter-field">
           <label>نوع الجهاز</label>
           <Select
@@ -218,24 +228,6 @@ export default function SuperVisorDevices() {
           </Select>
         </div>
 
-        <div className="filter-field">
-          <label>تاريخ البداية</label>
-          <DatePicker
-            onChange={(date) => setStartDate(date ? date.toDate() : null)}
-            style={{ width: "100%" }}
-            placeholder="اختر تاريخ البداية"
-          />
-        </div>
-
-        <div className="filter-field">
-          <label>تاريخ النهاية</label>
-          <DatePicker
-            onChange={(date) => setEndDate(date ? date.toDate() : null)}
-            style={{ width: "100%" }}
-            placeholder="اختر تاريخ النهاية"
-          />
-        </div>
-
         <div className="filter-buttons">
           <Button type="primary" onClick={handleSearch}>
             البحث
@@ -245,17 +237,16 @@ export default function SuperVisorDevices() {
           </Button>
         </div>
 
-        <Link to="/supervisor/damegedDevices/add">
-          <Button className="supervisor-devices-dameged-add-button">
-            اضافة جهاز تالف
-          </Button>
-        </Link>
+        {/* Conditionally render the create button if the user has the "create" permission */}
+        {canCreate("devices") && (
+          <Link to="/supervisor/damegedDevices/add">
+            <Button className="supervisor-devices-dameged-add-button">
+              اضافة جهاز تالف
+            </Button>
+          </Link>
+        )}
       </div>
-      <div className="toggle-search-button">
-        <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? " إخفاء البحث" : " إظهار البحث"}
-        </Button>
-      </div>
+
       <div className="supervisor-devices-dameged-table-container">
         <Table
           dataSource={devicesList}

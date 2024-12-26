@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
-import useAuthStore from "../store/store.js";
-import Icons from "./icons.jsx";
+import useAuthStore from "../store/store"; // Access roles from the store
+import { MENU_ITEMS, COMMON_MENU_ITEMS } from "../config/menuConfig";
+import Icons from "./icons";
 
 const DynamicSidebar = ({
-  fetchUrl,
   onLogout,
   currentPath,
   sidebarClassName,
@@ -13,108 +13,70 @@ const DynamicSidebar = ({
   activeMenuItemClassName,
   logoutClassName,
 }) => {
-  const { user } = useAuthStore();
-  const [roleItems, setRoleItems] = useState([]);
   const navigate = useNavigate();
+  const { roles } = useAuthStore(); // Get roles from the store
+  const [visibleMenuItems, setVisibleMenuItems] = useState([]);
+  const [visibleCommonItems, setVisibleCommonItems] = useState([]);
 
   useEffect(() => {
-    const fetchSidebarData = async () => {
-      try {
-        if (!user || !user.role) return;
+    const filterMenuItems = () => {
+      if (!roles || roles.length === 0) return;
 
-        if (typeof fetchUrl === "string") {
-          const response = await fetch(fetchUrl);
-          const data = await response.json();
-          setRoleItems(data[user.role] || []);
-        } else if (typeof fetchUrl === "object") {
-          setRoleItems(fetchUrl[user.role] || []);
-        } else {
-          throw new Error("Invalid fetchUrl format. Must be a URL or JSON object.");
-        }
-      } catch (error) {
-        console.error("Failed to fetch sidebar data:", error.message);
-      }
+      // Filter `MENU_ITEMS` based on roles
+      const accessibleMenuItems = MENU_ITEMS.filter((item) =>
+        item.role.some((role) => roles.includes(role))
+      );
+      setVisibleMenuItems(accessibleMenuItems);
+
+      // Filter `COMMON_MENU_ITEMS` (if you want to restrict them)
+      const accessibleCommonItems = COMMON_MENU_ITEMS.filter(
+        (item) => item.role.length === 0 || item.role.some((role) => roles.includes(role))
+      );
+      setVisibleCommonItems(accessibleCommonItems);
     };
 
-    fetchSidebarData();
-  }, [fetchUrl, user]);
-
-  const commonItems = [
-    { label: "الإعدادات", icon: "settings", path: "/settings" },
-    { label: "تسجيل الخروج", icon: "logout", action: onLogout },
-  ];
+    filterMenuItems();
+  }, [roles]);
 
   const handleMenuClick = (path, action) => {
-    if (action) {
-      action();
+    if (action === "logout") {
+      onLogout();
     } else if (path) {
       navigate(path);
     }
   };
 
+  const renderMenuItem = (item, index) => {
+    const isActive = currentPath === item.path;
+
+    return (
+      <div
+        key={index}
+        className={`${menuItemClassName} ${isActive ? activeMenuItemClassName : ""}`}
+        onClick={() => handleMenuClick(item.path, item.action)}
+      >
+        <Icons type={item.icon} />
+        <h3>{item.label}</h3>
+      </div>
+    );
+  };
+
   return (
-    <div className={sidebarClassName || "sidebar"} dir="rtl">
-      {/* Top section: Dynamic menu items */}
-      <div className="sidebar-top" dir="ltr">
-        {roleItems.map((item, index) => (
-          <div
-            key={index}
-            className={`${menuItemClassName} ${
-              currentPath === item.path ? activeMenuItemClassName : ""
-            }`}
-            style={{
-              color: currentPath === item.path ? "white" : "black",
-            }}
-            onClick={() => handleMenuClick(item.path, item.action)}
-          >
-
-            <span className="icons-sidebar-adjusment-for-mohsen" style={{
-              backgroundColor: currentPath === item.path ? "#4880ff" : "transparent",
-              color: currentPath === item.path ? "white" : "black",
-            }} >
-            <Icons
-            
-              type={item.icon}
-              width={40}
-              height={40}
-              color={currentPath === item.path ? "white" : "black"}
-            />
-
-            </span>
-            <h3>{item.label}</h3>
-          </div>
-        ))}
+    <div className={sidebarClassName || "sidebar"}>
+      {/* Main Menu Items */}
+      <div className="sidebar-top">
+        {visibleMenuItems.map((item, index) => renderMenuItem(item, index))}
       </div>
 
-      {/* Bottom section: Common items */}
-      <div className="sidebar-bottom" dir="ltr">
-        {commonItems.map((item, index) => (
-          <div
-            key={index}
-            className={`${item.label === "تسجيل الخروج" ? logoutClassName : menuItemClassName} ${
-              currentPath === item.path ? activeMenuItemClassName : ""
-            }`}
-            onClick={() => handleMenuClick(item.path, item.action)}
-          >
-   
-                  <Icons
-              type={item.icon}
-              width={24}
-              height={24}
-              color={item.label === "تسجيل الخروج" ? "white" : "black"}
-            />
-           
-        
-            <h3>{item.label}</h3>
-          </div>
-        ))}
+      {/* Common Menu Items */}
+      <div className="sidebar-bottom">
+        {visibleCommonItems.map((item, index) => renderMenuItem(item, index))}
       </div>
     </div>
   );
 };
 
 DynamicSidebar.propTypes = {
-  fetchUrl: PropTypes.oneOfType([PropTypes.string, PropTypes.object]).isRequired,
   onLogout: PropTypes.func.isRequired,
   currentPath: PropTypes.string.isRequired,
   sidebarClassName: PropTypes.string,
