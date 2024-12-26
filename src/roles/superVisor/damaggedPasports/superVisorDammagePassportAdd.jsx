@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Input, Button, DatePicker, message, Upload } from "antd";
 import axios from "axios";
-import "./superVisorDammagePassportAdd.css";
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
 import moment from "moment";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
+import "./superVisorDammagePassportAdd.css";
 
 const { Dragger } = Upload;
 
@@ -25,6 +25,22 @@ const SuperVisorDammagePassportAdd = () => {
     navigate(-1);
   };
 
+  // Step 1: Send damaged passport details first and get entityId
+  const sendPassportDetails = async (payload) => {
+    try {
+      const response = await axios.post(`${Url}/api/DamagedPassport`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      return response.data?.id || response.data;
+    } catch (error) {
+      throw new Error("Failed to add damaged passport.");
+    }
+  };
+
+  // Step 2: Attach files to the created damaged passport entity
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
       const formData = new FormData();
@@ -40,7 +56,7 @@ const SuperVisorDammagePassportAdd = () => {
           },
         });
       } catch (error) {
-        throw new Error("Failed to attach files. Operation aborted.");
+        throw new Error("Failed to attach files.");
       }
     }
   };
@@ -63,33 +79,22 @@ const SuperVisorDammagePassportAdd = () => {
         officeId,
         governorateId,
         profileId,
+        note: values.note || "",
       };
 
-      const damagedPassportResponse = await axios.post(
-        `${Url}/api/DamagedPassport`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      console.log("Payload to be sent:", payload);
 
-      const entityId =
-        damagedPassportResponse.data?.id || damagedPassportResponse.data;
+      // Step 1: Send damaged passport data and get the entity ID
+      const entityId = await sendPassportDetails(payload);
 
       if (!entityId) {
         throw new Error("Failed to retrieve entity ID from the response.");
       }
 
+      // Step 2: Attach files if any
       if (fileList.length > 0) {
-        try {
-          await attachFiles(entityId);
-          message.success("تم إرسال البيانات والمرفقات بنجاح");
-        } catch (attachmentError) {
-          throw new Error("Failed to attach files. Operation aborted.");
-        }
+        await attachFiles(entityId);
+        message.success("تم إرسال البيانات والمرفقات بنجاح");
       } else {
         message.success("تم إرسال البيانات بنجاح بدون مرفقات");
       }
@@ -113,9 +118,10 @@ const SuperVisorDammagePassportAdd = () => {
     );
     setPreviewUrls(previews);
   };
+
   const handleDeleteImage = (index) => {
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index)); // Remove the selected image from preview
-    setFileList((prev) => prev.filter((_, i) => i !== index)); // Remove the corresponding file from fileList
+    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    setFileList((prev) => prev.filter((_, i) => i !== index));
   };
 
   return (
@@ -139,14 +145,12 @@ const SuperVisorDammagePassportAdd = () => {
                 rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
                 <Input placeholder="أدخل رقم الجواز" />
               </Form.Item>
-
               <Form.Item
                 name="damagedTypeId"
                 label="سبب التلف"
                 rules={[{ required: true, message: "يرجى إدخال سبب التلف" }]}>
                 <Input placeholder="أدخل سبب التلف (رقم)" type="number" />
               </Form.Item>
-
               <Form.Item
                 name="date"
                 label="التاريخ"
@@ -154,6 +158,16 @@ const SuperVisorDammagePassportAdd = () => {
                 <DatePicker
                   placeholder="اختر التاريخ"
                   style={{ width: "267px", height: "45px" }}
+                />
+              </Form.Item>
+              <Form.Item
+                name="note"
+                label="ملاحظات"
+                rules={[{ required: false }]}
+                style={{ width: "450px", height: "150px" }}>
+                <Input.TextArea
+                  placeholder="أدخل الملاحظات"
+                  style={{ width: "450px", maxHeight: "650px" }}
                 />
               </Form.Item>
             </div>
@@ -167,13 +181,11 @@ const SuperVisorDammagePassportAdd = () => {
                   onChange={handleFileChange}
                   beforeUpload={() => false}
                   multiple
-                  showUploadList={false} // Hide the default file name/path list
-                >
+                  showUploadList={false}>
                   <p className="ant-upload-drag-icon">📂</p>
                   <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
                 </Dragger>
               </div>
-              {/* Pass uploaded images to ImagePreviewer */}
               <div className="image-preivwer-container">
                 <ImagePreviewer
                   uploadedImages={previewUrls}

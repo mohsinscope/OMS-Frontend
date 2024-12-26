@@ -28,13 +28,14 @@
   gap: 20px;
   padding: 20px 0px 20px 20px;
   transition: all 0.6s ease-in-out;
-  overflow: hidden;
+  display: none;
 }
 .supervisor-Lectur-filters.animate-show {
   max-height: 300px;
   opacity: 1;
+  display: flex;
   justify-content: flex-start;
-  transition: max-height 0.6s ease, opacity 0.6s ease;
+  transition: all 0.6s ease, opacity 0.6s ease;
 }
 
 .supervisor-Lectur-filters.animate-hide {
@@ -92,6 +93,16 @@
   border-radius: 6px;
   font-size: large;
 }
+.supervisor-add-Lectur-button {
+  background-color: #04aa6d;
+  color: white;
+  width: 150px;
+  height: 45px;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: large;
+}
 
 .supervisor-Lectur-table-container {
   width: 100%;
@@ -141,4 +152,15 @@
 
 .supervisor-Lectur-table-container table thead th {
   text-align: center !important;
+}
+
+.toggle-search-button button {
+  background-color: #4880ff;
+  color: white;
+  width: 120px;
+  height: 40px;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: large;
 }

@@ -1,25 +1,37 @@
 import React, { useState, useEffect } from "react";
+import {
+  Spin,
+  message,
+  Modal,
+  Form,
+  Input,
+  Button,
+  ConfigProvider,
+} from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Spin, message } from "antd";
 import axios from "axios";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./LecturerShow.css";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
-
+import Lele from "./../../../reusable elements/icons.jsx";
 const LecturerShow = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const lectureId = location.state?.id; // Retrieve the selected lecture ID
-  const [lectureData, setLectureData] = useState(null); // State to store fetched lecture data
-  const [images, setImages] = useState([]); // State to store fetched images
-  const [loading, setLoading] = useState(false); // Loading state
-  const { isSidebarCollapsed, accessToken } = useAuthStore(); // Access sidebar collapse state
+  const lectureId = location.state?.id;
+  const [lectureData, setLectureData] = useState(null);
+  const [images, setImages] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [form] = Form.useForm();
+  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
+  const { profileId, governorateId, officeId } = profile || {};
 
   useEffect(() => {
     if (!lectureId) {
       message.error("معرف المحضر غير موجود.");
-      navigate(-1); // Redirect if ID is missing
+      navigate(-1);
       return;
     }
 
@@ -31,7 +43,10 @@ const LecturerShow = () => {
             Authorization: `Bearer ${accessToken}`,
           },
         });
-        setLectureData(response.data);
+        const lecture = response.data;
+        const formattedDate = new Date(lecture.date).toISOString().slice(0, 16);
+        setLectureData({ ...lecture, date: formattedDate });
+        form.setFieldsValue({ ...lecture, date: formattedDate });
       } catch (error) {
         message.error(
           `حدث خطأ أثناء جلب تفاصيل المحضر: ${
@@ -54,8 +69,6 @@ const LecturerShow = () => {
           }
         );
         const imageUrls = response.data.map((image) => image.filePath);
-        //to print the width and hieght of the image
-        console.log("imageUrls", imageUrls);
         setImages(imageUrls);
       } catch (error) {
         message.error(
@@ -68,10 +81,56 @@ const LecturerShow = () => {
 
     fetchLectureDetails();
     fetchLectureImages();
-  }, [lectureId, accessToken, navigate]);
+  }, [lectureId, accessToken, navigate, form]);
+
+  const handleSaveEdit = async (values) => {
+    try {
+      const updatedValues = {
+        ...values,
+        id: lectureId,
+        profileId,
+        governorateId,
+        officeId,
+        date: new Date(values.date).toISOString(),
+      };
+      await axios.put(`${Url}/api/Lecture/${lectureId}`, updatedValues, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      message.success("تم تحديث المحضر بنجاح");
+      setEditModalVisible(false);
+      setLectureData((prev) => ({ ...prev, ...updatedValues }));
+    } catch (error) {
+      message.error(
+        `حدث خطأ أثناء تعديل المحضر: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`${Url}/api/Lecture/${lectureId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      message.success("تم حذف المحضر بنجاح");
+      setDeleteModalVisible(false);
+      navigate(-1); // Redirect after deletion
+    } catch (error) {
+      message.error(
+        `حدث خطأ أثناء حذف المحضر: ${
+          error.response?.data?.message || error.message
+        }`
+      );
+    }
+  };
 
   const handleBack = () => {
-    navigate(-1); // Go back to the previous page
+    navigate(-1);
   };
 
   if (loading) {
@@ -96,6 +155,22 @@ const LecturerShow = () => {
       dir="rtl">
       <div className="title-container">
         <h1>تفاصيل المحضر</h1>
+        <div className="edit-button-and-delete">
+          <Button onClick={handleBack} className="back-button">
+            <Lele type="back" />
+            الرجوع
+          </Button>
+          <Button
+            onClick={() => setDeleteModalVisible(true)}
+            className="delete-button-lecture">
+            حذف <Lele type="delete" />
+          </Button>
+          <Button
+            onClick={() => setEditModalVisible(true)}
+            className="edit-button-lecture">
+            تعديل <Lele type="edit" />
+          </Button>
+        </div>
       </div>
 
       <div className="details-container-Lecture">
@@ -105,56 +180,103 @@ const LecturerShow = () => {
             <input
               className="details-value"
               value={lectureData.title}
-              disabled></input>
+              disabled
+            />
           </div>
           <div className="details-row">
             <span className="details-label">التاريخ:</span>
             <input
               className="details-value"
               value={new Date(lectureData.date).toLocaleDateString("ar-EG")}
-              disabled></input>
+              disabled
+            />
           </div>
           <div className="details-row">
             <span className="details-label">المكتب:</span>
             <input
               className="details-value"
               value={lectureData.officeName}
-              disabled></input>
+              disabled
+            />
           </div>
           <div className="details-row">
             <span className="details-label">المحافظة:</span>
             <input
               className="details-value"
               value={lectureData.governorateName}
-              disabled></input>
+              disabled
+            />
           </div>
-          <div className="details-row">
-            <span className="details-label">اسم الملف الشخصي:</span>
-            <input
-              className="details-value"
-              value={lectureData.profileFullName}
-              disabled></input>
+
+          <div className="note-details-value">
+            <span className="details-label">الملاحظات:</span>
+            <textarea
+              className="textarea-value"
+              value={lectureData.note || "لا توجد ملاحظات"}
+              disabled
+            />
           </div>
         </div>
         <div className="image-lecture-container">
           {images.length > 0 && (
             <div className="image-lecture-preview-container">
-              <span className="details-label">صورة المحضر:</span>
+              <span className="note-details-label">صورة المحضر:</span>
               <ImagePreviewer
                 uploadedImages={images}
-                defaultWidth={800}
-                defaultHeight={520}
+                defaultWidth={1000}
+                defaultHeight={600}
               />
             </div>
           )}
         </div>
       </div>
 
-      <div className="back-button-container">
-        <button onClick={handleBack} className="back-button">
-          الرجوع
-        </button>
-      </div>
+      <ConfigProvider direction="rtl">
+        <Modal
+          className="model-container"
+          open={editModalVisible}
+          onCancel={() => setEditModalVisible(false)}
+          footer={null}>
+          <h1>تعديل المحضر</h1>
+          <Form
+            form={form}
+            onFinish={handleSaveEdit}
+            layout="vertical"
+            className="Admin-user-add-model-conatiner-form">
+            <Form.Item
+              name="title"
+              label="عنوان المحضر"
+              rules={[{ required: true, message: "يرجى إدخال عنوان المحضر" }]}>
+              <Input placeholder="عنوان المحضر" />
+            </Form.Item>
+            <Form.Item
+              name="date"
+              label="التاريخ"
+              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
+              <Input placeholder="التاريخ" type="datetime-local" />
+            </Form.Item>
+            <Form.Item
+              name="note"
+              label="الملاحظات"
+              rules={[{ required: false }]}>
+              <Input.TextArea placeholder="أدخل الملاحظات" />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              حفظ التعديلات
+            </Button>
+          </Form>
+        </Modal>
+
+        <Modal
+          title="تأكيد الحذف"
+          open={deleteModalVisible}
+          onOk={handleDelete}
+          onCancel={() => setDeleteModalVisible(false)}
+          okText="حذف"
+          cancelText="إلغاء">
+          <p>هل أنت متأكد أنك تريد حذف هذا المحضر؟</p>
+        </Modal>
+      </ConfigProvider>
     </div>
   );
 };

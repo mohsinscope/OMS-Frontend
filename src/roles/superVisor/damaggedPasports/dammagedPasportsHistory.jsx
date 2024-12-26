@@ -23,7 +23,9 @@ export default function SuperVisorPassport() {
   const formatDateToISO = (date) => {
     if (!date) return null;
     const d = new Date(date);
-    return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0)).toISOString();
+    return new Date(
+      Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0)
+    ).toISOString();
   };
 
   // Fetch dropdown options for damaged types
@@ -35,7 +37,10 @@ export default function SuperVisorPassport() {
         });
         setDamagedTypes(response.data);
       } catch (error) {
-        console.error("Error fetching damaged types:", error.response?.data || error.message);
+        console.error(
+          "Error fetching damaged types:",
+          error.response?.data || error.message
+        );
         message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة");
       }
     };
@@ -66,18 +71,25 @@ export default function SuperVisorPassport() {
     setLoading(true);
     console.log("Request Payload:", body); // Log payload for debugging
     try {
-      const response = await axios.post(`${Url}/api/DamagedPassport/search`, body, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await axios.post(
+        `${Url}/api/DamagedPassport/search`,
+        body,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
       setPassportList(response.data);
       if (response.data.length === 0) {
         message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
       }
     } catch (error) {
-      console.error("Error fetching passports:", error.response?.data || error.message);
+      console.error(
+        "Error fetching passports:",
+        error.response?.data || error.message
+      );
       message.error("حدث خطأ أثناء البحث");
     } finally {
       setLoading(false);
@@ -152,8 +164,7 @@ export default function SuperVisorPassport() {
         <Link
           to="DammagedPasportsShow"
           state={{ passport: record }}
-          className="supervisor-passport-dameged-details-link"
-        >
+          className="supervisor-passport-dameged-details-link">
           عرض
         </Link>
       ),
@@ -167,15 +178,13 @@ export default function SuperVisorPassport() {
           ? "sidebar-collapsed"
           : "supervisor-passport-dameged-page"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
 
       <div
         className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
-        }`}
-      >
+        }`}>
         <div className="filter-field">
           <label>رقم الجواز</label>
           <Input
@@ -192,8 +201,7 @@ export default function SuperVisorPassport() {
             value={damagedTypeId}
             onChange={(value) => setDamagedTypeId(value)}
             allowClear
-            placeholder="اختر سبب التلف"
-          >
+            placeholder="اختر سبب التلف">
             {damagedTypes.map((type) => (
               <Option key={type.id} value={type.id}>
                 {type.name}
@@ -231,7 +239,7 @@ export default function SuperVisorPassport() {
 
         <Link to="/supervisor/damagedpasportshistory/supervisordammagepasportadd">
           <Button className="supervisor-passport-dameged-add-button">
-            اضافة جواز تالف
+            اضافة جواز تالف +
           </Button>
         </Link>
       </div>
