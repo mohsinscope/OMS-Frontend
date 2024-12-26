@@ -2,17 +2,18 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./signIn.css";
 import Logo from "../assets/Asset 2.png";
-import useAuthStore from "./../store/store.js"; // Custom store for managing auth state
+import useAuthStore from "./../store/store.js";
 import axios from "axios";
 import Icons from "../reusable elements/icons.jsx";
-import BASE_URL from "../store/url.js"; // Import the base URL
+import BASE_URL from "../store/url.js";
 
 const SignInPage = () => {
   const navigate = useNavigate();
   const [loginError, setLoginError] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [passwordVisible, setPasswordVisible] = useState(false); // State for password visibility
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [loading, setLoading] = useState(false); // State to handle loading state
 
   // Access global store functions and state
   const { login, isLoggedIn } = useAuthStore();
@@ -33,18 +34,15 @@ const SignInPage = () => {
     try {
       const response = await axios.get(`${BASE_URL}/api/profile/user-profile`, {
         headers: {
-          Authorization: `Bearer ${token}`, // Pass the token as a Bearer token
+          Authorization: `Bearer ${token}`,
         },
       });
 
       const userProfile = response.data;
-
       console.log("User Profile Response:", userProfile);
 
       // Save profile data to the global store
       login(token, userProfile);
-
-      // Navigate to stats after login
       navigateToStats();
     } catch (error) {
       console.error("Failed to fetch user profile:", error);
@@ -58,15 +56,16 @@ const SignInPage = () => {
       return;
     }
 
+    setLoading(true); // Set loading state
+    setLoginError(""); // Reset error state
+
     try {
-      // Call login API
       const response = await axios.post(`${BASE_URL}/api/account/login`, {
         username,
         password,
       });
 
       const { token } = response.data;
-
       console.log("Login Response:", response.data);
 
       // Fetch user profile data with the token
@@ -77,6 +76,8 @@ const SignInPage = () => {
         error.response?.data?.message ||
         "فشل تسجيل الدخول. يرجى التحقق من البيانات.";
       setLoginError(errorMessage);
+    } finally {
+      setLoading(false); // Reset loading state
     }
   };
 
@@ -86,6 +87,7 @@ const SignInPage = () => {
         <img src={Logo} alt="ScopeSky Logo" className="logo" />
         <h1>نظام إدارة المكاتب</h1>
       </div>
+
       <div className="right-side">
         <h2>سجل الدخول</h2>
         {loginError && <div className="error-message">{loginError}</div>}
@@ -101,6 +103,7 @@ const SignInPage = () => {
             onChange={(e) => setUsername(e.target.value)}
             placeholder="اسم المستخدم"
             className="input-field"
+            disabled={loading} // Disable during loading
           />
         </div>
 
@@ -116,11 +119,14 @@ const SignInPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="كلمة السر"
               className="input-field-password"
+              disabled={loading} // Disable during loading
             />
             <button
               type="button"
               className="toggle-password"
-              onClick={() => setPasswordVisible(!passwordVisible)}>
+              onClick={() => setPasswordVisible(!passwordVisible)}
+              disabled={loading} // Disable during loading
+            >
               <Icons
                 type={passwordVisible ? "eye-off" : "eye"}
                 width={24}
@@ -130,8 +136,12 @@ const SignInPage = () => {
           </div>
         </div>
 
-        <button onClick={handleSubmit} className="login-btn">
-          تسجيل الدخول
+        <button
+          onClick={handleSubmit}
+          className={`login-btn ${loading ? "loading" : ""}`}
+          disabled={loading} // Disable button during loading
+        >
+          {loading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
         </button>
       </div>
     </div>

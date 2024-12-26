@@ -6,6 +6,7 @@
     display: flex;
     gap: 20px;
     justify-content: start;
+    align-items: end;
     justify-content: space-around;
     margin-bottom: 20px;
     
@@ -19,8 +20,29 @@
 .attendance-filters-stats button{
 
 }
+.attendance-filter input{
+    width: 200px !important;
+}
+.attendance-filter{
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
 
-
+#attendence-chart-stats{
+    box-shadow: none;
+    background-color: none;
+}
+.attendance-filters-stats button{
+    background-color: #4880ff;
+    color: white;
+    width: 120px;
+    height: 45px;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: large;
+}
 .card-attendence-stats-container{
     width: 300px;
     height: 100px;

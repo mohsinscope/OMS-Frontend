@@ -7,7 +7,7 @@ export const ROLE_PERMISSIONS = {
         expenses: ["create", "read", "update", "delete", "approve", "export"],
     },
     Attendence: {
-        attendance: [ "read", "update", "delete", "approve", "export"], // Consistent lowercase "attendance"
+        attendance: [ "create","read", "update", "delete", "approve", "export"], // Consistent lowercase "attendance"
     },
   };
   

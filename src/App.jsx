@@ -155,16 +155,18 @@ const App = () => {
 
         {/* Protected Routes */}
         <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout /> {/* Use Layout for fixed Dashboard */}
-            </ProtectedRoute>
-          }>
-          {routes.map(({ path, element }, index) => (
-            <Route key={index} path={path} element={element} />
-          ))}
-        </Route>
+  path="/"
+  element={
+    <ProtectedRoute>
+      <Layout />
+    </ProtectedRoute>
+  }
+>
+  {/* Define nested protected routes */}
+  {routes.map(({ path, element }, index) => (
+    <Route key={index} path={path} element={element} />
+  ))}
+</Route>
       </Routes>
     </Router>
   );

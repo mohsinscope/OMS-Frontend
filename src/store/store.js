@@ -21,12 +21,21 @@ const useAuthStore = create((set) => ({
         const base64Url = token.split(".")[1];
         const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
         const payload = JSON.parse(atob(base64)); // Decode the token payload
+
+        // Check if the token has expired
+        const currentTime = Math.floor(Date.now() / 1000); // Current time in seconds
+        if (payload.exp && payload.exp < currentTime) {
+          console.warn("Token has expired. Logging out.");
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("userProfile");
+          localStorage.removeItem("permissions");
+          return;
+        }
+
         const parsedProfile = JSON.parse(userProfile);
 
         // Ensure roles is an array extracted from `role` in the token
         const roles = Array.isArray(payload.role) ? payload.role : [payload.role];
-
-        console.log("Roles from token (initializeAuth):", roles);
 
         set({
           user: {
@@ -39,12 +48,16 @@ const useAuthStore = create((set) => ({
           isLoggedIn: true,
           accessToken: token,
         });
+
+        console.log("Auth initialized successfully.");
       } catch (error) {
         console.error("Failed to decode token or load user profile:", error);
         localStorage.removeItem("accessToken");
         localStorage.removeItem("userProfile");
         localStorage.removeItem("permissions");
       }
+    } else {
+      console.log("No token or user profile found in localStorage.");
     }
   },
 
@@ -70,8 +83,6 @@ const useAuthStore = create((set) => ({
       // Ensure roles is an array extracted from `role` in the token
       const roles = Array.isArray(payload.role) ? payload.role : [payload.role];
 
-      console.log("Roles from token (login):", roles);
-
       localStorage.setItem("accessToken", token); // Save token to localStorage
       localStorage.setItem("userProfile", JSON.stringify(parsedProfile)); // Save user profile to localStorage
       localStorage.setItem("permissions", JSON.stringify(permissions)); // Save permissions to localStorage
@@ -87,6 +98,8 @@ const useAuthStore = create((set) => ({
         isLoggedIn: true,
         accessToken: token,
       });
+
+      console.log("User logged in successfully.");
     } catch (error) {
       console.error("Failed to decode token or save user data:", error);
       set({
@@ -116,6 +129,7 @@ const useAuthStore = create((set) => ({
       isLoggedIn: false,
       accessToken: null,
     });
+    console.log("User logged out successfully.");
   },
 
   // Toggle search visibility

@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { Search } from 'lucide-react';
-import { DatePicker, Select } from 'antd';
 import './attendenceState.css';
 import useAuthStore from './../store/store.js';
 import axios from 'axios';
 import Url from './../store/url.js';
-
-const { Option } = Select;
 
 const AttendanceCard = ({ children, className = '' }) => (
   <div className={`attendance-card bg-white rounded-lg shadow-sm p-4 ${className}`}>
@@ -17,9 +14,9 @@ const AttendanceCard = ({ children, className = '' }) => (
 
 const AttendanceStats = () => {
   const { profile } = useAuthStore();
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [selectedGovernorate, setSelectedGovernorate] = useState(profile?.governorateId || null);
-  const [selectedOffice, setSelectedOffice] = useState(profile?.officeId || null);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedGovernorate, setSelectedGovernorate] = useState('');
+  const [selectedOffice, setSelectedOffice] = useState('');
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -41,12 +38,18 @@ const AttendanceStats = () => {
     try {
       const response = await axios.get(`${Url}/api/Governorate/dropdown`);
       setGovernorates(response.data);
+      return response.data;
     } catch (error) {
       console.error("Failed to fetch governorates:", error);
+      return [];
     }
   };
 
   const fetchOffices = async (governorateId) => {
+    if (!governorateId) {
+      setOffices([]);
+      return;
+    }
     try {
       const response = await axios.get(`${Url}/api/Office/dropdown?GovernorateId=${governorateId}`);
       setOffices(response.data);
@@ -57,10 +60,9 @@ const AttendanceStats = () => {
 
   const fetchAttendanceStats = async () => {
     try {
-      const body = {
-        GovernorateId: profile?.role === 'Supervisor' ? profile?.governorateId : selectedGovernorate || undefined,
-        OfficeId: profile?.role === 'Supervisor' ? profile?.officeId : selectedOffice || undefined,
-        WorkingHours: 3,
+      const baseBody = {
+        GovernorateId: selectedGovernorate || null,
+        OfficeId: selectedOffice || null,
         StaffType: "",
         Date: selectedDate ? `${selectedDate}T10:00:00Z` : undefined,
         PaginationParams: {
@@ -69,66 +71,68 @@ const AttendanceStats = () => {
         }
       };
 
-      const response = await axios.post(`${Url}/api/Attendance/search/statistics`, body);
-      setAttendanceStats((prevStats) => ({
-        ...prevStats,
+      const [response, morningResponse, eveningResponse] = await Promise.all([
+        axios.post(`${Url}/api/Attendance/search/statistics`, {
+          ...baseBody,
+          WorkingHours: 3
+        }),
+        axios.post(`${Url}/api/Attendance/search/statistics`, {
+          ...baseBody,
+          WorkingHours: 1
+        }),
+        axios.post(`${Url}/api/Attendance/search/statistics`, {
+          ...baseBody,
+          WorkingHours: 2
+        })
+      ]);
+
+      setAttendanceStats({
         totalStaffCount: response.data.totalStaffCount,
         availableStaff: response.data.availableStaff,
-        availableStaffPercentage: response.data.availableStaffPercentage
-      }));
-
-      const morningResponse = await axios.post(`${Url}/api/Attendance/search/statistics`, {
-        ...body,
-        WorkingHours: 1
-      });
-      setAttendanceStats((prevStats) => ({
-        ...prevStats,
+        availableStaffPercentage: response.data.availableStaffPercentage,
         availableMorningShiftStaff: morningResponse.data.availableStaff,
-        morningShiftPercentage: morningResponse.data.availableStaffPercentage
-      }));
-
-      const eveningResponse = await axios.post(`${Url}/api/Attendance/search/statistics`, {
-        ...body,
-        WorkingHours: 2
-      });
-      setAttendanceStats((prevStats) => ({
-        ...prevStats,
+        morningShiftPercentage: morningResponse.data.availableStaffPercentage,
         availableEveningShiftStaff: eveningResponse.data.availableStaff,
         eveningShiftPercentage: eveningResponse.data.availableStaffPercentage
-      }));
+      });
     } catch (error) {
       console.error("Failed to fetch attendance statistics:", error);
     }
   };
 
-  const fetchGovernorateStats = async () => {
+  const fetchGovernorateStats = async (govList = []) => {
     try {
-      const governorates = await axios.get(`${Url}/api/Governorate/dropdown`);
+      const baseBody = {
+        Date: selectedDate ? `${selectedDate}T10:00:00Z` : undefined,
+        PaginationParams: { PageNumber: 1, PageSize: 10 }
+      };
+
       const morningStatsData = [];
       const eveningStatsData = [];
 
-      for (const gov of governorates.data) {
-        const morningResponse = await axios.post(`${Url}/api/Attendance/search/statistics`, {
-          GovernorateId: gov.id,
-          WorkingHours: 1,
-          Date: selectedDate ? `${selectedDate}T10:00:00Z` : undefined,
-          PaginationParams: { PageNumber: 1, PageSize: 10 }
-        });
+      const governoratesToUse = govList.length > 0 ? govList : governorates;
+
+      for (const gov of governoratesToUse) {
+        const [morningResponse, eveningResponse] = await Promise.all([
+          axios.post(`${Url}/api/Attendance/search/statistics`, {
+            ...baseBody,
+            GovernorateId: gov.id,
+            WorkingHours: 1
+          }),
+          axios.post(`${Url}/api/Attendance/search/statistics`, {
+            ...baseBody,
+            GovernorateId: gov.id,
+            WorkingHours: 2
+          })
+        ]);
 
         morningStatsData.push({
-          name: decodeURIComponent(gov.name),
+          name: gov.name,
           value: morningResponse.data.availableStaff || 0
         });
 
-        const eveningResponse = await axios.post(`${Url}/api/Attendance/search/statistics`, {
-          GovernorateId: gov.id,
-          WorkingHours: 2,
-          Date: selectedDate ? `${selectedDate}T10:00:00Z` : undefined,
-          PaginationParams: { PageNumber: 1, PageSize: 10 }
-        });
-
         eveningStatsData.push({
-          name: decodeURIComponent(gov.name),
+          name: gov.name,
           value: eveningResponse.data.availableStaff || 0
         });
       }
@@ -143,21 +147,46 @@ const AttendanceStats = () => {
   };
 
   useEffect(() => {
-    fetchGovernorates();
-    if (profile?.role === 'Supervisor') {
-      fetchOffices(profile.governorateId);
-    }
-  }, []); // Only run once on component mount
+    const initData = async () => {
+      setLoading(true);
+      try {
+        const govs = await fetchGovernorates();
+        await Promise.all([
+          fetchGovernorateStats(govs),
+          fetchAttendanceStats()
+        ]);
+      } catch (error) {
+        console.error("Failed to initialize data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    initData();
+  }, []);
 
   const handleSearch = async () => {
     setLoading(true);
     try {
-      await fetchAttendanceStats();
-      await fetchGovernorateStats();
+      await Promise.all([
+        fetchAttendanceStats(),
+        fetchGovernorateStats()
+      ]);
     } catch (error) {
       console.error("Search failed:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGovernorateChange = (e) => {
+    const value = e.target.value;
+    setSelectedGovernorate(value);
+    setSelectedOffice('');
+    if (value) {
+      fetchOffices(value);
+    } else {
+      setOffices([]);
     }
   };
 
@@ -176,7 +205,7 @@ const AttendanceStats = () => {
   const renderChart = (data, title) => (
     <AttendanceCard>
       <h3 className="attendance-chart-title text-xl mb-6 text-center font-bold">{title}</h3>
-      <div className="chart-container" style={{ height: '600px' }}>
+      <div className="" style={{ height: '600px' }}>
         <BarChart
           width={800}
           height={550}
@@ -223,61 +252,51 @@ const AttendanceStats = () => {
   );
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen" dir="rtl">
-      <div className="attendance-header flex justify-between items-center mb-6">
-        <h1 className="attendance-title text-2xl font-bold">نظام إدارة المكاتب</h1>
-      </div>
-
+    <div className="" dir="rtl">
       <div className="attendance-filters-stats flex gap-4 mb-6">
-        {profile?.role !== 'Supervisor' && (
-          <>
-            <div className="attendance-filter flex-1">
-              <div className="filter-label mb-2">المحافظة</div>
-              <Select
-                value={selectedGovernorate}
-                onChange={(value) => {
-                  setSelectedGovernorate(value);
-                  fetchOffices(value);
-                }}
-                className="w-full"
-                placeholder="اختر المحافظة"
-                allowClear
-              >
-                <Option value={null}>فارغ</Option>
-                {governorates.map((gov) => (
-                  <Option key={gov.id} value={gov.id}>
-                    {gov.name}
-                  </Option>
-                ))}
-              </Select>
-            </div>
-            <div className="attendance-filter flex-1">
-              <div className="filter-label mb-2">المكتب</div>
-              <Select
-                value={selectedOffice}
-                onChange={setSelectedOffice}
-                className="w-full"
-                placeholder="اختر المكتب"
-                allowClear
-              >
-                <Option value={null}>فارغ</Option>
-                {offices.map((office) => (
-                  <Option key={office.id} value={office.id}>
-                    {office.name}
-                  </Option>
-                ))}
-              </Select>
-            </div>
-          </>
-        )}
         <div className="attendance-filter flex-1">
-          <div className="filter-label mb-2">التاريخ</div>
-          <DatePicker
-            onChange={(date, dateString) => setSelectedDate(dateString)}
-            className="w-full"
-            placeholder="اختر التاريخ"
+          <label className="filter-label mb-2 block">المحافظة</label>
+          <select
+            value={selectedGovernorate}
+            onChange={handleGovernorateChange}
+            className="w-full p-2 border rounded"
+          >
+            <option value="">اختر المحافظة</option>
+            {governorates.map((gov) => (
+              <option key={gov.id} value={gov.id}>
+                {gov.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="attendance-filter flex-1">
+          <label className="filter-label mb-2 block">المكتب</label>
+          <select
+            value={selectedOffice}
+            onChange={(e) => setSelectedOffice(e.target.value)}
+            className="w-full p-2 border rounded"
+            disabled={!selectedGovernorate}
+          >
+            <option value="">اختر المكتب</option>
+            {offices.map((office) => (
+              <option key={office.id} value={office.id}>
+                {office.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="attendance-filter flex-1">
+          <label className="filter-label mb-2 block">التاريخ</label>
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="w-full p-2 border rounded"
           />
         </div>
+
         <div className="attendance-filter flex-1 flex items-end">
           <button
             onClick={handleSearch}

@@ -1,23 +1,22 @@
 import React from "react";
-import { Navigate } from "react-router-dom"; // For navigation and redirects
-import useAuthStore from "../store/store.js"; // Authentication state management
+import { Navigate, useLocation } from "react-router-dom";
+import useAuthStore from "../store/store.js";
 
-/**
- * ProtectedRoute Component
- * Ensures that only authenticated users can access the wrapped children components.
- * If the user is not logged in, they are redirected to the login page.
- *
- * @param {ReactNode} children - The child components or pages to render if authenticated.
- */
 const ProtectedRoute = ({ children }) => {
-  const { isLoggedIn } = useAuthStore(); // Get the logged-in state from the authentication store
+  // Correctly access Zustand store using selector
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const location = useLocation();
 
-  // If the user is not logged in, redirect them to the login page
+  // Debugging: Log the authentication state
+  console.log("ProtectedRoute -> isLoggedIn:", isLoggedIn);
+
+  // Redirect to login page if not authenticated
   if (!isLoggedIn) {
-    return <Navigate to="/" replace />; // Redirect to the root (login) route
+    // Save the attempted URL for redirecting after login
+    return <Navigate to="/" replace state={{ from: location }} />;
   }
 
-  // If authenticated, render the children components
+  // Render the child components if authenticated
   return children;
 };
 

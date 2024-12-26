@@ -198,11 +198,11 @@ export default function SupervisorAttendanceHistory() {
           إعادة التعيين
         </button>
         {/* Conditionally render "إضافة حضور" based on permissions */}
-        {canCreate("attendance") && (
+         
           <Link to="AttendenceAdd">
             <button className="attendance-add-button">اضافة حضور</button>
           </Link>
-        )}
+        
       </div>
 
       <div className="toggle-search-button">
