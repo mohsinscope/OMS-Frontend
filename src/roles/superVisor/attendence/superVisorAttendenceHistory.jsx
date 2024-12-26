@@ -13,7 +13,8 @@ export default function SupervisorAttendanceHistory() {
   const [endDate, setEndDate] = useState(null);
   const [workingHours, setWorkingHours] = useState(3); // Default to "الكل"
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const { isSidebarCollapsed, profile, searchVisible, toggleSearch } = useAuthStore();
+  const { isSidebarCollapsed, profile, searchVisible, toggleSearch } =
+    useAuthStore();
   const canCreate = usePermissionsStore((state) => state.canCreate); // Check if the user has create permission
   const navigate = useNavigate();
 
@@ -148,7 +149,11 @@ export default function SupervisorAttendanceHistory() {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
-        <Button type="primary" size="small" onClick={() => handleView(record)}>
+        <Button
+          type="primary"
+          size="small"
+          state={{ id: record.id }}
+          onClick={() => handleView(record)}>
           عرض
         </Button>
       ),
@@ -206,12 +211,9 @@ export default function SupervisorAttendanceHistory() {
         <button className="attendance-reset-button" onClick={handleReset}>
           إعادة التعيين
         </button>
-        {/* Conditionally render "إضافة حضور" based on permissions */}
-        {canCreate("attendance") && (
-          <Link to="AttendenceAdd">
-            <button className="attendance-add-button">اضافة حضور</button>
-          </Link>
-        )}
+        <Link to="AttendenceAdd">
+          <button className="attendance-add-button">اضافة حضور</button>
+        </Link>
       </div>
 
       <div className="toggle-search-button">
@@ -224,7 +226,7 @@ export default function SupervisorAttendanceHistory() {
         <Table
           dataSource={filteredData}
           columns={tableColumns}
-          rowKey="id"
+          rowKey={(record) => record.id}
           bordered
           pagination={{ pageSize: 5 }}
         />

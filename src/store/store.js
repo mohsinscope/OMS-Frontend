@@ -8,7 +8,7 @@ const useAuthStore = create((set) => ({
   isLoggedIn: false, // Tracks the user's login status
   accessToken: null, // Stores the JWT token
   isSidebarCollapsed: false, // Tracks the state of the sidebar
-  searchVisible: false, // Tracks search visibility
+  searchVisible: true, // Tracks search visibility
 
   // Initialize the store from localStorage on app load
   initializeAuth: () => {
@@ -24,7 +24,9 @@ const useAuthStore = create((set) => ({
         const parsedProfile = JSON.parse(userProfile);
 
         // Ensure roles is an array extracted from `role` in the token
-        const roles = Array.isArray(payload.role) ? payload.role : [payload.role];
+        const roles = Array.isArray(payload.role)
+          ? payload.role
+          : [payload.role];
 
         console.log("Roles from token (initializeAuth):", roles);
 
