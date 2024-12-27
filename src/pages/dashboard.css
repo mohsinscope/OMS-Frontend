@@ -166,8 +166,20 @@
   transform: translateY(-2px); /* Subtle lift effect */
 }
 
-/* Logout Button Styles */
-.logout {
+
+
+.logout:hover {
+  transform: translateY(-2px); /* Subtle lift effect */
+}
+.sidebar.collapsed .sidebar-bottom .menu-item:nth-child(2)  {
+  background-color: white;
+  color: red;
+  margin-left: 3px;
+  margin-bottom: 30px;
+  padding: 10px 0;
+
+}
+.sidebar .sidebar-bottom .menu-item:nth-child(2){
   display: flex;
   align-items: center;
   gap: 10px; /* Space between icon and text */
@@ -180,17 +192,6 @@
   width: fit-content;
   font-size: 1rem; /* Text size for better readability */
   font-weight: 500; /* Medium font weight */
-}
-
-.logout:hover {
-  transform: translateY(-2px); /* Subtle lift effect */
-}
-.sidebar.collapsed .logout {
-  background-color: white;
-  color: red;
-  margin-left: 3px;
-
-  padding: 10px 0;
 }
 
 /* Icon Styling */
@@ -218,12 +219,14 @@
   font-size: 12px;
 }
 .sidebar-top .menu-item h3 {
-  font-size: 14px;
+  font-size: 15px;
   color: #565e6c;
 }
 
-.sidebar-top .menu-item svg {
+.sidebar-bottom .menu-item h3 {
+  font-size: 15px;
 }
+
 
 /* collapse the sidebar */
 
@@ -364,3 +367,6 @@
   height: 50px;
   border-radius: 10px;
 }
+
+
+

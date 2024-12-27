@@ -1,11 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./pages/LayOut.jsx";
 import useAuthStore from "./store/store.js";
 import SignInPage from "./pages/signIn.jsx";
 import Stats from "./pages/stats.jsx";
-
+import LandingPage from './pages/landingPage.jsx';
 // Import all components
 import Dashboard from "./pages/dashBoard.jsx";
 import AdminExpenses from "./roles/admin/admin-expensess/adminExpensess.jsx";
@@ -47,11 +47,6 @@ import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecture
 import LecturerShow from "./roles/superVisor/lecturer/SuperVisorLecturerShow.jsx";
 
 const App = () => {
-  const initializeAuth = useAuthStore((state) => state.initializeAuth);
-
-  useEffect(() => {
-    initializeAuth(); // Initialize authentication state on app load
-  }, [initializeAuth]);
 
   // Centralized routes configuration
   const routes = [
@@ -145,8 +140,23 @@ const App = () => {
     // Common Routes
     { path: "settings", element: <Settings /> },
     { path: "expenses-view", element: <ExpensessView /> },
+    { path: "landing-page", element: <LandingPage /> },
+    
   ];
+  const initializeAuth = useAuthStore(state => state.initializeAuth);
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+    const init = async () => {
+      await initializeAuth();
+      setIsLoading(false);
+    };
+    init();
+  }, [initializeAuth]);
+
+  if (isLoading) {
+    return null; // Or a loading spinner
+  }
   return (
     <Router>
       <Routes>
@@ -155,16 +165,18 @@ const App = () => {
 
         {/* Protected Routes */}
         <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout /> {/* Use Layout for fixed Dashboard */}
-            </ProtectedRoute>
-          }>
-          {routes.map(({ path, element }, index) => (
-            <Route key={index} path={path} element={element} />
-          ))}
-        </Route>
+  path="/"
+  element={
+    <ProtectedRoute>
+      <Layout />
+    </ProtectedRoute>
+  }
+>
+  {/* Define nested protected routes */}
+  {routes.map(({ path, element }, index) => (
+    <Route key={index} path={path} element={element} />
+  ))}
+</Route>
       </Routes>
     </Router>
   );

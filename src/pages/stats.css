@@ -15,13 +15,16 @@
     
     display: flex ;
     justify-content: start;
-    align-items: center;
-    gap: 20px;
+    align-items: end;
+    gap: 30px;
     list-style: none;
     width: 100%;
     background-color: white;
-    height: 100px;
+    height:70px;
     padding: 0 20px;
+}
+.small-stats-navbar-warber ul li{
+    padding: 10px 0;
 }
 
 .small-stats-navbar-warber ul li:active{
@@ -32,14 +35,60 @@
 .stats-main-section{
     display: flex;
     margin: 20px 20px;
+    gap: 20px;
 }
 .chart-container{
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
+    background-color: white;
+    padding: 10px;
+    height: 100%;
+    border-radius: 20px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+
+
+}
+.details-container-stats{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        padding: 10px;
+}
+.stats-form{
+    display: flex;
+    justify-content: start;
+    gap: 20px;
+    align-items: end;
+
 }
 
+.stats-form .form-group{
+    display: flex;
+    flex-direction: column;
+}
+.stats-form input{
+    width: 267px;
+    height: 45px;
+    padding: 0 20px;
+    border-radius: 8px;
+    outline: none;
+    border: #bcc1ca 1px solid;
+    font-size: large;
+}
+.stats-form button{
+    background-color: #4880ff;
+    color: white;
+    width: 120px;
+    height: 45px;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+    font-size: large;
+}
 .stats-summary{
     display: flex;
     justify-content: space-between;

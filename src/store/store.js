@@ -1,6 +1,17 @@
 import { create } from "zustand";
 
 const useAuthStore = create((set) => ({
+<<<<<<< HEAD
+  user: null,
+  profile: null,
+  roles: [],
+  permissions: {},
+  isLoggedIn: false,
+  accessToken: null,
+  isSidebarCollapsed: false,
+  searchVisible: false,
+  isInitialized: false,
+=======
   user: null, // Stores the logged-in user's information
   profile: null, // Stores the logged-in user's profile
   roles: [], // Stores the user's roles from backend (extracted from token)
@@ -9,9 +20,9 @@ const useAuthStore = create((set) => ({
   accessToken: null, // Stores the JWT token
   isSidebarCollapsed: false, // Tracks the state of the sidebar
   searchVisible: true, // Tracks search visibility
+>>>>>>> 9a20a5b456a1b521457140a142fff6b92c96e400
 
-  // Initialize the store from localStorage on app load
-  initializeAuth: () => {
+  initializeAuth: async () => {
     const token = localStorage.getItem("accessToken");
     const userProfile = localStorage.getItem("userProfile");
     const permissions = localStorage.getItem("permissions");
@@ -20,46 +31,56 @@ const useAuthStore = create((set) => ({
       try {
         const base64Url = token.split(".")[1];
         const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-        const payload = JSON.parse(atob(base64)); // Decode the token payload
+        const payload = JSON.parse(atob(base64));
+
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < currentTime) {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("userProfile");
+          localStorage.removeItem("permissions");
+          set({ isInitialized: true });
+          return;
+        }
+
         const parsedProfile = JSON.parse(userProfile);
+<<<<<<< HEAD
+        const roles = Array.isArray(payload.role) ? payload.role : [payload.role];
+=======
 
         // Ensure roles is an array extracted from `role` in the token
         const roles = Array.isArray(payload.role)
           ? payload.role
           : [payload.role];
-
-        console.log("Roles from token (initializeAuth):", roles);
+>>>>>>> 9a20a5b456a1b521457140a142fff6b92c96e400
 
         set({
           user: {
-            id: payload.nameid || null, // User ID from the token
-            username: payload.unique_name || "Guest", // Username
+            id: payload.nameid || null,
+            username: payload.unique_name || "Guest",
           },
-          profile: parsedProfile, // Ensure profile is parsed from localStorage
-          roles, // Store roles from the token
-          permissions: permissions ? JSON.parse(permissions) : {}, // Parse permissions or set default
+          profile: parsedProfile,
+          roles,
+          permissions: permissions ? JSON.parse(permissions) : {},
           isLoggedIn: true,
           accessToken: token,
+          isInitialized: true
         });
       } catch (error) {
-        console.error("Failed to decode token or load user profile:", error);
         localStorage.removeItem("accessToken");
         localStorage.removeItem("userProfile");
         localStorage.removeItem("permissions");
+        set({ isInitialized: true });
       }
+    } else {
+      set({ isInitialized: true });
     }
   },
 
-  // Toggle sidebar state
-  toggleSidebar: () =>
-    set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
-
-  // Login function to set user, roles, permissions, and token in state and localStorage
   login: (token, userProfile, permissions) => {
     try {
       const base64Url = token.split(".")[1];
       const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const payload = JSON.parse(atob(base64)); // Decode the token payload
+      const payload = JSON.parse(atob(base64));
 
       const parsedProfile = {
         ...userProfile,
@@ -69,28 +90,24 @@ const useAuthStore = create((set) => ({
         officeName: userProfile.officeName || "غير معروف",
       };
 
-      // Ensure roles is an array extracted from `role` in the token
       const roles = Array.isArray(payload.role) ? payload.role : [payload.role];
 
-      console.log("Roles from token (login):", roles);
-
-      localStorage.setItem("accessToken", token); // Save token to localStorage
-      localStorage.setItem("userProfile", JSON.stringify(parsedProfile)); // Save user profile to localStorage
-      localStorage.setItem("permissions", JSON.stringify(permissions)); // Save permissions to localStorage
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("userProfile", JSON.stringify(parsedProfile));
+      localStorage.setItem("permissions", JSON.stringify(permissions));
 
       set({
         user: {
           id: payload.nameid || null,
           username: payload.unique_name || "Guest",
         },
-        profile: parsedProfile, // Include additional user profile data
-        roles, // Store roles from the token
+        profile: parsedProfile,
+        roles,
         permissions,
         isLoggedIn: true,
         accessToken: token,
       });
     } catch (error) {
-      console.error("Failed to decode token or save user data:", error);
       set({
         user: null,
         profile: null,
@@ -105,11 +122,10 @@ const useAuthStore = create((set) => ({
     }
   },
 
-  // Logout function to clear user data and token
   logout: () => {
-    localStorage.removeItem("accessToken"); // Clear token from localStorage
-    localStorage.removeItem("userProfile"); // Clear user profile from localStorage
-    localStorage.removeItem("permissions"); // Clear permissions from localStorage
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("userProfile");
+    localStorage.removeItem("permissions");
     set({
       user: null,
       profile: null,
@@ -120,7 +136,9 @@ const useAuthStore = create((set) => ({
     });
   },
 
-  // Toggle search visibility
+  toggleSidebar: () =>
+    set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
+
   toggleSearch: () => set((state) => ({ searchVisible: !state.searchVisible })),
 }));
 

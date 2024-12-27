@@ -1,23 +1,32 @@
-import React from "react";
-import { Navigate } from "react-router-dom"; // For navigation and redirects
-import useAuthStore from "../store/store.js"; // Authentication state management
+import React, { useEffect, useState } from "react";
+import { Navigate, useLocation } from "react-router-dom";
+import useAuthStore from "../store/store.js";
 
-/**
- * ProtectedRoute Component
- * Ensures that only authenticated users can access the wrapped children components.
- * If the user is not logged in, they are redirected to the login page.
- *
- * @param {ReactNode} children - The child components or pages to render if authenticated.
- */
 const ProtectedRoute = ({ children }) => {
-  const { isLoggedIn } = useAuthStore(); // Get the logged-in state from the authentication store
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+  const location = useLocation();
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // If the user is not logged in, redirect them to the login page
-  if (!isLoggedIn) {
-    return <Navigate to="/" replace />; // Redirect to the root (login) route
+  useEffect(() => {
+    const init = async () => {
+      await initializeAuth();
+      setIsInitialized(true);
+    };
+    init();
+  }, [initializeAuth]);
+
+  // Show nothing while initializing
+  if (!isInitialized) {
+    return null; // Or a loading spinner
   }
 
-  // If authenticated, render the children components
+  // Redirect to login page if not authenticated
+  if (!isLoggedIn) {
+    return <Navigate to="/" replace state={{ from: location }} />;
+  }
+
+  // Render the child components if authenticated
   return children;
 };
 
