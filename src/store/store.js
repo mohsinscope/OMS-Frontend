@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 const useAuthStore = create((set) => ({
+<<<<<<< HEAD
   user: null,
   profile: null,
   roles: [],
@@ -10,6 +11,16 @@ const useAuthStore = create((set) => ({
   isSidebarCollapsed: false,
   searchVisible: false,
   isInitialized: false,
+=======
+  user: null, // Stores the logged-in user's information
+  profile: null, // Stores the logged-in user's profile
+  roles: [], // Stores the user's roles from backend (extracted from token)
+  permissions: {}, // Stores the user's permissions for resources
+  isLoggedIn: false, // Tracks the user's login status
+  accessToken: null, // Stores the JWT token
+  isSidebarCollapsed: false, // Tracks the state of the sidebar
+  searchVisible: true, // Tracks search visibility
+>>>>>>> 9a20a5b456a1b521457140a142fff6b92c96e400
 
   initializeAuth: async () => {
     const token = localStorage.getItem("accessToken");
@@ -32,7 +43,15 @@ const useAuthStore = create((set) => ({
         }
 
         const parsedProfile = JSON.parse(userProfile);
+<<<<<<< HEAD
         const roles = Array.isArray(payload.role) ? payload.role : [payload.role];
+=======
+
+        // Ensure roles is an array extracted from `role` in the token
+        const roles = Array.isArray(payload.role)
+          ? payload.role
+          : [payload.role];
+>>>>>>> 9a20a5b456a1b521457140a142fff6b92c96e400
 
         set({
           user: {

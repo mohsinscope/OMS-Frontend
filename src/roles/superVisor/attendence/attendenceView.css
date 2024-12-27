@@ -9,7 +9,42 @@
   justify-content: center;
   align-items: start;
 }
-
+.display-container-charts {
+  display: flex;
+  justify-content: start;
+  gap: 100px;
+}
+.single-total-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  width: 500px;
+  height: fit-content;
+  background-color: white;
+  border-radius: 8px;
+}
+.attendence-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  width: 100%;
+}
+.charts-section {
+  display: flex;
+  justify-content: start;
+  flex-wrap: wrap;
+  gap: 100px;
+}
+.single-chart {
+  display: flex;
+  padding: 20px;
+  width: 300px;
+  height: fit-content;
+  background-color: white;
+  border-radius: 8px;
+}
 .attendence-view-table-data {
   display: flex;
   flex-direction: column;

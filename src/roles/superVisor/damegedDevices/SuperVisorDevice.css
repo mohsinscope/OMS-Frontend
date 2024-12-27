@@ -39,7 +39,6 @@
   opacity: 1;
   transition: all 0.6s ease, opacity 0.6s ease;
   display: flex;
-  flex-wrap: wrap;
 }
 
 .supervisor-devices-dameged-filters.animate-hide {

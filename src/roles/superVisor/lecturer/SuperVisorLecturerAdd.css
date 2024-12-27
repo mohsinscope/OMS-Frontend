@@ -12,16 +12,16 @@
   /* background-color: orange; */
 }
 .supervisor-damaged-passport-add-containe h1 {
-  font-size: 24px;
+  margin-bottom: 10px;
+  margin-top: 10px;
   font-weight: bold;
   text-align: start;
   width: 100%;
   color: #333;
 }
 .SuperVisor-Lecturer-title-conatiner {
-  font-size: 24px;
-  margin-bottom: 10px;
-  margin-top: 10px;
+  margin-bottom: 20px;
+  margin-top: 20px;
   font-weight: bold;
   text-align: start;
   width: 100%;
@@ -71,7 +71,7 @@
 }
 .Lecturer-dragger-container {
   width: 40%;
-  height: 200px;
+  height: 300px;
 }
 .Lecturer-image-preivwer-container {
   width: 50%;
@@ -82,4 +82,24 @@
   margin-top: 30px;
   margin-bottom: 30px;
   gap: 30px;
+}
+.ant-upload-drag-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 40px;
+}
+
+.add-back-button {
+  /* add color red */
+  background-color: red;
+  border: 2px solid red;
+  color: white;
+  font-weight: bold;
+}
+.add-back-button:hover {
+  /* add color red */
+  background-color: white !important;
+  color: red !important;
+  font-weight: bold !important;
 }

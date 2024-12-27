@@ -6,19 +6,20 @@ import { Table, message, Button, Select, DatePicker } from "antd"; // Ant Design
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Url from "./../../../store/url"; // Base URL for API endpoints
+import { use } from "react";
 
 const { Option } = Select; // Ant Design Select options
 
 export default function SuperVisorDevices() {
   // Global state values from the authentication store
   const {
+    roles,
     isSidebarCollapsed, // Determines if the sidebar is collapsed
     accessToken, // JWT access token for authenticated API requests
     profile, // User profile data, including office and governorate details
     searchVisible, // Tracks visibility of the search/filter panel
     toggleSearch, // Function to toggle the search panel visibility
   } = useAuthStore();
-
   // Permission store: Check if the user has the "create" permission for devices
   const canCreate = usePermissionsStore((state) => state.canCreate);
 
@@ -31,7 +32,6 @@ export default function SuperVisorDevices() {
   const [damagedTypeId, setDamagedTypeId] = useState(null); // Selected damage reason for filtering
   const [startDate, setStartDate] = useState(null); // Selected start date for filtering
   const [endDate, setEndDate] = useState(null); // Selected end date for filtering
-
   // **Helper Function**: Convert date to local ISO format without UTC offset
   const formatToLocalISOString = (date) => {
     if (!(date instanceof Date)) date = new Date(date); // Ensure input is a Date object
@@ -57,7 +57,10 @@ export default function SuperVisorDevices() {
         setDeviceTypes(deviceTypeResponse.data); // Set device types for dropdown
         setDamagedTypes(damagedTypeResponse.data); // Set damage types for dropdown
       } catch (error) {
-        console.error("Error fetching dropdown data:", error.response?.data || error.message);
+        console.error(
+          "Error fetching dropdown data:",
+          error.response?.data || error.message
+        );
         message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة"); // Show error message in Arabic
       }
     };
@@ -68,6 +71,7 @@ export default function SuperVisorDevices() {
   // **Effect**: Fetch initial list of devices based on user's office and governorate
   useEffect(() => {
     if (profile) {
+      console.log(profile);
       fetchDevices({
         DeviceTypeId: null, // No filtering by device type initially
         damagedTypeId: null, // No filtering by damage reason initially
@@ -84,15 +88,29 @@ export default function SuperVisorDevices() {
   }, [profile]);
 
   // **Function**: Fetch the devices based on the applied filters
-  const fetchDevices = async (filters) => {
+  const fetchDevices = async (body) => {
     try {
       setLoading(true); // Show loading indicator
-      const response = await axios.post(`${Url}/api/DamagedDevice/search`, filters, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`, // Pass token for authentication
-          "Content-Type": "application/json",
-        },
-      });
+      let response;
+
+      if (roles === "Supervisor") {
+        response = await axios.get(
+          `${Url}/api/DamagedDevice/office/${profile.officeId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`, // Pass token for authentication
+              "Content-Type": "application/json",
+            },
+          }
+        );
+      } else {
+        response = await axios.get(`${Url}/api/DamagedDevice`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`, // Pass token for authentication
+            "Content-Type": "application/json",
+          },
+        });
+      }
 
       setDevicesList(response.data); // Update the devices list
 
@@ -100,7 +118,10 @@ export default function SuperVisorDevices() {
         message.warning("لا توجد نتائج تطابق الفلاتر المحددة"); // Show warning if no results
       }
     } catch (error) {
-      console.error("Error fetching devices:", error.response?.data || error.message);
+      console.error(
+        "Error fetching devices:",
+        error.response?.data || error.message
+      );
       message.error("حدث خطأ أثناء البحث"); // Show error in Arabic
     } finally {
       setLoading(false); // Hide loading indicator
@@ -176,9 +197,8 @@ export default function SuperVisorDevices() {
       render: (_, record) => (
         <Link
           to="/supervisor/damegedDevices/show"
-          state={{ device: record }}
-          className="supervisor-devices-dameged-details-link"
-        >
+          state={{ id: record.id }}
+          className="supervisor-devices-dameged-details-link">
           عرض
         </Link>
       ),
@@ -188,12 +208,17 @@ export default function SuperVisorDevices() {
   return (
     <div
       className={`supervisor-devices-dameged-page ${
-        isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-devices-dameged-page"
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-devices-dameged-page"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
-      <div className={`supervisor-devices-dameged-filters ${searchVisible ? "animate-show" : "animate-hide"}`}>
+
+      <div
+        className={`supervisor-devices-dameged-filters ${
+          searchVisible ? "animate-show" : "animate-hide"
+        }`}>
         <div className="filter-field">
           <label>نوع الجهاز</label>
           <Select
@@ -201,8 +226,7 @@ export default function SuperVisorDevices() {
             value={deviceTypeId}
             onChange={(value) => setDeviceTypeId(value)}
             allowClear
-            placeholder="اختر نوع الجهاز"
-          >
+            placeholder="اختر نوع الجهاز">
             {deviceTypes.map((type) => (
               <Option key={type.id} value={type.id}>
                 {type.name}
@@ -218,8 +242,7 @@ export default function SuperVisorDevices() {
             value={damagedTypeId}
             onChange={(value) => setDamagedTypeId(value)}
             allowClear
-            placeholder="اختر سبب التلف"
-          >
+            placeholder="اختر سبب التلف">
             {damagedTypes.map((type) => (
               <Option key={type.id} value={type.id}>
                 {type.name}
@@ -238,15 +261,18 @@ export default function SuperVisorDevices() {
         </div>
 
         {/* Conditionally render the create button if the user has the "create" permission */}
-        {canCreate("devices") && (
-          <Link to="/supervisor/damegedDevices/add">
-            <Button className="supervisor-devices-dameged-add-button">
-              اضافة جهاز تالف
-            </Button>
-          </Link>
-        )}
-      </div>
 
+        <Link to="/supervisor/damegedDevices/add">
+          <Button className="supervisor-devices-dameged-add-button">
+            اضافة جهاز تالف
+          </Button>
+        </Link>
+      </div>
+      <div className="toggle-search-button">
+        <Button type="primary" onClick={toggleSearch}>
+          {searchVisible ? "بحث" : "بحث"}
+        </Button>
+      </div>
       <div className="supervisor-devices-dameged-table-container">
         <Table
           dataSource={devicesList}
