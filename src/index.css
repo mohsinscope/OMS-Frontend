@@ -7,15 +7,6 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-<<<<<<< HEAD
-=======
-  scrollbar-width: none;
-  font-family: "Cairo", sans-serif !important;
-}
-* label {
-  font-family: "Cairo", sans-serif !important;
-  font-weight: bold;
->>>>>>> 9a20a5b456a1b521457140a142fff6b92c96e400
 }
 
 :root {

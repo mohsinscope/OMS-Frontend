@@ -24,16 +24,6 @@
       "label": "انواع تلف الجوازات",
       "icon": "passport",
       "path": "/admin/passport-dammage-types"
-    },
-    {
-      "label": "الاجهزة التالفة",
-      "icon": "add-device",
-      "path": "/admin/device-dammage-types"
-    },
-    {
-      "label": "الجوازات التالفة",
-      "icon": "passport",
-      "path": "/admin/passport-dammage"
     }
   ]
 }

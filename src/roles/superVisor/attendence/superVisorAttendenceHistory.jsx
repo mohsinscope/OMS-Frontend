@@ -211,18 +211,11 @@ export default function SupervisorAttendanceHistory() {
         <button className="attendance-reset-button" onClick={handleReset}>
           إعادة التعيين
         </button>
-<<<<<<< HEAD
-        {/* Conditionally render "إضافة حضور" based on permissions */}
-         
-          <Link to="AttendenceAdd">
-            <button className="attendance-add-button">اضافة حضور</button>
-          </Link>
         
 =======
         <Link to="AttendenceAdd">
           <button className="attendance-add-button">اضافة حضور</button>
         </Link>
->>>>>>> 9a20a5b456a1b521457140a142fff6b92c96e400
       </div>
 
       <div className="toggle-search-button">
