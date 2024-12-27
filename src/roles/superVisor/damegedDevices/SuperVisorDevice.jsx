@@ -2,16 +2,14 @@ import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store"; // Custom store for user authentication and profile management
 import usePermissionsStore from "./../../../store/permissionsStore"; // Store for managing permissions
 import React, { useState, useEffect } from "react";
-import { Table, message, Button, Select, DatePicker } from "antd"; // Ant Design components
+import { Table, message, Button, Select, DatePicker, Input } from "antd"; // Ant Design components
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Url from "./../../../store/url"; // Base URL for API endpoints
-import { use } from "react";
 
 const { Option } = Select; // Ant Design Select options
 
 export default function SuperVisorDevices() {
-  // Global state values from the authentication store
   const {
     roles,
     isSidebarCollapsed, // Determines if the sidebar is collapsed
@@ -20,10 +18,9 @@ export default function SuperVisorDevices() {
     searchVisible, // Tracks visibility of the search/filter panel
     toggleSearch, // Function to toggle the search panel visibility
   } = useAuthStore();
-  // Permission store: Check if the user has the "create" permission for devices
+
   const canCreate = usePermissionsStore((state) => state.canCreate);
 
-  // Local state variables for managing device data, dropdowns, and filters
   const [devicesList, setDevicesList] = useState([]); // Stores the list of damaged devices
   const [deviceTypes, setDeviceTypes] = useState([]); // List of available device types
   const [damagedTypes, setDamagedTypes] = useState([]); // List of damaged device reasons
@@ -32,16 +29,16 @@ export default function SuperVisorDevices() {
   const [damagedTypeId, setDamagedTypeId] = useState(null); // Selected damage reason for filtering
   const [startDate, setStartDate] = useState(null); // Selected start date for filtering
   const [endDate, setEndDate] = useState(null); // Selected end date for filtering
-  // **Helper Function**: Convert date to local ISO format without UTC offset
-  const formatToLocalISOString = (date) => {
-    if (!(date instanceof Date)) date = new Date(date); // Ensure input is a Date object
-    if (!date) return null; // Return null if date is invalid
-    const offset = date.getTimezoneOffset() * 60000; // Convert timezone offset to milliseconds
-    const localDate = new Date(date.getTime() - offset); // Adjust date to local time
-    return localDate.toISOString().slice(0, 19); // Return ISO format (without timezone offset)
+  const [serialDeviceNumber, setSerialDeviceNumber] = useState("");
+
+  const formatDateToISO = (date) => {
+    if (!date) return null;
+    const d = new Date(date);
+    return new Date(
+      Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0)
+    ).toISOString();
   };
 
-  // **Effect**: Fetch dropdown options for device type and damage reasons
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
@@ -68,11 +65,10 @@ export default function SuperVisorDevices() {
     fetchDropdownData();
   }, [accessToken]);
 
-  // **Effect**: Fetch initial list of devices based on user's office and governorate
   useEffect(() => {
     if (profile) {
-      console.log(profile);
       fetchDevices({
+        SerialNumber: "", // No filtering by serial number initially
         DeviceTypeId: null, // No filtering by device type initially
         damagedTypeId: null, // No filtering by damage reason initially
         startDate: null, // No start date filter initially
@@ -87,30 +83,19 @@ export default function SuperVisorDevices() {
     }
   }, [profile]);
 
-  // **Function**: Fetch the devices based on the applied filters
   const fetchDevices = async (body) => {
     try {
       setLoading(true); // Show loading indicator
-      let response;
-
-      if (roles === "Supervisor") {
-        response = await axios.get(
-          `${Url}/api/DamagedDevice/office/${profile.officeId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`, // Pass token for authentication
-              "Content-Type": "application/json",
-            },
-          }
-        );
-      } else {
-        response = await axios.get(`${Url}/api/DamagedDevice`, {
+      const response = await axios.post(
+        `${Url}/api/DamagedDevice/search`,
+        body,
+        {
           headers: {
             Authorization: `Bearer ${accessToken}`, // Pass token for authentication
             "Content-Type": "application/json",
           },
-        });
-      }
+        }
+      );
 
       setDevicesList(response.data); // Update the devices list
 
@@ -128,13 +113,13 @@ export default function SuperVisorDevices() {
     }
   };
 
-  // **Function**: Handle search/filtering
   const handleSearch = async () => {
     const body = {
+      SerialNumber: serialDeviceNumber || "",
       DeviceTypeId: deviceTypeId || undefined, // Use selected device type
       damagedTypeId: damagedTypeId || undefined, // Use selected damage reason
-      startDate: startDate ? formatToLocalISOString(startDate) : null, // Format start date
-      endDate: endDate ? formatToLocalISOString(endDate) : null, // Format end date
+      startDate: startDate ? formatDateToISO(startDate) : null, // Format start date
+      endDate: endDate ? formatDateToISO(endDate) : null, // Format end date
       officeId: profile?.officeId, // User's office ID
       governorateId: profile?.governorateId, // User's governorate ID
       PaginationParams: {
@@ -142,18 +127,20 @@ export default function SuperVisorDevices() {
         PageSize: 10, // Default page size
       },
     };
+    console.log(body);
 
     fetchDevices(body); // Fetch devices with the applied filters
   };
 
-  // **Function**: Reset filters and fetch all devices
   const handleReset = async () => {
+    setSerialDeviceNumber(null);
     setDeviceTypeId(null); // Reset device type filter
     setDamagedTypeId(null); // Reset damage reason filter
     setStartDate(null); // Reset start date filter
     setEndDate(null); // Reset end date filter
 
     fetchDevices({
+      SerialNumber: "",
       DeviceTypeId: null,
       damagedTypeId: null,
       startDate: null,
@@ -169,8 +156,13 @@ export default function SuperVisorDevices() {
     message.success("تم إعادة تعيين الفلاتر بنجاح"); // Show success message
   };
 
-  // **Table Columns**: Define columns for the Ant Design table
   const columns = [
+    {
+      title: "الرقم التسلسلي للجهاز",
+      dataIndex: "serialNumber", // Corrected field name
+      key: "serialNumber",
+      className: "table-column-device-type",
+    },
     {
       title: "نوع الجهاز",
       dataIndex: "deviceTypeName",
@@ -220,6 +212,14 @@ export default function SuperVisorDevices() {
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
         <div className="filter-field">
+          <label>الرقم التسلسلي للجهاز</label>
+          <Input
+            value={serialDeviceNumber}
+            onChange={(e) => setSerialDeviceNumber(e.target.value)}
+            placeholder="أدخل رقم التسلسلي للجهاز"
+          />
+        </div>
+        <div className="filter-field">
           <label>نوع الجهاز</label>
           <Select
             className="filter-dropdown"
@@ -250,6 +250,23 @@ export default function SuperVisorDevices() {
             ))}
           </Select>
         </div>
+        <div className="filter-field">
+          <label>تاريخ البداية</label>
+          <DatePicker
+            onChange={(date) => setStartDate(date)}
+            style={{ width: "100%" }}
+            placeholder="اختر تاريخ البداية"
+          />
+        </div>
+
+        <div className="filter-field">
+          <label>تاريخ النهاية</label>
+          <DatePicker
+            onChange={(date) => setEndDate(date)}
+            style={{ width: "100%" }}
+            placeholder="اختر تاريخ النهاية"
+          />
+        </div>
 
         <div className="filter-buttons">
           <Button type="primary" onClick={handleSearch}>
@@ -259,8 +276,6 @@ export default function SuperVisorDevices() {
             إعادة التعيين
           </Button>
         </div>
-
-        {/* Conditionally render the create button if the user has the "create" permission */}
 
         <Link to="/supervisor/damegedDevices/add">
           <Button className="supervisor-devices-dameged-add-button">
