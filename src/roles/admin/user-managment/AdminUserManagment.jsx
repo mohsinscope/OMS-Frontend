@@ -15,7 +15,7 @@ import Dashboard from "./../../../pages/dashBoard.jsx";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import "./AdminUserManagment.css";
 import useAuthStore from "./../../../store/store.js";
-import Url  from './../../../store/url.js';
+import Url from './../../../store/url.js';
 const { Option } = Select;
 
 const AdminUserManagment = () => {
@@ -25,12 +25,13 @@ const AdminUserManagment = () => {
   const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [addModalVisible, setAddModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false); // State for Edit Modal
+  const [editModalVisible, setEditModalVisible] = useState(false);
   const [form] = Form.useForm();
-  const { accessToken } = useAuthStore(); // Access token from Zustand store
-  const { searchVisible, toggleSearch } = useAuthStore(); // search visibility state from store
-  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
-  const [selectedUser, setSelectedUser] = useState(null); // State for selected user to edit
+  const { accessToken } = useAuthStore();
+  const { searchVisible, toggleSearch } = useAuthStore();
+  const { isSidebarCollapsed } = useAuthStore();
+  const [selectedUser, setSelectedUser] = useState(null);
+
   // Fetch profiles with users and roles
   useEffect(() => {
     const fetchProfilesWithUsersAndRoles = async () => {
@@ -127,7 +128,7 @@ const AdminUserManagment = () => {
 
       setUserRecords((prev) => [...prev, response.data]);
       setFilteredRecords((prev) => [...prev, response.data]);
-      message.success("User added successfully!");
+      message.success("تمت إضافة المستخدم بنجاح!");
       setAddModalVisible(false);
       form.resetFields();
     } catch (error) {
@@ -135,36 +136,35 @@ const AdminUserManagment = () => {
         "Error adding user:",
         error.response?.data || error.message
       );
-      message.error("Failed to add user");
+      message.error("فشل في إضافة المستخدم");
     }
   };
 
   const handleEditUser = (user) => {
-    setSelectedUser(user); // Set selected user to be edited
+    setSelectedUser(user);
     form.setFieldsValue({
       username: user.username,
       fullName: user.fullName,
-      role: user.roles.join(", "), // Handle the roles if it's an array
+      role: user.roles.join(", "),
       position: user.position,
       governorate: user.governorateId,
-      officeName: user.officeId, // Use correct field names based on your form
+      officeName: user.officeId,
     });
-    setEditModalVisible(true); // Open the modal to edit the user
+    setEditModalVisible(true);
   };
 
   const handleSaveEdit = async (values) => {
-    const updatedUser = {
-      ProfileId: selectedUser.id, // Ensure the ProfileId is included
-      FullName: values.fullName, // Full Name from form
-      Position: values.position, // Position from form
-      OfficeId: values.officeName, // Office selected from the form
-      GovernorateId: values.governorate, // Governorate selected from the form
-    };
-    console.log(updatedUser); // Log to see the object being sent in the PUT request
-
     setLoading(true);
     try {
-      // PUT request to update the user
+      // Update user profile
+      const updatedUser = {
+        ProfileId: selectedUser.id,
+        FullName: values.fullName,
+        Position: values.position,
+        OfficeId: values.officeName,
+        GovernorateId: values.governorate,
+      };
+
       await axios.put(
         `${Url}/api/account/${selectedUser.id}`,
         updatedUser,
@@ -175,7 +175,23 @@ const AdminUserManagment = () => {
         }
       );
 
-      message.success("User updated successfully!");
+      // If new password is provided, reset password
+      if (values.newPassword) {
+        await axios.post(
+          `${Url}/api/account/reset-password`,
+          {
+            userId: selectedUser.id,
+            newPassword: values.newPassword
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+      }
+
+      message.success("تم تحديث المستخدم بنجاح!");
 
       // Fetch the updated list
       const updatedResponse = await axios.get(
@@ -188,10 +204,11 @@ const AdminUserManagment = () => {
       );
       setUserRecords(updatedResponse.data);
       setFilteredRecords(updatedResponse.data);
-      setEditModalVisible(false); // Close the modal
+      setEditModalVisible(false);
+      form.resetFields();
     } catch (error) {
       console.error("Error updating user:", error);
-      message.error("Failed to update user");
+      message.error("فشل في تحديث المستخدم");
     } finally {
       setLoading(false);
     }
@@ -236,7 +253,7 @@ const AdminUserManagment = () => {
             color: "#fff",
             borderRadius: "4px",
           }}
-          onClick={() => handleEditUser(record)} // Open modal to edit the user
+          onClick={() => handleEditUser(record)}
         >
           تعديل
         </Button>
@@ -255,7 +272,7 @@ const AdminUserManagment = () => {
         }`}
         dir="rtl">
         <h1 className="admin-header">إدارة المستخدمين</h1>
-        {/* Filter Section */}
+        
         <div
           className={`filter-section ${
             searchVisible ? "animate-show" : "animate-hide"
@@ -295,7 +312,6 @@ const AdminUserManagment = () => {
         </div>
 
         <div className="toggle-search-button">
-          {/* Add Button */}
           <Button
             type="primary"
             style={{
@@ -310,7 +326,6 @@ const AdminUserManagment = () => {
           </Button>
         </div>
 
-        {/* Data Table Section */}
         <div className="data-table-container">
           <Spin spinning={loading}>
             <Table
@@ -328,7 +343,10 @@ const AdminUserManagment = () => {
           <Modal
             className="model-container"
             open={addModalVisible}
-            onCancel={() => setAddModalVisible(false)}
+            onCancel={() => {
+              setAddModalVisible(false);
+              form.resetFields();
+            }}
             style={{ top: 10 }}
             footer={null}>
             <Form
@@ -404,7 +422,14 @@ const AdminUserManagment = () => {
               <Form.Item
                 name="password"
                 label="كلمة السر"
-                rules={[{ required: true, message: "يرجى إدخال كلمة السر" }]}>
+                rules={[
+                  { required: true, message: "يرجى إدخال كلمة السر" },
+                  {
+                    pattern: /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
+                    message: "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية"
+                  },
+                  { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" }
+                ]}>
                 <Input.Password placeholder="كلمة السر" />
               </Form.Item>
               <Form.Item
@@ -412,6 +437,7 @@ const AdminUserManagment = () => {
                 label="تأكيد كلمة السر"
                 dependencies={["password"]}
                 rules={[
+                  { required: true, message: "يرجى تأكيد كلمة السر" },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (!value || getFieldValue("password") === value) {
@@ -437,14 +463,17 @@ const AdminUserManagment = () => {
           <Modal
             className="model-container"
             open={editModalVisible}
-            onCancel={() => setEditModalVisible(false)}
+            onCancel={() => {
+              setEditModalVisible(false);
+              form.resetFields();
+            }}
             footer={null}>
-            <h1>تعديل المستخدم</h1>
             <Form
               form={form}
               onFinish={handleSaveEdit}
               layout="vertical"
               className="Admin-user-add-model-conatiner-form">
+              <h1>تعديل المستخدم</h1>
               <Form.Item
                 name="fullName"
                 label="الاسم الكامل"
@@ -458,9 +487,10 @@ const AdminUserManagment = () => {
                 label="المنصب"
                 rules={[{ required: true, message: "يرجى اختيار المنصب" }]}>
                 <Select placeholder="اختر المنصب" style={{ height: 45 }}>
-                  <Option value="Supervisor">مشرف</Option>
-                  <Option value="Manager">مدير</Option>
-                  <Option value="Employee">موظف</Option>
+                  <Option value="2">مدير</Option>
+                  <Option value="3">مشرف</Option>
+                  <Option value="4">موظف متابعة التلف</Option>
+                  <Option value="5">موظف المتابعة</Option>
                 </Select>
               </Form.Item>
               <Form.Item
@@ -487,6 +517,43 @@ const AdminUserManagment = () => {
                   ))}
                 </Select>
               </Form.Item>
+
+              {/* Password Reset Section */}
+              <div className="border-t mt-4 pt-4">
+                <h3 className="mb-4">اعادة تعيين كلمة السر</h3>
+                <Form.Item
+                  name="newPassword"
+                  label="كلمة السر الجديدة"
+                  rules={[
+                    {
+                      pattern: /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
+                      message: "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية"
+                    },
+                    { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" }
+                  ]}>
+                  <Input.Password placeholder="كلمة السر الجديدة" />
+                </Form.Item>
+                <Form.Item
+                  name="confirmNewPassword"
+                  label="تأكيد كلمة السر الجديدة"
+                  dependencies={["newPassword"]}
+                  rules={[
+                    ({ getFieldValue }) => ({
+                      validator(_, value) {
+                        if (!value || !getFieldValue("newPassword")) {
+                          return Promise.resolve();
+                        }
+                        if (value === getFieldValue("newPassword")) {
+                          return Promise.resolve();
+                        }
+                        return Promise.reject(new Error("كلمات السر غير متطابقة!"));
+                      },
+                    }),
+                  ]}>
+                  <Input.Password placeholder="تأكيد كلمة السر الجديدة" />
+                </Form.Item>
+              </div>
+
               <Button type="primary" htmlType="submit" block>
                 حفظ التعديلات
               </Button>
