@@ -293,7 +293,7 @@ export default function Stats() {
             {chartData.map((item, index) => (
               <div key={index} className="summary-card">
                 <h3>{item.name}</h3>
-                <p>{item.value}</p>
+             
                 <PieChart width={120} height={120}>
                   <Pie
                     data={[{ name: item.name, value: item.value }]}

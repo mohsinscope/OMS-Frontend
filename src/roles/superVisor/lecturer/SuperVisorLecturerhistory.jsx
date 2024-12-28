@@ -3,6 +3,7 @@ import { Table, message, Button } from "antd";
 import { Link } from "react-router-dom";
 import "./SuperVisorLecturerhistory.css";
 import useAuthStore from "./../../../store/store";
+import usePermissionsStore from "./../../../store/permissionsStore";
 import axios from "axios";
 import Url from "./../../../store/url.js";
 
@@ -13,11 +14,23 @@ const SuperVisorLecturerhistory = () => {
     profile,
     searchVisible,
     toggleSearch,
+    roles,
   } = useAuthStore();
+
+  const { hasAnyPermission } = usePermissionsStore();
+  const hasCreatePermission = hasAnyPermission("create");
+
+  const isSupervisor = roles.includes("Supervisor"); // Check if the user is a Supervisor
+
   const [lectures, setLectures] = useState([]);
   const [totalLectures, setTotalLectures] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+
+  const [governorates, setGovernorates] = useState([]);
+  const [offices, setOffices] = useState([]);
+  const [selectedGovernorate, setSelectedGovernorate] = useState(null);
+  const [selectedOffice, setSelectedOffice] = useState(null);
 
   const [filterData, setFilterData] = useState({
     title: "",
@@ -30,6 +43,29 @@ const SuperVisorLecturerhistory = () => {
     const parsedDate = new Date(date);
     return parsedDate.toISOString();
   };
+
+  const fetchDropdownData = useCallback(async () => {
+    try {
+      const [govResponse, officeResponse] = await Promise.all([
+        axios.get(`${Url}/api/Governorate/dropdown`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+        axios.get(`${Url}/api/Office/dropdown`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }),
+      ]);
+
+      setGovernorates(govResponse.data);
+      setOffices(officeResponse.data);
+
+      if (isSupervisor) {
+        setSelectedGovernorate(profile.governorateId);
+        setSelectedOffice(profile.officeId);
+      }
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة");
+    }
+  }, [accessToken, isSupervisor, profile]);
 
   const fetchLectures = useCallback(
     async (payload) => {
@@ -61,11 +97,19 @@ const SuperVisorLecturerhistory = () => {
 
   const fetchInitialLectures = useCallback(async () => {
     try {
-      const response = await axios.get(`${Url}/api/Lecture`, {
-        params: {
+      const payload = {
+        title: "",
+        officeId: isSupervisor ? profile.officeId : selectedOffice,
+        governorateId: isSupervisor ? profile.governorateId : selectedGovernorate,
+        startDate: null,
+        endDate: null,
+        PaginationParams: {
           PageNumber: 1,
           PageSize: pageSize,
         },
+      };
+
+      const response = await axios.post(`${Url}/api/Lecture/search`, payload, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -82,16 +126,19 @@ const SuperVisorLecturerhistory = () => {
         }`
       );
     }
-  }, [accessToken, pageSize]);
+  }, [accessToken, pageSize, isSupervisor, profile, selectedGovernorate, selectedOffice]);
 
   useEffect(() => {
+    fetchDropdownData();
     fetchInitialLectures();
-  }, [fetchInitialLectures]);
+  }, [fetchDropdownData, fetchInitialLectures]);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
     const payload = {
       title: filterData.title,
+      officeId: isSupervisor ? profile.officeId : selectedOffice,
+      governorateId: isSupervisor ? profile.governorateId : selectedGovernorate,
       startDate: formatToISO(filterData.startDate),
       endDate: formatToISO(filterData.endDate),
       PaginationParams: {
@@ -107,6 +154,8 @@ const SuperVisorLecturerhistory = () => {
     const formData = new FormData(e.target);
     const payload = {
       title: formData.get("title") || "",
+      officeId: isSupervisor ? profile.officeId : selectedOffice,
+      governorateId: isSupervisor ? profile.governorateId : selectedGovernorate,
       startDate: formatToISO(formData.get("startDate")) || null,
       endDate: formatToISO(formData.get("endDate")) || null,
       PaginationParams: {
@@ -121,9 +170,8 @@ const SuperVisorLecturerhistory = () => {
   const handleReset = async () => {
     setFilterData({ title: "", startDate: "", endDate: "" });
     setCurrentPage(1);
-    document.getElementById("title").value = "";
-    document.getElementById("startDate").value = "";
-    document.getElementById("endDate").value = "";
+    setSelectedGovernorate(null);
+    setSelectedOffice(null);
     fetchInitialLectures();
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
@@ -145,7 +193,7 @@ const SuperVisorLecturerhistory = () => {
         if (isNaN(date.getTime())) {
           return "تاريخ غير صالح";
         }
-        return date.toLocaleDateString("ar-EG"); //this means Arabic-Egypt
+        return date.toLocaleDateString("ar-EG");
       },
     },
     {
@@ -178,6 +226,42 @@ const SuperVisorLecturerhistory = () => {
         }`}>
         <form onSubmit={handleFormSubmit} className="supervisor-Lectur-form">
           <div className="supervisor-Lectur-field-wrapper">
+            <label htmlFor="governorate" className="supervisor-Lectur-label">
+              المحافظة
+            </label>
+            <select
+              id="governorate"
+              value={selectedGovernorate || ""}
+              onChange={(e) => setSelectedGovernorate(e.target.value)}
+              disabled={isSupervisor}
+              className="supervisor-Lectur-select">
+              <option value="">اختر المحافظة</option>
+              {governorates.map((gov) => (
+                <option key={gov.id} value={gov.id}>
+                  {gov.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="supervisor-Lectur-field-wrapper">
+            <label htmlFor="office" className="supervisor-Lectur-label">
+              اسم المكتب
+            </label>
+            <select
+              id="office"
+              value={selectedOffice || ""}
+              onChange={(e) => setSelectedOffice(e.target.value)}
+              disabled={isSupervisor}
+              className="supervisor-Lectur-select">
+              <option value="">اختر المكتب</option>
+              {offices.map((office) => (
+                <option key={office.id} value={office.id}>
+                  {office.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="supervisor-Lectur-field-wrapper">
             <label htmlFor="title" className="supervisor-Lectur-label">
               عنوان المحضر
             </label>
@@ -186,7 +270,6 @@ const SuperVisorLecturerhistory = () => {
               id="title"
               name="title"
               className="supervisor-Lectur-input"
-              placeholder=""
             />
           </div>
           <div className="supervisor-Lectur-field-wrapper">
@@ -223,11 +306,14 @@ const SuperVisorLecturerhistory = () => {
             </button>
           </div>
         </form>
-        <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
-          <button className="supervisor-add-Lectur-button">
-            اضافة محضر جديد +
-          </button>
-        </Link>
+
+        {hasCreatePermission && (
+          <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
+            <button className="supervisor-add-Lectur-button">
+              اضافة محضر جديد +
+            </button>
+          </Link>
+        )}
       </div>
 
       <div className="toggle-search-button">

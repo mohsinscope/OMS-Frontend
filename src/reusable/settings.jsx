@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Modal, Button, message } from "antd";
 import useAuthStore from "./../store/store.js";
 import Icons from "./../reusable elements/icons.jsx";
 import axios from "axios";
@@ -6,76 +7,63 @@ import "./styles/settings.css";
 import BASE_URL from "../store/url.js";
 
 export default function Settings() {
-  const { user, accessToken,profile } = useAuthStore();
+  const { user, accessToken, profile } = useAuthStore();
   const { isSidebarCollapsed } = useAuthStore();
-  
-  const [formData, setFormData] = useState({
-    fullName: profile?.fullName || "غير معروف",  // Use profile.fullName
 
+  const [formData, setFormData] = useState({
+    fullName: profile?.fullName || "غير معروف",
     username: user?.username || "ali",
     governorate: user?.governorateName || "Basra",
     office: user?.officeName || "Karadah",
+  });
+
+  const [passwordData, setPasswordData] = useState({
     currentPassword: "",
-    password: "",
+    newPassword: "",
     confirmPassword: "",
   });
 
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [step, setStep] = useState(1); // Step 1: Current Password, Step 2: New Password
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isValidPassword, setIsValidPassword] = useState(false);
 
   const validatePassword = (password) => {
-    // Password must start with capital letter and contain only English characters
     const passwordRegex = /^[A-Z][a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/;
     return passwordRegex.test(password);
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
-    // Check if input is password or newPassword and validate English characters only
-    if ((name === "password" || name === "currentPassword") && value !== "") {
-      if (!/^[A-Za-z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/.test(value)) {
-        setError("يرجى إدخال الحروف الإنجليزية فقط في كلمة المرور");
-        return;
-      }
-      
-      if (name === "password") {
-        setIsValidPassword(validatePassword(value));
-        if (!validatePassword(value)) {
-          setError("يجب أن تبدأ كلمة المرور بحرف كبير");
-          return;
-        }
-      }
-    }
-
-    setFormData((prevData) => ({ ...prevData, [name]: value }));
+    setPasswordData((prevData) => ({ ...prevData, [name]: value }));
     setError("");
   };
 
-  const handleSave = async () => {
-    setError("");
-    setSuccess("");
+  const handleNextStep = () => {
+    if (!passwordData.currentPassword) {
+      message.error("يرجى إدخال كلمة السر الحالية");
+      return;
+    }
+    setStep(2);
+  };
 
-    // Validation
-    if (!formData.currentPassword) {
-      setError("الرجاء إدخال كلمة السر الحالية");
+  const handleSavePassword = async () => {
+    const { newPassword, confirmPassword } = passwordData;
+
+    if (!newPassword || !confirmPassword) {
+      message.error("يرجى ملء جميع الحقول");
       return;
     }
-    if (!formData.password) {
-      setError("الرجاء إدخال كلمة السر الجديدة");
+
+    if (newPassword !== confirmPassword) {
+      message.error("كلمات المرور غير متطابقة");
       return;
     }
-    if (formData.password !== formData.confirmPassword) {
-      setError("كلمات المرور غير متطابقة!");
-      return;
-    }
-    if (!isValidPassword) {
-      setError("يجب أن تبدأ كلمة المرور بحرف كبير وتحتوي على حروف إنجليزية فقط");
+
+    if (!validatePassword(newPassword)) {
+      message.error("يجب أن تبدأ كلمة المرور بحرف كبير");
       return;
     }
 
@@ -86,8 +74,8 @@ export default function Settings() {
         `${BASE_URL}/api/account/change-password`,
         {
           userId: user.id,
-          currentPassword: formData.currentPassword,
-          newPassword: formData.password
+          currentPassword: passwordData.currentPassword,
+          newPassword,
         },
         {
           headers: {
@@ -95,34 +83,19 @@ export default function Settings() {
           },
         }
       );
-
-      setSuccess("تم تحديث كلمة المرور بنجاح!");
-      setFormData(prev => ({
-        ...prev,
-        currentPassword: "",
-        password: "",
-        confirmPassword: ""
-      }));
+      message.success("تم تغيير كلمة المرور بنجاح");
+      setShowModal(false);
+      setStep(1);
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (error) {
       if (error.response?.status === 401) {
-        setError("كلمة السر الحالية غير صحيحة");
+        message.error("كلمة المرور الحالية غير صحيحة");
       } else {
-        setError("حدث خطأ أثناء تحديث كلمة المرور");
+        message.error("حدث خطأ أثناء تغيير كلمة المرور");
       }
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleCancel = () => {
-    setFormData(prev => ({
-      ...prev,
-      currentPassword: "",
-      password: "",
-      confirmPassword: "",
-    }));
-    setError("");
-    setSuccess("");
   };
 
   return (
@@ -133,19 +106,15 @@ export default function Settings() {
       dir="rtl">
       <h1 className="settings-header">إعدادات الحساب</h1>
 
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
-
       <div className="settings-form">
-        {/* Existing fields */}
         <label htmlFor="fullName">الاسم الشخصي</label>
         <input
           type="text"
           id="fullName"
           name="fullName"
           value={formData.fullName}
-          onChange={handleInputChange}
           placeholder="أدخل اسمك الكامل"
+          disabled
         />
 
         <label htmlFor="username">اسم المستخدم</label>
@@ -177,92 +146,70 @@ export default function Settings() {
           placeholder="اسم المكتب"
           disabled
         />
-
-        {/* Current Password Field */}
-        <label htmlFor="currentPassword">ادخل كلمة السر القديمة لتغيير كلمة السر</label>
-        <div className="password-field">
-          <input
-            type={showCurrentPassword ? "text" : "password"}
-            id="currentPassword"
-            name="currentPassword"
-            value={formData.currentPassword}
-            onChange={handleInputChange}
-            placeholder="أدخل كلمة السر الحالية"
-            dir="ltr"
-          />
-          <button
-            type="button"
-            className="toggle-password"
-            onClick={() => setShowCurrentPassword(!showCurrentPassword)}>
-            <Icons
-              type={showCurrentPassword ? "eye-off" : "eye"}
-              width={24}
-              height={24}
-            />
-          </button>
-        </div>
-
-        {/* New Password Field */}
-        <label htmlFor="password">كلمة السر الجديدة</label>
-        <div className="password-field">
-          <input
-            type={showPassword ? "text" : "password"}
-            id="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            placeholder="أدخل كلمة السر الجديدة"
-            dir="ltr"
-          />
-          <button
-            type="button"
-            className="toggle-password"
-            onClick={() => setShowPassword(!showPassword)}>
-            <Icons
-              type={showPassword ? "eye-off" : "eye"}
-              width={24}
-              height={24}
-            />
-          </button>
-        </div>
-
-        {/* Confirm Password Field */}
-        <label htmlFor="confirmPassword">تأكيد كلمة السر</label>
-        <div className="password-field">
-          <input
-            type={showConfirmPassword ? "text" : "password"}
-            id="confirmPassword"
-            name="confirmPassword"
-            value={formData.confirmPassword}
-            onChange={handleInputChange}
-            placeholder="تأكيد كلمة السر"
-            dir="ltr"
-          />
-          <button
-            type="button"
-            className="toggle-password"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-            <Icons
-              type={showConfirmPassword ? "eye-off" : "eye"}
-              width={24}
-              height={24}
-            />
-          </button>
-        </div>
       </div>
 
       <div className="settings-buttons-container">
-        <button 
-          className={`save-button ${loading ? 'disabled' : ''}`} 
-          onClick={handleSave}
-          disabled={loading}
-        >
-          {loading ? 'جاري الحفظ...' : 'حفظ'}
+        <button
+          className={`save-button ${loading ? "disabled" : ""}`}
+          onClick={() => setShowModal(true)}>
+          تغيير كلمة السر
         </button>
-        <button className="cancel-button" onClick={handleCancel}>
+        <button className="cancel-button" onClick={() => setShowModal(false)}>
           الغاء
         </button>
       </div>
+
+      {/* Modal for Changing Password */}
+      <Modal
+        title={step === 1 ? "أدخل كلمة السر الحالية" : "أدخل كلمة السر الجديدة"}
+        visible={showModal}
+        onCancel={() => {
+          setShowModal(false);
+          setStep(1);
+          setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+        }}
+        onOk={step === 1 ? handleNextStep : handleSavePassword}
+        okText={step === 1 ? "التالي" : "حفظ"}
+        cancelText="إلغاء"
+        confirmLoading={loading}>
+        {step === 1 ? (
+          <div className="modal-content">
+            <label htmlFor="currentPassword">كلمة المرور الحالية</label>
+            <input
+              type="password"
+              id="currentPassword"
+              name="currentPassword"
+              value={passwordData.currentPassword}
+              onChange={handleInputChange}
+              placeholder="أدخل كلمة المرور الحالية"
+              dir="ltr"
+            />
+          </div>
+        ) : (
+          <div className="modal-content">
+            <label htmlFor="newPassword">كلمة المرور الجديدة</label>
+            <input
+              type={showPassword ? "text" : "password"}
+              id="newPassword"
+              name="newPassword"
+              value={passwordData.newPassword}
+              onChange={handleInputChange}
+              placeholder="أدخل كلمة المرور الجديدة"
+              dir="ltr"
+            />
+            <label htmlFor="confirmPassword">تأكيد كلمة المرور</label>
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              id="confirmPassword"
+              name="confirmPassword"
+              value={passwordData.confirmPassword}
+              onChange={handleInputChange}
+              placeholder="تأكيد كلمة المرور"
+              dir="ltr"
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

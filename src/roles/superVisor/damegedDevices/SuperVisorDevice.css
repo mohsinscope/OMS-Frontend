@@ -33,6 +33,7 @@
   padding: 20px 0px 20px 20px;
   transition: all 0.6s ease-in-out;
   display: none;
+  flex-wrap: wrap;
 }
 .supervisor-devices-dameged-filters.animate-show {
   max-height: 500px;
@@ -202,7 +203,7 @@
 #date {
 }
 .filter-field .ant-picker input {
-  width: 200px !important;
+  width: 130px !important;
 }
 .filter-field .ant-select {
   width: 200px !important;

@@ -96,3 +96,15 @@
 .password-field input {
   text-align: left;
 }
+.change-password{
+  width: 600px;
+  padding: 10px 20px;
+  outline: none;
+  border: none;
+  background-color: #efb034;
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  height: 52px;
+  margin: 15px 0;
+}
