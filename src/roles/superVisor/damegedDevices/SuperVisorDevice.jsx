@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Table, message, Button, Select, DatePicker, Input, ConfigProvider } from "antd";
+import {
+  Table,
+  message,
+  Button,
+  Select,
+  DatePicker,
+  Input,
+  ConfigProvider,
+} from "antd";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Url from "./../../../store/url";
@@ -43,7 +51,7 @@ export default function SuperVisorDevices() {
   };
 
   useEffect(() => {
-    const fetchDropdownData = async () => {
+    const fetchDamagedTypes = async () => {
       try {
         const [governorateResponse, officeResponse, deviceTypeResponse, damagedTypeResponse] = await Promise.all([
           axios.get(`${Url}/api/Governorate/dropdown`, {
@@ -74,7 +82,7 @@ export default function SuperVisorDevices() {
         setDamagedTypes(damagedTypeResponse.data);
       } catch (error) {
         console.error(
-          "Error fetching dropdown data:",
+          "Error fetching damaged types:",
           error.response?.data || error.message
         );
         message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة");
@@ -109,7 +117,7 @@ export default function SuperVisorDevices() {
     try {
       setLoading(true);
       const response = await axios.post(
-        `${Url}/api/DamagedDevice/search`,
+        `${Url}/api/DamagedPassport/search`,
         body,
         {
           headers: {
@@ -126,7 +134,7 @@ export default function SuperVisorDevices() {
       }
     } catch (error) {
       console.error(
-        "Error fetching devices:",
+        "Error fetching passports:",
         error.response?.data || error.message
       );
       message.error("حدث خطأ أثناء البحث");
@@ -163,7 +171,7 @@ export default function SuperVisorDevices() {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     const body = {
       SerialNumber: serialDeviceNumber || "",
       DeviceTypeId: deviceTypeId || undefined,
@@ -226,9 +234,9 @@ export default function SuperVisorDevices() {
     },
     {
       title: "سبب التلف",
-      dataIndex: "damagedDeviceTypesName",
-      key: "damagedDeviceTypesName",
-      className: "table-column-damage-reason",
+      dataIndex: "damagedTypeName",
+      key: "damagedTypeName",
+      className: "table-column-damage",
     },
     {
       title: "التاريخ",
@@ -243,9 +251,9 @@ export default function SuperVisorDevices() {
       className: "table-column-details",
       render: (_, record) => (
         <Link
-          to="/supervisor/damegedDevices/show"
+          to="DammagedPasportsShow"
           state={{ id: record.id }}
-          className="supervisor-devices-dameged-details-link">
+          className="supervisor-passport-dameged-details-link">
           عرض
         </Link>
       ),
@@ -254,19 +262,20 @@ export default function SuperVisorDevices() {
 
   return (
     <div
-      className={`supervisor-devices-dameged-page ${
+      className={`supervisor-passport-dameged-page ${
         isSidebarCollapsed
           ? "sidebar-collapsed"
-          : "supervisor-devices-dameged-page"
+          : "supervisor-passport-dameged-page"
       }`}
       dir="rtl">
-      <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
+      <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
 
       <div
-        className={`supervisor-devices-dameged-filters ${
+        className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
         <div className="filter-field">
+<<<<<<< HEAD
           <label>اسم المحافظة</label>
           <Input
             value={governorateName}
@@ -284,28 +293,15 @@ export default function SuperVisorDevices() {
         </div>
         <div className="filter-field">
           <label>الرقم التسلسلي للجهاز</label>
+=======
+          <label>رقم الجواز</label>
+>>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
           <Input
-            value={serialDeviceNumber}
-            onChange={(e) => setSerialDeviceNumber(e.target.value)}
-            placeholder="أدخل رقم التسلسلي للجهاز"
+            value={passportNumber}
+            onChange={(e) => setPassportNumber(e.target.value)}
+            placeholder="أدخل رقم الجواز"
           />
         </div>
-        <div className="filter-field">
-          <label>نوع الجهاز</label>
-          <Select
-            className="filter-dropdown"
-            value={deviceTypeId}
-            onChange={(value) => setDeviceTypeId(value)}
-            allowClear
-            placeholder="اختر نوع الجهاز">
-            {deviceTypes.map((type) => (
-              <Option key={type.id} value={type.id}>
-                {type.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
-
         <div className="filter-field">
           <label>سبب التلف</label>
           <Select
@@ -329,7 +325,6 @@ export default function SuperVisorDevices() {
             placeholder="اختر تاريخ البداية"
           />
         </div>
-
         <div className="filter-field">
           <label>تاريخ النهاية</label>
           <DatePicker
@@ -341,6 +336,7 @@ export default function SuperVisorDevices() {
         <div className="filter-buttons">
           <Button type="primary" onClick={handleSearch}>
             البحث
+            <Lele type="search-icon" />
           </Button>
           <Button onClick={handleReset} style={{ marginLeft: "10px" }}>
             إعادة التعيين
@@ -356,6 +352,7 @@ export default function SuperVisorDevices() {
 
 
       </div>
+
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
           {searchVisible ? "بحث" : "بحث"}

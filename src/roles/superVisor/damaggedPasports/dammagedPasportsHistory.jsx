@@ -1,18 +1,32 @@
 import "./dammagedPasportsHistory.css";
 import useAuthStore from "./../../../store/store";
+<<<<<<< HEAD
 import usePermissionsStore from "./../../../store/permissionsStore";
+=======
+>>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
 import React, { useState, useEffect } from "react";
 import { Table, message, Button, Input, Select, DatePicker } from "antd";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Url from "./../../../store/url";
-
+import Lele from "./../../../reusable elements/icons.jsx";
 const { Option } = Select;
 
 export default function SuperVisorPassport() {
+<<<<<<< HEAD
   const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
   const { hasAnyPermission } = usePermissionsStore();
   const hasCreatePermission = hasAnyPermission("create");
+=======
+  const {
+    isSidebarCollapsed,
+    accessToken,
+    profile,
+    roles,
+    searchVisible,
+    toggleSearch,
+  } = useAuthStore();
+>>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
   const [passportList, setPassportList] = useState([]);
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [governorates, setGovernorates] = useState([]);
@@ -22,6 +36,7 @@ export default function SuperVisorPassport() {
   const [damagedTypeId, setDamagedTypeId] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
+<<<<<<< HEAD
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [pagination, setPagination] = useState({
@@ -32,6 +47,13 @@ export default function SuperVisorPassport() {
   const { searchVisible, toggleSearch } = useAuthStore();
 
   const isSupervisor = roles.includes("Supervisor");
+=======
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+  });
+>>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
 
   const formatDateToISO = (date) => {
     if (!date) return null;
@@ -70,6 +92,7 @@ export default function SuperVisorPassport() {
       }
     };
 
+<<<<<<< HEAD
     fetchDropdownData();
   }, [accessToken, isSupervisor, profile]);
 
@@ -88,6 +111,35 @@ export default function SuperVisorPassport() {
       },
     };
 
+=======
+    const fetchInitialPassports = async () => {
+      if (roles.includes("Supervisor")) {
+        const body = {
+          passportNumber: "",
+          damagedTypeId: null,
+          startDate: null,
+          endDate: null,
+          officeId: profile?.officeId,
+          governorateId: profile?.governorateId,
+          profileId: profile?.profileId,
+          PaginationParams: {
+            PageNumber: 1,
+            PageSize: pagination.pageSize,
+          },
+        };
+        fetchPassports(body);
+      } else {
+        fetchAllPassports();
+      }
+    };
+
+    fetchDamagedTypes();
+    fetchInitialPassports();
+  }, [accessToken, profile, roles, pagination.pageSize]);
+
+  const fetchPassports = async (body) => {
+    setLoading(true);
+>>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
     try {
       setLoading(true);
       const response = await axios.post(
@@ -101,6 +153,7 @@ export default function SuperVisorPassport() {
         }
       );
 
+<<<<<<< HEAD
       setPassportList(response.data);
       const headers = response.headers;
       setPagination((prev) => ({
@@ -108,6 +161,18 @@ export default function SuperVisorPassport() {
         total: parseInt(headers["totalItems"], 10) || 0,
         pageSize: parseInt(headers["itemsPerPage"], 10) || 10,
       }));
+=======
+      const paginationHeader = response.headers.pagination
+        ? JSON.parse(response.headers.pagination)
+        : {};
+
+      setPassportList(response.data);
+      setPagination({
+        currentPage: paginationHeader.currentPage || 1,
+        pageSize: paginationHeader.pageSize || 10,
+        totalItems: paginationHeader.totalItems || 0,
+      });
+>>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
 
       if (response.data.length === 0) {
         message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
@@ -120,6 +185,61 @@ export default function SuperVisorPassport() {
     }
   };
 
+<<<<<<< HEAD
+=======
+  const fetchAllPassports = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(
+        `${Url}/api/DamagedPassport/?PageNumber=${pagination.currentPage}&PageSize=${pagination.pageSize}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      const paginationHeader = response.headers.pagination
+        ? JSON.parse(response.headers.pagination)
+        : {};
+
+      setPassportList(response.data);
+      setPagination({
+        currentPage: paginationHeader.currentPage || 1,
+        pageSize: paginationHeader.pageSize || 10,
+        totalItems: paginationHeader.totalItems || 0,
+      });
+    } catch (error) {
+      console.error(
+        "Error fetching all passports:",
+        error.response?.data || error.message
+      );
+      message.error("حدث خطأ أثناء جلب البيانات");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = () => {
+    if (roles.includes("Supervisor")) {
+      const body = {
+        passportNumber: passportNumber || "",
+        damagedTypeId: damagedTypeId || null,
+        startDate: startDate ? formatDateToISO(startDate) : null,
+        endDate: endDate ? formatDateToISO(endDate) : null,
+        officeId: profile?.officeId,
+        governorateId: profile?.governorateId,
+        profileId: profile?.profileId,
+        PaginationParams: {
+          PageNumber: 1,
+          PageSize: pagination.pageSize,
+        },
+      };
+      fetchPassports(body);
+    } else {
+      fetchAllPassports();
+    }
+  };
+
+>>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
   const handleReset = () => {
     setPassportNumber("");
     setDamagedTypeId(null);
@@ -132,11 +252,32 @@ export default function SuperVisorPassport() {
     handleSearch();
   };
 
+<<<<<<< HEAD
   const handleTableChange = (paginationInfo) => {
     setPagination((prev) => ({
       ...prev,
       current: paginationInfo.current,
     }));
+=======
+    if (roles.includes("Supervisor")) {
+      const body = {
+        passportNumber: "",
+        damagedTypeId: null,
+        startDate: null,
+        endDate: null,
+        officeId: profile?.officeId,
+        governorateId: profile?.governorateId,
+        profileId: profile?.profileId,
+        PaginationParams: {
+          PageNumber: 1,
+          PageSize: pagination.pageSize,
+        },
+      };
+      fetchPassports(body);
+    } else {
+      fetchAllPassports();
+    }
+>>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
   };
 
   const columns = [
@@ -265,6 +406,7 @@ export default function SuperVisorPassport() {
         <div className="filter-buttons">
           <Button type="primary" onClick={handleSearch}>
             البحث
+            <Lele type="search-icon" />
           </Button>
           <Button onClick={handleReset} style={{ marginLeft: "10px" }}>
             إعادة التعيين
@@ -294,11 +436,39 @@ export default function SuperVisorPassport() {
           bordered
           loading={loading}
           pagination={{
+<<<<<<< HEAD
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
           }}
           onChange={handleTableChange}
+=======
+            current: pagination.currentPage,
+            pageSize: pagination.pageSize,
+            total: pagination.totalItems,
+            onChange: (page) => {
+              if (roles.includes("Supervisor")) {
+                const body = {
+                  passportNumber: passportNumber || "",
+                  damagedTypeId: damagedTypeId || null,
+                  startDate: startDate ? formatDateToISO(startDate) : null,
+                  endDate: endDate ? formatDateToISO(endDate) : null,
+                  officeId: profile?.officeId,
+                  governorateId: profile?.governorateId,
+                  profileId: profile?.profileId,
+                  PaginationParams: {
+                    PageNumber: page,
+                    PageSize: pagination.pageSize,
+                  },
+                };
+                fetchPassports(body);
+              } else {
+                fetchAllPassports();
+              }
+            },
+            position: ["bottomCenter"],
+          }}
+>>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
           locale={{ emptyText: "لا توجد بيانات" }}
           className="supervisor-passport-dameged-table"
         />

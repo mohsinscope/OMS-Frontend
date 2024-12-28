@@ -17,7 +17,7 @@ export const MENU_ITEMS = [
   {
     label: "الأجهزة التالفة",
     icon: "devices",
-    path: "supervisor/damegedDevices",
+    path: "/supervisor/damegedDevices",
     resource: "devices",
     role: [ "Supervisor", "Admin","DamagedDevice"], // Role allowed to access
   },
@@ -25,7 +25,7 @@ export const MENU_ITEMS = [
   {
     label: "الجوازات التالفة",
     icon: "passport",
-    path: "supervisor/damagedpasportshistory",
+    path: "/supervisor/damagedpasportshistory",
 
     role: [ "Supervisor", "Admin","DamagedPassport"], // Role allowed to access
   },

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/store";
 import { MENU_ITEMS, COMMON_MENU_ITEMS } from "../config/menuConfig";
 import Icons from "./icons";
-import './../pages/dashboard.css';
+import "./../pages/dashboard.css";
 
 const DynamicSidebar = ({
   onLogout,
@@ -35,7 +35,9 @@ const DynamicSidebar = ({
     const filterMenuItems = () => {
       if (!isLoggedIn || !roles || roles.length === 0) {
         setVisibleMenuItems([]);
-        setVisibleCommonItems(COMMON_MENU_ITEMS.filter(item => item.role.length === 0));
+        setVisibleCommonItems(
+          COMMON_MENU_ITEMS.filter((item) => item.role.length === 0)
+        );
         return;
       }
 
@@ -63,27 +65,32 @@ const DynamicSidebar = ({
     }
   };
 
-  const renderMenuItem = React.useCallback((item, index) => {
-    const isActive = currentPath === item.path;
-    const activeColor = "#1677ff";
-    const itemClass = `${menuItemClassName || 'menu-item'} ${
-      isActive ? activeMenuItemClassName || 'active' : ''
-    }`;
+  const renderMenuItem = React.useCallback(
+    (item, index) => {
+      const isActive =
+        currentPath === item.path ||
+        (currentPath.startsWith(item.path) && item.path !== "/"); // للتأكد من التطابق الجزئي
+      const activeColor = "#1677ff";
+      const itemClass = `${menuItemClassName || "menu-item"} ${
+        isActive ? activeMenuItemClassName || "active" : ""
+      }`;
 
-    return (
-      <div
-        key={item.path || index}
-        className={itemClass}
-        onClick={() => handleMenuClick(item.path, item.action)}
-      >
-        <Icons 
-          type={item.icon} 
-          color={isActive ? activeColor : "currentColor"}
-        />
-        <h3 style={{ color: isActive ? activeColor : "" }}>{item.label}</h3>
-      </div>
-    );
-  }, [currentPath, menuItemClassName, activeMenuItemClassName]);
+      return (
+        <div
+          key={item.path || index}
+          className={itemClass}
+          onClick={() => handleMenuClick(item.path, item.action)}
+          style={{ cursor: "pointer" }}>
+          <Icons
+            type={item.icon}
+            color={isActive ? activeColor : "currentColor"}
+          />
+          <h3 style={{ color: isActive ? activeColor : "" }}>{item.label}</h3>
+        </div>
+      );
+    },
+    [currentPath, menuItemClassName, activeMenuItemClassName]
+  );
 
   if (!isInitialized) {
     return null; // Or return a loading spinner
@@ -94,7 +101,10 @@ const DynamicSidebar = ({
   }
 
   return (
-    <div className={`${sidebarClassName || "sidebar"} ${isSidebarCollapsed ? 'collapsed' : ''}`}>
+    <div
+      className={`${sidebarClassName || "sidebar"} ${
+        isSidebarCollapsed ? "collapsed" : ""
+      }`}>
       {visibleMenuItems.length > 0 && (
         <div className="sidebar-top">
           {visibleMenuItems.map(renderMenuItem)}
