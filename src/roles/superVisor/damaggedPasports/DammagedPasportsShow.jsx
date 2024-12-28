@@ -41,7 +41,10 @@ const DammagedPasportsShow = () => {
 
   // For debugging
   useEffect(() => {
-    console.log('Current user permissions:', { hasUpdatePermission, hasDeletePermission });
+    console.log("Current user permissions:", {
+      hasUpdatePermission,
+      hasDeletePermission,
+    });
   }, [hasUpdatePermission, hasDeletePermission]);
 
   useEffect(() => {
@@ -72,7 +75,7 @@ const DammagedPasportsShow = () => {
         console.error("Error Fetching Passport Details:", error.response);
         if (error.response?.status === 401) {
           message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate('/login');
+          navigate("/login");
           return;
         }
         message.error(
@@ -100,7 +103,7 @@ const DammagedPasportsShow = () => {
       } catch (error) {
         if (error.response?.status === 401) {
           message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate('/login');
+          navigate("/login");
           return;
         }
         console.error("Error Fetching Passport Images:", error.response);
@@ -128,7 +131,7 @@ const DammagedPasportsShow = () => {
       } catch (error) {
         if (error.response?.status === 401) {
           message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate('/login');
+          navigate("/login");
           return;
         }
         message.error("خطأ في جلب أنواع التلف للجوازات");
@@ -171,7 +174,7 @@ const DammagedPasportsShow = () => {
     } catch (error) {
       if (error.response?.status === 401) {
         message.error("الرجاء تسجيل الدخول مرة أخرى");
-        navigate('/login');
+        navigate("/login");
         return;
       }
       console.error("Error Updating Passport Details:", error.response);
@@ -196,7 +199,7 @@ const DammagedPasportsShow = () => {
     } catch (error) {
       if (error.response?.status === 401) {
         message.error("الرجاء تسجيل الدخول مرة أخرى");
-        navigate('/login');
+        navigate("/login");
         return;
       }
       console.error("Error Deleting Passport:", error.response);
@@ -255,7 +258,7 @@ const DammagedPasportsShow = () => {
       </div>
 
       {/* Rest of the component remains the same */}
-      
+
       <div className="details-container">
         <div className="details-fields">
           <div className="details-row">
@@ -294,10 +297,10 @@ const DammagedPasportsShow = () => {
         <div className="image-container">
           {images.length > 0 && (
             <div className="image-preview-container">
-              <span className="note-details-label">صور الجواز:</span>
+              {/* <span className="note-details-label">صور الجواز:</span> */}
               <ImagePreviewer
                 uploadedImages={images}
-                defaultWidth={1000}
+                defaultWidth={900}
                 defaultHeight={600}
               />
             </div>
