@@ -16,9 +16,17 @@ export const ROLE_PERMISSIONS = {
     supervisor: ["create","read", "update", "delete", "approve", "export"], // Consistent lowercase "attendance"
   },
   Admin: {
-    admin: ["create","read", "update", "delete", "approve", "export"], // Consistent lowercase "attendance"
+    admin: ["create","read", "update", "delete", "approve"], // Consistent lowercase "attendance"
   },
 
-
+  AddDamagedDevice:{
+    adddamageddevice:["create","read", "update", "delete", "approve"],
+  },
+  Lecture:{
+    lecture:["create","read", "update", "delete", "approve"],
+  },
+  Report:{
+    report:["create","read", "update", "delete", "approve"],
+  }
   };
   

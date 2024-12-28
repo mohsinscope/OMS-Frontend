@@ -19,29 +19,17 @@ export const MENU_ITEMS = [
     icon: "devices",
     path: "/supervisor/damegedDevices",
     resource: "devices",
-    role: [ "Supervisor", "Admin"], // Role allowed to access
+    role: [ "Supervisor", "Admin","DamagedDevice"], // Role allowed to access
   },
-  {
-    label: "الأجهزة التالفة",
-    icon: "devices",
-    path: "/employee_damage/damage/devices",
-    resource: "devices",
-    role: ["DamagedDevice"], // Role allowed to access
-  },
+  
   {
     label: "الجوازات التالفة",
     icon: "passport",
     path: "/supervisor/damagedpasportshistory",
 
-    role: [ "Supervisor", "Admin"], // Role allowed to access
+    role: [ "Supervisor", "Admin","DamagedPassport"], // Role allowed to access
   },
-  {
-    label: "الجوازات التالفة",
-    icon: "passport",
-    path: "/employee_damage/damage/pasports",
-    resource: "passports",
-    role: ["DamagedPassport"], // Role allowed to access
-  },
+  
   {
     label: "المحاضر",
     icon: "Lecturer",

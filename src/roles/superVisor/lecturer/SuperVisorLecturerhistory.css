@@ -62,7 +62,16 @@
 
 .supervisor-Lectur-input,
 .supervisor-Lectur-dropdown {
-  width: 267px;
+  width: 200px;
+  height: 45px;
+  padding: 0 20px;
+  border-radius: 8px;
+  outline: none;
+  border: #bcc1ca 1px solid;
+  font-size: large;
+}
+.supervisor-Lectur-field-wrapper select{
+  width: 200px;
   height: 45px;
   padding: 0 20px;
   border-radius: 8px;

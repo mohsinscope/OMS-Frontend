@@ -39,6 +39,8 @@ export default function SuperVisorDevices() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [serialDeviceNumber, setSerialDeviceNumber] = useState("");
+  const [governorateName, setGovernorateName] = useState("");
+  const [officeName, setOfficeName] = useState("");
 
   const formatDateToISO = (date) => {
     if (!date) return null;
@@ -51,7 +53,13 @@ export default function SuperVisorDevices() {
   useEffect(() => {
     const fetchDamagedTypes = async () => {
       try {
-        const [deviceTypeResponse, damagedTypeResponse] = await Promise.all([
+        const [governorateResponse, officeResponse, deviceTypeResponse, damagedTypeResponse] = await Promise.all([
+          axios.get(`${Url}/api/Governorate/dropdown`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }),
+          axios.get(`${Url}/api/Office/dropdown`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }),
           axios.get(`${Url}/api/devicetype`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
@@ -59,6 +67,16 @@ export default function SuperVisorDevices() {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
         ]);
+
+        const governorateData = governorateResponse.data.find(
+          (item) => item.id === profile?.governorateId
+        );
+        const officeData = officeResponse.data.find(
+          (item) => item.id === profile?.officeId
+        );
+
+        setGovernorateName(governorateData?.name || "غير معروف");
+        setOfficeName(officeData?.name || "غير معروف");
 
         setDeviceTypes(deviceTypeResponse.data);
         setDamagedTypes(damagedTypeResponse.data);
@@ -72,7 +90,7 @@ export default function SuperVisorDevices() {
     };
 
     fetchDropdownData();
-  }, [accessToken]);
+  }, [accessToken, profile]);
 
   useEffect(() => {
     if (profile) {
@@ -257,7 +275,27 @@ export default function SuperVisorDevices() {
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
         <div className="filter-field">
+<<<<<<< HEAD
+          <label>اسم المحافظة</label>
+          <Input
+            value={governorateName}
+            disabled={roles.includes("Supervisor")}
+            placeholder="اسم المحافظة"
+          />
+        </div>
+        <div className="filter-field">
+          <label>اسم المكتب</label>
+          <Input
+            value={officeName}
+            disabled={roles.includes("Supervisor")}
+            placeholder="اسم المكتب"
+          />
+        </div>
+        <div className="filter-field">
+          <label>الرقم التسلسلي للجهاز</label>
+=======
           <label>رقم الجواز</label>
+>>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
           <Input
             value={passportNumber}
             onChange={(e) => setPassportNumber(e.target.value)}
@@ -303,8 +341,6 @@ export default function SuperVisorDevices() {
           <Button onClick={handleReset} style={{ marginLeft: "10px" }}>
             إعادة التعيين
           </Button>
-        </div>
-
         {hasCreatePermission && (
           <Link to="/supervisor/damegedDevices/add">
             <Button className="supervisor-devices-dameged-add-button">
@@ -312,6 +348,9 @@ export default function SuperVisorDevices() {
             </Button>
           </Link>
         )}
+        </div>
+
+
       </div>
 
       <div className="toggle-search-button">
