@@ -7,6 +7,7 @@ import {
   Input,
   Button,
   ConfigProvider,
+  Select,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -26,6 +27,9 @@ const SuperVisorDeviceShow = () => {
   const [loading, setLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  const [damagedTypes, setDamagedTypes] = useState([]);
+  const [damagedDeviceTypes, setDamagedDeviceTypes] = useState([]);
   const [form] = Form.useForm();
 
   // Get store data
@@ -39,7 +43,10 @@ const SuperVisorDeviceShow = () => {
 
   // For debugging
   useEffect(() => {
-    console.log('Current user permissions:', { hasUpdatePermission, hasDeletePermission });
+    console.log("Current user permissions:", {
+      hasUpdatePermission,
+      hasDeletePermission,
+    });
   }, [hasUpdatePermission, hasDeletePermission]);
 
   useEffect(() => {
@@ -60,6 +67,7 @@ const SuperVisorDeviceShow = () => {
             },
           }
         );
+        console.log(response);
         const device = response.data;
         const formattedDate = device.date
           ? new Date(device.date).toISOString().slice(0, 19) + "Z"
@@ -69,7 +77,7 @@ const SuperVisorDeviceShow = () => {
       } catch (error) {
         if (error.response?.status === 401) {
           message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate('/login');
+          navigate("/login");
           return;
         }
         message.error(
@@ -92,12 +100,13 @@ const SuperVisorDeviceShow = () => {
             },
           }
         );
+        console.log(response);
         const imageUrls = response.data.map((image) => image.filePath);
         setImages(imageUrls);
       } catch (error) {
         if (error.response?.status === 401) {
           message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate('/login');
+          navigate("/login");
           return;
         }
         message.error(
@@ -108,6 +117,44 @@ const SuperVisorDeviceShow = () => {
       }
     };
 
+    const fetchDamagedTypes = async () => {
+      try {
+        const response = await axios.get(`${Url}/api/damageddevicetype/all`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        setDamagedTypes(
+          response.data.map((type) => ({
+            value: type.id,
+            label: type.name,
+          }))
+        );
+      } catch (error) {
+        message.error("خطأ في جلب أنواع التلف للاجهزة");
+      }
+    };
+
+    const fetchDamagedDeviceTypes = async () => {
+      try {
+        const response = await axios.get(`${Url}/api/devicetype`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        setDamagedDeviceTypes(
+          response.data.map((type) => ({
+            value: type.id,
+            label: type.name,
+          }))
+        );
+      } catch (error) {
+        message.error("خطأ في جلب أنواع التلف للأجهزة");
+      }
+    };
+
+    fetchDamagedDeviceTypes();
+    fetchDamagedTypes();
     fetchDeviceDetails();
     fetchDeviceImages();
   }, [deviceId, accessToken, navigate, form]);
@@ -140,7 +187,7 @@ const SuperVisorDeviceShow = () => {
     } catch (error) {
       if (error.response?.status === 401) {
         message.error("الرجاء تسجيل الدخول مرة أخرى");
-        navigate('/login');
+        navigate("/login");
         return;
       }
       message.error(
@@ -164,7 +211,7 @@ const SuperVisorDeviceShow = () => {
     } catch (error) {
       if (error.response?.status === 401) {
         message.error("الرجاء تسجيل الدخول مرة أخرى");
-        navigate('/login');
+        navigate("/login");
         return;
       }
       message.error(
@@ -309,13 +356,13 @@ const SuperVisorDeviceShow = () => {
             <Form.Item
               name="damagedDeviceTypeId"
               label="نوع الضرر"
-              rules={[{ required: true, message: "يرجى إدخال نوع الضرر" }]}>                
+              rules={[{ required: true, message: "يرجى إدخال نوع الضرر" }]}>
               <Input placeholder="نوع الضرر" />
             </Form.Item>
             <Form.Item
               name="date"
               label="التاريخ"
-              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>                
+              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
               <Input placeholder="التاريخ" type="datetime-local" />
             </Form.Item>
             <Form.Item

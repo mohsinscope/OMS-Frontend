@@ -181,3 +181,7 @@
 .ant-upload-drag-icon {
   width: 100%;
 }
+
+.add-back-button {
+  background-color: #ff4d4f !important;
+}
