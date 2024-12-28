@@ -16,12 +16,13 @@
     justify-content: start;
     align-items: end;
     gap: 20px;
-    width: 55%;
+    width: 100%;
 }
 
 .damaged-devices-form{
     width: 100%;
     display: flex;
+    gap: 20px;
     justify-content: start;
     align-items: end;
 }
@@ -33,15 +34,26 @@
 }
 
 
-.damaged-devices-field-wrapper {
+.field-wrapper{
     display: flex;
     flex-direction: column;
+    
   
 }
 
-.damaged-devices-field-wrapper select {
+.field-wrapper:last-child{
+    display: flex;
+    flex-direction: row;
+    
+  
+}
+.field-wrapper input{
+    width: 200px !important;
+  
+}
+.field-wrapper select {
 
-    width: 200px;
+    width: 200px !important;
     height: 45px;
     padding: 0 20px;
     border-radius: 8px;

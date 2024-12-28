@@ -63,6 +63,7 @@
     justify-content: start;
     gap: 20px;
     align-items: end;
+    padding: 20px;
 
 }
 
@@ -70,10 +71,23 @@
     display: flex;
     flex-direction: column;
 }
+.stats-form .form-group label{
+    font-size: large;
+    padding: 5px;
+}
 .stats-form input{
     width: 267px;
     height: 45px;
-    padding: 0 20px;
+    padding: 0 10px;
+    border-radius: 8px;
+    outline: none;
+    border: #bcc1ca 1px solid;
+    font-size: large;
+}
+.stats-form select{
+    width: 267px;
+    height: 45px;
+    padding: 0 10px;
     border-radius: 8px;
     outline: none;
     border: #bcc1ca 1px solid;
