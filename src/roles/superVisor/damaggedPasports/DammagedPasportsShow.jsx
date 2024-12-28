@@ -14,6 +14,7 @@ import axios from "axios";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./dammagedPasportsShow.css";
 import useAuthStore from "./../../../store/store";
+import usePermissionsStore from "./../../../store/permissionsStore";
 import Url from "./../../../store/url.js";
 import Lele from "./../../../reusable elements/icons.jsx";
 
@@ -28,8 +29,20 @@ const DammagedPasportsShow = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [form] = Form.useForm();
+
+  // Get store data
   const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
+  const { hasAnyPermission } = usePermissionsStore();
   const { profileId, governorateId, officeId } = profile || {};
+
+  // Check permissions using hasAnyPermission
+  const hasUpdatePermission = hasAnyPermission("update");
+  const hasDeletePermission = hasAnyPermission("delete");
+
+  // For debugging
+  useEffect(() => {
+    console.log('Current user permissions:', { hasUpdatePermission, hasDeletePermission });
+  }, [hasUpdatePermission, hasDeletePermission]);
 
   useEffect(() => {
     if (!passportId) {
@@ -41,7 +54,6 @@ const DammagedPasportsShow = () => {
     const fetchPassportDetails = async () => {
       setLoading(true);
       try {
-        console.log("Fetching Passport Details for ID:", passportId);
         const response = await axios.get(
           `${Url}/api/DamagedPassport/${passportId}`,
           {
@@ -58,6 +70,11 @@ const DammagedPasportsShow = () => {
         form.setFieldsValue({ ...passport, date: formattedDate });
       } catch (error) {
         console.error("Error Fetching Passport Details:", error.response);
+        if (error.response?.status === 401) {
+          message.error("الرجاء تسجيل الدخول مرة أخرى");
+          navigate('/login');
+          return;
+        }
         message.error(
           `حدث خطأ أثناء جلب تفاصيل الجواز: ${
             error.response?.data?.message || error.message
@@ -81,6 +98,11 @@ const DammagedPasportsShow = () => {
         const imageUrls = response.data.map((image) => image.filePath);
         setImages(imageUrls);
       } catch (error) {
+        if (error.response?.status === 401) {
+          message.error("الرجاء تسجيل الدخول مرة أخرى");
+          navigate('/login');
+          return;
+        }
         console.error("Error Fetching Passport Images:", error.response);
         message.error(
           `حدث خطأ أثناء جلب صور الجواز: ${
@@ -104,6 +126,11 @@ const DammagedPasportsShow = () => {
           }))
         );
       } catch (error) {
+        if (error.response?.status === 401) {
+          message.error("الرجاء تسجيل الدخول مرة أخرى");
+          navigate('/login');
+          return;
+        }
         message.error("خطأ في جلب أنواع التلف للجوازات");
       }
     };
@@ -116,7 +143,7 @@ const DammagedPasportsShow = () => {
   const handleSaveEdit = async (values) => {
     try {
       const updatedValues = {
-        id: passportId, // Ensure ID is consistent
+        id: passportId,
         passportNumber: values.passportNumber,
         date: values.date
           ? new Date(values.date).toISOString().slice(0, 19) + "Z"
@@ -128,10 +155,8 @@ const DammagedPasportsShow = () => {
         profileId: profileId,
       };
 
-      console.log("Sending Updated Values:", updatedValues);
-
       const response = await axios.put(
-        `${Url}/api/DamagedPassport/${passportId}`, // Ensure the path matches the backend API
+        `${Url}/api/DamagedPassport/${passportId}`,
         updatedValues,
         {
           headers: {
@@ -140,12 +165,15 @@ const DammagedPasportsShow = () => {
         }
       );
 
-      console.log("Update Response:", response.data);
-
       message.success("تم تحديث بيانات الجواز بنجاح");
       setEditModalVisible(false);
       setPassportData((prev) => ({ ...prev, ...updatedValues }));
     } catch (error) {
+      if (error.response?.status === 401) {
+        message.error("الرجاء تسجيل الدخول مرة أخرى");
+        navigate('/login');
+        return;
+      }
       console.error("Error Updating Passport Details:", error.response);
       message.error(
         `حدث خطأ أثناء تعديل بيانات الجواز: ${
@@ -166,6 +194,11 @@ const DammagedPasportsShow = () => {
       setDeleteModalVisible(false);
       navigate(-1);
     } catch (error) {
+      if (error.response?.status === 401) {
+        message.error("الرجاء تسجيل الدخول مرة أخرى");
+        navigate('/login');
+        return;
+      }
       console.error("Error Deleting Passport:", error.response);
       message.error(
         `حدث خطأ أثناء حذف الجواز: ${
@@ -194,9 +227,7 @@ const DammagedPasportsShow = () => {
   return (
     <div
       className={`supervisor-passport-damage-show-container ${
-        isSidebarCollapsed
-          ? "sidebar-collapsed"
-          : "supervisor-passport-damage-show-container"
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
       <div className="title-container">
@@ -206,19 +237,25 @@ const DammagedPasportsShow = () => {
             <Lele type="back" />
             الرجوع
           </Button>
-          <Button
-            onClick={() => setDeleteModalVisible(true)}
-            className="delete-button-passport">
-            حذف <Lele type="delete" />
-          </Button>
-          <Button
-            onClick={() => setEditModalVisible(true)}
-            className="edit-button-passport">
-            تعديل <Lele type="edit" />
-          </Button>
+          {hasDeletePermission && (
+            <Button
+              onClick={() => setDeleteModalVisible(true)}
+              className="delete-button-passport">
+              حذف <Lele type="delete" />
+            </Button>
+          )}
+          {hasUpdatePermission && (
+            <Button
+              onClick={() => setEditModalVisible(true)}
+              className="edit-button-passport">
+              تعديل <Lele type="edit" />
+            </Button>
+          )}
         </div>
       </div>
 
+      {/* Rest of the component remains the same */}
+      
       <div className="details-container">
         <div className="details-fields">
           <div className="details-row">

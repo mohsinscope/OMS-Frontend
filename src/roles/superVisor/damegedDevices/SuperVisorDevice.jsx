@@ -1,34 +1,35 @@
-import "./SuperVisorDevice.css";
-import useAuthStore from "./../../../store/store"; // Custom store for user authentication and profile management
-import usePermissionsStore from "./../../../store/permissionsStore"; // Store for managing permissions
 import React, { useState, useEffect } from "react";
-import { Table, message, Button, Select, DatePicker, Input,ConfigProvider  } from "antd"; // Ant Design components
+import { Table, message, Button, Select, DatePicker, Input, ConfigProvider } from "antd";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import Url from "./../../../store/url"; // Base URL for API endpoints
+import Url from "./../../../store/url";
+import useAuthStore from "./../../../store/store";
+import usePermissionsStore from "./../../../store/permissionsStore";
+import "./SuperVisorDevice.css";
 
-const { Option } = Select; // Ant Design Select options
+const { Option } = Select;
 
 export default function SuperVisorDevices() {
   const {
     roles,
-    isSidebarCollapsed, // Determines if the sidebar is collapsed
-    accessToken, // JWT access token for authenticated API requests
-    profile, // User profile data, including office and governorate details
-    searchVisible, // Tracks visibility of the search/filter panel
-    toggleSearch, // Function to toggle the search panel visibility
+    isSidebarCollapsed,
+    accessToken,
+    profile,
+    searchVisible,
+    toggleSearch,
   } = useAuthStore();
 
-  const canCreate = usePermissionsStore((state) => state.canCreate);
+  const { hasAnyPermission } = usePermissionsStore();
+  const hasCreatePermission = hasAnyPermission("create");
 
-  const [devicesList, setDevicesList] = useState([]); // Stores the list of damaged devices
-  const [deviceTypes, setDeviceTypes] = useState([]); // List of available device types
-  const [damagedTypes, setDamagedTypes] = useState([]); // List of damaged device reasons
-  const [loading, setLoading] = useState(false); // Tracks loading state for the table
-  const [deviceTypeId, setDeviceTypeId] = useState(null); // Selected device type for filtering
-  const [damagedTypeId, setDamagedTypeId] = useState(null); // Selected damage reason for filtering
-  const [startDate, setStartDate] = useState(null); // Selected start date for filtering
-  const [endDate, setEndDate] = useState(null); // Selected end date for filtering
+  const [devicesList, setDevicesList] = useState([]);
+  const [deviceTypes, setDeviceTypes] = useState([]);
+  const [damagedTypes, setDamagedTypes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [deviceTypeId, setDeviceTypeId] = useState(null);
+  const [damagedTypeId, setDamagedTypeId] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [serialDeviceNumber, setSerialDeviceNumber] = useState("");
 
   const formatDateToISO = (date) => {
@@ -44,21 +45,21 @@ export default function SuperVisorDevices() {
       try {
         const [deviceTypeResponse, damagedTypeResponse] = await Promise.all([
           axios.get(`${Url}/api/devicetype`, {
-            headers: { Authorization: `Bearer ${accessToken}` }, // Pass token for authentication
+            headers: { Authorization: `Bearer ${accessToken}` },
           }),
           axios.get(`${Url}/api/damageddevicetype/all`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
         ]);
 
-        setDeviceTypes(deviceTypeResponse.data); // Set device types for dropdown
-        setDamagedTypes(damagedTypeResponse.data); // Set damage types for dropdown
+        setDeviceTypes(deviceTypeResponse.data);
+        setDamagedTypes(damagedTypeResponse.data);
       } catch (error) {
         console.error(
           "Error fetching dropdown data:",
           error.response?.data || error.message
         );
-        message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة"); // Show error message in Arabic
+        message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة");
       }
     };
 
@@ -67,99 +68,135 @@ export default function SuperVisorDevices() {
 
   useEffect(() => {
     if (profile) {
-      fetchDevices({
-        SerialNumber: "", // No filtering by serial number initially
-        DeviceTypeId: null, // No filtering by device type initially
-        damagedTypeId: null, // No filtering by damage reason initially
-        startDate: null, // No start date filter initially
-        endDate: null, // No end date filter initially
-        officeId: profile.officeId, // Filter by user's office
-        governorateId: profile.governorateId, // Filter by user's governorate
-        PaginationParams: {
-          PageNumber: 1, // Start with the first page
-          PageSize: 10, // Set default page size
-        },
-      });
+      if (roles.includes("Supervisor")) {
+        fetchDevices({
+          SerialNumber: "",
+          DeviceTypeId: null,
+          damagedTypeId: null,
+          startDate: null,
+          endDate: null,
+          officeId: profile.officeId,
+          PaginationParams: {
+            PageNumber: 1,
+            PageSize: 10,
+          },
+        });
+      } else {
+        fetchAllDevices();
+      }
     }
-  }, [profile]);
+  }, [profile, roles]);
 
   const fetchDevices = async (body) => {
     try {
-      setLoading(true); // Show loading indicator
+      setLoading(true);
       const response = await axios.post(
         `${Url}/api/DamagedDevice/search`,
         body,
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`, // Pass token for authentication
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         }
       );
 
-      setDevicesList(response.data); // Update the devices list
+      setDevicesList(response.data);
 
       if (response.data.length === 0) {
-        message.warning("لا توجد نتائج تطابق الفلاتر المحددة"); // Show warning if no results
+        message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
       }
     } catch (error) {
       console.error(
         "Error fetching devices:",
         error.response?.data || error.message
       );
-      message.error("حدث خطأ أثناء البحث"); // Show error in Arabic
+      message.error("حدث خطأ أثناء البحث");
     } finally {
-      setLoading(false); // Hide loading indicator
+      setLoading(false);
+    }
+  };
+
+  const fetchAllDevices = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `${Url}/api/DamagedDevice?PageNumber=1&PageSize=10`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      setDevicesList(response.data);
+
+      if (response.data.length === 0) {
+        message.warning("لا توجد بيانات");
+      }
+    } catch (error) {
+      console.error(
+        "Error fetching all devices:",
+        error.response?.data || error.message
+      );
+      message.error("حدث خطأ أثناء جلب البيانات");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSearch = async () => {
     const body = {
       SerialNumber: serialDeviceNumber || "",
-      DeviceTypeId: deviceTypeId || undefined, // Use selected device type
-      damagedTypeId: damagedTypeId || undefined, // Use selected damage reason
-      startDate: startDate ? formatDateToISO(startDate) : null, // Format start date
-      endDate: endDate ? formatDateToISO(endDate) : null, // Format end date
-      officeId: profile?.officeId, // User's office ID
-      governorateId: profile?.governorateId, // User's governorate ID
-      PaginationParams: {
-        PageNumber: 1, // Start with the first page
-        PageSize: 10, // Default page size
-      },
-    };
-    console.log(body);
-
-    fetchDevices(body); // Fetch devices with the applied filters
-  };
-
-  const handleReset = async () => {
-    setSerialDeviceNumber(null);
-    setDeviceTypeId(null); // Reset device type filter
-    setDamagedTypeId(null); // Reset damage reason filter
-    setStartDate(null); // Reset start date filter
-    setEndDate(null); // Reset end date filter
-
-    fetchDevices({
-      SerialNumber: "",
-      DeviceTypeId: null,
-      damagedTypeId: null,
-      startDate: null,
-      endDate: null,
-      officeId: profile?.officeId,
-      governorateId: profile?.governorateId,
+      DeviceTypeId: deviceTypeId || undefined,
+      damagedTypeId: damagedTypeId || undefined,
+      startDate: startDate ? formatDateToISO(startDate) : null,
+      endDate: endDate ? formatDateToISO(endDate) : null,
+      officeId: roles.includes("Supervisor") ? profile?.officeId : undefined,
       PaginationParams: {
         PageNumber: 1,
         PageSize: 10,
       },
-    });
+    };
 
-    message.success("تم إعادة تعيين الفلاتر بنجاح"); // Show success message
+    if (roles.includes("Supervisor")) {
+      fetchDevices(body);
+    } else {
+      fetchAllDevices();
+    }
+  };
+
+  const handleReset = async () => {
+    setSerialDeviceNumber(null);
+    setDeviceTypeId(null);
+    setDamagedTypeId(null);
+    setStartDate(null);
+    setEndDate(null);
+
+    if (roles.includes("Supervisor")) {
+      fetchDevices({
+        SerialNumber: "",
+        DeviceTypeId: null,
+        damagedTypeId: null,
+        startDate: null,
+        endDate: null,
+        officeId: profile?.officeId,
+        PaginationParams: {
+          PageNumber: 1,
+          PageSize: 10,
+        },
+      });
+    } else {
+      fetchAllDevices();
+    }
+
+    message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
   const columns = [
     {
       title: "الرقم التسلسلي للجهاز",
-      dataIndex: "serialNumber", // Corrected field name
+      dataIndex: "serialNumber",
       key: "serialNumber",
       className: "table-column-device-type",
     },
@@ -180,7 +217,7 @@ export default function SuperVisorDevices() {
       dataIndex: "date",
       key: "date",
       className: "table-column-date",
-      render: (text) => text.split("T")[0], // Format date to YYYY-MM-DD
+      render: (text) => text.split("T")[0],
     },
     {
       title: "التفاصيل",
@@ -277,11 +314,13 @@ export default function SuperVisorDevices() {
           </Button>
         </div>
 
-        <Link to="/supervisor/damegedDevices/add">
-          <Button className="supervisor-devices-dameged-add-button">
-            اضافة جهاز تالف
-          </Button>
-        </Link>
+        {hasCreatePermission && (
+          <Link to="/supervisor/damegedDevices/add">
+            <Button className="supervisor-devices-dameged-add-button">
+              اضافة جهاز تالف
+            </Button>
+          </Link>
+        )}
       </div>
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
@@ -289,21 +328,21 @@ export default function SuperVisorDevices() {
         </Button>
       </div>
       <div className="supervisor-devices-dameged-table-container">
-      <ConfigProvider direction="rtl">
-        <Table
-          dataSource={devicesList}
-          columns={columns}
-          rowKey={(record) => record.id}
-          bordered
-          loading={loading}
-          pagination={{
-            pageSize: 15,
-            position: ["bottomCenter"],
-          }}
-          locale={{ emptyText: "لا توجد بيانات" }}
-          className="supervisor-devices-dameged-table"
-        />
-          </ConfigProvider>
+        <ConfigProvider direction="rtl">
+          <Table
+            dataSource={devicesList}
+            columns={columns}
+            rowKey={(record) => record.id}
+            bordered
+            loading={loading}
+            pagination={{
+              pageSize: 15,
+              position: ["bottomCenter"],
+            }}
+            locale={{ emptyText: "لا توجد بيانات" }}
+            className="supervisor-devices-dameged-table"
+          />
+        </ConfigProvider>
       </div>
     </div>
   );
