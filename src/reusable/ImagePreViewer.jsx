@@ -44,6 +44,11 @@ export default function ImagePreviewer({
     setIsDeleteConfirmVisible(false);
   };
 
+  const formatImageUrl = (url) => {
+    if (!url) return '';
+    return url.startsWith('http') ? url : `https://cdn-oms.scopesky.org/${url}`;
+  };
+
   if (!uploadedImages || uploadedImages.length === 0) {
     return <p>لا توجد صور للعرض</p>;
   }
@@ -54,7 +59,7 @@ export default function ImagePreviewer({
         <Image
           width={defaultWidth}
           height={defaultHeight}
-          src={uploadedImages[currentIndex]}
+          src={formatImageUrl(uploadedImages[currentIndex])}
           alt={`Image ${currentIndex + 1}`}
           className="image-preview-item"
           style={{ objectFit: "contain" }}

@@ -414,7 +414,7 @@
 }
 
 .error-message {
-  animation: shake 0.5s ease-in-out;
+  animation: shake 0.3s ease-in-out;
 }
 
 @keyframes slideFromTop {
