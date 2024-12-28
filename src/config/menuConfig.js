@@ -16,14 +16,14 @@ export const MENU_ITEMS = [
   {
     label: "الأجهزة التالفة",
     icon: "devices",
-    path: "supervisor/damegedDevices",
+    path: "/supervisor/damegedDevices",
     resource: "devices",
     role: ["DamagedDevice", "Supervisor", "Admin"], // Role allowed to access
   },
   {
     label: "الجوازات التالفة",
     icon: "passport",
-    path: "supervisor/damagedpasportshistory",
+    path: "/supervisor/damagedpasportshistory",
 
     role: ["DamagedPassport", "Supervisor", "Admin"], // Role allowed to access
   },

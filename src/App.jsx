@@ -5,7 +5,7 @@ import Layout from "./pages/LayOut.jsx";
 import useAuthStore from "./store/store.js";
 import SignInPage from "./pages/signIn.jsx";
 import Stats from "./pages/stats.jsx";
-import LandingPage from './pages/landingPage.jsx';
+import LandingPage from "./pages/landingPage.jsx";
 // Import all components
 import Dashboard from "./pages/dashBoard.jsx";
 import AdminExpenses from "./roles/admin/admin-expensess/adminExpensess.jsx";
@@ -47,7 +47,6 @@ import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecture
 import LecturerShow from "./roles/superVisor/lecturer/SuperVisorLecturerShow.jsx";
 
 const App = () => {
-
   // Centralized routes configuration
   const routes = [
     { path: "dashboard", element: <Dashboard /> },
@@ -76,24 +75,24 @@ const App = () => {
     },
 
     {
-      path: "supervisor/damagedpasportshistory",
+      path: "/supervisor/damagedpasportshistory",
       element: <SuperVisorDamagedpasportsHistory />,
     },
     {
-      path: "supervisor/damagedpasportshistory/DammagedPasportsShow",
+      path: "/supervisor/damagedpasportshistory/DammagedPasportsShow",
       element: <DammagedPasportsShow />,
     },
     {
-      path: "supervisor/damagedpasportshistory/supervisordammagepasportadd",
+      path: "/supervisor/damagedpasportshistory/supervisordammagepasportadd",
       element: <SuperVisorDammagePassportAdd />,
     },
-    { path: "supervisor/damegedDevices", element: <SuperVisorDevices /> },
+    { path: "/supervisor/damegedDevices", element: <SuperVisorDevices /> },
     {
-      path: "supervisor/damegedDevices/show",
+      path: "/supervisor/damegedDevices/show",
       element: <SuperVisorDeviceShow />,
     },
     {
-      path: "supervisor/damegedDevices/add",
+      path: "/supervisor/damegedDevices/add",
       element: <SuperVisorDevicesAdd />,
     },
     {
@@ -141,9 +140,8 @@ const App = () => {
     { path: "settings", element: <Settings /> },
     { path: "expenses-view", element: <ExpensessView /> },
     { path: "landing-page", element: <LandingPage /> },
-    
   ];
-  const initializeAuth = useAuthStore(state => state.initializeAuth);
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -165,18 +163,17 @@ const App = () => {
 
         {/* Protected Routes */}
         <Route
-  path="/"
-  element={
-    <ProtectedRoute>
-      <Layout />
-    </ProtectedRoute>
-  }
->
-  {/* Define nested protected routes */}
-  {routes.map(({ path, element }, index) => (
-    <Route key={index} path={path} element={element} />
-  ))}
-</Route>
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }>
+          {/* Define nested protected routes */}
+          {routes.map(({ path, element }, index) => (
+            <Route key={index} path={path} element={element} />
+          ))}
+        </Route>
       </Routes>
     </Router>
   );

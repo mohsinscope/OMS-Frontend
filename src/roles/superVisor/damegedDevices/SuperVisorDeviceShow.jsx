@@ -7,6 +7,7 @@ import {
   Input,
   Button,
   ConfigProvider,
+  Select,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -25,6 +26,9 @@ const SuperVisorDeviceShow = () => {
   const [loading, setLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+
+  const [damagedTypes, setDamagedTypes] = useState([]);
+  const [damagedDeviceTypes, setDamagedDeviceTypes] = useState([]);
   const [form] = Form.useForm();
   const { isSidebarCollapsed, accessToken } = useAuthStore();
 
@@ -38,7 +42,7 @@ const SuperVisorDeviceShow = () => {
     const fetchDeviceDetails = async () => {
       setLoading(true);
       try {
-        console.log("Fetchinh device id = ", deviceId);
+        console.log("Fetching device id = ", deviceId);
         const response = await axios.get(
           `${Url}/api/DamagedDevice/${deviceId}`,
           {
@@ -47,6 +51,7 @@ const SuperVisorDeviceShow = () => {
             },
           }
         );
+        console.log(response);
         const device = response.data;
         const formattedDate = device.date
           ? new Date(device.date).toISOString().slice(0, 19) + "Z"
@@ -74,6 +79,7 @@ const SuperVisorDeviceShow = () => {
             },
           }
         );
+        console.log(response);
         const imageUrls = response.data.map((image) => image.filePath);
         setImages(imageUrls);
       } catch (error) {
@@ -85,6 +91,44 @@ const SuperVisorDeviceShow = () => {
       }
     };
 
+    const fetchDamagedTypes = async () => {
+      try {
+        const response = await axios.get(`${Url}/api/damageddevicetype/all`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        setDamagedTypes(
+          response.data.map((type) => ({
+            value: type.id,
+            label: type.name,
+          }))
+        );
+      } catch (error) {
+        message.error("خطأ في جلب أنواع التلف للاجهزة");
+      }
+    };
+
+    const fetchDamagedDeviceTypes = async () => {
+      try {
+        const response = await axios.get(`${Url}/api/devicetype`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        setDamagedDeviceTypes(
+          response.data.map((type) => ({
+            value: type.id,
+            label: type.name,
+          }))
+        );
+      } catch (error) {
+        message.error("خطأ في جلب أنواع التلف للأجهزة");
+      }
+    };
+
+    fetchDamagedDeviceTypes();
+    fetchDamagedTypes();
     fetchDeviceDetails();
     fetchDeviceImages();
   }, [deviceId, accessToken, navigate, form]);
@@ -99,7 +143,7 @@ const SuperVisorDeviceShow = () => {
           : deviceData.date,
         damagedDeviceTypeId: values.damagedDeviceTypeId,
         note: values.note || "",
-        deviceTypeId: deviceData.deviceTypeId,
+        deviceTypeId: values.deviceTypeId,
         officeId: deviceData.officeId,
         governorateId: deviceData.governorateId,
         profileId: deviceData.profileId,
@@ -144,7 +188,7 @@ const SuperVisorDeviceShow = () => {
       setDeleteModalVisible(false);
       navigate(-1);
     } catch (error) {
-      console.error("Error Deleting Passport:", error.response);
+      console.error("Error Deleting Device:", error.response);
       message.error(
         `حدث خطأ أثناء حذف الجهاز: ${
           error.response?.data?.message || error.message
@@ -282,12 +326,25 @@ const SuperVisorDeviceShow = () => {
               ]}>
               <Input placeholder="الرقم التسلسلي" />
             </Form.Item>
-            {/* input dopdown to select damaged type */}
+            <Form.Item
+              name="deviceTypeId"
+              label="نوع الجهاز"
+              rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}>
+              <Select
+                options={damagedDeviceTypes}
+                placeholder="اختر نوع الجهاز"
+                allowClear
+              />
+            </Form.Item>
             <Form.Item
               name="damagedDeviceTypeId"
               label="نوع الضرر"
               rules={[{ required: true, message: "يرجى إدخال نوع الضرر" }]}>
-              <Input placeholder="نوع الضرر" />
+              <Select
+                options={damagedTypes}
+                placeholder="اختر سبب التلف"
+                allowClear
+              />
             </Form.Item>
             <Form.Item
               name="date"
