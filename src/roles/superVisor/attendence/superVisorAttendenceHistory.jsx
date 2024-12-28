@@ -211,8 +211,7 @@ export default function SupervisorAttendanceHistory() {
         <button className="attendance-reset-button" onClick={handleReset}>
           إعادة التعيين
         </button>
-        
-=======
+  
         <Link to="AttendenceAdd">
           <button className="attendance-add-button">اضافة حضور</button>
         </Link>

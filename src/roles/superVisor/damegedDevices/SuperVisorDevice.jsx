@@ -2,7 +2,7 @@ import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store"; // Custom store for user authentication and profile management
 import usePermissionsStore from "./../../../store/permissionsStore"; // Store for managing permissions
 import React, { useState, useEffect } from "react";
-import { Table, message, Button, Select, DatePicker, Input } from "antd"; // Ant Design components
+import { Table, message, Button, Select, DatePicker, Input,ConfigProvider  } from "antd"; // Ant Design components
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Url from "./../../../store/url"; // Base URL for API endpoints
@@ -289,6 +289,7 @@ export default function SuperVisorDevices() {
         </Button>
       </div>
       <div className="supervisor-devices-dameged-table-container">
+      <ConfigProvider direction="rtl">
         <Table
           dataSource={devicesList}
           columns={columns}
@@ -302,6 +303,7 @@ export default function SuperVisorDevices() {
           locale={{ emptyText: "لا توجد بيانات" }}
           className="supervisor-devices-dameged-table"
         />
+          </ConfigProvider>
       </div>
     </div>
   );

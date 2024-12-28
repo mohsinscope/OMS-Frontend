@@ -12,10 +12,24 @@
     
 }
 .attendance-filters-stats input{
-    width: 200px;
+    width: 267px;
+    height: 45px;
+    padding: 0 10px;
+    border-radius: 8px;
+    outline: none;
+    border: #bcc1ca 1px solid;
+    font-size: large;
+
 }
 .attendance-filters-stats select{
-    width: 200px;
+    width: 267px;
+    height: 45px;
+    padding: 0 10px;
+    border-radius: 8px;
+    outline: none;
+    border: #bcc1ca 1px solid;
+    font-size: large;
+
 }
 .attendance-filters-stats button{
 

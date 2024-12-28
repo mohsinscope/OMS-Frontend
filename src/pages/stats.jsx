@@ -21,18 +21,8 @@ export default function Stats() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
 
-  const COLORS = [
-    "#4CAF50", // Green
-    "#F44336", // Red
-    "#2196F3", // Blue
-    "#FFC107", // Amber
-    "#9C27B0", // Purple
-    "#FF5722", // Deep Orange
-    "#00BCD4", // Cyan
-    "#E91E63", // Pink
-    "#3F51B5", // Indigo
-    "#CDDC39"  // Lime
-  ];
+  const COLORS = ["#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0", 
+                  "#FF5722", "#00BCD4", "#E91E63", "#3F51B5", "#CDDC39"];
 
   const fetchGovernorates = async () => {
     try {
@@ -81,7 +71,6 @@ export default function Stats() {
             Date: `${selectedDate}T12:00:00Z`,
             DamagedDeviceTypeId: type.id,
           };
-
           const response = await axios.post(`${Url}/api/DamagedDevice/search/statistics`, body);
           return {
             name: type.name,
@@ -90,20 +79,9 @@ export default function Stats() {
         })
       );
 
-      const combinedData = deviceData.reduce((acc, curr) => {
-        if (curr.value > 0) {
-          const existing = acc.find(item => item.name === curr.name);
-          if (existing) {
-            existing.value += curr.value;
-          } else {
-            acc.push(curr);
-          }
-        }
-        return acc;
-      }, []);
-
-      const total = combinedData.reduce((acc, curr) => acc + curr.value, 0);
-      setChartData(combinedData);
+      const filteredData = deviceData.filter(item => item.value > 0);
+      const total = filteredData.reduce((acc, curr) => acc + curr.value, 0);
+      setChartData(filteredData);
       setTotalItems(total);
     } catch (error) {
       console.error("Failed to fetch damaged devices:", error.message);
@@ -125,7 +103,6 @@ export default function Stats() {
             Date: `${selectedDate}T12:00:00Z`,
             DamagedTypeId: type.id,
           };
-
           const response = await axios.post(`${Url}/api/DamagedPassport/search/statistics`, body);
           return {
             name: type.name,
@@ -134,8 +111,9 @@ export default function Stats() {
         })
       );
 
-      const total = passportData.reduce((acc, curr) => acc + curr.value, 0);
-      setChartData(passportData);
+      const filteredData = passportData.filter(item => item.value > 0);
+      const total = filteredData.reduce((acc, curr) => acc + curr.value, 0);
+      setChartData(filteredData);
       setTotalItems(total);
     } catch (error) {
       console.error("Failed to fetch damaged passports:", error.message);
@@ -146,11 +124,41 @@ export default function Stats() {
     }
   };
 
+  const handleTabChange = async (tab) => {
+    setChartData([]);
+    setTotalItems(0);
+    setSelectedTab(tab);
+    
+    // First ensure types are loaded before fetching data
+    if (tab === "damagedDevices") {
+      if (damagedDeviceTypes.length === 0) {
+        await fetchDamagedDeviceTypes();
+      }
+      fetchDamagedDevices();
+    } else if (tab === "damagedPassports") {
+      if (damagedPassportTypes.length === 0) {
+        await fetchDamagedPassportTypes();
+      }
+      fetchDamagedPassports();
+    }
+  };
   useEffect(() => {
-    fetchGovernorates();
-    fetchOffices();
-    fetchDamagedDeviceTypes();
-    fetchDamagedPassportTypes();
+    const fetchInitialData = async () => {
+      await Promise.all([
+        fetchGovernorates(),
+        fetchOffices(),
+        fetchDamagedDeviceTypes(),
+        fetchDamagedPassportTypes()
+      ]);
+      
+      if (selectedTab === "damagedDevices") {
+        fetchDamagedDevices();
+      } else if (selectedTab === "damagedPassports") {
+        fetchDamagedPassports();
+      }
+    };
+    
+    fetchInitialData();
   }, []);
 
   return (
@@ -160,19 +168,19 @@ export default function Stats() {
           <ul>
             <li
               className={`stats-navbar-item ${selectedTab === "damagedDevices" ? "active" : ""}`}
-              onClick={() => setSelectedTab("damagedDevices")}
+              onClick={() => handleTabChange("damagedDevices")}
             >
               الأجهزة التالفة
             </li>
             <li
               className={`stats-navbar-item ${selectedTab === "damagedPassports" ? "active" : ""}`}
-              onClick={() => setSelectedTab("damagedPassports")}
+              onClick={() => handleTabChange("damagedPassports")}
             >
               الجوازات التالفة
             </li>
             <li
               className={`stats-navbar-item ${selectedTab === "attendance" ? "active" : ""}`}
-              onClick={() => setSelectedTab("attendance")}
+              onClick={() => handleTabChange("attendance")}
             >
               الحضور
             </li>
@@ -248,7 +256,8 @@ export default function Stats() {
       <div className="stats-main-section" dir="rtl">
         <div className="stats-chart-section">
           <h2 className="stats-chart-title">
-            احصائيات {selectedTab === "damagedDevices" ? "الأجهزة التالفة" : selectedTab === "damagedPassports" ? "الجوازات التالفة" : "الحضور"}
+            احصائيات {selectedTab === "damagedDevices" ? "الأجهزة التالفة" : 
+                     selectedTab === "damagedPassports" ? "الجوازات التالفة" : "الحضور"}
           </h2>
           <div className="chart-container">
             {selectedTab === "attendance" ? (
@@ -299,7 +308,9 @@ export default function Stats() {
                   </Pie>
                   <Tooltip />
                 </PieChart>
-                <span>{selectedTab === "damagedDevices" ? "عدد الأجهزة" : "عدد الجوازات"}: {item.value}</span>
+                <span>
+                  {selectedTab === "damagedDevices" ? "عدد الأجهزة" : "عدد الجوازات"}: {item.value}
+                </span>
               </div>
             ))}
           </div>

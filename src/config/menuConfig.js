@@ -11,21 +11,42 @@ export const MENU_ITEMS = [
     icon: "attendence",
     path: "/supervisor/Attendence",
     resource: "attendence",
-    role: ["Attendance", "Supervisor", "Admin"], // Role allowed to access
+    role: [ "Supervisor", "Admin"], // Role allowed to access
+  },
+  {
+    label: "الحضور",
+    icon: "attendence",
+    path: "/manager/attendence",
+    resource: "attendence",
+    role: ["Attendance",], // Role allowed to access
   },
   {
     label: "الأجهزة التالفة",
     icon: "devices",
     path: "/supervisor/damegedDevices",
     resource: "devices",
-    role: ["DamagedDevice", "Supervisor", "Admin"], // Role allowed to access
+    role: [ "Supervisor", "Admin"], // Role allowed to access
+  },
+  {
+    label: "الأجهزة التالفة",
+    icon: "devices",
+    path: "/employee_damage/damage/devices",
+    resource: "devices",
+    role: ["DamagedDevice"], // Role allowed to access
   },
   {
     label: "الجوازات التالفة",
     icon: "passport",
     path: "/supervisor/damagedpasportshistory",
 
-    role: ["DamagedPassport", "Supervisor", "Admin"], // Role allowed to access
+    role: [ "Supervisor", "Admin"], // Role allowed to access
+  },
+  {
+    label: "الجوازات التالفة",
+    icon: "passport",
+    path: "/employee_damage/damage/pasports",
+
+    role: ["DamagedPassport"], // Role allowed to access
   },
   {
     label: "المحاضر",
@@ -62,14 +83,7 @@ export const MENU_ITEMS = [
     path: "admin/users",
 
     role: ["Admin"], // Role allowed to access
-  },
-  {
-    label: "ادارة المستخدمين",
-    icon: "user",
-    path: "admin/users",
-
-    role: ["Admin"], // Role allowed to access
-  },
+  }
 ];
 
 export const COMMON_MENU_ITEMS = [
