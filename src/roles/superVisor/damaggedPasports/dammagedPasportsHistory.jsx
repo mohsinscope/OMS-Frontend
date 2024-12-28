@@ -307,7 +307,7 @@ export default function SuperVisorPassport() {
 
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "إخفاء الفلاتر" : "إظهار الفلاتر"}
+          {searchVisible ? "بحث" : "بحث"}
         </Button>
       </div>
 
