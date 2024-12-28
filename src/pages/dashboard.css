@@ -166,20 +166,17 @@
   transform: translateY(-2px); /* Subtle lift effect */
 }
 
-
-
 .logout:hover {
   transform: translateY(-2px); /* Subtle lift effect */
 }
-.sidebar.collapsed .sidebar-bottom .menu-item:nth-child(2)  {
+.sidebar.collapsed .sidebar-bottom .menu-item:nth-child(2) {
   background-color: white;
   color: red;
   margin-left: 3px;
   margin-bottom: 30px;
   padding: 10px 0;
-
 }
-.sidebar .sidebar-bottom .menu-item:nth-child(2){
+.sidebar .sidebar-bottom .menu-item:nth-child(2) {
   display: flex;
   align-items: center;
   gap: 10px; /* Space between icon and text */
@@ -226,7 +223,6 @@
 .sidebar-bottom .menu-item h3 {
   font-size: 15px;
 }
-
 
 /* collapse the sidebar */
 
@@ -367,6 +363,3 @@
   height: 50px;
   border-radius: 10px;
 }
-
-
-
