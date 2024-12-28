@@ -1,51 +1,80 @@
-import { create } from "zustand"; // Import the Zustand library for state management
-import { ROLE_PERMISSIONS } from "../config/permissionsConfig"; // Import role-based permissions configuration
-import useAuthStore from "./store"; // Import the auth store to access user roles and authentication data
+import { create } from "zustand";
+import { ROLE_PERMISSIONS } from "../config/permissionsConfig";
+import useAuthStore from "./store";
 
-// Define the permissions store using Zustand
 const usePermissionsStore = create(() => ({
   /**
    * Checks if the user has a specific permission for a resource.
    *
-   * @param {string} resource - The name of the resource (e.g., "devices").
+   * @param {string} resource - The name of the resource (e.g., "devices", "admin").
    * @param {string} permission - The type of permission (e.g., "read", "create").
-   * @returns {boolean} - Returns `true` if the user has the specified permission, otherwise `false`.
+   * @returns {boolean} - Returns `true` if the user has the specified permission.
    */
   hasPermission: (resource, permission) => {
-    const { roles } = useAuthStore.getState(); // Access user roles from the auth store
+    try {
+      const { roles } = useAuthStore.getState();
 
-    // If no roles are assigned to the user, deny access
-    if (!roles || roles.length === 0) return false;
+      // If no roles are assigned to the user, deny access
+      if (!roles || roles.length === 0) {
+        console.warn('No roles assigned to user');
+        return false;
+      }
 
-    // Check if any of the user's roles have the specified permission for the resource
-    return roles.some((role) => {
-      const permissions = ROLE_PERMISSIONS[role]?.[resource] || []; // Get permissions for the role and resource
-      return permissions.includes(permission); // Check if the permission exists
-    });
+      // Check if any of the user's roles have the specified permission for the resource
+      return roles.some((role) => {
+        const rolePermissions = ROLE_PERMISSIONS[role];
+        if (!rolePermissions) {
+          console.warn(`No permissions defined for role: ${role}`);
+          return false;
+        }
+
+        // Get permissions for the specific resource
+        const permissions = rolePermissions[resource];
+        if (!permissions) {
+          return false; // Don't warn here as it's a normal case
+        }
+
+        return permissions.includes(permission);
+      });
+    } catch (error) {
+      console.error('Error checking permission:', error);
+      return false;
+    }
   },
 
   /**
-   * Permission-specific helper functions
-   *
-   * These functions provide an easier way to check for specific permissions without passing
-   * the permission type explicitly. For example, `canRead` checks for "read" permissions.
+   * Check if user has any permission of a specific type across all roles and resources
+   * @param {string} permission - The permission to check for
+   * @returns {boolean} - True if user has the permission in any role/resource
    */
+  hasAnyPermission: (permission) => {
+    try {
+      const { roles } = useAuthStore.getState();
 
-  // Checks if the user has "read" permission for the given resource
-  canRead: (resource) =>
-    usePermissionsStore.getState().hasPermission(resource, "read"),
+      if (!roles || roles.length === 0) return false;
 
-  // Checks if the user has "create" permission for the given resource
-  canCreate: (resource) =>
-    usePermissionsStore.getState().hasPermission(resource, "create"),
+      return roles.some(role => {
+        const rolePerms = ROLE_PERMISSIONS[role];
+        if (!rolePerms) return false;
 
-  // Checks if the user has "update" permission for the given resource
-  canUpdate: (resource) =>
-    usePermissionsStore.getState().hasPermission(resource, "update"),
+        // Check all resources in this role
+        return Object.values(rolePerms).some(resourcePerms => 
+          resourcePerms.includes(permission)
+        );
+      });
+    } catch (error) {
+      console.error('Error checking any permission:', error);
+      return false;
+    }
+  },
 
-  // Checks if the user has "delete" permission for the given resource
-  canDelete: (resource) =>
-    usePermissionsStore.getState().hasPermission(resource, "delete"),
+  // Helper functions for common permission checks
+  canRead: (resource) => usePermissionsStore.getState().hasPermission(resource, "read"),
+  canCreate: (resource) => usePermissionsStore.getState().hasPermission(resource, "create"),
+  canUpdate: (resource) => usePermissionsStore.getState().hasPermission(resource, "update"),
+  canDelete: (resource) => usePermissionsStore.getState().hasPermission(resource, "delete"),
+  canApprove: (resource) => usePermissionsStore.getState().hasPermission(resource, "approve"),
+  canExport: (resource) => usePermissionsStore.getState().hasPermission(resource, "export"),
 }));
 
-export default usePermissionsStore; // Export the permissions store for use across the app
+export default usePermissionsStore;

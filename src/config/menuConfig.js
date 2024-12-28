@@ -11,15 +11,9 @@ export const MENU_ITEMS = [
     icon: "attendence",
     path: "/supervisor/Attendence",
     resource: "attendence",
-    role: [ "Supervisor", "Admin"], // Role allowed to access
+    role: [ "Supervisor", "Admin","Attendance"], // Role allowed to access
   },
-  {
-    label: "الحضور",
-    icon: "attendence",
-    path: "/manager/attendence",
-    resource: "attendence",
-    role: ["Attendance",], // Role allowed to access
-  },
+ 
   {
     label: "الأجهزة التالفة",
     icon: "devices",
@@ -45,7 +39,7 @@ export const MENU_ITEMS = [
     label: "الجوازات التالفة",
     icon: "passport",
     path: "/employee_damage/damage/pasports",
-
+    resource: "passports",
     role: ["DamagedPassport"], // Role allowed to access
   },
   {

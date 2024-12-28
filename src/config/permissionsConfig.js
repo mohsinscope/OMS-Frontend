@@ -1,13 +1,24 @@
 export const ROLE_PERMISSIONS = {
-    Damaged_Devices: {
-      devices: ["create", "read", "update", "delete", "export"],
+  DamagedDevice: {
+      devices: [ "read",  "export"],
     
     },
     Expenses: {
-        expenses: ["create", "read", "update", "delete", "approve", "export"],
+        expenses: [ "read", "update", "delete", "approve", "export"],
     },
     Attendence: {
-        attendance: [ "create","read", "update", "delete", "approve", "export"], // Consistent lowercase "attendance"
+        attendance: ["read", "update", "delete", "approve", "export"], // Consistent lowercase "attendance"
     },
+    DamagedPassport: {
+      passports: [ "read",  "approve", "export"], // Consistent lowercase "attendance"
+  },
+  Supervisor: {
+    supervisor: ["create","read", "update", "delete", "approve", "export"], // Consistent lowercase "attendance"
+  },
+  Admin: {
+    admin: ["create","read", "update", "delete", "approve", "export"], // Consistent lowercase "attendance"
+  },
+
+
   };
   

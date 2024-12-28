@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./DammagedDevicess.css";
-import { Table, message, Button } from "antd";
+import { Table, message, Button, ConfigProvider } from "antd";
 import { Link } from "react-router-dom";
 import useAuthStore from "./../../../store/store.js";
 import axios from "axios";
@@ -15,6 +15,12 @@ export default function DammagedDevicess() {
   const [damageDeviceTypes, setDamageDeviceTypes] = useState([]);
   const [deviceTypes, setDeviceTypes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0,
+  });
 
   useEffect(() => {
     const fetchDropdownData = async () => {
@@ -46,25 +52,36 @@ export default function DammagedDevicess() {
     fetchDropdownData();
   }, []);
 
-  useEffect(() => {
-    const fetchDamagedDevices = async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(`${Url}/api/DamagedDevice?PageNumber=1&PageSize=10`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        setDamagedDevices(response.data);
-        setFilteredDevices(response.data);
-      } catch (error) {
-        console.error("Error fetching damaged devices:", error);
-        message.error("حدث خطأ أثناء تحميل البيانات");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchDamagedDevices = async (pageNumber = 1, pageSize = 10) => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${Url}/api/DamagedDevice`, {
+        params: { PageNumber: pageNumber, PageSize: pageSize },
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      setDamagedDevices(response.data);
+      setFilteredDevices(response.data);
 
+      const paginationHeader = response.headers.pagination
+        ? JSON.parse(response.headers.pagination)
+        : {};
+      setPagination({
+        currentPage: paginationHeader.currentPage || 1,
+        pageSize: paginationHeader.itemsPerPage || 10,
+        totalItems: paginationHeader.totalItems || 0,
+        totalPages: paginationHeader.totalPages || 1,
+      });
+    } catch (error) {
+      console.error("Error fetching damaged devices:", error);
+      message.error("حدث خطأ أثناء تحميل البيانات");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchDamagedDevices();
   }, []);
 
@@ -81,10 +98,10 @@ export default function DammagedDevicess() {
     const formData = new FormData(event.target);
 
     const startDate = formData.get("startDate")
-      ? `${formData.get("startDate")}T12:00:00Z`
+      ? `${formData.get("startDate")}T00:00:00Z`
       : null;
     const endDate = formData.get("endDate")
-      ? `${formData.get("endDate")}T12:00:00Z`
+      ? `${formData.get("endDate")}T23:59:59Z`
       : null;
 
     const payload = {
@@ -96,7 +113,7 @@ export default function DammagedDevicess() {
       endDate,
       PaginationParams: {
         PageNumber: 1,
-        PageSize: 10,
+        PageSize: pagination.pageSize, // Always 10 as requested
       },
     };
 
@@ -107,6 +124,17 @@ export default function DammagedDevicess() {
       });
 
       setFilteredDevices(response.data);
+
+      const paginationHeader = response.headers.pagination
+        ? JSON.parse(response.headers.pagination)
+        : {};
+      setPagination({
+        currentPage: paginationHeader.currentPage || 1,
+        pageSize: paginationHeader.itemsPerPage || 10,
+        totalItems: paginationHeader.totalItems || 0,
+        totalPages: paginationHeader.totalPages || 1,
+      });
+
       if (response.data.length === 0) {
         message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
       }
@@ -120,7 +148,7 @@ export default function DammagedDevicess() {
 
   const handleReset = () => {
     document.getElementById("filter-form").reset();
-    setFilteredDevices(damagedDevices);
+    fetchDamagedDevices();
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
@@ -163,7 +191,8 @@ export default function DammagedDevicess() {
         <Link
           to="/supervisor/damegedDevices/show"
           state={{ id: record.id }}
-          className="damaged-devices-details-link">
+          className="damaged-devices-details-link"
+        >
           عرض
         </Link>
       ),
@@ -171,100 +200,109 @@ export default function DammagedDevicess() {
   ];
 
   return (
-    <div
-      className={`damaged-devices-page ${
-        isSidebarCollapsed ? "sidebar-collapsed" : "damaged-devices-page"
-      }`}
-      dir="rtl">
-      <h1 className="damaged-devices-title">الأجهزة التالفة</h1>
+    <ConfigProvider direction="rtl">
+      <div
+        className={`damaged-devices-page ${
+          isSidebarCollapsed ? "sidebar-collapsed" : "damaged-devices-page"
+        }`}
+        dir="rtl"
+      >
+        <h1 className="damaged-devices-title">الأجهزة التالفة</h1>
 
-      <form id="filter-form" className="damaged-devices-form" onSubmit={handleFilterSubmit}>
-        <div className="field-wrapper">
-          <label htmlFor="damageDeviceType">سبب التلف</label>
-          <select name="damageDeviceType" id="damageDeviceType" className="damaged-devices-dropdown">
-            <option value=""></option>
-            {damageDeviceTypes.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field-wrapper">
-          <label htmlFor="deviceType">نوع الجهاز</label>
-          <select name="deviceType" id="deviceType" className="damaged-devices-dropdown">
-            <option value=""></option>
-            {deviceTypes.map((type) => (
-              <option key={type.id} value={type.id}>
-                {type.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field-wrapper">
-          <label htmlFor="governorate">اسم المحافظة</label>
-          <select name="governorate" id="governorate" className="damaged-devices-dropdown">
-            <option value=""></option>
-            {governorates.map((gov) => (
-              <option key={gov.id} value={gov.id}>
-                {gov.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field-wrapper">
-          <label htmlFor="office">اسم المكتب</label>
-          <select name="office" id="office" className="damaged-devices-dropdown">
-            <option value=""></option>
-            {offices.map((office) => (
-              <option key={office.id} value={office.id}>
-                {office.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="field-wrapper">
-          <label htmlFor="startDate">من التاريخ</label>
-          <input
-            type="date"
-            name="startDate"
-            id="startDate"
-            className="damaged-devices-date-picker"
-            required
+        <form id="filter-form" className="damaged-devices-form" onSubmit={handleFilterSubmit}>
+          <div className="field-wrapper">
+            <label htmlFor="damageDeviceType">سبب التلف</label>
+            <select name="damageDeviceType" id="damageDeviceType" className="damaged-devices-dropdown">
+              <option value=""></option>
+              {damageDeviceTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field-wrapper">
+            <label htmlFor="deviceType">نوع الجهاز</label>
+            <select name="deviceType" id="deviceType" className="damaged-devices-dropdown">
+              <option value=""></option>
+              {deviceTypes.map((type) => (
+                <option key={type.id} value={type.id}>
+                  {type.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field-wrapper">
+            <label htmlFor="governorate">اسم المحافظة</label>
+            <select name="governorate" id="governorate" className="damaged-devices-dropdown">
+              <option value=""></option>
+              {governorates.map((gov) => (
+                <option key={gov.id} value={gov.id}>
+                  {gov.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field-wrapper">
+            <label htmlFor="office">اسم المكتب</label>
+            <select name="office" id="office" className="damaged-devices-dropdown">
+              <option value=""></option>
+              {offices.map((office) => (
+                <option key={office.id} value={office.id}>
+                  {office.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field-wrapper">
+            <label htmlFor="startDate">من التاريخ</label>
+            <input
+              type="date"
+              name="startDate"
+              id="startDate"
+              className="damaged-devices-date-picker"
+              required
+            />
+          </div>
+          <div className="field-wrapper">
+            <label htmlFor="endDate">إلى التاريخ</label>
+            <input
+              type="date"
+              name="endDate"
+              id="endDate"
+              className="damaged-devices-date-picker"
+              required
+            />
+          </div>
+          <div className="field-wrapper">
+            <Button type="primary" htmlType="submit">
+              تطبيق
+            </Button>
+            <Button style={{ marginLeft: "10px" }} onClick={handleReset}>
+              إعادة تعيين
+            </Button>
+          </div>
+        </form>
+
+        <div className="damaged-devices-table-container">
+          <Table
+            dataSource={filteredDevices}
+            columns={columns}
+            rowKey={(record) => record.id}
+            bordered
+            loading={loading}
+            pagination={{
+              current: pagination.currentPage,
+              pageSize: pagination.pageSize,
+              total: pagination.totalItems,
+              onChange: (page) => fetchDamagedDevices(page, pagination.pageSize),
+              position:["bottomCenter"]
+            }}
+            locale={{ emptyText: "لا توجد بيانات" }}
+            className="damaged-devices-table"
           />
         </div>
-        <div className="field-wrapper">
-          <label htmlFor="endDate">إلى التاريخ</label>
-          <input
-            type="date"
-            name="endDate"
-            id="endDate"
-            className="damaged-devices-date-picker"
-            required
-          />
-        </div>
-        <div className="field-wrapper">
-          <Button type="primary" htmlType="submit">
-            تطبيق
-          </Button>
-          <Button style={{ marginLeft: "10px" }} onClick={handleReset}>
-            إعادة تعيين
-          </Button>
-        </div>
-      </form>
-
-      <div className="damaged-devices-table-container">
-        <Table
-          dataSource={filteredDevices}
-          columns={columns}
-          rowKey={(record) => record.id}
-          bordered
-          loading={loading}
-          pagination={{ pageSize: 15 }}
-          locale={{ emptyText: "لا توجد بيانات" }}
-          className="damaged-devices-table"
-        />
       </div>
-    </div>
+    </ConfigProvider>
   );
 }
