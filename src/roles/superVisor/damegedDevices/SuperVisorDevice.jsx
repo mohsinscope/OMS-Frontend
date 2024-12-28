@@ -1,35 +1,33 @@
 import "./SuperVisorDevice.css";
-import useAuthStore from "./../../../store/store"; // Custom store for user authentication and profile management
-import usePermissionsStore from "./../../../store/permissionsStore"; // Store for managing permissions
+import useAuthStore from "./../../../store/store";
 import React, { useState, useEffect } from "react";
-import { Table, message, Button, Select, DatePicker, Input,ConfigProvider  } from "antd"; // Ant Design components
+import { Table, message, Button, Input, Select, DatePicker } from "antd";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import Url from "./../../../store/url"; // Base URL for API endpoints
+import Url from "./../../../store/url";
+import Lele from "./../../../reusable elements/icons.jsx";
+const { Option } = Select;
 
-const { Option } = Select; // Ant Design Select options
-
-export default function SuperVisorDevices() {
+export default function SuperVisorPassport() {
   const {
-    roles,
-    isSidebarCollapsed, // Determines if the sidebar is collapsed
-    accessToken, // JWT access token for authenticated API requests
-    profile, // User profile data, including office and governorate details
-    searchVisible, // Tracks visibility of the search/filter panel
-    toggleSearch, // Function to toggle the search panel visibility
+    isSidebarCollapsed,
+    accessToken,
+    profile,
+    searchVisible,
+    toggleSearch,
   } = useAuthStore();
-
-  const canCreate = usePermissionsStore((state) => state.canCreate);
-
-  const [devicesList, setDevicesList] = useState([]); // Stores the list of damaged devices
-  const [deviceTypes, setDeviceTypes] = useState([]); // List of available device types
-  const [damagedTypes, setDamagedTypes] = useState([]); // List of damaged device reasons
-  const [loading, setLoading] = useState(false); // Tracks loading state for the table
-  const [deviceTypeId, setDeviceTypeId] = useState(null); // Selected device type for filtering
-  const [damagedTypeId, setDamagedTypeId] = useState(null); // Selected damage reason for filtering
-  const [startDate, setStartDate] = useState(null); // Selected start date for filtering
-  const [endDate, setEndDate] = useState(null); // Selected end date for filtering
-  const [serialDeviceNumber, setSerialDeviceNumber] = useState("");
+  const [passportList, setPassportList] = useState([]);
+  const [damagedTypes, setDamagedTypes] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [passportNumber, setPassportNumber] = useState("");
+  const [damagedTypeId, setDamagedTypeId] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+  });
 
   const formatDateToISO = (date) => {
     if (!date) return null;
@@ -40,147 +38,143 @@ export default function SuperVisorDevices() {
   };
 
   useEffect(() => {
-    const fetchDropdownData = async () => {
+    const fetchDamagedTypes = async () => {
       try {
-        const [deviceTypeResponse, damagedTypeResponse] = await Promise.all([
-          axios.get(`${Url}/api/devicetype`, {
-            headers: { Authorization: `Bearer ${accessToken}` }, // Pass token for authentication
-          }),
-          axios.get(`${Url}/api/damageddevicetype/all`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-        ]);
-
-        setDeviceTypes(deviceTypeResponse.data); // Set device types for dropdown
-        setDamagedTypes(damagedTypeResponse.data); // Set damage types for dropdown
+        const response = await axios.get(`${Url}/api/damagedtype/all`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        setDamagedTypes(response.data);
       } catch (error) {
         console.error(
-          "Error fetching dropdown data:",
+          "Error fetching damaged types:",
           error.response?.data || error.message
         );
-        message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة"); // Show error message in Arabic
+        message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة");
       }
     };
 
-    fetchDropdownData();
-  }, [accessToken]);
+    const fetchInitialPassports = async () => {
+      if (profile) {
+        const body = {
+          passportNumber: "",
+          damagedTypeId: null,
+          startDate: null,
+          endDate: null,
+          officeId: profile.officeId,
+          governorateId: profile.governorateId,
+          profileId: profile.profileId,
+          PaginationParams: {
+            PageNumber: 1,
+            PageSize: pagination.pageSize,
+          },
+        };
+        fetchPassports(body);
+      }
+    };
 
-  useEffect(() => {
-    if (profile) {
-      fetchDevices({
-        SerialNumber: "", // No filtering by serial number initially
-        DeviceTypeId: null, // No filtering by device type initially
-        damagedTypeId: null, // No filtering by damage reason initially
-        startDate: null, // No start date filter initially
-        endDate: null, // No end date filter initially
-        officeId: profile.officeId, // Filter by user's office
-        governorateId: profile.governorateId, // Filter by user's governorate
-        PaginationParams: {
-          PageNumber: 1, // Start with the first page
-          PageSize: 10, // Set default page size
-        },
-      });
-    }
-  }, [profile]);
+    fetchDamagedTypes();
+    fetchInitialPassports();
+  }, [accessToken, profile, pagination.pageSize]);
 
-  const fetchDevices = async (body) => {
+  const fetchPassports = async (body) => {
+    setLoading(true);
     try {
-      setLoading(true); // Show loading indicator
       const response = await axios.post(
-        `${Url}/api/DamagedDevice/search`,
+        `${Url}/api/DamagedPassport/search`,
         body,
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`, // Pass token for authentication
+            Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
         }
       );
 
-      setDevicesList(response.data); // Update the devices list
+      const paginationHeader = response.headers.pagination
+        ? JSON.parse(response.headers.pagination)
+        : {};
+
+      setPassportList(response.data);
+      setPagination({
+        currentPage: paginationHeader.currentPage || 1,
+        pageSize: paginationHeader.pageSize || 10,
+        totalItems: paginationHeader.totalItems || 0,
+      });
 
       if (response.data.length === 0) {
-        message.warning("لا توجد نتائج تطابق الفلاتر المحددة"); // Show warning if no results
+        message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
       }
     } catch (error) {
       console.error(
-        "Error fetching devices:",
+        "Error fetching passports:",
         error.response?.data || error.message
       );
-      message.error("حدث خطأ أثناء البحث"); // Show error in Arabic
+      message.error("حدث خطأ أثناء البحث");
     } finally {
-      setLoading(false); // Hide loading indicator
+      setLoading(false);
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     const body = {
-      SerialNumber: serialDeviceNumber || "",
-      DeviceTypeId: deviceTypeId || undefined, // Use selected device type
-      damagedTypeId: damagedTypeId || undefined, // Use selected damage reason
-      startDate: startDate ? formatDateToISO(startDate) : null, // Format start date
-      endDate: endDate ? formatDateToISO(endDate) : null, // Format end date
-      officeId: profile?.officeId, // User's office ID
-      governorateId: profile?.governorateId, // User's governorate ID
+      passportNumber: passportNumber || "",
+      damagedTypeId: damagedTypeId || null,
+      startDate: startDate ? formatDateToISO(startDate) : null,
+      endDate: endDate ? formatDateToISO(endDate) : null,
+      officeId: profile?.officeId,
+      governorateId: profile?.governorateId,
+      profileId: profile?.profileId,
       PaginationParams: {
-        PageNumber: 1, // Start with the first page
-        PageSize: 10, // Default page size
+        PageNumber: 1,
+        PageSize: pagination.pageSize,
       },
     };
-    console.log(body);
 
-    fetchDevices(body); // Fetch devices with the applied filters
+    fetchPassports(body);
   };
 
-  const handleReset = async () => {
-    setSerialDeviceNumber(null);
-    setDeviceTypeId(null); // Reset device type filter
-    setDamagedTypeId(null); // Reset damage reason filter
-    setStartDate(null); // Reset start date filter
-    setEndDate(null); // Reset end date filter
+  const handleReset = () => {
+    setPassportNumber("");
+    setDamagedTypeId(null);
+    setStartDate(null);
+    setEndDate(null);
 
-    fetchDevices({
-      SerialNumber: "",
-      DeviceTypeId: null,
+    fetchPassports({
+      passportNumber: "",
       damagedTypeId: null,
       startDate: null,
       endDate: null,
       officeId: profile?.officeId,
       governorateId: profile?.governorateId,
+      profileId: profile?.profileId,
       PaginationParams: {
         PageNumber: 1,
-        PageSize: 10,
+        PageSize: pagination.pageSize,
       },
     });
 
-    message.success("تم إعادة تعيين الفلاتر بنجاح"); // Show success message
+    message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
   const columns = [
     {
-      title: "الرقم التسلسلي للجهاز",
-      dataIndex: "serialNumber", // Corrected field name
-      key: "serialNumber",
-      className: "table-column-device-type",
-    },
-    {
-      title: "نوع الجهاز",
-      dataIndex: "deviceTypeName",
-      key: "deviceTypeName",
-      className: "table-column-device-type",
+      title: "رقم الجواز",
+      dataIndex: "passportNumber",
+      key: "passportNumber",
+      className: "table-column-passport-number",
     },
     {
       title: "سبب التلف",
-      dataIndex: "damagedDeviceTypesName",
-      key: "damagedDeviceTypesName",
-      className: "table-column-damage-reason",
+      dataIndex: "damagedTypeName",
+      key: "damagedTypeName",
+      className: "table-column-damage",
     },
     {
       title: "التاريخ",
       dataIndex: "date",
       key: "date",
       className: "table-column-date",
-      render: (text) => text.split("T")[0], // Format date to YYYY-MM-DD
+      render: (text) => new Date(text).toLocaleDateString("en-CA"),
     },
     {
       title: "التفاصيل",
@@ -188,9 +182,9 @@ export default function SuperVisorDevices() {
       className: "table-column-details",
       render: (_, record) => (
         <Link
-          to="/supervisor/damegedDevices/show"
+          to="DammagedPasportsShow"
           state={{ id: record.id }}
-          className="supervisor-devices-dameged-details-link">
+          className="supervisor-passport-dameged-details-link">
           عرض
         </Link>
       ),
@@ -199,42 +193,26 @@ export default function SuperVisorDevices() {
 
   return (
     <div
-      className={`supervisor-devices-dameged-page ${
+      className={`supervisor-passport-dameged-page ${
         isSidebarCollapsed
           ? "sidebar-collapsed"
-          : "supervisor-devices-dameged-page"
+          : "supervisor-passport-dameged-page"
       }`}
       dir="rtl">
-      <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
+      <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
 
       <div
-        className={`supervisor-devices-dameged-filters ${
+        className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
         <div className="filter-field">
-          <label>الرقم التسلسلي للجهاز</label>
+          <label>رقم الجواز</label>
           <Input
-            value={serialDeviceNumber}
-            onChange={(e) => setSerialDeviceNumber(e.target.value)}
-            placeholder="أدخل رقم التسلسلي للجهاز"
+            value={passportNumber}
+            onChange={(e) => setPassportNumber(e.target.value)}
+            placeholder="أدخل رقم الجواز"
           />
         </div>
-        <div className="filter-field">
-          <label>نوع الجهاز</label>
-          <Select
-            className="filter-dropdown"
-            value={deviceTypeId}
-            onChange={(value) => setDeviceTypeId(value)}
-            allowClear
-            placeholder="اختر نوع الجهاز">
-            {deviceTypes.map((type) => (
-              <Option key={type.id} value={type.id}>
-                {type.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
-
         <div className="filter-field">
           <label>سبب التلف</label>
           <Select
@@ -258,7 +236,6 @@ export default function SuperVisorDevices() {
             placeholder="اختر تاريخ البداية"
           />
         </div>
-
         <div className="filter-field">
           <label>تاريخ النهاية</label>
           <DatePicker
@@ -267,43 +244,55 @@ export default function SuperVisorDevices() {
             placeholder="اختر تاريخ النهاية"
           />
         </div>
-
         <div className="filter-buttons">
           <Button type="primary" onClick={handleSearch}>
             البحث
+            <Lele type="search-icon" />
           </Button>
           <Button onClick={handleReset} style={{ marginLeft: "10px" }}>
             إعادة التعيين
           </Button>
         </div>
-
-        <Link to="/supervisor/damegedDevices/add">
-          <Button className="supervisor-devices-dameged-add-button">
-            اضافة جهاز تالف
-          </Button>
-        </Link>
       </div>
+
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
           {searchVisible ? "بحث" : "بحث"}
         </Button>
       </div>
-      <div className="supervisor-devices-dameged-table-container">
-      <ConfigProvider direction="rtl">
+
+      <div className="supervisor-passport-dameged-table-container">
         <Table
-          dataSource={devicesList}
+          dataSource={passportList}
           columns={columns}
           rowKey={(record) => record.id}
           bordered
           loading={loading}
           pagination={{
-            pageSize: 15,
+            current: pagination.currentPage,
+            pageSize: pagination.pageSize,
+            total: pagination.totalItems,
+            onChange: (page) => {
+              const body = {
+                passportNumber: passportNumber || "",
+                damagedTypeId: damagedTypeId || null,
+                startDate: startDate ? formatDateToISO(startDate) : null,
+                endDate: endDate ? formatDateToISO(endDate) : null,
+                officeId: profile?.officeId,
+                governorateId: profile?.governorateId,
+                profileId: profile?.profileId,
+                PaginationParams: {
+                  PageNumber: page,
+                  PageSize: pagination.pageSize,
+                },
+              };
+              fetchPassports(body);
+            },
             position: ["bottomCenter"],
           }}
           locale={{ emptyText: "لا توجد بيانات" }}
-          className="supervisor-devices-dameged-table"
+          className="supervisor-passport-dameged-table"
         />
-          </ConfigProvider>
       </div>
     </div>
   );

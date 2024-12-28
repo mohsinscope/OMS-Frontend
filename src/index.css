@@ -10,6 +10,11 @@
   font-family: cairo;
 }
 
+* label {
+  font-weight: bold;
+  font-size: 38;
+}
+
 :root {
   height: 100vh;
   --bg-color: #171a1f;
