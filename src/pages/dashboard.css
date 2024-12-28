@@ -1,5 +1,5 @@
 /* navbar */
-
+  
 .navbar-container {
   display: flex;
   justify-content: space-between;
@@ -26,7 +26,7 @@
   padding: 0px;
   padding-top: 20px;
   position: fixed;
-  top: 8%;
+  top: 9%;
   right: 0;
   transition: all 0.3s ease;
   overflow-y: auto; /* Add this line to enable vertical scrolling */
