@@ -38,7 +38,7 @@ export default function SuperVisorDevices() {
   const [damagedTypeId, setDamagedTypeId] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [serialDeviceNumber, setSerialDeviceNumber] = useState("");
+  const [serialDeviceNumber, setSerialDeviceNumber] = useState(""); // Updated variable
   const [governorateName, setGovernorateName] = useState("");
   const [officeName, setOfficeName] = useState("");
 
@@ -51,7 +51,7 @@ export default function SuperVisorDevices() {
   };
 
   useEffect(() => {
-    const fetchDamagedTypes = async () => {
+    const fetchDropdownData = async () => {
       try {
         const [governorateResponse, officeResponse, deviceTypeResponse, damagedTypeResponse] = await Promise.all([
           axios.get(`${Url}/api/Governorate/dropdown`, {
@@ -82,7 +82,7 @@ export default function SuperVisorDevices() {
         setDamagedTypes(damagedTypeResponse.data);
       } catch (error) {
         console.error(
-          "Error fetching damaged types:",
+          "Error fetching dropdown data:",
           error.response?.data || error.message
         );
         message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة");
@@ -117,7 +117,7 @@ export default function SuperVisorDevices() {
     try {
       setLoading(true);
       const response = await axios.post(
-        `${Url}/api/DamagedPassport/search`,
+        `${Url}/api/DamagedDevice/search`,
         body,
         {
           headers: {
@@ -134,7 +134,7 @@ export default function SuperVisorDevices() {
       }
     } catch (error) {
       console.error(
-        "Error fetching passports:",
+        "Error fetching devices:",
         error.response?.data || error.message
       );
       message.error("حدث خطأ أثناء البحث");
@@ -173,7 +173,7 @@ export default function SuperVisorDevices() {
 
   const handleSearch = () => {
     const body = {
-      SerialNumber: serialDeviceNumber || "",
+      SerialNumber: serialDeviceNumber || "", // Corrected variable name
       DeviceTypeId: deviceTypeId || undefined,
       damagedTypeId: damagedTypeId || undefined,
       startDate: startDate ? formatDateToISO(startDate) : null,
@@ -193,7 +193,7 @@ export default function SuperVisorDevices() {
   };
 
   const handleReset = async () => {
-    setSerialDeviceNumber(null);
+    setSerialDeviceNumber(""); // Reset correctly
     setDeviceTypeId(null);
     setDamagedTypeId(null);
     setStartDate(null);
@@ -251,9 +251,9 @@ export default function SuperVisorDevices() {
       className: "table-column-details",
       render: (_, record) => (
         <Link
-          to="DammagedPasportsShow"
+          to="DammagedDevicesShow"
           state={{ id: record.id }}
-          className="supervisor-passport-dameged-details-link">
+          className="supervisor-device-details-link">
           عرض
         </Link>
       ),
@@ -263,19 +263,16 @@ export default function SuperVisorDevices() {
   return (
     <div
       className={`supervisor-passport-dameged-page ${
-        isSidebarCollapsed
-          ? "sidebar-collapsed"
-          : "supervisor-passport-dameged-page"
+        isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-passport-dameged-page"
       }`}
       dir="rtl">
-      <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
+      <h1 className="supervisor-passport-dameged-title">الأجهزة التالفة</h1>
 
       <div
         className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
         <div className="filter-field">
-<<<<<<< HEAD
           <label>اسم المحافظة</label>
           <Input
             value={governorateName}
@@ -293,13 +290,10 @@ export default function SuperVisorDevices() {
         </div>
         <div className="filter-field">
           <label>الرقم التسلسلي للجهاز</label>
-=======
-          <label>رقم الجواز</label>
->>>>>>> 80508badc9bc4159332fa65cdba7305cb1e3ff5b
           <Input
-            value={passportNumber}
-            onChange={(e) => setPassportNumber(e.target.value)}
-            placeholder="أدخل رقم الجواز"
+            value={serialDeviceNumber} // Corrected variable name
+            onChange={(e) => setSerialDeviceNumber(e.target.value)} // Corrected variable name
+            placeholder="أدخل الرقم التسلسلي للجهاز"
           />
         </div>
         <div className="filter-field">
@@ -336,21 +330,18 @@ export default function SuperVisorDevices() {
         <div className="filter-buttons">
           <Button type="primary" onClick={handleSearch}>
             البحث
-            <Lele type="search-icon" />
           </Button>
           <Button onClick={handleReset} style={{ marginLeft: "10px" }}>
             إعادة التعيين
           </Button>
-        {hasCreatePermission && (
-          <Link to="/supervisor/damegedDevices/add">
-            <Button className="supervisor-devices-dameged-add-button">
-              اضافة جهاز تالف
-            </Button>
-          </Link>
-        )}
+          {hasCreatePermission && (
+            <Link to="/supervisor/damagedDevices/add">
+              <Button className="supervisor-device-add-button">
+                اضافة جهاز تالف
+              </Button>
+            </Link>
+          )}
         </div>
-
-
       </div>
 
       <div className="toggle-search-button">
@@ -358,7 +349,7 @@ export default function SuperVisorDevices() {
           {searchVisible ? "بحث" : "بحث"}
         </Button>
       </div>
-      <div className="supervisor-devices-dameged-table-container">
+      <div className="supervisor-passport-dameged-table-container">
         <ConfigProvider direction="rtl">
           <Table
             dataSource={devicesList}
@@ -371,7 +362,7 @@ export default function SuperVisorDevices() {
               position: ["bottomCenter"],
             }}
             locale={{ emptyText: "لا توجد بيانات" }}
-            className="supervisor-devices-dameged-table"
+            className="supervisor-passport-dameged-table"
           />
         </ConfigProvider>
       </div>
