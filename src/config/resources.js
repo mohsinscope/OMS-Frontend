@@ -9,8 +9,8 @@ export const RESOURCES = {
         export: "/devices/export",
       },
     },
-    PASSPORTS: {
-      name: "passports",
+    DamagedPassport: {
+      name: "DamagedPassport",
       routes: {
         list: "/passports",
         create: "/passports/create",

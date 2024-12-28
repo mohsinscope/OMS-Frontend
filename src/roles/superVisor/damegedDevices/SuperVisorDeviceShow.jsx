@@ -14,6 +14,7 @@ import axios from "axios";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./../lecturer/LecturerShow.css";
 import useAuthStore from "./../../../store/store";
+import usePermissionsStore from "./../../../store/permissionsStore";
 import Url from "./../../../store/url.js";
 import Lele from "./../../../reusable elements/icons.jsx";
 
@@ -30,7 +31,23 @@ const SuperVisorDeviceShow = () => {
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [damagedDeviceTypes, setDamagedDeviceTypes] = useState([]);
   const [form] = Form.useForm();
-  const { isSidebarCollapsed, accessToken } = useAuthStore();
+
+  // Get store data
+  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
+  const { hasAnyPermission } = usePermissionsStore();
+  const { profileId, governorateId, officeId } = profile || {};
+
+  // Check permissions using hasAnyPermission
+  const hasUpdatePermission = hasAnyPermission("update");
+  const hasDeletePermission = hasAnyPermission("delete");
+
+  // For debugging
+  useEffect(() => {
+    console.log("Current user permissions:", {
+      hasUpdatePermission,
+      hasDeletePermission,
+    });
+  }, [hasUpdatePermission, hasDeletePermission]);
 
   useEffect(() => {
     if (!deviceId) {
@@ -42,7 +59,6 @@ const SuperVisorDeviceShow = () => {
     const fetchDeviceDetails = async () => {
       setLoading(true);
       try {
-        console.log("Fetching device id = ", deviceId);
         const response = await axios.get(
           `${Url}/api/DamagedDevice/${deviceId}`,
           {
@@ -59,6 +75,11 @@ const SuperVisorDeviceShow = () => {
         setDeviceData({ ...device, date: formattedDate });
         form.setFieldsValue({ ...device, date: formattedDate });
       } catch (error) {
+        if (error.response?.status === 401) {
+          message.error("الرجاء تسجيل الدخول مرة أخرى");
+          navigate("/login");
+          return;
+        }
         message.error(
           `حدث خطأ أثناء جلب تفاصيل الجهاز: ${
             error.response?.data?.message || error.message
@@ -83,6 +104,11 @@ const SuperVisorDeviceShow = () => {
         const imageUrls = response.data.map((image) => image.filePath);
         setImages(imageUrls);
       } catch (error) {
+        if (error.response?.status === 401) {
+          message.error("الرجاء تسجيل الدخول مرة أخرى");
+          navigate("/login");
+          return;
+        }
         message.error(
           `حدث خطأ أثناء جلب صور الجهاز: ${
             error.response?.data?.message || error.message
@@ -143,31 +169,27 @@ const SuperVisorDeviceShow = () => {
           : deviceData.date,
         damagedDeviceTypeId: values.damagedDeviceTypeId,
         note: values.note || "",
-        deviceTypeId: values.deviceTypeId,
-        officeId: deviceData.officeId,
-        governorateId: deviceData.governorateId,
-        profileId: deviceData.profileId,
+        deviceTypeId: deviceData.deviceTypeId,
+        officeId: officeId,
+        governorateId: governorateId,
+        profileId: profileId,
       };
 
-      console.log("Sending Updated Values:", updatedValues);
-
-      const response = await axios.put(
-        `${Url}/api/DamagedDevice/${deviceId}`,
-        updatedValues,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      console.log("Update Response:", response.data);
+      await axios.put(`${Url}/api/DamagedDevice/${deviceId}`, updatedValues, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       message.success("تم تحديث بيانات الجهاز بنجاح");
       setEditModalVisible(false);
       setDeviceData((prev) => ({ ...prev, ...updatedValues }));
     } catch (error) {
-      console.error("Error Updating Device Details:", error.response);
+      if (error.response?.status === 401) {
+        message.error("الرجاء تسجيل الدخول مرة أخرى");
+        navigate("/login");
+        return;
+      }
       message.error(
         `حدث خطأ أثناء تعديل بيانات الجهاز: ${
           error.response?.data?.message || error.message
@@ -177,7 +199,6 @@ const SuperVisorDeviceShow = () => {
   };
 
   const handleDelete = async () => {
-    console.log("Deleting Device ID:", deviceId);
     try {
       await axios.delete(`${Url}/api/DamagedDevice/${deviceId}`, {
         headers: {
@@ -188,7 +209,11 @@ const SuperVisorDeviceShow = () => {
       setDeleteModalVisible(false);
       navigate(-1);
     } catch (error) {
-      console.error("Error Deleting Device:", error.response);
+      if (error.response?.status === 401) {
+        message.error("الرجاء تسجيل الدخول مرة أخرى");
+        navigate("/login");
+        return;
+      }
       message.error(
         `حدث خطأ أثناء حذف الجهاز: ${
           error.response?.data?.message || error.message
@@ -216,9 +241,7 @@ const SuperVisorDeviceShow = () => {
   return (
     <div
       className={`supervisor-lecture-show-container ${
-        isSidebarCollapsed
-          ? "sidebar-collapsed"
-          : "supervisor-lecture-show-container"
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
       <div className="title-container">
@@ -228,16 +251,20 @@ const SuperVisorDeviceShow = () => {
             <Lele type="back" />
             الرجوع
           </Button>
-          <Button
-            onClick={() => setDeleteModalVisible(true)}
-            className="delete-button-lecture">
-            حذف <Lele type="delete" />
-          </Button>
-          <Button
-            onClick={() => setEditModalVisible(true)}
-            className="edit-button-lecture">
-            تعديل <Lele type="edit" />
-          </Button>
+          {hasDeletePermission && (
+            <Button
+              onClick={() => setDeleteModalVisible(true)}
+              className="delete-button-passport">
+              حذف <Lele type="delete" />
+            </Button>
+          )}
+          {hasUpdatePermission && (
+            <Button
+              onClick={() => setEditModalVisible(true)}
+              className="edit-button-passport">
+              تعديل <Lele type="edit" />
+            </Button>
+          )}
         </div>
       </div>
 
@@ -327,24 +354,10 @@ const SuperVisorDeviceShow = () => {
               <Input placeholder="الرقم التسلسلي" />
             </Form.Item>
             <Form.Item
-              name="deviceTypeId"
-              label="نوع الجهاز"
-              rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}>
-              <Select
-                options={damagedDeviceTypes}
-                placeholder="اختر نوع الجهاز"
-                allowClear
-              />
-            </Form.Item>
-            <Form.Item
               name="damagedDeviceTypeId"
               label="نوع الضرر"
               rules={[{ required: true, message: "يرجى إدخال نوع الضرر" }]}>
-              <Select
-                options={damagedTypes}
-                placeholder="اختر سبب التلف"
-                allowClear
-              />
+              <Input placeholder="نوع الضرر" />
             </Form.Item>
             <Form.Item
               name="date"
@@ -363,6 +376,7 @@ const SuperVisorDeviceShow = () => {
             </Button>
           </Form>
         </Modal>
+
         <Modal
           title="تأكيد الحذف"
           open={deleteModalVisible}

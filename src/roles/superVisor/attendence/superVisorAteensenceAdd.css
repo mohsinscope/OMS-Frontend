@@ -88,7 +88,7 @@
     outline: none;
     border: #bcc1ca 1px solid;
     border-radius: 6px;
-    padding: 20px;
+ 
 }
 
 .attendance-dropdown:hover{
@@ -104,5 +104,5 @@
     outline: 0;
 }
 .attendance-dropdown {
-    padding: 10px;
+ 
 }
