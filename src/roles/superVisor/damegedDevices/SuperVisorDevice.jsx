@@ -64,21 +64,18 @@ export default function SuperVisorDevices() {
     const fetchDropdownData = async () => {
       try {
         setLoading(true);
-        const [
-          governorateResponse,
-          deviceTypeResponse,
-          damagedTypeResponse,
-        ] = await Promise.all([
-          axios.get(`${Url}/api/Governorate/dropdown`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          axios.get(`${Url}/api/devicetype`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          axios.get(`${Url}/api/damageddevicetype/all`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-        ]);
+        const [governorateResponse, deviceTypeResponse, damagedTypeResponse] =
+          await Promise.all([
+            axios.get(`${Url}/api/Governorate/dropdown`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+            axios.get(`${Url}/api/devicetype`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+            axios.get(`${Url}/api/damageddevicetype/all`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+          ]);
 
         setGovernorates(governorateResponse.data);
         setDeviceTypes(deviceTypeResponse.data);
@@ -171,9 +168,9 @@ export default function SuperVisorDevices() {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-  
+
       // Extract pagination info from the headers
-      const paginationHeader = response.headers['pagination'];
+      const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
         setPagination({
@@ -182,9 +179,9 @@ export default function SuperVisorDevices() {
           total: paginationInfo.totalItems,
         });
       }
-  
+
       setDevicesList(response.data);
-  
+
       if (response.data.length === 0) {
         message.warning("لا توجد بيانات");
       }
@@ -258,8 +255,7 @@ export default function SuperVisorDevices() {
         <Link
           to="/damegedDevices/show"
           state={{ id: record.id }}
-          className="supervisor-devices-dameged-details-link"
-        >
+          className="supervisor-devices-dameged-details-link">
           عرض
         </Link>
       ),
@@ -271,8 +267,7 @@ export default function SuperVisorDevices() {
       className={`supervisor-passport-dameged-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <h1 className="supervisor-passport-dameged-title">الأجهزة التالفة</h1>
 
       <div className="toggle-search-button">
@@ -284,8 +279,7 @@ export default function SuperVisorDevices() {
       <div
         className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
-        }`}
-      >
+        }`}>
         <div className="filter-field">
           <label>اسم المحافظة</label>
           <Select
@@ -293,9 +287,7 @@ export default function SuperVisorDevices() {
             value={selectedGovernorateId}
             onChange={handleGovernorateChange}
             allowClear
-            placeholder="اختر المحافظة"
-            loading={loading}
-          >
+            loading={loading}>
             {governorates.map((gov) => (
               <Option key={gov.id} value={gov.id}>
                 {gov.name}
@@ -311,9 +303,7 @@ export default function SuperVisorDevices() {
             value={selectedOfficeId}
             onChange={(value) => setSelectedOfficeId(value)}
             allowClear
-            placeholder="اختر المكتب"
-            loading={loadingOffices}
-          >
+            loading={loadingOffices}>
             {offices.map((office) => (
               <Option key={office.id} value={office.id}>
                 {office.name}
@@ -327,7 +317,6 @@ export default function SuperVisorDevices() {
           <Input
             value={serialDeviceNumber}
             onChange={(e) => setSerialDeviceNumber(e.target.value)}
-            placeholder="ادخل الرقم التسلسلي"
           />
         </div>
 
@@ -337,9 +326,7 @@ export default function SuperVisorDevices() {
             className="filter-dropdown"
             value={deviceTypeId}
             onChange={(value) => setDeviceTypeId(value)}
-            allowClear
-            placeholder="اختر نوع الجهاز"
-          >
+            allowClear>
             {deviceTypes.map((type) => (
               <Option key={type.id} value={type.id}>
                 {type.name}
@@ -354,9 +341,7 @@ export default function SuperVisorDevices() {
             className="filter-dropdown"
             value={damagedTypeId}
             onChange={(value) => setDamagedTypeId(value)}
-            allowClear
-            placeholder="اختر سبب التلف"
-          >
+            allowClear>
             {damagedTypes.map((type) => (
               <Option key={type.id} value={type.id}>
                 {type.name}
@@ -388,8 +373,7 @@ export default function SuperVisorDevices() {
           <Button
             type="primary"
             onClick={handleReset}
-            style={{ marginLeft: "10px" }}
-          >
+            style={{ marginLeft: "10px" }}>
             إعادة التعيين
           </Button>
           {hasCreatePermission && (
@@ -410,15 +394,13 @@ export default function SuperVisorDevices() {
             rowKey={(record) => record.id}
             bordered
             loading={loading}
-            
             pagination={{
-              position:["bottomCenter"],
+              position: ["bottomCenter"],
               current: pagination.current,
-    pageSize: pagination.pageSize,
-    total: pagination.total,
-    onChange: handleTableChange,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              onChange: handleTableChange,
             }}
-            
             locale={{ emptyText: "لا توجد بيانات" }}
             className="supervisor-passport-dameged-table"
           />
