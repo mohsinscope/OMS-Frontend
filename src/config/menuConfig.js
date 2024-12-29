@@ -55,14 +55,14 @@ export const MENU_ITEMS = [
   {
     label: "ادارة القيم",
     icon: "data",
-    path: "admin/listofvalues",
+    path: "/admin/listofvalues",
 
     role: ["Admin"], // Role allowed to access
   },
   {
     label: "ادارة المستخدمين",
     icon: "user",
-    path: "admin/users",
+    path: "/admin/users",
 
     role: ["Admin"], // Role allowed to access
   }

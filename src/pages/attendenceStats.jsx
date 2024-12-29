@@ -14,11 +14,19 @@ const AttendanceCard = ({ children, className = '' }) => (
 
 const AttendanceStats = () => {
   const { profile } = useAuthStore();
-  const [selectedDate, setSelectedDate] = useState('');
+  
+  const getYesterdayDate = () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
+  };
+
+  const [selectedDate, setSelectedDate] = useState(getYesterdayDate());
   const [selectedGovernorate, setSelectedGovernorate] = useState('');
   const [selectedOffice, setSelectedOffice] = useState('');
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
+  const [noDataMessage, setNoDataMessage] = useState(false);
   const [loading, setLoading] = useState(false);
   const [governorateData, setGovernorateData] = useState({
     morning: [],
@@ -34,42 +42,66 @@ const AttendanceStats = () => {
     eveningShiftPercentage: 0
   });
 
+  // Fetch governorates list
   const fetchGovernorates = async () => {
     try {
+      setLoading(true);
       const response = await axios.get(`${Url}/api/Governorate/dropdown`);
       setGovernorates(response.data);
       return response.data;
     } catch (error) {
       console.error("Failed to fetch governorates:", error);
       return [];
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Fetch offices for selected governorate
   const fetchOffices = async (governorateId) => {
     if (!governorateId) {
       setOffices([]);
+      setSelectedOffice('');
       return;
     }
+
     try {
-      const response = await axios.get(`${Url}/api/Office/dropdown?GovernorateId=${governorateId}`);
-      setOffices(response.data);
+      setLoading(true);
+      const response = await axios.get(`${Url}/api/Governorate/dropdown/${governorateId}`);
+      if (response.data && response.data.length > 0 && response.data[0].offices) {
+        setOffices(response.data[0].offices);
+      } else {
+        setOffices([]);
+      }
+      setSelectedOffice('');
     } catch (error) {
       console.error("Failed to fetch offices:", error);
+      setOffices([]);
+      setSelectedOffice('');
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Fetch attendance statistics
   const fetchAttendanceStats = async () => {
+    setNoDataMessage(false);
     try {
       const baseBody = {
         GovernorateId: selectedGovernorate || null,
         OfficeId: selectedOffice || null,
         StaffType: "",
-        Date: selectedDate ? `${selectedDate}T10:00:00Z` : undefined,
+        Date: `${selectedDate}T10:00:00Z`,
         PaginationParams: {
           PageNumber: 1,
           PageSize: 10
         }
       };
+
+      if (!selectedDate) {
+        setNoDataMessage(true);
+        return;
+      }
 
       const [response, morningResponse, eveningResponse] = await Promise.all([
         axios.post(`${Url}/api/Attendance/search/statistics`, {
@@ -100,10 +132,11 @@ const AttendanceStats = () => {
     }
   };
 
+  // Fetch governorate statistics
   const fetchGovernorateStats = async (govList = []) => {
     try {
       const baseBody = {
-        Date: selectedDate ? `${selectedDate}T10:00:00Z` : undefined,
+        Date: `${selectedDate}T10:00:00Z`,
         PaginationParams: { PageNumber: 1, PageSize: 10 }
       };
 
@@ -137,15 +170,20 @@ const AttendanceStats = () => {
         });
       }
 
+      // Sort data from highest to lowest value
+      const sortedMorningData = morningStatsData.sort((a, b) => b.value - a.value);
+      const sortedEveningData = eveningStatsData.sort((a, b) => b.value - a.value);
+      
       setGovernorateData({
-        morning: morningStatsData,
-        evening: eveningStatsData
+        morning: sortedMorningData,
+        evening: sortedEveningData
       });
     } catch (error) {
       console.error("Failed to fetch governorate stats:", error);
     }
   };
 
+  // Initialize data on component mount
   useEffect(() => {
     const initData = async () => {
       setLoading(true);
@@ -165,6 +203,19 @@ const AttendanceStats = () => {
     initData();
   }, []);
 
+  // Handle governorate change
+  const handleGovernorateChange = async (e) => {
+    const value = e.target.value;
+    setSelectedGovernorate(value);
+    if (value) {
+      await fetchOffices(value);
+    } else {
+      setOffices([]);
+      setSelectedOffice('');
+    }
+  };
+
+  // Handle search button click
   const handleSearch = async () => {
     setLoading(true);
     try {
@@ -179,17 +230,7 @@ const AttendanceStats = () => {
     }
   };
 
-  const handleGovernorateChange = (e) => {
-    const value = e.target.value;
-    setSelectedGovernorate(value);
-    setSelectedOffice('');
-    if (value) {
-      fetchOffices(value);
-    } else {
-      setOffices([]);
-    }
-  };
-
+  // Custom tooltip for charts
   const CustomTooltip = ({ active, payload }) => {
     if (active && payload && payload.length) {
       return (
@@ -202,6 +243,7 @@ const AttendanceStats = () => {
     return null;
   };
 
+  // Render chart function
   const renderChart = (data, title) => (
     <AttendanceCard>
       <h3 className="attendance-chart-title text-xl mb-6 text-center font-bold">{title}</h3>
@@ -260,6 +302,7 @@ const AttendanceStats = () => {
             value={selectedGovernorate}
             onChange={handleGovernorateChange}
             className="w-full p-2 border rounded"
+            disabled={loading}
           >
             <option value="">اختر المحافظة</option>
             {governorates.map((gov) => (
@@ -276,7 +319,7 @@ const AttendanceStats = () => {
             value={selectedOffice}
             onChange={(e) => setSelectedOffice(e.target.value)}
             className="w-full p-2 border rounded"
-            disabled={!selectedGovernorate}
+            disabled={!selectedGovernorate || loading}
           >
             <option value="">اختر المكتب</option>
             {offices.map((office) => (
@@ -294,6 +337,7 @@ const AttendanceStats = () => {
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
             className="w-full p-2 border rounded"
+            disabled={loading}
           />
         </div>
 
@@ -301,7 +345,7 @@ const AttendanceStats = () => {
           <button
             onClick={handleSearch}
             disabled={loading}
-            className={`attendance-search-button w-full px-6 py-2 bg-blue-500 text-white rounded-lg flex items-center justify-center gap-2 hover:bg-blue-600 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className="attendance-search-button w-full"
           >
             <Search size={20} />
             {loading ? 'جاري البحث...' : 'ابحث'}
@@ -332,8 +376,14 @@ const AttendanceStats = () => {
       </div>
 
       <div className="attendance-charts-stats grid grid-cols-1 md:grid-cols-2 gap-6">
-        {renderChart(governorateData.morning, 'حضور الموظفين الصباحي')}
-        {renderChart(governorateData.evening, 'حضور الموظفين المسائي')}
+        {noDataMessage ? (
+          <div className="no-data-message">لا توجد بيانات للعرض</div>
+        ) : (
+          <>
+            {renderChart(governorateData.morning, 'حضور الموظفين الصباحي')}
+            {renderChart(governorateData.evening, 'حضور الموظفين المسائي')}
+          </>
+        )}
       </div>
     </div>
   );
