@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Modal, message, Input, DatePicker } from "antd";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -20,6 +20,7 @@ export default function SuperVisorAttendanceAdd() {
     الجودة: 0,
     التسليم: 0,
   });
+  const [employeeNumbers, setEmployeeNumbers] = useState({});
   const [notes, setNotes] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [modalAction, setModalAction] = useState("");
@@ -27,6 +28,39 @@ export default function SuperVisorAttendanceAdd() {
   const governorateId = profile?.governorateId;
   const officeId = profile?.officeId;
   const profileId = profile?.profileId;
+
+  useEffect(() => {
+    const fetchEmployeeNumbers = async () => {
+      try {
+        const response = await axios.get(`${Url}/api/office/${officeId}`, {
+          headers: {
+            Authorization: `Bearer ${profile?.accessToken}`,
+          },
+        });
+        const data = response.data;
+        setEmployeeNumbers({
+          الاستلام: data.receivingStaff,
+          الحسابات: data.accountStaff,
+          الطباعة: data.printingStaff,
+          الجودة: data.qualityStaff,
+          التسليم: data.deliveryStaff,
+        });
+      } catch (error) {
+        console.error("Error fetching employee numbers:", error);
+        message.error("حدث خطأ أثناء جلب بيانات الموظفين");
+      }
+    };
+
+    if (officeId) fetchEmployeeNumbers();
+  }, [officeId, profile]);
+
+  const handleInputChange = (key, value) => {
+    const parsedValue = Math.max(0, Math.min(value, employeeNumbers[key] || 0));
+    setPassportAttendance((prev) => ({
+      ...prev,
+      [key]: parsedValue,
+    }));
+  };
 
   const handleResetAction = () => {
     setPassportAttendance({
@@ -86,9 +120,11 @@ export default function SuperVisorAttendanceAdd() {
   const handleModalCancel = () => {
     setModalVisible(false);
   };
+
   const handleBack = () => {
     navigate(-1);
   };
+
   return (
     <div
       className={`supervisor-attendence-register-container ${
@@ -144,17 +180,18 @@ export default function SuperVisorAttendanceAdd() {
 
         {Object.keys(passportAttendance).map((key) => (
           <div className="attendance-field-wrapper-add" key={key}>
-            <label>عدد موظفي {key}</label>
+            <label>
+              عدد موظفي {key}{" "}
+              <span style={{ color: "blue", fontSize: "18px" }}>
+                {employeeNumbers[key] || 0}
+              </span>
+            </label>
             <Input
               type="number"
               className="attendance-input"
               value={passportAttendance[key]}
-              onChange={(e) =>
-                setPassportAttendance((prev) => ({
-                  ...prev,
-                  [key]: Number(e.target.value),
-                }))
-              }
+              onChange={(e) => handleInputChange(key, Number(e.target.value))}
+              onBlur={(e) => handleInputChange(key, Number(e.target.value))}
             />
           </div>
         ))}
@@ -188,7 +225,7 @@ export default function SuperVisorAttendanceAdd() {
 
       <Modal
         title="تأكيد العملية"
-        visible={modalVisible}
+        open={modalVisible}
         onOk={handleModalConfirm}
         onCancel={handleModalCancel}
         okText="نعم"
