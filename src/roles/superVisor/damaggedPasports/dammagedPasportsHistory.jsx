@@ -302,6 +302,7 @@ export default function SuperVisorPassport() {
           bordered
           loading={loading}
           pagination={{
+            position: ["bottomCenter"],
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
