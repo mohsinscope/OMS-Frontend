@@ -100,7 +100,9 @@ const SuperVisorLecturerhistory = () => {
       const payload = {
         title: "",
         officeId: isSupervisor ? profile.officeId : selectedOffice,
-        governorateId: isSupervisor ? profile.governorateId : selectedGovernorate,
+        governorateId: isSupervisor
+          ? profile.governorateId
+          : selectedGovernorate,
         startDate: null,
         endDate: null,
         PaginationParams: {
@@ -126,7 +128,14 @@ const SuperVisorLecturerhistory = () => {
         }`
       );
     }
-  }, [accessToken, pageSize, isSupervisor, profile, selectedGovernorate, selectedOffice]);
+  }, [
+    accessToken,
+    pageSize,
+    isSupervisor,
+    profile,
+    selectedGovernorate,
+    selectedOffice,
+  ]);
 
   useEffect(() => {
     fetchDropdownData();
@@ -193,7 +202,7 @@ const SuperVisorLecturerhistory = () => {
         if (isNaN(date.getTime())) {
           return "تاريخ غير صالح";
         }
-        return date.toLocaleDateString("ar-EG");
+        return date.toLocaleDateString("en-CA");
       },
     },
     {

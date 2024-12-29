@@ -30,22 +30,12 @@ const DammagedPasportsShow = () => {
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [form] = Form.useForm();
 
-  // Get store data
   const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
   const { hasAnyPermission } = usePermissionsStore();
   const { profileId, governorateId, officeId } = profile || {};
 
-  // Check permissions using hasAnyPermission
   const hasUpdatePermission = hasAnyPermission("update");
   const hasDeletePermission = hasAnyPermission("delete");
-
-  // For debugging
-  useEffect(() => {
-    console.log("Current user permissions:", {
-      hasUpdatePermission,
-      hasDeletePermission,
-    });
-  }, [hasUpdatePermission, hasDeletePermission]);
 
   useEffect(() => {
     if (!passportId) {
@@ -72,17 +62,7 @@ const DammagedPasportsShow = () => {
         setPassportData({ ...passport, date: formattedDate });
         form.setFieldsValue({ ...passport, date: formattedDate });
       } catch (error) {
-        console.error("Error Fetching Passport Details:", error.response);
-        if (error.response?.status === 401) {
-          message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate("/login");
-          return;
-        }
-        message.error(
-          `حدث خطأ أثناء جلب تفاصيل الجواز: ${
-            error.response?.data?.message || error.message
-          }`
-        );
+        message.error("حدث خطأ أثناء جلب تفاصيل الجواز.");
       } finally {
         setLoading(false);
       }
@@ -101,17 +81,7 @@ const DammagedPasportsShow = () => {
         const imageUrls = response.data.map((image) => image.filePath);
         setImages(imageUrls);
       } catch (error) {
-        if (error.response?.status === 401) {
-          message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate("/login");
-          return;
-        }
-        console.error("Error Fetching Passport Images:", error.response);
-        message.error(
-          `حدث خطأ أثناء جلب صور الجواز: ${
-            error.response?.data?.message || error.message
-          }`
-        );
+        message.error("حدث خطأ أثناء جلب صور الجواز.");
       }
     };
 
@@ -129,12 +99,7 @@ const DammagedPasportsShow = () => {
           }))
         );
       } catch (error) {
-        if (error.response?.status === 401) {
-          message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate("/login");
-          return;
-        }
-        message.error("خطأ في جلب أنواع التلف للجوازات");
+        message.error("خطأ في جلب أنواع التلف للجوازات.");
       }
     };
 
@@ -151,14 +116,15 @@ const DammagedPasportsShow = () => {
         date: values.date
           ? new Date(values.date).toISOString().slice(0, 19) + "Z"
           : passportData.date,
-        note: values.notes,
+        note: values.notes ? values.notes : "لا يوجد",
         damagedTypeId: values.damagedTypeId,
         governorateId: governorateId,
         officeId: officeId,
         profileId: profileId,
       };
+      console.log(updatedValues);
 
-      const response = await axios.put(
+      await axios.put(
         `${Url}/api/DamagedPassport/${passportId}`,
         updatedValues,
         {
@@ -172,17 +138,7 @@ const DammagedPasportsShow = () => {
       setEditModalVisible(false);
       setPassportData((prev) => ({ ...prev, ...updatedValues }));
     } catch (error) {
-      if (error.response?.status === 401) {
-        message.error("الرجاء تسجيل الدخول مرة أخرى");
-        navigate("/login");
-        return;
-      }
-      console.error("Error Updating Passport Details:", error.response);
-      message.error(
-        `حدث خطأ أثناء تعديل بيانات الجواز: ${
-          error.response?.data?.message || error.message
-        }`
-      );
+      message.error("حدث خطأ أثناء تعديل بيانات الجواز.");
     }
   };
 
@@ -197,17 +153,7 @@ const DammagedPasportsShow = () => {
       setDeleteModalVisible(false);
       navigate(-1);
     } catch (error) {
-      if (error.response?.status === 401) {
-        message.error("الرجاء تسجيل الدخول مرة أخرى");
-        navigate("/login");
-        return;
-      }
-      console.error("Error Deleting Passport:", error.response);
-      message.error(
-        `حدث خطأ أثناء حذف الجواز: ${
-          error.response?.data?.message || error.message
-        }`
-      );
+      message.error("حدث خطأ أثناء حذف الجواز.");
     }
   };
 
@@ -257,13 +203,11 @@ const DammagedPasportsShow = () => {
         </div>
       </div>
 
-      {/* Rest of the component remains the same */}
-
-      <div className="details-container">
-        <div className="details-fields">
+      <div className="details-container-Lecture">
+        <div className="details-lecture-container">
           <div className="details-row">
             <span className="details-label">رقم الجواز:</span>
-            <Input
+            <input
               className="details-value"
               value={passportData.passportNumber}
               disabled
@@ -271,15 +215,15 @@ const DammagedPasportsShow = () => {
           </div>
           <div className="details-row">
             <span className="details-label">التاريخ:</span>
-            <Input
+            <input
               className="details-value"
-              value={new Date(passportData.date).toLocaleDateString("ar-EG")}
+              value={new Date(passportData.date).toLocaleDateString("en-CA")}
               disabled
             />
           </div>
           <div className="details-row">
             <span className="details-label">سبب التلف:</span>
-            <Input
+            <input
               className="details-value"
               value={passportData.damagedTypeName || "غير محدد"}
               disabled
@@ -287,9 +231,9 @@ const DammagedPasportsShow = () => {
           </div>
           <div className="details-row">
             <span className="details-label">الملاحظات:</span>
-            <Input.TextArea
+            <textarea
               className="textarea-value"
-              value={passportData.notes || "لا توجد ملاحظات"}
+              value={passportData.note || "لا توجد ملاحظات"}
               disabled
             />
           </div>
@@ -297,7 +241,6 @@ const DammagedPasportsShow = () => {
         <div className="image-container">
           {images.length > 0 && (
             <div className="image-preview-container">
-              {/* <span className="note-details-label">صور الجواز:</span> */}
               <ImagePreviewer
                 uploadedImages={images}
                 defaultWidth={900}
@@ -324,13 +267,14 @@ const DammagedPasportsShow = () => {
               name="passportNumber"
               label="رقم الجواز"
               rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
-              <Input placeholder="رقم الجواز" />
+              <input placeholder="رقم الجواز" />
             </Form.Item>
             <Form.Item
               name="damagedTypeId"
               label="سبب التلف"
               rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}>
               <Select
+                style={{ height: "45px" }}
                 options={damagedTypes}
                 placeholder="اختر سبب التلف"
                 allowClear
@@ -340,13 +284,16 @@ const DammagedPasportsShow = () => {
               name="date"
               label="التاريخ"
               rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-              <Input placeholder="التاريخ" type="datetime-local" />
+              <input placeholder="التاريخ" type="date" />
             </Form.Item>
             <Form.Item
               name="notes"
               label="الملاحظات"
               rules={[{ required: false }]}>
-              <Input.TextArea placeholder="أدخل الملاحظات" />
+              <Input.TextArea
+                placeholder="أدخل الملاحظات"
+                defaultValue={"لا يوجد"}
+              />
             </Form.Item>
             <Button type="primary" htmlType="submit" block>
               حفظ التعديلات

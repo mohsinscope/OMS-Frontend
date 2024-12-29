@@ -31,9 +31,19 @@
 .settings-buttons-container {
   margin-top: 15px;
   display: flex;
+  align-items: start;
   justify-content: space-between;
   width: 37%;
   gap: 30px;
+}
+.ant-modal-footer {
+  display: flex;
+  justify-content: start;
+}
+.modal-content input,
+.modal-content label {
+  padding: 10px;
+  margin: 10px;
 }
 
 .settings-buttons-container button {
@@ -96,7 +106,7 @@
 .password-field input {
   text-align: left;
 }
-.change-password{
+.change-password {
   width: 600px;
   padding: 10px 20px;
   outline: none;

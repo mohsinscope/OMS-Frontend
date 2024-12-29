@@ -30,7 +30,9 @@
   border-radius: 8px;
   display: flex;
   flex-direction: row;
-  height: 80vh;
+  justify-content: space-between;
+  align-items: start;
+  height: fit-content;
 }
 
 .image-lecture-container {

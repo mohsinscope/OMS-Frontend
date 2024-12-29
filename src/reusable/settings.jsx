@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Modal, Button, message } from "antd";
+import { Modal, Button, message, ConfigProvider } from "antd";
 import useAuthStore from "./../store/store.js";
 import Icons from "./../reusable elements/icons.jsx";
 import axios from "axios";
@@ -31,7 +31,8 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
 
   const validatePassword = (password) => {
-    const passwordRegex = /^[A-Z][a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/;
+    const passwordRegex =
+      /^[A-Z][a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/;
     return passwordRegex.test(password);
   };
 
@@ -86,7 +87,11 @@ export default function Settings() {
       message.success("تم تغيير كلمة المرور بنجاح");
       setShowModal(false);
       setStep(1);
-      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
     } catch (error) {
       if (error.response?.status === 401) {
         message.error("كلمة المرور الحالية غير صحيحة");
@@ -160,56 +165,64 @@ export default function Settings() {
       </div>
 
       {/* Modal for Changing Password */}
-      <Modal
-        title={step === 1 ? "أدخل كلمة السر الحالية" : "أدخل كلمة السر الجديدة"}
-        visible={showModal}
-        onCancel={() => {
-          setShowModal(false);
-          setStep(1);
-          setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-        }}
-        onOk={step === 1 ? handleNextStep : handleSavePassword}
-        okText={step === 1 ? "التالي" : "حفظ"}
-        cancelText="إلغاء"
-        confirmLoading={loading}>
-        {step === 1 ? (
-          <div className="modal-content">
-            <label htmlFor="currentPassword">كلمة المرور الحالية</label>
-            <input
-              type="password"
-              id="currentPassword"
-              name="currentPassword"
-              value={passwordData.currentPassword}
-              onChange={handleInputChange}
-              placeholder="أدخل كلمة المرور الحالية"
-              dir="ltr"
-            />
-          </div>
-        ) : (
-          <div className="modal-content">
-            <label htmlFor="newPassword">كلمة المرور الجديدة</label>
-            <input
-              type={showPassword ? "text" : "password"}
-              id="newPassword"
-              name="newPassword"
-              value={passwordData.newPassword}
-              onChange={handleInputChange}
-              placeholder="أدخل كلمة المرور الجديدة"
-              dir="ltr"
-            />
-            <label htmlFor="confirmPassword">تأكيد كلمة المرور</label>
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              id="confirmPassword"
-              name="confirmPassword"
-              value={passwordData.confirmPassword}
-              onChange={handleInputChange}
-              placeholder="تأكيد كلمة المرور"
-              dir="ltr"
-            />
-          </div>
-        )}
-      </Modal>
+      <ConfigProvider direction="rtl">
+        <Modal
+          title={
+            step === 1 ? "أدخل كلمة السر الحالية" : "أدخل كلمة السر الجديدة"
+          }
+          visible={showModal}
+          onCancel={() => {
+            setShowModal(false);
+            setStep(1);
+            setPasswordData({
+              currentPassword: "",
+              newPassword: "",
+              confirmPassword: "",
+            });
+          }}
+          onOk={step === 1 ? handleNextStep : handleSavePassword}
+          okText={step === 1 ? "التالي" : "حفظ"}
+          cancelText="إلغاء"
+          confirmLoading={loading}>
+          {step === 1 ? (
+            <div className="modal-content">
+              <label htmlFor="currentPassword">كلمة المرور الحالية</label>
+              <input
+                type="password"
+                id="currentPassword"
+                name="currentPassword"
+                value={passwordData.currentPassword}
+                onChange={handleInputChange}
+                placeholder="أدخل كلمة المرور الحالية"
+                dir="rtl"
+              />
+            </div>
+          ) : (
+            <div className="modal-content">
+              <label htmlFor="newPassword">كلمة المرور الجديدة</label>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="newPassword"
+                name="newPassword"
+                value={passwordData.newPassword}
+                onChange={handleInputChange}
+                placeholder="أدخل كلمة المرور الجديدة"
+                dir="rtl"
+              />
+              <label htmlFor="confirmPassword">تأكيد كلمة المرور</label>
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                name="confirmPassword"
+                value={passwordData.confirmPassword}
+                onChange={handleInputChange}
+                placeholder="تأكيد كلمة المرور"
+                dir="rtl"
+              />
+            </div>
+          )}
+        </Modal>
+      </ConfigProvider>
     </div>
   );
 }
