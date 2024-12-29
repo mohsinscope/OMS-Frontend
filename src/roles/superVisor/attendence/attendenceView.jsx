@@ -14,6 +14,7 @@ import axios from "axios";
 import Lele from "./../../../reusable elements/icons.jsx";
 import "./attendenceView.css";
 import useAuthStore from "./../../../store/store";
+import usePermissionsStore from "./../../../store/permissionsStore";
 import Url from "./../../../store/url.js";
 
 export default function ViewAttendance() {
@@ -21,10 +22,13 @@ export default function ViewAttendance() {
   const navigate = useNavigate();
   const id = location.state?.id;
   const { isSidebarCollapsed, accessToken } = useAuthStore();
+  const { hasAnyPermission } = usePermissionsStore();
   const [attendanceData, setAttendanceData] = useState(null);
   const [attendanceData2, setAttendanceData2] = useState(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [form] = Form.useForm();
+
+  const hasUpdatePermission = hasAnyPermission("update");
 
   const handleBack = () => {
     navigate(-1);
@@ -82,8 +86,6 @@ export default function ViewAttendance() {
         governorateId: attendanceData.governorateId,
         profileId: attendanceData.profileId,
       };
-
-      console.log("Sending Updated Values:", updatedValues);
 
       const response = await axios.put(
         `${Url}/api/Attendance/${id}`,
@@ -214,11 +216,13 @@ export default function ViewAttendance() {
           <Lele type="back" />
           الرجوع
         </Button>
-        <Button
-          onClick={() => setEditModalVisible(true)}
-          className="edit-button-lecture">
-          تعديل <Lele type="edit" />
-        </Button>
+        {hasUpdatePermission && (
+          <Button
+            onClick={() => setEditModalVisible(true)}
+            className="edit-button-lecture">
+            تعديل <Lele type="edit" />
+          </Button>
+        )}
       </div>
 
       <div className="display-container-charts">
@@ -317,7 +321,7 @@ export default function ViewAttendance() {
             <Form.Item
               name="date"
               label="التاريخ"
-              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
+              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>            
               <Input placeholder="التاريخ" type="date" />
             </Form.Item>
             <Form.Item
