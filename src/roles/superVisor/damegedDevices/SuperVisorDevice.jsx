@@ -53,7 +53,12 @@ export default function SuperVisorDevices() {
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const [governorateResponse, officeResponse, deviceTypeResponse, damagedTypeResponse] = await Promise.all([
+        const [
+          governorateResponse,
+          officeResponse,
+          deviceTypeResponse,
+          damagedTypeResponse,
+        ] = await Promise.all([
           axios.get(`${Url}/api/Governorate/dropdown`, {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
@@ -251,9 +256,9 @@ export default function SuperVisorDevices() {
       className: "table-column-details",
       render: (_, record) => (
         <Link
-          to="DammagedDevicesShow"
+          to="/damegedDevices/show"
           state={{ id: record.id }}
-          className="supervisor-device-details-link">
+          className="supervisor-devices-dameged-details-link">
           عرض
         </Link>
       ),
@@ -263,11 +268,17 @@ export default function SuperVisorDevices() {
   return (
     <div
       className={`supervisor-passport-dameged-page ${
-        isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-passport-dameged-page"
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-passport-dameged-page"
       }`}
       dir="rtl">
       <h1 className="supervisor-passport-dameged-title">الأجهزة التالفة</h1>
-
+      <div className="toggle-search-button">
+        <Button type="primary" onClick={toggleSearch}>
+          {searchVisible ? "بحث" : "بحث"}
+        </Button>
+      </div>
       <div
         className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
@@ -327,28 +338,26 @@ export default function SuperVisorDevices() {
             placeholder="اختر تاريخ النهاية"
           />
         </div>
-        <div className="filter-buttons">
+        <div className="supervisor-device-filter-buttons">
           <Button type="primary" onClick={handleSearch}>
             البحث
           </Button>
-          <Button onClick={handleReset} style={{ marginLeft: "10px" }}>
+          <Button
+            type="primary"
+            onClick={handleReset}
+            style={{ marginLeft: "10px" }}>
             إعادة التعيين
           </Button>
           {hasCreatePermission && (
-            <Link to="/supervisor/damagedDevices/add">
-              <Button className="supervisor-device-add-button">
-                اضافة جهاز تالف
+            <Link to="/damegedDevices/add">
+              <Button type="primary" className="supervisor-filter-buttons">
+                اضافة جهاز تالف +
               </Button>
             </Link>
           )}
         </div>
       </div>
 
-      <div className="toggle-search-button">
-        <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "بحث" : "بحث"}
-        </Button>
-      </div>
       <div className="supervisor-passport-dameged-table-container">
         <ConfigProvider direction="rtl">
           <Table

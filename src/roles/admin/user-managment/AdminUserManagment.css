@@ -71,7 +71,7 @@
   align-items: start;
   gap: 10px;
 }
-.attendance-dropdown-wrapper{
+.attendance-dropdown-wrapper {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -244,17 +244,9 @@
   margin-top: 2%;
   width: 100%;
 }
-.filter-buttons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  margin-top: 2%;
-  width: 100%;
-}
 
 .filter-buttons button {
-  width: 110px;
+  width: 130px;
   height: 45px;
   background-color: #4880ff;
   border-radius: 8px;
@@ -266,18 +258,8 @@
   align-items: center;
   gap: 10px;
 }
-.filter-buttons button {
-  width: 110px;
-  height: 45px;
-  background-color: #4880ff;
-  border-radius: 8px;
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
+.actions-button-usermanagement {
+  padding: 20px !important;
 }
 
 .data-table-container div {

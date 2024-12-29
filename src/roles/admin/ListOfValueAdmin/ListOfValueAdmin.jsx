@@ -90,18 +90,16 @@ export default function ListOfValueAdmin() {
         render: (_, record) => (
           <Space>
             <Button
-              type="link"
+              type="primary"
               onClick={() => handleEdit(record)}
-              disabled={loading}
-            >
+              disabled={loading}>
               تعديل
             </Button>
             <Button
-              type="link"
+              variant="outlined"
               danger
               onClick={() => handleDelete(record.id)}
-              disabled={loading}
-            >
+              disabled={loading}>
               حذف
             </Button>
           </Space>
@@ -179,11 +177,11 @@ export default function ListOfValueAdmin() {
       message.error("بيانات التحديث غير مكتملة");
       return;
     }
-  
+
     setLoading(true);
     try {
       const endpoint = selectedConfig.putEndpoint(editingId);
-  
+
       // Prepare payload
       const payload = {
         id: editingId, // Include the ID if required by the endpoint
@@ -191,9 +189,9 @@ export default function ListOfValueAdmin() {
         profileId: user.id, // Include profileId from the store
         note: values.note || "", // Include the note field, defaulting to an empty string if not provided
       };
-  
+
       await api.put(endpoint, payload);
-  
+
       message.success("تم تحديث البيانات بنجاح");
       setIsModalOpen(false);
       form.resetFields();
@@ -269,8 +267,7 @@ export default function ListOfValueAdmin() {
             optionFilterProp="children"
             filterOption={(input, option) =>
               (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
-            }
-          >
+            }>
             {(dropdownOptions[field.name] || []).map((option) => (
               <Select.Option key={option.value} value={option.value}>
                 {option.label}
@@ -297,8 +294,7 @@ export default function ListOfValueAdmin() {
               className={`list-of-value-item ${
                 currentPath === item.path ? "active" : ""
               }`}
-              onClick={() => handleItemClick(item)}
-            >
+              onClick={() => handleItemClick(item)}>
               <a className="list-of-value-link">
                 <Icons type={item.icon} />
                 <span>{item.label}</span>
@@ -314,8 +310,7 @@ export default function ListOfValueAdmin() {
           <Button
             type="primary"
             onClick={handleAddNew}
-            disabled={!selectedConfig || loading}
-          >
+            disabled={!selectedConfig || loading}>
             إضافة <Icons type="add" />
           </Button>
         </div>
@@ -336,44 +331,44 @@ export default function ListOfValueAdmin() {
           />
         </ConfigProvider>
       </div>
-
-      <Modal
-        title={isEditMode ? "تعديل القيمة" : "إضافة قيمة جديدة"}
-        open={isModalOpen}
-        onCancel={() => {
-          setIsModalOpen(false);
-          setEditingId(null);
-          setIsEditMode(false);
-          form.resetFields();
-        }}
-        footer={null}
-        maskClosable={false}
-      >
-        <Form
-          form={form}
-          onFinish={isEditMode ? handleUpdate : handleAdd}
-          layout="vertical"
-        >
-          {formFields.map((field) => (
-            <Form.Item
-              key={field.name}
-              name={field.name}
-              label={field.label}
-              rules={[{ required: true, message: `الرجاء إدخال ${field.label}` }]}
-            >
-              {renderFormField(field)}
+      <ConfigProvider direction="rtl">
+        <Modal
+          title={isEditMode ? "تعديل القيمة" : "إضافة قيمة جديدة"}
+          open={isModalOpen}
+          onCancel={() => {
+            setIsModalOpen(false);
+            setEditingId(null);
+            setIsEditMode(false);
+            form.resetFields();
+          }}
+          footer={null}
+          maskClosable={false}>
+          <Form
+            form={form}
+            onFinish={isEditMode ? handleUpdate : handleAdd}
+            layout="vertical">
+            {formFields.map((field) => (
+              <Form.Item
+                key={field.name}
+                name={field.name}
+                label={field.label}
+                rules={[
+                  { required: true, message: `الرجاء إدخال ${field.label}` },
+                ]}>
+                {renderFormField(field)}
+              </Form.Item>
+            ))}
+            <Form.Item>
+              <Space style={{ justifyContent: "flex-end" }}>
+                <Button onClick={() => setIsModalOpen(false)}>إلغاء</Button>
+                <Button type="primary" htmlType="submit" loading={loading}>
+                  {isEditMode ? "تحديث" : "إضافة"}
+                </Button>
+              </Space>
             </Form.Item>
-          ))}
-          <Form.Item>
-            <Space style={{ justifyContent: "flex-end" }}>
-              <Button onClick={() => setIsModalOpen(false)}>إلغاء</Button>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                {isEditMode ? "تحديث" : "إضافة"}
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+          </Form>
+        </Modal>
+      </ConfigProvider>
     </div>
   );
 }

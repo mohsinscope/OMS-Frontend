@@ -152,9 +152,12 @@
 .attendance-add-button {
   padding: 20px;
 }
+.attendance-search-button {
+  padding: 20px;
+  background-color: #04aa6d !important;
+}
 
-
-.html-dropdown{
+.html-dropdown {
   width: 200px;
   padding: 0 10px;
 }

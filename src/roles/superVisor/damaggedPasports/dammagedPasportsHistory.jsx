@@ -12,7 +12,6 @@ import Lele from "./../../../reusable elements/icons.jsx";
 const { Option } = Select;
 
 export default function SuperVisorPassport() {
-
   const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
   const { hasAnyPermission } = usePermissionsStore();
   const hasCreatePermission = hasAnyPermission("create");
@@ -38,7 +37,6 @@ export default function SuperVisorPassport() {
 
   const isSupervisor = roles.includes("Supervisor");
 
-
   const formatDateToISO = (date) => {
     if (!date) return null;
     const d = new Date(date);
@@ -50,17 +48,18 @@ export default function SuperVisorPassport() {
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
-        const [govResponse, officeResponse, damagedTypeResponse] = await Promise.all([
-          axios.get(`${Url}/api/Governorate/dropdown`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          axios.get(`${Url}/api/Office/dropdown`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          axios.get(`${Url}/api/damagedtype/all`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-        ]);
+        const [govResponse, officeResponse, damagedTypeResponse] =
+          await Promise.all([
+            axios.get(`${Url}/api/Governorate/dropdown`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+            axios.get(`${Url}/api/Office/dropdown`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+            axios.get(`${Url}/api/damagedtype/all`, {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            }),
+          ]);
 
         setGovernorates(govResponse.data);
         setOffices(officeResponse.data);
@@ -75,7 +74,6 @@ export default function SuperVisorPassport() {
         message.error("حدث خطأ أثناء جلب بيانات القائمة المنسدلة");
       }
     };
-
 
     fetchDropdownData();
   }, [accessToken, isSupervisor, profile]);
@@ -95,7 +93,6 @@ export default function SuperVisorPassport() {
       },
     };
 
-
     try {
       setLoading(true);
       const response = await axios.post(
@@ -109,7 +106,6 @@ export default function SuperVisorPassport() {
         }
       );
 
-
       setPassportList(response.data);
       const headers = response.headers;
       setPagination((prev) => ({
@@ -118,18 +114,19 @@ export default function SuperVisorPassport() {
         pageSize: parseInt(headers["itemsPerPage"], 10) || 10,
       }));
 
-
       if (response.data.length === 0) {
         message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
       }
     } catch (error) {
-      console.error("Error fetching search results:", error.response?.data || error.message);
+      console.error(
+        "Error fetching search results:",
+        error.response?.data || error.message
+      );
       message.error("حدث خطأ أثناء البحث");
     } finally {
       setLoading(false);
     }
   };
-
 
   const handleReset = () => {
     setPassportNumber("");
@@ -143,13 +140,11 @@ export default function SuperVisorPassport() {
     handleSearch();
   };
 
-
   const handleTableChange = (paginationInfo) => {
     setPagination((prev) => ({
       ...prev,
       current: paginationInfo.current,
     }));
-
   };
 
   const columns = [
@@ -196,7 +191,11 @@ export default function SuperVisorPassport() {
       }`}
       dir="rtl">
       <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
-
+      <div className="toggle-search-button">
+        <Button type="primary" onClick={toggleSearch}>
+          {searchVisible ? "بحث" : "بحث"}
+        </Button>
+      </div>
       <div
         className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
@@ -275,29 +274,24 @@ export default function SuperVisorPassport() {
             placeholder="اختر تاريخ النهاية"
           />
         </div>
-        <div className="filter-buttons">
+        <div className="supervisor-damaged-passport-filter-buttons">
           <Button type="primary" onClick={handleSearch}>
             البحث
-            <Lele type="search-icon" />
           </Button>
-          <Button onClick={handleReset} style={{ marginLeft: "10px" }}>
+          <Button type="primary" onClick={handleReset}>
             إعادة التعيين
           </Button>
 
           {hasCreatePermission && (
             <Link to="/supervisor/damagedpasportshistory/supervisordammagepasportadd">
-              <Button className="supervisor-passport-dameged-add-button">
+              <Button
+                type="primary"
+                className="supervisor-passport-dameged-add-button">
                 اضافة جواز تالف +
               </Button>
             </Link>
           )}
         </div>
-      </div>
-
-      <div className="toggle-search-button">
-        <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "بحث" : "بحث"}
-        </Button>
       </div>
 
       <div className="supervisor-passport-dameged-table-container">
@@ -308,7 +302,6 @@ export default function SuperVisorPassport() {
           bordered
           loading={loading}
           pagination={{
-
             current: pagination.current,
             pageSize: pagination.pageSize,
             total: pagination.total,
