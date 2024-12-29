@@ -247,13 +247,13 @@ const LecturerShow = () => {
               name="title"
               label="عنوان المحضر"
               rules={[{ required: true, message: "يرجى إدخال عنوان المحضر" }]}>
-              <Input placeholder="عنوان المحضر" />
+              <input placeholder="عنوان المحضر" />
             </Form.Item>
             <Form.Item
               name="date"
               label="التاريخ"
               rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-              <Input placeholder="التاريخ" type="datetime-local" />
+              <input placeholder="التاريخ" type="date" />
             </Form.Item>
             <Form.Item
               name="note"

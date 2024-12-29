@@ -206,7 +206,7 @@ export default function ViewAttendance() {
       dir="rtl">
       <div className="header">
         <h1>
-          التاريخ: {new Date(attendanceData.date).toLocaleDateString("en-GB")}
+          التاريخ: {new Date(attendanceData.date).toLocaleDateString("en-CA")}
         </h1>
       </div>
       <div className="attendence-buttons">
@@ -318,13 +318,16 @@ export default function ViewAttendance() {
               name="date"
               label="التاريخ"
               rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-              <Input placeholder="التاريخ" type="datetime-local" />
+              <Input placeholder="التاريخ" type="date" />
             </Form.Item>
             <Form.Item
               name="note"
               label="الملاحظات"
               rules={[{ required: false }]}>
-              <Input.TextArea placeholder="أدخل الملاحظات" />
+              <Input.TextArea
+                placeholder="أدخل الملاحظات"
+                defaultValue={"لا يوجد"}
+              />
             </Form.Item>
             <Form.Item
               name="workingHours"

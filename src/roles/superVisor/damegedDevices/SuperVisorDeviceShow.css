@@ -1,72 +1,66 @@
-.supervisor-device-show-container{
-    margin-top: 6%;
-    padding: 20px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: start;
-    margin-right: 20px;
-    margin-left: 20px;
-    transition: all 0.3s ease-in-out;
+.supervisor-device-show-container {
+  margin-top: 6%;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  margin-right: 20px;
+  margin-left: 20px;
+  transition: all 0.3s ease-in-out;
 }
 
-.device-details-container{
-    background-color: white;
-    width: 100%;
-    padding: 20px;
-    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-    border-radius: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    height: 800px;
-
+.device-details-container {
+  background-color: white;
+  width: 100%;
+  padding: 20px;
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+  border-radius: 8px;
+  display: flex;
 }
 
-.device-details-fields{
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    gap: 30px;
+.device-details-fields {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
 }
 
-.device-field-wrapper{
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-top: 20px;
+.device-field-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-.device-details-fields input{
-    height: 45px;
-
+.device-details-fields input {
+  height: 45px;
 }
 
-.device-details-fields textarea{
-
-    height: 200px;
-    max-width: 500px;
-    min-width: 450px;
-    max-height: 300px;
+.device-details-fields textarea {
+  height: 200px;
+  max-width: 500px;
+  min-width: 450px;
+  max-height: 300px;
 }
 
-.device-preview-image{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 30px;
-    gap: 70px;
+.device-preview-image {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 30px;
+  gap: 70px;
 }
 
-.device-back-button{
-    margin: 10px 10px 10px auto;
-    padding: 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    color: white;
-    background-color: #4880ff;
+.device-back-button {
+  margin: 10px 10px 10px auto;
+  padding: 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: white;
+  background-color: #4880ff;
 }
