@@ -7,7 +7,7 @@ export const ROLE_PERMISSIONS = {
         expenses: [ "read", "update", "delete", "approve", "export"],
     },
     Attendence: {
-        attendance: ["read", "update", "delete", "approve", "export"], // Consistent lowercase "attendance"
+        attendance: ["read",  "approve", "export"], // Consistent lowercase "attendance"
     },
     DamagedPassport: {
       passports: [ "read",  "approve", "export"], // Consistent lowercase "attendance"
@@ -23,10 +23,10 @@ export const ROLE_PERMISSIONS = {
     adddamageddevice:["create","read", "update", "delete", "approve"],
   },
   Lecture:{
-    lecture:["create","read", "update", "delete", "approve"],
+    lecture:["read",  "approve"],
   },
   Report:{
-    report:["create","read", "update", "delete", "approve"],
+    report:["read",  "approve"],
   }
   };
   
