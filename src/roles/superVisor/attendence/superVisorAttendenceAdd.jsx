@@ -5,7 +5,7 @@ import axios from "axios";
 import "./superVisorAteensenceAdd.css";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
-
+import IconName from "./../../../reusable elements/icons.jsx";
 const { TextArea } = Input;
 
 export default function SuperVisorAttendanceAdd() {
@@ -86,7 +86,9 @@ export default function SuperVisorAttendanceAdd() {
   const handleModalCancel = () => {
     setModalVisible(false);
   };
-
+  const handleBack = () => {
+    navigate(-1);
+  };
   return (
     <div
       className={`supervisor-attendence-register-container ${
@@ -94,9 +96,14 @@ export default function SuperVisorAttendanceAdd() {
           ? "sidebar-collapsed"
           : "supervisor-expenses-history-page"
       }`}
-      dir="rtl"
-    >
-      <h2 style={{ marginTop: "20px" }}>حضور موظفين الجوازات</h2>
+      dir="rtl">
+      <div className="supervisor-attendence-add-title-content">
+        <Button type="primary" style={{ height: "45px" }} onClick={handleBack}>
+          <IconName type="back" />
+          الرجوع
+        </Button>
+        <h2>حضور موظفين الجوازات</h2>
+      </div>
       <div className="attendance-input-group">
         <div className="attendance-field-wrapper-add">
           <label>اسم المحافظة</label>
@@ -121,8 +128,7 @@ export default function SuperVisorAttendanceAdd() {
           <select
             className="attendance-dropdown"
             value={workingHours}
-            onChange={(e) => setWorkingHours(Number(e.target.value))}
-          >
+            onChange={(e) => setWorkingHours(Number(e.target.value))}>
             <option value={1}>صباحي</option>
             <option value={2}>مسائي</option>
           </select>
@@ -169,15 +175,13 @@ export default function SuperVisorAttendanceAdd() {
           type="default"
           danger
           onClick={() => showModal("reset")}
-          style={{ margin: "10px" }}
-        >
+          style={{ margin: "10px" }}>
           إعادة التعيين
         </Button>
         <Button
           type="primary"
           onClick={() => showModal("save")}
-          style={{ margin: "10px" }}
-        >
+          style={{ margin: "10px" }}>
           الحفظ والإرسال
         </Button>
       </div>
@@ -188,8 +192,7 @@ export default function SuperVisorAttendanceAdd() {
         onOk={handleModalConfirm}
         onCancel={handleModalCancel}
         okText="نعم"
-        cancelText="الغاء"
-      >
+        cancelText="الغاء">
         <p>
           {modalAction === "reset"
             ? "هل أنت متأكد من إعادة التعيين؟"

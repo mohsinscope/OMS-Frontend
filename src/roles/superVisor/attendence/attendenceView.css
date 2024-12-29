@@ -12,7 +12,7 @@
 .display-container-charts {
   display: flex;
   justify-content: start;
-  gap: 100px;
+  gap: 50px;
 }
 .single-total-container {
   padding: 20px;
@@ -44,6 +44,16 @@
   height: fit-content;
   background-color: white;
   border-radius: 8px;
+}
+.chart-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+.chart-card {
+  display: flex;
+  justify-content: end;
 }
 .attendence-view-table-data {
   display: flex;
