@@ -16,11 +16,13 @@ import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import "./AdminUserManagment.css";
 import useAuthStore from "./../../../store/store.js";
 import Url from "./../../../store/url.js";
+
 const { Option } = Select;
 
 const AdminUserManagment = () => {
   const [userRecords, setUserRecords] = useState([]);
   const [filteredRecords, setFilteredRecords] = useState([]);
+  const [roles, setRoles] = useState([]);
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -58,16 +60,19 @@ const AdminUserManagment = () => {
     fetchProfilesWithUsersAndRoles();
   }, [accessToken]);
 
-  // Fetch data for dropdowns
+  // Fetch roles and dropdown data
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [officesResponse, governoratesResponse] = await Promise.all([
-          axios.get(`${Url}/api/office`),
-          axios.get(`${Url}/api/Governorate`),
-        ]);
+        const [officesResponse, governoratesResponse, rolesResponse] =
+          await Promise.all([
+            axios.get(`${Url}/api/office`),
+            axios.get(`${Url}/api/Governorate`),
+            axios.get(`${Url}/api/profile/all-roles`),
+          ]);
         setOffices(officesResponse.data);
         setGovernorates(governoratesResponse.data);
+        setRoles(rolesResponse.data);
       } catch (error) {
         console.error("Error fetching data:", error);
         message.error("Failed to load dropdown data");
@@ -109,22 +114,18 @@ const AdminUserManagment = () => {
       const payload = {
         userName: values.username,
         password: values.password,
-        roles: [values.role],
+        roles: values.roles, // Allow multiple roles
         fullName: values.fullName,
         position: parseInt(values.position, 10),
         officeId: parseInt(values.officeName, 10),
         governorateId: parseInt(values.governorate, 10),
       };
 
-      const response = await axios.post(
-        `${Url}/api/account/register`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await axios.post(`${Url}/api/account/register`, payload, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       setUserRecords((prev) => [...prev, response.data]);
       setFilteredRecords((prev) => [...prev, response.data]);
@@ -132,10 +133,7 @@ const AdminUserManagment = () => {
       setAddModalVisible(false);
       form.resetFields();
     } catch (error) {
-      console.error(
-        "Error adding user:",
-        error.response?.data || error.message
-      );
+      console.error("Error adding user:", error.response?.data || error.message);
       message.error("فشل في إضافة المستخدم");
     }
   };
@@ -145,7 +143,7 @@ const AdminUserManagment = () => {
     form.setFieldsValue({
       username: user.username,
       fullName: user.fullName,
-      role: user.roles.join(", "),
+      roles: user.roles, // Pre-fill roles for editing
       position: user.position,
       governorate: user.governorateId,
       officeName: user.officeId,
@@ -156,13 +154,13 @@ const AdminUserManagment = () => {
   const handleSaveEdit = async (values) => {
     setLoading(true);
     try {
-      // Update user profile
       const updatedUser = {
         ProfileId: selectedUser.id,
         FullName: values.fullName,
         Position: values.position,
         OfficeId: values.officeName,
         GovernorateId: values.governorate,
+        Roles: values.roles, // Handle multiple roles
       };
 
       await axios.put(`${Url}/api/account/${selectedUser.id}`, updatedUser, {
@@ -171,25 +169,8 @@ const AdminUserManagment = () => {
         },
       });
 
-      // If new password is provided, reset password
-      if (values.newPassword) {
-        await axios.post(
-          `${Url}/api/account/reset-password`,
-          {
-            userId: selectedUser.id,
-            newPassword: values.newPassword,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-      }
-
       message.success("تم تحديث المستخدم بنجاح!");
 
-      // Fetch the updated list
       const updatedResponse = await axios.get(
         `${Url}/api/account/profiles-with-users-and-roles`,
         {
@@ -245,7 +226,8 @@ const AdminUserManagment = () => {
           type="primary"
           variant="solid"
           className="actions-button-usermanagement"
-          onClick={() => handleEditUser(record)}>
+          onClick={() => handleEditUser(record)}
+        >
           تعديل
         </Button>
       ),
@@ -261,13 +243,15 @@ const AdminUserManagment = () => {
             ? "sidebar-collapsed"
             : "admin-user-management-container"
         }`}
-        dir="rtl">
+        dir="rtl"
+      >
         <h1 className="admin-header">إدارة المستخدمين</h1>
 
         <div
           className={`filter-section ${
             searchVisible ? "animate-show" : "animate-hide"
-          }`}>
+          }`}
+        >
           <TextFieldForm
             fields={[
               { name: "username", label: "اسم المستخدم", type: "text" },
@@ -275,11 +259,7 @@ const AdminUserManagment = () => {
                 name: "role",
                 label: "الصلاحيات",
                 type: "dropdown",
-                options: [
-                  { value: "Supervisor", label: "مشرف" },
-                  { value: "Manager", label: "مدير" },
-                  { value: "Employee", label: "موظف" },
-                ],
+                options: roles.map((role) => ({ value: role, label: role })),
               },
               {
                 name: "governorate",
@@ -311,7 +291,8 @@ const AdminUserManagment = () => {
               backgroundColor: "#04AA6D",
               border: "none",
             }}
-            onClick={() => setAddModalVisible(true)}>
+            onClick={() => setAddModalVisible(true)}
+          >
             إضافة مستخدم +
           </Button>
           <Button type="primary" onClick={toggleSearch}>
@@ -341,19 +322,22 @@ const AdminUserManagment = () => {
               form.resetFields();
             }}
             style={{ top: 10 }}
-            footer={null}>
+            footer={null}
+          >
             <Form
               form={form}
               onFinish={handleAddUser}
               layout="vertical"
-              className="Admin-user-add-model-conatiner-form">
+              className="Admin-user-add-model-conatiner-form"
+            >
               <h1>اضافة مستخدم جديد</h1>
               <Form.Item
                 name="username"
                 label="اسم المستخدم"
                 rules={[
                   { required: true, message: "يرجى إدخال اسم المستخدم" },
-                ]}>
+                ]}
+              >
                 <Input placeholder="اسم المستخدم" />
               </Form.Item>
               <Form.Item
@@ -361,37 +345,49 @@ const AdminUserManagment = () => {
                 label="الاسم الكامل"
                 rules={[
                   { required: true, message: "يرجى إدخال الاسم الكامل" },
-                ]}>
+                ]}
+              >
                 <Input placeholder="الاسم الكامل" />
               </Form.Item>
               <Form.Item
-                name="role"
-                label="الصلاحية"
-                rules={[{ required: true, message: "يرجى اختيار الصلاحية" }]}>
-                <Select placeholder="اختر الصلاحية" style={{ height: 45 }}>
-                  <Option value="Supervisor">مشرف</Option>
-                  <Option value="Manager">مدير</Option>
-                  <Option value="EmployeeOfDamageFollowUp">
-                    موظف متابعة التلف
-                  </Option>
-                  <Option value="FollowUpEmployee">موظف المتابعة</Option>
+                name="roles"
+                label="الصلاحيات"
+                rules={[{ required: true, message: "يرجى اختيار الصلاحيات" }]}
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="اختر الصلاحيات"
+                  style={{ height: 45 }}
+                >
+                  {roles.map((role) => (
+                    <Option key={role} value={role}>
+                      {role}
+                    </Option>
+                  ))}
                 </Select>
               </Form.Item>
               <Form.Item
                 name="position"
                 label="المنصب"
-                rules={[{ required: true, message: "يرجى اختيار المنصب" }]}>
+                rules={[{ required: true, message: "يرجى اختيار المنصب" }]}
+              >
                 <Select placeholder="اختر المنصب" style={{ height: 45 }}>
-                  <Option value={2}>مدير</Option>
-                  <Option value={3}>مشرف</Option>
-                  <Option value={4}>موظف متابعة التلف</Option>
-                  <Option value={5}>موظف المتابعة</Option>
+                <Option value="1">Manager</Option>
+                  <Option value="2">Director</Option>
+                  <Option value="3">Supervisor</Option>
+                  <Option value="4">Accontnt</Option>
+                  <Option value="5">FollowUpEmployee</Option>
+                  <Option value="6">Reporting Analyst</Option>
+                  <Option value="7">Sr.Controller</Option>
+                  <Option value="8">Project Coordinator</Option>
+                  <Option value="9">Operation Manager</Option>
                 </Select>
               </Form.Item>
               <Form.Item
                 name="governorate"
                 label="المحافظة"
-                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
+                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
+              >
                 <Select placeholder="اختر المحافظة" style={{ height: 45 }}>
                   {governorates.map((gov) => (
                     <Option key={gov.id} value={gov.id}>
@@ -403,7 +399,8 @@ const AdminUserManagment = () => {
               <Form.Item
                 name="officeName"
                 label="اسم المكتب"
-                rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}>
+                rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}
+              >
                 <Select placeholder="اختر المكتب" style={{ height: 45 }}>
                   {offices.map((office) => (
                     <Option key={office.id} value={office.id}>
@@ -424,7 +421,8 @@ const AdminUserManagment = () => {
                       "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية",
                   },
                   { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" },
-                ]}>
+                ]}
+              >
                 <Input.Password placeholder="كلمة السر" />
               </Form.Item>
               <Form.Item
@@ -443,7 +441,8 @@ const AdminUserManagment = () => {
                       );
                     },
                   }),
-                ]}>
+                ]}
+              >
                 <Input.Password placeholder="تأكيد كلمة السر" />
               </Form.Item>
               <Button type="primary" htmlType="submit" block>
@@ -462,36 +461,64 @@ const AdminUserManagment = () => {
               setEditModalVisible(false);
               form.resetFields();
             }}
-            footer={null}>
+            footer={null}
+          >
             <Form
               form={form}
               onFinish={handleSaveEdit}
               layout="vertical"
-              className="Admin-user-add-model-conatiner-form">
+              className="Admin-user-add-model-conatiner-form"
+            >
               <h1>تعديل المستخدم</h1>
               <Form.Item
                 name="fullName"
                 label="الاسم الكامل"
                 rules={[
                   { required: true, message: "يرجى إدخال الاسم الكامل" },
-                ]}>
+                ]}
+              >
                 <Input placeholder="الاسم الكامل" />
+              </Form.Item>
+              <Form.Item
+                name="roles"
+                label="الصلاحيات"
+                rules={[{ required: true, message: "يرجى اختيار الصلاحيات" }]}
+              >
+                <Select
+                  mode="multiple"
+                  placeholder="اختر الصلاحيات"
+                  style={{ height: 45 }}
+                >
+                  {roles.map((role) => (
+                    <Option key={role} value={role}>
+                      {role}
+                    </Option>
+                  ))}
+                </Select>
               </Form.Item>
               <Form.Item
                 name="position"
                 label="المنصب"
-                rules={[{ required: true, message: "يرجى اختيار المنصب" }]}>
+                rules={[{ required: true, message: "يرجى اختيار المنصب" }]}
+              >
                 <Select placeholder="اختر المنصب" style={{ height: 45 }}>
-                  <Option value="2">مدير</Option>
-                  <Option value="3">مشرف</Option>
-                  <Option value="4">موظف متابعة التلف</Option>
-                  <Option value="5">موظف المتابعة</Option>
+                  <Option value="1">Manager</Option>
+                  <Option value="2">Director</Option>
+                  <Option value="3">Supervisor</Option>
+                  <Option value="4">Accontnt</Option>
+                  <Option value="5">FollowUpEmployee</Option>
+                  <Option value="6">Reporting Analyst</Option>
+                  <Option value="7">Sr.Controller</Option>
+                  <Option value="8">Project Coordinator</Option>
+                  <Option value="9">Operation Manager</Option>
+
                 </Select>
               </Form.Item>
               <Form.Item
                 name="governorate"
                 label="المحافظة"
-                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
+                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
+              >
                 <Select placeholder="اختر المحافظة" style={{ height: 45 }}>
                   {governorates.map((gov) => (
                     <Option key={gov.id} value={gov.id}>
@@ -503,7 +530,8 @@ const AdminUserManagment = () => {
               <Form.Item
                 name="officeName"
                 label="اسم المكتب"
-                rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}>
+                rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}
+              >
                 <Select placeholder="اختر المكتب" style={{ height: 45 }}>
                   {offices.map((office) => (
                     <Option key={office.id} value={office.id}>
@@ -513,7 +541,6 @@ const AdminUserManagment = () => {
                 </Select>
               </Form.Item>
 
-              {/* Password Reset Section */}
               <div className="border-t mt-4 pt-4">
                 <h3 className="mb-4">اعادة تعيين كلمة السر</h3>
                 <Form.Item
@@ -530,7 +557,8 @@ const AdminUserManagment = () => {
                       min: 8,
                       message: "كلمة السر يجب أن تكون 8 أحرف على الأقل",
                     },
-                  ]}>
+                  ]}
+                >
                   <Input.Password placeholder="كلمة السر الجديدة" />
                 </Form.Item>
                 <Form.Item
@@ -551,7 +579,8 @@ const AdminUserManagment = () => {
                         );
                       },
                     }),
-                  ]}>
+                  ]}
+                >
                   <Input.Password placeholder="تأكيد كلمة السر الجديدة" />
                 </Form.Item>
               </div>
