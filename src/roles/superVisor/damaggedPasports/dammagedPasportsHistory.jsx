@@ -84,6 +84,7 @@ export default function SuperVisorPassport() {
     };
 
     fetchDropdownData();
+    handleSearch();
   }, [accessToken, isSupervisor, profile]);
 
   const handleSearch = async () => {

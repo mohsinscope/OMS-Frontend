@@ -19,7 +19,7 @@ export const MENU_ITEMS = [
     icon: "devices",
     path: "/supervisor/damegedDevices",
     resource: "devices",
-    role: [ "Supervisor", "Admin","DamagedDevice"], // Role allowed to access
+    role: [ "Supervisor", "Admin","DamagedDevice","AddDamagedDevice"], // Role allowed to access
   },
   
   {
