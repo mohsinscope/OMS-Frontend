@@ -15,7 +15,7 @@ import Dashboard from "./../../../pages/dashBoard.jsx";
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import "./AdminUserManagment.css";
 import useAuthStore from "./../../../store/store.js";
-import Url from './../../../store/url.js';
+import Url from "./../../../store/url.js";
 const { Option } = Select;
 
 const AdminUserManagment = () => {
@@ -165,15 +165,11 @@ const AdminUserManagment = () => {
         GovernorateId: values.governorate,
       };
 
-      await axios.put(
-        `${Url}/api/account/${selectedUser.id}`,
-        updatedUser,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      await axios.put(`${Url}/api/account/${selectedUser.id}`, updatedUser, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       // If new password is provided, reset password
       if (values.newPassword) {
@@ -181,7 +177,7 @@ const AdminUserManagment = () => {
           `${Url}/api/account/reset-password`,
           {
             userId: selectedUser.id,
-            newPassword: values.newPassword
+            newPassword: values.newPassword,
           },
           {
             headers: {
@@ -247,14 +243,9 @@ const AdminUserManagment = () => {
       render: (_, record) => (
         <Button
           type="primary"
-          style={{
-            backgroundColor: "#1890ff",
-            border: "none",
-            color: "#fff",
-            borderRadius: "4px",
-          }}
-          onClick={() => handleEditUser(record)}
-        >
+          variant="solid"
+          className="actions-button-usermanagement"
+          onClick={() => handleEditUser(record)}>
           تعديل
         </Button>
       ),
@@ -272,7 +263,7 @@ const AdminUserManagment = () => {
         }`}
         dir="rtl">
         <h1 className="admin-header">إدارة المستخدمين</h1>
-        
+
         <div
           className={`filter-section ${
             searchVisible ? "animate-show" : "animate-hide"
@@ -314,12 +305,14 @@ const AdminUserManagment = () => {
         <div className="toggle-search-button">
           <Button
             type="primary"
+            className="usermanagemenr-adduser"
             style={{
-              backgroundColor: "#1890ff",
+              width: "170px",
+              backgroundColor: "#04AA6D",
               border: "none",
             }}
             onClick={() => setAddModalVisible(true)}>
-            + إضافة
+            إضافة مستخدم +
           </Button>
           <Button type="primary" onClick={toggleSearch}>
             {searchVisible ? " البحث" : " البحث"}
@@ -425,10 +418,12 @@ const AdminUserManagment = () => {
                 rules={[
                   { required: true, message: "يرجى إدخال كلمة السر" },
                   {
-                    pattern: /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
-                    message: "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية"
+                    pattern:
+                      /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
+                    message:
+                      "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية",
                   },
-                  { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" }
+                  { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" },
                 ]}>
                 <Input.Password placeholder="كلمة السر" />
               </Form.Item>
@@ -526,10 +521,15 @@ const AdminUserManagment = () => {
                   label="كلمة السر الجديدة"
                   rules={[
                     {
-                      pattern: /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
-                      message: "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية"
+                      pattern:
+                        /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
+                      message:
+                        "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية",
                     },
-                    { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" }
+                    {
+                      min: 8,
+                      message: "كلمة السر يجب أن تكون 8 أحرف على الأقل",
+                    },
                   ]}>
                   <Input.Password placeholder="كلمة السر الجديدة" />
                 </Form.Item>
@@ -546,7 +546,9 @@ const AdminUserManagment = () => {
                         if (value === getFieldValue("newPassword")) {
                           return Promise.resolve();
                         }
-                        return Promise.reject(new Error("كلمات السر غير متطابقة!"));
+                        return Promise.reject(
+                          new Error("كلمات السر غير متطابقة!")
+                        );
                       },
                     }),
                   ]}>

@@ -156,7 +156,7 @@
 .supervisor-devices-dameged-details-link {
   background-color: #4880ff;
   color: white;
-  padding: 10px 20px;
+  padding: 5px 20px;
   border-radius: 6px;
   text-decoration: none;
   transition: background-color 0.3s ease;
@@ -188,10 +188,26 @@
 }
 
 /* Filter Button Container */
-.filter-buttons {
+.supervisor-device-filter-buttons {
+  height: 45px;
   display: flex; /* Align buttons in a row */
   gap: 10px; /* Space between buttons */
   margin-top: 10px; /* Add spacing above buttons */
+}
+.supervisor-device-filter-buttons button {
+  height: 45px !important;
+}
+.supervisor-filter-buttons {
+  height: 45px;
+  width: 150px !important;
+  background-color: #04aa6d !important;
+  border: 2px solid #04aa6d;
+}
+.supervisor-filter-buttons:hover {
+  height: 45px;
+  width: 150px !important;
+  background-color: white !important;
+  color: #04aa6d !important;
 }
 
 .supervisor-devices-dameged-field-wrapper input {

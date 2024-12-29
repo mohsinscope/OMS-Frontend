@@ -272,10 +272,11 @@ export default function SupervisorAttendanceHistory() {
   return (
     <div
       className={`supervisor-attendance-history-main-container ${
-        isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-expenses-history-page"
+        isSidebarCollapsed
+          ? "sidebar-collapsed"
+          : "supervisor-expenses-history-page"
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <div className="supervisor-attendance-history-title">
         <h1>الحضور</h1>
       </div>
@@ -283,8 +284,7 @@ export default function SupervisorAttendanceHistory() {
       <div
         className={`supervisor-attendance-history-fields ${
           searchVisible ? "animate-show" : "animate-hide"
-        }`}
-      >
+        }`}>
         <div className="filter-row">
           <label>التاريخ من</label>
           <DatePicker
@@ -309,8 +309,7 @@ export default function SupervisorAttendanceHistory() {
             className="html-dropdown"
             value={isSupervisor ? userGovernorateId : selectedGovernorate}
             onChange={(e) => setSelectedGovernorate(e.target.value)}
-            disabled={isSupervisor}
-          >
+            disabled={isSupervisor}>
             <option value="">اختر المحافظة</option>
             {governorates.map((gov) => (
               <option key={gov.id} value={gov.id}>
@@ -325,8 +324,7 @@ export default function SupervisorAttendanceHistory() {
             className="html-dropdown"
             value={isSupervisor ? userOfficeId : selectedOffice}
             onChange={(e) => setSelectedOffice(e.target.value)}
-            disabled={isSupervisor}
-          >
+            disabled={isSupervisor}>
             <option value="">اختر المكتب</option>
             {offices.map((office) => (
               <option key={office.id} value={office.id}>
@@ -335,14 +333,13 @@ export default function SupervisorAttendanceHistory() {
             ))}
           </select>
         </div>
-        <div className="attendance-dropdown-wrapper" >
+        <div className="attendance-dropdown-wrapper">
           <label>نوع الدوام</label>
           <select
             className="attendance-dropdown"
             value={workingHours}
             onChange={(e) => setWorkingHours(Number(e.target.value))}
-            style={{padding:"0"}}
-          >
+            style={{ padding: "0" }}>
             <option value={3}>الكل</option>
             <option value={1}>صباحي</option>
             <option value={2}>مسائي</option>
@@ -351,26 +348,23 @@ export default function SupervisorAttendanceHistory() {
         <Button
           className="attendance-add-button"
           onClick={handleSearch}
-          loading={isLoading}
-        >
+          loading={isLoading}>
           البحث
         </Button>
         <Button
           className="attendance-reset-button"
           onClick={handleReset}
-          disabled={isLoading}
-        >
+          disabled={isLoading}>
           إعادة التعيين
         </Button>
 
         {hasCreatePermission && (
           <Link to="AttendenceAdd">
             <Button
-              className="attendance-add-button"
+              className="attendance-search-button"
               disabled={isLoading}
-              type="primary"
-            >
-              اضافة حضور
+              type="primary">
+              اضافة حضور +
             </Button>
           </Link>
         )}
@@ -378,7 +372,7 @@ export default function SupervisorAttendanceHistory() {
 
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "إخفاء البحث" : "إظهار البحث"}
+          {searchVisible ? "بحث" : "بحث"}
         </Button>
       </div>
 
@@ -399,8 +393,7 @@ export default function SupervisorAttendanceHistory() {
         onOk={() => setIsModalVisible(false)}
         onCancel={() => setIsModalVisible(false)}
         okText="حسناً"
-        cancelText="إغلاق"
-      >
+        cancelText="إغلاق">
         <p>لا يوجد تطابق للفلاتر</p>
       </Modal>
     </div>

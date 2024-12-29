@@ -88,11 +88,11 @@ const App = () => {
     },
     { path: "/supervisor/damegedDevices", element: <SuperVisorDevices /> },
     {
-      path: "/supervisor/damegedDevices/show",
+      path: "/damegedDevices/show",
       element: <SuperVisorDeviceShow />,
     },
     {
-      path: "/supervisor/damegedDevices/add",
+      path: "/damegedDevices/add",
       element: <SuperVisorDevicesAdd />,
     },
     {
