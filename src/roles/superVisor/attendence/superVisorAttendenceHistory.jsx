@@ -116,7 +116,7 @@ export default function SupervisorAttendanceHistory() {
 
       const formattedData = data.map((item) => ({
         id: item.id,
-        date: new Date(item.date).toLocaleDateString("ar-EG"),
+        date: new Date(item.date).toLocaleDateString("en-CA"),
         totalStaff:
           item.receivingStaff +
           item.accountStaff +
@@ -247,19 +247,19 @@ export default function SupervisorAttendanceHistory() {
         <div className="filter-row">
           <label>التاريخ من</label>
           <DatePicker
+            placeholder=""
             onChange={(date) => setStartDate(date)}
             value={startDate}
             style={{ width: "100%" }}
-            placeholder="اختر التاريخ"
           />
         </div>
         <div className="filter-row">
           <label>التاريخ إلى</label>
           <DatePicker
+            placeholder=""
             onChange={(date) => setEndDate(date)}
             value={endDate}
             style={{ width: "100%" }}
-            placeholder="اختر التاريخ"
           />
         </div>
         <div className="filter-row">
@@ -269,7 +269,7 @@ export default function SupervisorAttendanceHistory() {
             value={isSupervisor ? userGovernorateId : selectedGovernorate}
             onChange={(e) => setSelectedGovernorate(e.target.value)}
             disabled={isSupervisor}>
-            <option value="">اختر المحافظة</option>
+            <option value=""></option>
             {governorates.map((gov) => (
               <option key={gov.id} value={gov.id}>
                 {gov.name}
@@ -284,7 +284,7 @@ export default function SupervisorAttendanceHistory() {
             value={isSupervisor ? userOfficeId : selectedOffice}
             onChange={(e) => setSelectedOffice(e.target.value)}
             disabled={isSupervisor}>
-            <option value="">اختر المكتب</option>
+            <option value=""></option>
             {offices.map((office) => (
               <option key={office.id} value={office.id}>
                 {office.name}
@@ -331,7 +331,7 @@ export default function SupervisorAttendanceHistory() {
 
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "بحث" : "بحث"}
+          {searchVisible ? "اِخفاء الحقول" : "اِظهار الحقول"}
         </Button>
       </div>
 

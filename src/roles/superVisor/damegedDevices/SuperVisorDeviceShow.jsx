@@ -29,25 +29,15 @@ const SuperVisorDeviceShow = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   const [damagedTypes, setDamagedTypes] = useState([]);
-  const [damagedDeviceTypes, setDamagedDeviceTypes] = useState([]);
+  const [deviceTypes, setDeviceTypes] = useState([]);
   const [form] = Form.useForm();
 
-  // Get store data
   const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
   const { hasAnyPermission } = usePermissionsStore();
   const { profileId, governorateId, officeId } = profile || {};
 
-  // Check permissions using hasAnyPermission
   const hasUpdatePermission = hasAnyPermission("update");
   const hasDeletePermission = hasAnyPermission("delete");
-
-  // For debugging
-  useEffect(() => {
-    console.log("Current user permissions:", {
-      hasUpdatePermission,
-      hasDeletePermission,
-    });
-  }, [hasUpdatePermission, hasDeletePermission]);
 
   useEffect(() => {
     if (!deviceId) {
@@ -67,7 +57,6 @@ const SuperVisorDeviceShow = () => {
             },
           }
         );
-        console.log(response);
         const device = response.data;
         const formattedDate = device.date
           ? new Date(device.date).toISOString().slice(0, 19) + "Z"
@@ -75,16 +64,7 @@ const SuperVisorDeviceShow = () => {
         setDeviceData({ ...device, date: formattedDate });
         form.setFieldsValue({ ...device, date: formattedDate });
       } catch (error) {
-        if (error.response?.status === 401) {
-          message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate("/login");
-          return;
-        }
-        message.error(
-          `حدث خطأ أثناء جلب تفاصيل الجهاز: ${
-            error.response?.data?.message || error.message
-          }`
-        );
+        message.error("حدث خطأ أثناء جلب تفاصيل الجهاز.");
       } finally {
         setLoading(false);
       }
@@ -100,20 +80,10 @@ const SuperVisorDeviceShow = () => {
             },
           }
         );
-        console.log(response);
         const imageUrls = response.data.map((image) => image.filePath);
         setImages(imageUrls);
       } catch (error) {
-        if (error.response?.status === 401) {
-          message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate("/login");
-          return;
-        }
-        message.error(
-          `حدث خطأ أثناء جلب صور الجهاز: ${
-            error.response?.data?.message || error.message
-          }`
-        );
+        message.error("حدث خطأ أثناء جلب صور الجهاز.");
       }
     };
 
@@ -131,29 +101,29 @@ const SuperVisorDeviceShow = () => {
           }))
         );
       } catch (error) {
-        message.error("خطأ في جلب أنواع التلف للاجهزة");
+        message.error("خطأ في جلب أنواع التلف للأجهزة.");
       }
     };
 
-    const fetchDamagedDeviceTypes = async () => {
+    const fetchDeviceTypes = async () => {
       try {
         const response = await axios.get(`${Url}/api/devicetype`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
-        setDamagedDeviceTypes(
+        setDeviceTypes(
           response.data.map((type) => ({
             value: type.id,
             label: type.name,
           }))
         );
       } catch (error) {
-        message.error("خطأ في جلب أنواع التلف للأجهزة");
+        message.error("خطأ في جلب أنواع الأجهزة.");
       }
     };
 
-    fetchDamagedDeviceTypes();
+    fetchDeviceTypes();
     fetchDamagedTypes();
     fetchDeviceDetails();
     fetchDeviceImages();
@@ -168,13 +138,13 @@ const SuperVisorDeviceShow = () => {
           ? new Date(values.date).toISOString().slice(0, 19) + "Z"
           : deviceData.date,
         damagedDeviceTypeId: values.damagedDeviceTypeId,
+        deviceTypeId: values.deviceTypeId,
         note: values.note || "",
-        deviceTypeId: deviceData.deviceTypeId,
         officeId: officeId,
         governorateId: governorateId,
         profileId: profileId,
       };
-
+      console.log(updatedValues);
       await axios.put(`${Url}/api/DamagedDevice/${deviceId}`, updatedValues, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -185,16 +155,7 @@ const SuperVisorDeviceShow = () => {
       setEditModalVisible(false);
       setDeviceData((prev) => ({ ...prev, ...updatedValues }));
     } catch (error) {
-      if (error.response?.status === 401) {
-        message.error("الرجاء تسجيل الدخول مرة أخرى");
-        navigate("/login");
-        return;
-      }
-      message.error(
-        `حدث خطأ أثناء تعديل بيانات الجهاز: ${
-          error.response?.data?.message || error.message
-        }`
-      );
+      message.error("حدث خطأ أثناء تعديل بيانات الجهاز.");
     }
   };
 
@@ -209,16 +170,7 @@ const SuperVisorDeviceShow = () => {
       setDeleteModalVisible(false);
       navigate(-1);
     } catch (error) {
-      if (error.response?.status === 401) {
-        message.error("الرجاء تسجيل الدخول مرة أخرى");
-        navigate("/login");
-        return;
-      }
-      message.error(
-        `حدث خطأ أثناء حذف الجهاز: ${
-          error.response?.data?.message || error.message
-        }`
-      );
+      message.error("حدث خطأ أثناء حذف الجهاز.");
     }
   };
 
@@ -282,7 +234,7 @@ const SuperVisorDeviceShow = () => {
             <span className="details-label">التاريخ:</span>
             <input
               className="details-value"
-              value={new Date(deviceData.date).toLocaleDateString("ar-EG")}
+              value={new Date(deviceData.date).toLocaleDateString("en-CA")}
               disabled
             />
           </div>
@@ -298,7 +250,11 @@ const SuperVisorDeviceShow = () => {
             <span className="details-label">نوع الضرر:</span>
             <input
               className="details-value"
-              value={damagedTypes.find(type => type.value === deviceData.damagedDeviceTypeId)?.label || 'غير معروف'}
+              value={
+                damagedTypes.find(
+                  (type) => type.value === deviceData.damagedDeviceTypeId
+                )?.label || "غير معروف"
+              }
               disabled
             />
           </div>
@@ -354,16 +310,32 @@ const SuperVisorDeviceShow = () => {
               <Input placeholder="الرقم التسلسلي" />
             </Form.Item>
             <Form.Item
+              name="deviceTypeId"
+              label="نوع الجهاز"
+              rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}>
+              <Select
+                style={{ height: "45px" }}
+                options={deviceTypes}
+                placeholder="اختر نوع الجهاز"
+                allowClear
+              />
+            </Form.Item>
+            <Form.Item
               name="damagedDeviceTypeId"
               label="نوع الضرر"
-              rules={[{ required: true, message: "يرجى إدخال نوع الضرر" }]}>
-              <Input placeholder="نوع الضرر" />
+              rules={[{ required: true, message: "يرجى اختيار نوع الضرر" }]}>
+              <Select
+                style={{ height: "45px" }}
+                options={damagedTypes}
+                placeholder="اختر نوع الضرر"
+                allowClear
+              />
             </Form.Item>
             <Form.Item
               name="date"
               label="التاريخ"
               rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-              <Input placeholder="التاريخ" type="datetime-local" />
+              <Input placeholder="التاريخ" type="date" />
             </Form.Item>
             <Form.Item
               name="note"

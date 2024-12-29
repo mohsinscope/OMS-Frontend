@@ -70,7 +70,7 @@
   border: #bcc1ca 1px solid;
   font-size: large;
 }
-.supervisor-Lectur-field-wrapper select{
+.supervisor-Lectur-field-wrapper select {
   width: 200px;
   height: 45px;
   padding: 0 20px;
@@ -134,7 +134,7 @@
 .supervisor-Lectur-details-link {
   background-color: #4880ff;
   color: white;
-  padding: 10px 20px;
+  padding: 5px 20px;
   border-radius: 6px;
   text-decoration: none;
   transition: background-color 0.3s ease;

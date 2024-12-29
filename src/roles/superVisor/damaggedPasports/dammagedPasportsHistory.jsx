@@ -4,7 +4,15 @@ import useAuthStore from "./../../../store/store";
 import usePermissionsStore from "./../../../store/permissionsStore";
 
 import React, { useState, useEffect } from "react";
-import { Table, message, Button, Input, Select, DatePicker } from "antd";
+import {
+  Table,
+  message,
+  Button,
+  Input,
+  Select,
+  DatePicker,
+  ConfigProvider,
+} from "antd";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Url from "./../../../store/url";
@@ -193,7 +201,7 @@ export default function SuperVisorPassport() {
       <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "بحث" : "بحث"}
+          {searchVisible ? "اِخفاء الحقول" : "اِظهار الحقول"}
         </Button>
       </div>
       <div
@@ -206,8 +214,7 @@ export default function SuperVisorPassport() {
             className="filter-dropdown"
             value={selectedGovernorate}
             onChange={setSelectedGovernorate}
-            disabled={isSupervisor}
-            placeholder="اختر المحافظة">
+            disabled={isSupervisor}>
             {governorates.map((gov) => (
               <Option key={gov.id} value={gov.id}>
                 {gov.name}
@@ -222,8 +229,7 @@ export default function SuperVisorPassport() {
             className="filter-dropdown"
             value={selectedOffice}
             onChange={setSelectedOffice}
-            disabled={isSupervisor}
-            placeholder="اختر المكتب">
+            disabled={isSupervisor}>
             {offices.map((office) => (
               <Option key={office.id} value={office.id}>
                 {office.name}
@@ -237,7 +243,6 @@ export default function SuperVisorPassport() {
           <Input
             value={passportNumber}
             onChange={(e) => setPassportNumber(e.target.value)}
-            placeholder="أدخل رقم الجواز"
           />
         </div>
 
@@ -247,8 +252,7 @@ export default function SuperVisorPassport() {
             className="filter-dropdown"
             value={damagedTypeId}
             onChange={(value) => setDamagedTypeId(value)}
-            allowClear
-            placeholder="اختر سبب التلف">
+            allowClear>
             {damagedTypes.map((type) => (
               <Option key={type.id} value={type.id}>
                 {type.name}
@@ -262,7 +266,6 @@ export default function SuperVisorPassport() {
           <DatePicker
             onChange={(date) => setStartDate(date)}
             style={{ width: "100%" }}
-            placeholder="اختر تاريخ البداية"
           />
         </div>
 
@@ -271,7 +274,6 @@ export default function SuperVisorPassport() {
           <DatePicker
             onChange={(date) => setEndDate(date)}
             style={{ width: "100%" }}
-            placeholder="اختر تاريخ النهاية"
           />
         </div>
         <div className="supervisor-damaged-passport-filter-buttons">
@@ -295,22 +297,24 @@ export default function SuperVisorPassport() {
       </div>
 
       <div className="supervisor-passport-dameged-table-container">
-        <Table
-          dataSource={passportList}
-          columns={columns}
-          rowKey={(record) => record.id}
-          bordered
-          loading={loading}
-          pagination={{
-            position: ["bottomCenter"],
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-          }}
-          onChange={handleTableChange}
-          locale={{ emptyText: "لا توجد بيانات" }}
-          className="supervisor-passport-dameged-table"
-        />
+        <ConfigProvider direction="rtl">
+          <Table
+            dataSource={passportList}
+            columns={columns}
+            rowKey={(record) => record.id}
+            bordered
+            loading={loading}
+            pagination={{
+              position: ["bottomCenter"],
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+            }}
+            onChange={handleTableChange}
+            locale={{ emptyText: "لا توجد بيانات" }}
+            className="supervisor-passport-dameged-table"
+          />
+        </ConfigProvider>
       </div>
     </div>
   );
