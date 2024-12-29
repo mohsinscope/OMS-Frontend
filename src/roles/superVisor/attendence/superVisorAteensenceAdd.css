@@ -61,9 +61,6 @@
   max-height: 200px;
 }
 
-.attendance-input-group div input {
-}
-
 .ant-picker-input input {
   height: 37px !important;
   width: 150px !important;
@@ -100,6 +97,4 @@
   border: #1677ff 1px solid;
   box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
   outline: 0;
-}
-.attendance-dropdown {
 }
