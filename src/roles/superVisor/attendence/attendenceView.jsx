@@ -22,6 +22,7 @@ export default function ViewAttendance() {
   const id = location.state?.id;
   const { isSidebarCollapsed, accessToken } = useAuthStore();
   const [attendanceData, setAttendanceData] = useState(null);
+  const [attendanceData2, setAttendanceData2] = useState(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [form] = Form.useForm();
 
@@ -37,12 +38,23 @@ export default function ViewAttendance() {
             Authorization: `Bearer ${accessToken}`,
           },
         });
+        const response2 = await axios.get(
+          `${Url}/api/office/${response.data.officeId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
         const data = response.data;
+        const attendsdata = response2;
         setAttendanceData(data);
+        setAttendanceData2(attendsdata);
         form.setFieldsValue({
           ...data,
           date: data.date ? data.date.replace(/:00.000Z$/, "") : "",
-        }); // Pre-fill the form with fetched data
+        });
       } catch (error) {
         console.error("Error fetching attendance details:", error);
         message.error("حدث خطأ أثناء جلب بيانات الحضور.");
@@ -84,28 +96,30 @@ export default function ViewAttendance() {
         }
       );
 
-      // On success, update attendanceData with the latest values
       message.success("تم تحديث بيانات الحضور بنجاح");
       setEditModalVisible(false);
-      const updatedData = response.data || updatedValues; // Use server response or edited values
-      setAttendanceData(updatedData); // Trigger re-render of charts
+      const updatedData = response.data || updatedValues;
+      setAttendanceData(updatedData);
     } catch (error) {
       console.error("Error Updating Attendance Details:", error);
       message.error(`حدث خطأ أثناء تعديل بيانات الحضور: ${error.message}`);
     }
   };
 
-  const renderChart = (title, count) => {
+  const renderChart = (title, count, total) => {
     const data = [
       { name: "حاضر", value: count },
-      { name: "غائب", value: 10 - count },
+      { name: "غائب", value: total - count },
     ];
 
     const COLORS = ["#0088FE", "#FF8042"];
 
     return (
       <div className="chart-card">
-        <h3>{title}</h3>
+        <div className="chart-content">
+          <h3>{title}</h3>
+          <h2>{`${count} / ${total}`}</h2>
+        </div>
         <PieChart width={120} height={120}>
           <Pie
             data={data}
@@ -124,13 +138,12 @@ export default function ViewAttendance() {
           </Pie>
           <Tooltip />
         </PieChart>
-        <p>{`${count} موظفين`}</p>
       </div>
     );
   };
 
   const renderTotalChart = () => {
-    if (!attendanceData) return null;
+    if (!attendanceData || !attendanceData2) return null;
 
     const totalPresent =
       attendanceData.receivingStaff +
@@ -139,12 +152,21 @@ export default function ViewAttendance() {
       attendanceData.qualityStaff +
       attendanceData.deliveryStaff;
 
+    const totalCapacity =
+      attendanceData2?.data?.receivingStaff +
+      attendanceData2?.data?.accountStaff +
+      attendanceData2?.data?.printingStaff +
+      attendanceData2?.data?.qualityStaff +
+      attendanceData2?.data?.deliveryStaff;
+
+    const absentCount = totalCapacity - totalPresent;
+
     const data = [
       { name: "حاضر", value: totalPresent },
-      { name: "غائب", value: 50 - totalPresent }, // Assuming max capacity of 50 employees
+      { name: "غائب", value: absentCount },
     ];
 
-    const COLORS = ["#4CAF50", "#F44336"]; // Green for present, red for absent
+    const COLORS = ["#4CAF50", "#F44336"];
 
     return (
       <div className="total-chart-container">
@@ -167,12 +189,12 @@ export default function ViewAttendance() {
           </Pie>
           <Tooltip />
         </PieChart>
-        <p>{`الحاضرون: ${totalPresent} موظفين`}</p>
+        <h2>{`الحاضرون: ${totalPresent} / ${totalCapacity}`}</h2>
       </div>
     );
   };
 
-  if (!attendanceData) {
+  if (!attendanceData || !attendanceData2) {
     return <div>Loading...</div>;
   }
 
@@ -200,25 +222,42 @@ export default function ViewAttendance() {
       </div>
 
       <div className="display-container-charts">
-        <div className="single-total-container">
-          {/* Total Attendance Chart */}
-          {renderTotalChart()}
-        </div>
+        <div className="single-total-container">{renderTotalChart()}</div>
         <div className="charts-section">
           <div className="single-chart">
-            {renderChart("موظفي الحسابات", attendanceData.accountStaff)}
+            {renderChart(
+              "موظفي الحسابات",
+              attendanceData.accountStaff,
+              attendanceData2?.data?.accountStaff || 0
+            )}
           </div>
           <div className="single-chart">
-            {renderChart("موظفي الطباعة", attendanceData.printingStaff)}
+            {renderChart(
+              "موظفي الطباعة",
+              attendanceData.printingStaff,
+              attendanceData2?.data?.printingStaff || 0
+            )}
           </div>
           <div className="single-chart">
-            {renderChart("موظفي الجودة", attendanceData.qualityStaff)}
+            {renderChart(
+              "موظفي الجودة",
+              attendanceData.qualityStaff,
+              attendanceData2?.data?.qualityStaff || 0
+            )}
           </div>
           <div className="single-chart">
-            {renderChart("موظفي التسليم", attendanceData.deliveryStaff)}
+            {renderChart(
+              "موظفي التسليم",
+              attendanceData.deliveryStaff,
+              attendanceData2?.data?.deliveryStaff || 0
+            )}
           </div>
           <div className="single-chart">
-            {renderChart("موظفي الاستلام", attendanceData.receivingStaff)}
+            {renderChart(
+              "موظفي الاستلام",
+              attendanceData.receivingStaff,
+              attendanceData2?.data?.receivingStaff || 0
+            )}
           </div>
         </div>
       </div>

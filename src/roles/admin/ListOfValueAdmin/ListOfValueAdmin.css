@@ -57,7 +57,7 @@
   flex-direction: column;
   background-color: white;
   width: 78%;
-  height: 88vh;
+  height: fit-content;
   border: #bcc1ca 1px solid;
   border-radius: 42px;
   padding: 30px;

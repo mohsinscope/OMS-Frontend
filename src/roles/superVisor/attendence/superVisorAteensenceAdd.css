@@ -1,108 +1,105 @@
-.supervisor-attendence-register-container{
+.supervisor-attendence-register-container {
+  /* Limit the width */
+  margin-top: 6%;
 
-        /* Limit the width */
-        margin-top: 6%;
-  
-        padding: 20px;
-      
-        border-radius: 8px;
-        /* Smooth rounded corners */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: start;
+  padding: 20px;
+
+  border-radius: 8px;
+  /* Smooth rounded corners */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
 }
-
-.attendance-input-group{
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    display: flex;
-    justify-content: start;
-    align-items: start;
-    flex-wrap: wrap;
-    gap: 20px;
-
+.supervisor-attendence-add-title-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: start;
+  margin-bottom: 20px;
 }
-.attendance-input-group div{
-    display: flex;
-    justify-content: start;
-    align-items: start;
-    gap: 20px;
-    flex-wrap: wrap;
-   
+.attendance-input-group {
+  background-color: white;
+  padding: 20px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: start;
+  align-items: start;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.attendance-input-group div {
+  display: flex;
+  justify-content: start;
+  align-items: start;
+  gap: 20px;
+  flex-wrap: wrap;
 }
 .attendance-field-wrapper-add {
-    align-items: start;
-    justify-content: start;
-    flex-direction: column;
+  align-items: start;
+  justify-content: start;
+  flex-direction: column;
 }
-.attendance-field-wrapper-add input{
-    height: 45px;
-    width: 200px;
-    outline: none;
-    border: #bcc1ca 1px solid;
-    border-radius: 6px;
-    padding: 20px;
-
-}
-
-
-.attendance-field-wrapper-add textarea{
-    outline: none;
-    border: #bcc1ca 1px solid;
-    border-radius: 6px;
-    padding: 20px;
-    min-width: 300px;
-    max-width: 400px;
-    min-height: 50px;
-    max-height: 200px;
+.attendance-field-wrapper-add input {
+  height: 45px;
+  width: 200px;
+  outline: none;
+  border: #bcc1ca 1px solid;
+  border-radius: 6px;
+  padding: 20px;
 }
 
-.attendance-input-group div input{
-
+.attendance-field-wrapper-add textarea {
+  outline: none;
+  border: #bcc1ca 1px solid;
+  border-radius: 6px;
+  padding: 20px;
+  min-width: 300px;
+  max-width: 400px;
+  min-height: 50px;
+  max-height: 200px;
 }
 
-.ant-picker-input input{
-    height: 37px !important;
-    width: 150px !important;
-    
-}
-.attendance-input-group #date:hover{
-    border:none;
-    box-shadow: none;
-    outline: 0;
-}
-.attendance-input-group #date:focus{
-    border: none;
-    box-shadow: none;
-    outline: none;
-}
-.attendance-buttons button{
-    padding: 20px;
+.attendance-input-group div input {
 }
 
-.attendance-dropdown{
-    width: 200px;
-    height: 45px;
-    outline: none;
-    border: #bcc1ca 1px solid;
-    border-radius: 6px;
- 
+.ant-picker-input input {
+  height: 37px !important;
+  width: 150px !important;
+}
+.attendance-input-group #date:hover {
+  border: none;
+  box-shadow: none;
+  outline: 0;
+}
+.attendance-input-group #date:focus {
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+.attendance-buttons button {
+  padding: 20px;
 }
 
-.attendance-dropdown:hover{
-    border:#1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
-    outline: 0;
-
+.attendance-dropdown {
+  width: 200px;
+  height: 45px;
+  outline: none;
+  border: #bcc1ca 1px solid;
+  border-radius: 6px;
 }
 
-.attendance-dropdown:focus{
-    border:#1677ff 1px solid;
-    box-shadow: 0 0 0 2px rgba(5,145,255,0.1);
-    outline: 0;
+.attendance-dropdown:hover {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
+}
+
+.attendance-dropdown:focus {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
 }
 .attendance-dropdown {
- 
 }
