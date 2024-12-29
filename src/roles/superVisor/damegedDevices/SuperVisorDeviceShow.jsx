@@ -298,7 +298,7 @@ const SuperVisorDeviceShow = () => {
             <span className="details-label">نوع الضرر:</span>
             <input
               className="details-value"
-              value={deviceData.damagedDeviceTypeId}
+              value={damagedTypes.find(type => type.value === deviceData.damagedDeviceTypeId)?.label || 'غير معروف'}
               disabled
             />
           </div>

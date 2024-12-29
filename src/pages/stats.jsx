@@ -1,10 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import axios from "axios";
 import "./stats.css";
 import Url from "./../store/url.js";
 import useAuthStore from "./../store/store.js";
 import AttendanceStats from './attendenceStats.jsx';
+
+const COLORS = [
+  "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0",
+  "#FF5722", "#00BCD4", "#E91E63", "#3F51B5", "#CDDC39"
+];
 
 export default function Stats() {
   const { profile } = useAuthStore();
@@ -13,153 +18,149 @@ export default function Stats() {
   const [selectedTab, setSelectedTab] = useState("damagedDevices");
   const [attendanceData, setAttendanceData] = useState([]);
   const [governorates, setGovernorates] = useState([]);
-  const [offices, setOffices] = useState([]);
+  const [availableOffices, setAvailableOffices] = useState([]);
   const [damagedDeviceTypes, setDamagedDeviceTypes] = useState([]);
   const [damagedPassportTypes, setDamagedPassportTypes] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const COLORS = ["#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0", 
-                  "#FF5722", "#00BCD4", "#E91E63", "#3F51B5", "#CDDC39"];
-
-  const fetchGovernorates = async () => {
+  // Fetch governorates data
+  const fetchGovernorates = useCallback(async () => {
     try {
       const response = await axios.get(`${Url}/api/Governorate/dropdown`);
       setGovernorates(response.data);
     } catch (error) {
-      console.error("Failed to fetch governorates:", error.message);
+      setError("Failed to fetch governorates. Please try again later.");
+      console.error("Governorates fetch error:", error);
     }
-  };
+  }, []);
 
-  const fetchOffices = async () => {
+  // Fetch offices for selected governorate
+  const fetchOffices = useCallback(async (governorateId) => {
+    if (!governorateId) {
+      setAvailableOffices([]);
+      setSelectedOffice(null);
+      return;
+    }
+
     try {
-      const response = await axios.get(`${Url}/api/Office/dropdown`);
-      setOffices(response.data);
-    } catch (error) {
-      console.error("Failed to fetch offices:", error.message);
-    }
-  };
-
-  const fetchDamagedDeviceTypes = async () => {
-    try {
-      const response = await axios.get(`${Url}/api/damageddevicetype/all`);
-      setDamagedDeviceTypes(response.data);
-    } catch (error) {
-      console.error("Failed to fetch damaged device types:", error.message);
-    }
-  };
-
-  const fetchDamagedPassportTypes = async () => {
-    try {
-      const response = await axios.get(`${Url}/api/damagedtype/all`);
-      setDamagedPassportTypes(response.data);
-    } catch (error) {
-      console.error("Failed to fetch damaged passport types:", error.message);
-    }
-  };
-
-  const fetchDamagedDevices = async () => {
-    setLoading(true);
-    try {
-      const deviceData = await Promise.all(
-        damagedDeviceTypes.map(async (type) => {
-          const body = {
-            OfficeId: selectedOffice,
-            GovernorateId: selectedGovernorate,
-            Date: `${selectedDate}T12:00:00Z`,
-            DamagedDeviceTypeId: type.id,
-          };
-          const response = await axios.post(`${Url}/api/DamagedDevice/search/statistics`, body);
-          return {
-            name: type.name,
-            value: response.data.availableSpecificDamagedDevices,
-          };
-        })
-      );
-
-      const filteredData = deviceData.filter(item => item.value > 0);
-      const total = filteredData.reduce((acc, curr) => acc + curr.value, 0);
-      setChartData(filteredData);
-      setTotalItems(total);
-    } catch (error) {
-      console.error("Failed to fetch damaged devices:", error.message);
-      setChartData([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchDamagedPassports = async () => {
-    setLoading(true);
-    try {
-      const passportData = await Promise.all(
-        damagedPassportTypes.map(async (type) => {
-          const body = {
-            OfficeId: selectedOffice,
-            GovernorateId: selectedGovernorate,
-            Date: `${selectedDate}T12:00:00Z`,
-            DamagedTypeId: type.id,
-          };
-          const response = await axios.post(`${Url}/api/DamagedPassport/search/statistics`, body);
-          return {
-            name: type.name,
-            value: response.data.availableSpecificDamagedPassports,
-          };
-        })
-      );
-
-      const filteredData = passportData.filter(item => item.value > 0);
-      const total = filteredData.reduce((acc, curr) => acc + curr.value, 0);
-      setChartData(filteredData);
-      setTotalItems(total);
-    } catch (error) {
-      console.error("Failed to fetch damaged passports:", error.message);
-      setChartData([]);
-      setTotalItems(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTabChange = async (tab) => {
-    setChartData([]);
-    setTotalItems(0);
-    setSelectedTab(tab);
-    
-    // First ensure types are loaded before fetching data
-    if (tab === "damagedDevices") {
-      if (damagedDeviceTypes.length === 0) {
-        await fetchDamagedDeviceTypes();
+      const response = await axios.get(`${Url}/api/Governorate/dropdown/${governorateId}`);
+      if (response.data && response.data[0] && response.data[0].offices) {
+        setAvailableOffices(response.data[0].offices);
       }
-      fetchDamagedDevices();
-    } else if (tab === "damagedPassports") {
-      if (damagedPassportTypes.length === 0) {
-        await fetchDamagedPassportTypes();
-      }
-      fetchDamagedPassports();
+      setSelectedOffice(null); // Reset selected office when governorate changes
+    } catch (error) {
+      setError("Failed to fetch offices. Please try again later.");
+      console.error("Offices fetch error:", error);
     }
-  };
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      await Promise.all([
-        fetchGovernorates(),
-        fetchOffices(),
-        fetchDamagedDeviceTypes(),
-        fetchDamagedPassportTypes()
+  }, []);
+
+  // Handle governorate change
+  const handleGovernorateChange = useCallback((governorateId) => {
+    setSelectedGovernorate(governorateId || null);
+    if (governorateId) {
+      fetchOffices(governorateId);
+    } else {
+      setAvailableOffices([]);
+      setSelectedOffice(null);
+    }
+  }, [fetchOffices]);
+
+  // Fetch types data
+  const fetchTypesData = useCallback(async () => {
+    try {
+      const [deviceTypesRes, passportTypesRes] = await Promise.all([
+        axios.get(`${Url}/api/damageddevicetype/all`),
+        axios.get(`${Url}/api/damagedtype/all`)
       ]);
       
-      if (selectedTab === "damagedDevices") {
-        fetchDamagedDevices();
-      } else if (selectedTab === "damagedPassports") {
-        fetchDamagedPassports();
-      }
+      setDamagedDeviceTypes(deviceTypesRes.data);
+      setDamagedPassportTypes(passportTypesRes.data);
+    } catch (error) {
+      setError("Failed to fetch types data. Please try again later.");
+      console.error("Types data fetch error:", error);
+    }
+  }, []);
+
+  // Fetch statistics data
+  const fetchStatisticsData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const types = selectedTab === "damagedDevices" ? damagedDeviceTypes : damagedPassportTypes;
+      const endpoint = selectedTab === "damagedDevices" 
+        ? `${Url}/api/DamagedDevice/search/statistics`
+        : `${Url}/api/DamagedPassport/search/statistics`;
+      
+      const requests = types.map(type => {
+        const body = {
+          OfficeId: selectedOffice || null,
+          GovernorateId: selectedGovernorate || null,
+          Date: `${selectedDate}T00:00:00Z`,
+          [selectedTab === "damagedDevices" ? "DamagedDeviceTypeId" : "DamagedTypeId"]: type.id
+        };
+        return axios.post(endpoint, body);
+      });
+
+      const responses = await Promise.all(requests);
+      
+      const data = responses.map((response, index) => ({
+        name: types[index].name,
+        value: selectedTab === "damagedDevices" 
+          ? response.data.availableSpecificDamagedDevices
+          : response.data.availableSpecificDamagedPassports
+      }));
+
+      const filteredData = data.filter(item => item.value > 0);
+      const total = filteredData.reduce((acc, curr) => acc + curr.value, 0);
+      
+      setChartData(filteredData);
+      setTotalItems(total);
+    } catch (error) {
+      setError("Failed to fetch statistics. Please try again later.");
+      console.error("Statistics fetch error:", error);
+      setChartData([]);
+      setTotalItems(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedTab, selectedOffice, selectedGovernorate, selectedDate, damagedDeviceTypes, damagedPassportTypes]);
+
+  // Handle tab change
+  const handleTabChange = useCallback(async (tab) => {
+    setChartData([]);
+    setTotalItems(0);
+    setError(null);
+    setSelectedTab(tab);
+    
+    if (tab === "attendance") return;
+    
+    if ((tab === "damagedDevices" && damagedDeviceTypes.length === 0) ||
+        (tab === "damagedPassports" && damagedPassportTypes.length === 0)) {
+      await fetchTypesData();
+    }
+  }, [fetchTypesData]);
+
+  // Initial data fetch
+  useEffect(() => {
+    const initializeData = async () => {
+      await Promise.all([
+        fetchGovernorates(),
+        fetchTypesData()
+      ]);
     };
     
-    fetchInitialData();
-  }, []);
+    initializeData();
+  }, [fetchGovernorates, fetchTypesData]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    fetchStatisticsData();
+  };
 
   return (
     <div className="stats-container">
@@ -189,18 +190,7 @@ export default function Stats() {
       </div>
 
       {selectedTab !== "attendance" && (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (selectedTab === "damagedDevices") {
-              fetchDamagedDevices();
-            } else if (selectedTab === "damagedPassports") {
-              fetchDamagedPassports();
-            }
-          }}
-          className="stats-form"
-          dir="rtl"
-        >
+        <form onSubmit={handleSubmit} className="stats-form" dir="rtl">
           <div className="form-group">
             <label>التاريخ</label>
             <input
@@ -212,26 +202,10 @@ export default function Stats() {
           </div>
 
           <div className="form-group">
-            <label>اسم المكتب</label>
-            <select
-              value={selectedOffice || ""}
-              onChange={(e) => setSelectedOffice(e.target.value || null)}
-              className="form-control"
-            >
-              <option value="">كل المكاتب</option>
-              {offices.map((office) => (
-                <option key={office.id} value={office.id}>
-                  {office.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
             <label>المحافظة</label>
             <select
               value={selectedGovernorate || ""}
-              onChange={(e) => setSelectedGovernorate(e.target.value || null)}
+              onChange={(e) => handleGovernorateChange(e.target.value)}
               className="form-control"
             >
               <option value="">كل المحافظات</option>
@@ -243,26 +217,47 @@ export default function Stats() {
             </select>
           </div>
 
-          <button 
-            type="submit" 
-            className="search-button"
-            disabled={loading}
-          >
+          <div className="form-group">
+            <label>اسم المكتب</label>
+            <select
+              value={selectedOffice || ""}
+              onChange={(e) => setSelectedOffice(e.target.value || null)}
+              className="form-control"
+              disabled={!selectedGovernorate}
+            >
+              <option value="">كل المكاتب</option>
+              {availableOffices.map((office) => (
+                <option key={office.id} value={office.id}>
+                  {office.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button type="submit" className="search-button" disabled={loading}>
             {loading ? 'جاري البحث...' : 'ابحث'}
           </button>
         </form>
       )}
 
+      {error && (
+        <div className="error-message" dir="rtl">
+          {error}
+        </div>
+      )}
+
       <div className="stats-main-section" dir="rtl">
         <div className="stats-chart-section">
           <h2 className="stats-chart-title">
-            احصائيات {selectedTab === "damagedDevices" ? "الأجهزة التالفة" : 
-                     selectedTab === "damagedPassports" ? "الجوازات التالفة" : "الحضور"}
+            احصائيات {
+              selectedTab === "damagedDevices" ? "الأجهزة التالفة" :
+              selectedTab === "damagedPassports" ? "الجوازات التالفة" : "الحضور"
+            }
           </h2>
           <div className="chart-container">
             {selectedTab === "attendance" ? (
               <AttendanceStats data={attendanceData} />
-            ) : (
+            ) : !loading && chartData.length > 0 ? (
               <>
                 <PieChart width={400} height={400}>
                   <Pie
@@ -284,6 +279,8 @@ export default function Stats() {
                   إجمالي {selectedTab === "damagedDevices" ? "الأجهزة التالفة" : "الجوازات التالفة"}: {totalItems}
                 </h3>
               </>
+            ) : !loading && (
+              <div className="no-data-message">لا توجد بيانات للعرض</div>
             )}
           </div>
         </div>
@@ -292,25 +289,28 @@ export default function Stats() {
           <div className="stats-summary">
             {chartData.map((item, index) => (
               <div key={index} className="summary-card">
-                <h3>{item.name}</h3>
-             
-                <PieChart width={120} height={120}>
-                  <Pie
-                    data={[{ name: item.name, value: item.value }]}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={30}
-                    outerRadius={50}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    <Cell fill={COLORS[index % COLORS.length]} />
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-                <span>
-                  {selectedTab === "damagedDevices" ? "عدد الأجهزة" : "عدد الجوازات"}: {item.value}
-                </span>
+                <div>
+                  <PieChart width={120} height={120}>
+                    <Pie
+                      data={[{ name: item.name, value: item.value }]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={30}
+                      outerRadius={50}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      <Cell fill={COLORS[index % COLORS.length]} />
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </div>
+                <div>
+                  <h3>{item.name}</h3>
+                  <span>
+                    {selectedTab === "damagedDevices" ? "عدد الأجهزة" : "عدد الجوازات"}: {item.value}
+                  </span>
+                </div>
               </div>
             ))}
           </div>

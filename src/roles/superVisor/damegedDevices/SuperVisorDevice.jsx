@@ -38,7 +38,7 @@ export default function SuperVisorDevices() {
   const [damagedTypeId, setDamagedTypeId] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [serialDeviceNumber, setSerialDeviceNumber] = useState(""); // Updated variable
+  const [serialDeviceNumber, setSerialDeviceNumber] = useState("");
   const [governorateName, setGovernorateName] = useState("");
   const [officeName, setOfficeName] = useState("");
 
@@ -73,6 +73,8 @@ export default function SuperVisorDevices() {
           }),
         ]);
 
+        console.log('Damaged Types Response:', damagedTypeResponse.data);
+
         const governorateData = governorateResponse.data.find(
           (item) => item.id === profile?.governorateId
         );
@@ -82,7 +84,6 @@ export default function SuperVisorDevices() {
 
         setGovernorateName(governorateData?.name || "غير معروف");
         setOfficeName(officeData?.name || "غير معروف");
-
         setDeviceTypes(deviceTypeResponse.data);
         setDamagedTypes(damagedTypeResponse.data);
       } catch (error) {
@@ -98,12 +99,13 @@ export default function SuperVisorDevices() {
   }, [accessToken, profile]);
 
   useEffect(() => {
-    if (profile) {
+    if (profile && damagedTypes.length > 0) {
+      console.log('Damaged Types Available:', damagedTypes);
       if (roles.includes("Supervisor")) {
         fetchDevices({
           SerialNumber: "",
           DeviceTypeId: null,
-          damagedTypeId: null,
+          DamagedDeviceTypeId: null,
           startDate: null,
           endDate: null,
           officeId: profile.officeId,
@@ -116,7 +118,7 @@ export default function SuperVisorDevices() {
         fetchAllDevices();
       }
     }
-  }, [profile, roles]);
+  }, [profile, roles, damagedTypes]);
 
   const fetchDevices = async (body) => {
     try {
@@ -132,9 +134,39 @@ export default function SuperVisorDevices() {
         }
       );
 
-      setDevicesList(response.data);
+      console.log('Device List Before Mapping:', response.data);
+      console.log('Available Damage Types:', damagedTypes);
 
-      if (response.data.length === 0) {
+      const updatedData = response.data.map((device) => {
+        // Log the device details for debugging
+        console.log('Processing device:', {
+          id: device.id,
+          damagedTypeId: device.damagedTypeId,
+          damageType: device.damageType,
+          damageTypeId: device.damageType?.id
+        });
+
+        // Get the damage type ID from the damageType object
+        const deviceDamageTypeId = device.damageType?.id;
+        console.log('Device damage type ID:', deviceDamageTypeId);
+
+        // Find the matching damage type from our list
+        const damageType = deviceDamageTypeId ? 
+          damagedTypes.find(type => Number(type.id) === Number(deviceDamageTypeId)) : 
+          null;
+
+        console.log('Found damage type:', damageType);
+
+        return {
+          ...device,
+          damagedTypeName: device.damageType?.name || damageType?.name || "غير معروف"
+        };
+      });
+
+      console.log('Device List After Mapping:', updatedData);
+      setDevicesList(updatedData);
+
+      if (updatedData.length === 0) {
         message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
       }
     } catch (error) {
@@ -160,9 +192,39 @@ export default function SuperVisorDevices() {
         }
       );
 
-      setDevicesList(response.data);
+      console.log('All Devices Before Mapping:', response.data);
+      console.log('Available Damage Types:', damagedTypes);
 
-      if (response.data.length === 0) {
+      const updatedData = response.data.map((device) => {
+        // Log the device details for debugging
+        console.log('Processing device:', {
+          id: device.id,
+          damagedTypeId: device.damagedTypeId,
+          damageType: device.damageType,
+          damageTypeId: device.damageType?.id
+        });
+
+        // Get the damage type ID from the damageType object
+        const deviceDamageTypeId = device.damageType?.id;
+        console.log('Device damage type ID:', deviceDamageTypeId);
+
+        // Find the matching damage type from our list
+        const damageType = deviceDamageTypeId ? 
+          damagedTypes.find(type => Number(type.id) === Number(deviceDamageTypeId)) : 
+          null;
+
+        console.log('Found damage type:', damageType);
+
+        return {
+          ...device,
+          damagedTypeName: device.damageType?.name || damageType?.name || "غير معروف"
+        };
+      });
+
+      console.log('All Devices After Mapping:', updatedData);
+      setDevicesList(updatedData);
+
+      if (updatedData.length === 0) {
         message.warning("لا توجد بيانات");
       }
     } catch (error) {
@@ -178,9 +240,9 @@ export default function SuperVisorDevices() {
 
   const handleSearch = () => {
     const body = {
-      SerialNumber: serialDeviceNumber || "", // Corrected variable name
+      SerialNumber: serialDeviceNumber || "",
       DeviceTypeId: deviceTypeId || undefined,
-      damagedTypeId: damagedTypeId || undefined,
+      DamagedDeviceTypeId: damagedTypeId || undefined,
       startDate: startDate ? formatDateToISO(startDate) : null,
       endDate: endDate ? formatDateToISO(endDate) : null,
       officeId: roles.includes("Supervisor") ? profile?.officeId : undefined,
@@ -197,8 +259,8 @@ export default function SuperVisorDevices() {
     }
   };
 
-  const handleReset = async () => {
-    setSerialDeviceNumber(""); // Reset correctly
+  const handleReset = () => {
+    setSerialDeviceNumber("");
     setDeviceTypeId(null);
     setDamagedTypeId(null);
     setStartDate(null);
@@ -208,7 +270,7 @@ export default function SuperVisorDevices() {
       fetchDevices({
         SerialNumber: "",
         DeviceTypeId: null,
-        damagedTypeId: null,
+        DamagedDeviceTypeId: null,
         startDate: null,
         endDate: null,
         officeId: profile?.officeId,
@@ -242,6 +304,9 @@ export default function SuperVisorDevices() {
       dataIndex: "damagedTypeName",
       key: "damagedTypeName",
       className: "table-column-damage",
+      render: (text, record) => {
+        return record.damageType?.name || text || "غير معروف";
+      },
     },
     {
       title: "التاريخ",
@@ -279,6 +344,7 @@ export default function SuperVisorDevices() {
           {searchVisible ? "بحث" : "بحث"}
         </Button>
       </div>
+      
       <div
         className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
@@ -302,10 +368,25 @@ export default function SuperVisorDevices() {
         <div className="filter-field">
           <label>الرقم التسلسلي للجهاز</label>
           <Input
-            value={serialDeviceNumber} // Corrected variable name
-            onChange={(e) => setSerialDeviceNumber(e.target.value)} // Corrected variable name
+            value={serialDeviceNumber}
+            onChange={(e) => setSerialDeviceNumber(e.target.value)}
             placeholder="أدخل الرقم التسلسلي للجهاز"
           />
+        </div>
+        <div className="filter-field">
+          <label>نوع الجهاز</label>
+          <Select
+            className="filter-dropdown"
+            value={deviceTypeId}
+            onChange={(value) => setDeviceTypeId(value)}
+            allowClear
+            placeholder="اختر نوع الجهاز">
+            {deviceTypes.map((type) => (
+              <Option key={type.id} value={type.id}>
+                {type.name}
+              </Option>
+            ))}
+          </Select>
         </div>
         <div className="filter-field">
           <label>سبب التلف</label>
