@@ -257,14 +257,14 @@ export default function Stats() {
         </div>
       )}
 
-      <div className="stats-main-section" dir="rtl">
-        <div className="stats-chart-section">
-          <h2 className="stats-chart-title">
+          <h2 className="stats-chart-title" dir="rtl"style={{marginRight:"20px"}}>
             احصائيات {
               selectedTab === "damagedDevices" ? "الأجهزة التالفة" :
               selectedTab === "damagedPassports" ? "الجوازات التالفة" : "الحضور"
             }
           </h2>
+      <div className="stats-main-section" dir="rtl">
+        <div className="stats-chart-section">
           <div className="chart-container">
             {selectedTab === "attendance" ? (
               <AttendanceStats data={attendanceData} />
