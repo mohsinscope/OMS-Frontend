@@ -9,6 +9,7 @@ import {
   Input,
   Button,
   ConfigProvider,
+  Select,
 } from "antd";
 import axios from "axios";
 import Lele from "./../../../reusable elements/icons.jsx";
@@ -102,6 +103,9 @@ export default function ViewAttendance() {
       setEditModalVisible(false);
       const updatedData = response.data || updatedValues;
       setAttendanceData(updatedData);
+
+      // Reload the page
+      window.location.reload();
     } catch (error) {
       console.error("Error Updating Attendance Details:", error);
       message.error(`حدث خطأ أثناء تعديل بيانات الحضور: ${error.message}`);
@@ -114,7 +118,7 @@ export default function ViewAttendance() {
       { name: "غائب", value: total - count },
     ];
 
-    const COLORS = ["#0088FE", "#FF8042"];
+    const COLORS = ["#04AA6D", "#f44336"];
 
     return (
       <div className="chart-card">
@@ -280,7 +284,16 @@ export default function ViewAttendance() {
             className="Admin-user-add-model-container-form">
             <Form.Item
               name="receivingStaff"
-              label="موظفي الاستلام"
+              label={
+                <span>
+                  موظفي الاستلام
+                  <span style={{ color: "blue", fontSize: "14px" }}>
+                    {` (الحالي: ${attendanceData.receivingStaff} / ${
+                      attendanceData2?.data?.receivingStaff || 0
+                    })`}
+                  </span>
+                </span>
+              }
               rules={[
                 { required: true, message: "يرجى إدخال عدد موظفي الاستلام" },
               ]}>
@@ -288,7 +301,16 @@ export default function ViewAttendance() {
             </Form.Item>
             <Form.Item
               name="accountStaff"
-              label="موظفي الحسابات"
+              label={
+                <span>
+                  موظفي الحسابات
+                  <span style={{ color: "blue", fontSize: "14px" }}>
+                    {` (الحالي: ${attendanceData.accountStaff} / ${
+                      attendanceData2?.data?.accountStaff || 0
+                    })`}
+                  </span>
+                </span>
+              }
               rules={[
                 { required: true, message: "يرجى إدخال عدد موظفي الحسابات" },
               ]}>
@@ -296,7 +318,16 @@ export default function ViewAttendance() {
             </Form.Item>
             <Form.Item
               name="printingStaff"
-              label="موظفي الطباعة"
+              label={
+                <span>
+                  موظفي الطباعة
+                  <span style={{ color: "blue", fontSize: "14px" }}>
+                    {` (الحالي: ${attendanceData.printingStaff} / ${
+                      attendanceData2?.data?.printingStaff || 0
+                    })`}
+                  </span>
+                </span>
+              }
               rules={[
                 { required: true, message: "يرجى إدخال عدد موظفي الطباعة" },
               ]}>
@@ -304,7 +335,16 @@ export default function ViewAttendance() {
             </Form.Item>
             <Form.Item
               name="qualityStaff"
-              label="موظفي الجودة"
+              label={
+                <span>
+                  موظفي الجودة
+                  <span style={{ color: "blue", fontSize: "14px" }}>
+                    {` (الحالي: ${attendanceData.qualityStaff} / ${
+                      attendanceData2?.data?.qualityStaff || 0
+                    })`}
+                  </span>
+                </span>
+              }
               rules={[
                 { required: true, message: "يرجى إدخال عدد موظفي الجودة" },
               ]}>
@@ -312,7 +352,16 @@ export default function ViewAttendance() {
             </Form.Item>
             <Form.Item
               name="deliveryStaff"
-              label="موظفي التسليم"
+              label={
+                <span>
+                  موظفي التسليم
+                  <span style={{ color: "blue", fontSize: "14px" }}>
+                    {` (الحالي: ${attendanceData.deliveryStaff} / ${
+                      attendanceData2?.data?.deliveryStaff || 0
+                    })`}
+                  </span>
+                </span>
+              }
               rules={[
                 { required: true, message: "يرجى إدخال عدد موظفي التسليم" },
               ]}>
@@ -321,7 +370,7 @@ export default function ViewAttendance() {
             <Form.Item
               name="date"
               label="التاريخ"
-              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>            
+              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
               <Input placeholder="التاريخ" type="date" />
             </Form.Item>
             <Form.Item
@@ -339,7 +388,13 @@ export default function ViewAttendance() {
               rules={[
                 { required: true, message: "يرجى إدخال عدد ساعات العمل" },
               ]}>
-              <Input placeholder="عدد ساعات العمل" type="number" />
+              <Select
+                placeholder="اختر عدد ساعات العمل"
+                style={{ width: "100%", height: "45px" }}>
+                <Select.Option value={3}>الكل</Select.Option>
+                <Select.Option value={1}>صباحي</Select.Option>
+                <Select.Option value={2}>مسائي</Select.Option>
+              </Select>
             </Form.Item>
             <Button type="primary" htmlType="submit" block>
               حفظ التعديلات
