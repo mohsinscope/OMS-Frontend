@@ -1,262 +1,254 @@
-import React, { useState, useEffect } from "react";
-import {
-  Table,
-  message,
-  Button,
-  Select,
-  DatePicker,
-  Input,
-  ConfigProvider,
-} from "antd";
+import React, { useState, useEffect, useCallback } from "react";
+import { Table, message, Button, ConfigProvider } from "antd";
 import { Link } from "react-router-dom";
-import axios from "axios";
-import Url from "./../../../store/url";
+import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store";
 import usePermissionsStore from "./../../../store/permissionsStore";
-import "./SuperVisorDevice.css";
+import axios from "axios";
+import Url from "./../../../store/url.js";
 
-const { Option } = Select;
-
-export default function SuperVisorDevices() {
+const SuperVisorDevices = () => {
   const {
-    roles,
     isSidebarCollapsed,
     accessToken,
     profile,
     searchVisible,
     toggleSearch,
+    roles,
   } = useAuthStore();
 
   const { hasAnyPermission } = usePermissionsStore();
   const hasCreatePermission = hasAnyPermission("create");
+  const isSupervisor = roles.includes("Supervisor");
 
-  const [devicesList, setDevicesList] = useState([]);
-  const [deviceTypes, setDeviceTypes] = useState([]);
-  const [damagedTypes, setDamagedTypes] = useState([]);
+  // State setup
+  const [devices, setDevices] = useState([]);
+  const [totalDevices, setTotalDevices] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingOffices, setLoadingOffices] = useState(false);
+  const [selectedGovernorate, setSelectedGovernorate] = useState(null);
+  const [selectedOffice, setSelectedOffice] = useState(null);
 
-  const [deviceTypeId, setDeviceTypeId] = useState(null);
-  const [damagedTypeId, setDamagedTypeId] = useState(null);
-  const [startDate, setStartDate] = useState(null);
-  const [endDate, setEndDate] = useState(null);
-  const [serialDeviceNumber, setSerialDeviceNumber] = useState("");
-  const [selectedGovernorateId, setSelectedGovernorateId] = useState(null);
-  const [selectedOfficeId, setSelectedOfficeId] = useState(null);
-
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    total: 0,
+  const [formData, setFormData] = useState({
+    serialNumber: "",
+    startDate: null,
+    endDate: null,
   });
 
-  const formatDateToISO = (date) => {
+  // Date formatting helper
+  const formatToISO = (date) => {
     if (!date) return null;
-    const d = new Date(date);
-    return new Date(
-      Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0)
-    ).toISOString();
+    const parsedDate = new Date(date);
+    return isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString();
   };
 
-  useEffect(() => {
-    const fetchDropdownData = async () => {
-      try {
-        setLoading(true);
-        const [
-          governorateResponse,
-          deviceTypeResponse,
-          damagedTypeResponse,
-        ] = await Promise.all([
-          axios.get(`${Url}/api/Governorate/dropdown`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          axios.get(`${Url}/api/devicetype`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          axios.get(`${Url}/api/damageddevicetype/all`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-        ]);
-
-        setGovernorates(governorateResponse.data);
-        setDeviceTypes(deviceTypeResponse.data);
-        setDamagedTypes(damagedTypeResponse.data);
-      } catch (error) {
-        message.error("حدث خطأ أثناء جلب البيانات الأولية");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDropdownData();
-  }, [accessToken]);
-
-  const handleGovernorateChange = async (value) => {
+  // API calls and data fetching
+  const fetchDevices = async (payload) => {
     try {
-      setSelectedGovernorateId(value);
-      setSelectedOfficeId(null);
-      setOffices([]);
-
-      if (!value) return;
-
-      setLoadingOffices(true);
-      const response = await axios.get(
-        `${Url}/api/Governorate/dropdown/${value}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-
-      if (response.data && response.data[0] && response.data[0].offices) {
-        setOffices(response.data[0].offices);
-        if (response.data[0].offices.length === 0) {
-          message.info("لا توجد مكاتب متاحة لهذه المحافظة");
-        }
-      } else {
-        message.info("لا توجد مكاتب متاحة لهذه المحافظة");
-        setOffices([]);
-      }
-    } catch (error) {
-      message.error("حدث خطأ أثناء جلب بيانات المكاتب");
-    } finally {
-      setLoadingOffices(false);
-    }
-  };
-
-  const fetchDevices = async (body, page = 1) => {
-    try {
-      setLoading(true);
       const response = await axios.post(
         `${Url}/api/DamagedDevice/search`,
         {
-          ...body,
+          serialNumber: payload.serialNumber || "",
+          officeId: payload.officeId || null,
+          governorateId: payload.governorateId || null,
+          startDate: payload.startDate || null,
+          endDate: payload.endDate || null,
           PaginationParams: {
-            PageNumber: page,
-            PageSize: pagination.pageSize,
+            PageNumber: payload.PaginationParams.PageNumber,
+            PageSize: payload.PaginationParams.PageSize,
           },
         },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
           },
         }
       );
 
-      setDevicesList(response.data);
-      setPagination((prev) => ({
-        ...prev,
-        current: page,
-        total: response.headers["x-pagination-total-count"] || 0,
-      }));
-
-      if (response.data.length === 0) {
-        message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
-      }
-    } catch (error) {
-      message.error("حدث خطأ أثناء البحث");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAllDevices = async (page = 1) => {
-    try {
-      setLoading(true);
-      const response = await axios.get(
-        `${Url}/api/DamagedDevice?PageNumber=${page}&PageSize=${pagination.pageSize}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
+      if (response.data) {
+        setDevices(response.data);
+        
+        const paginationHeader = response.headers['pagination'];
+        if (paginationHeader) {
+          const paginationInfo = JSON.parse(paginationHeader);
+          setTotalDevices(paginationInfo.totalItems);
+        } else {
+          setTotalDevices(response.data.length);
         }
-      );
-  
-      // Extract pagination info from the headers
-      const paginationHeader = response.headers['pagination'];
-      if (paginationHeader) {
-        const paginationInfo = JSON.parse(paginationHeader);
-        setPagination({
-          current: paginationInfo.currentPage,
-          pageSize: paginationInfo.itemsPerPage,
-          total: paginationInfo.totalItems,
-        });
-      }
-  
-      setDevicesList(response.data);
-  
-      if (response.data.length === 0) {
-        message.warning("لا توجد بيانات");
       }
     } catch (error) {
-      message.error("حدث خطأ أثناء جلب البيانات");
-    } finally {
-      setLoading(false);
+      console.error('API Error:', error);
+      message.error(
+        `حدث خطأ أثناء جلب الأجهزة: ${
+          error.response?.data?.message || error.message
+        }`
+      );
     }
   };
-  const handleSearch = (page = 1) => {
-    const body = {
-      SerialNumber: serialDeviceNumber || "",
-      DeviceTypeId: deviceTypeId || null,
-      DamagedDeviceTypeId: damagedTypeId || null,
-      startDate: startDate ? formatDateToISO(startDate) : null,
-      endDate: endDate ? formatDateToISO(endDate) : null,
-      governorateId: selectedGovernorateId || null,
-      officeId: selectedOfficeId || null,
+
+  // Event handlers
+  const handleSearch = async (page = 1) => {
+    const payload = {
+      serialNumber: formData.serialNumber || "",
+      officeId: isSupervisor ? profile.officeId : (selectedOffice || null),
+      governorateId: isSupervisor ? profile.governorateId : (selectedGovernorate || null),
+      startDate: formData.startDate ? formatToISO(formData.startDate) : null,
+      endDate: formData.endDate ? formatToISO(formData.endDate) : null,
+      PaginationParams: {
+        PageNumber: page,
+        PageSize: pageSize,
+      },
     };
 
-    fetchDevices(body, page);
+    await fetchDevices(payload);
+  };
+
+  const handleFormSubmit = (e) => {
+    e.preventDefault();
+    handleSearch();
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleReset = async () => {
+    setFormData({ serialNumber: "", startDate: "", endDate: "" });
+    setCurrentPage(1);
+
+    if (!isSupervisor) {
+      setSelectedGovernorate(null);
+      setSelectedOffice(null);
+      setOffices([]);
+    }
+
+    const payload = {
+      serialNumber: "",
+      officeId: isSupervisor ? profile.officeId : null,
+      governorateId: isSupervisor ? profile.governorateId : null,
+      startDate: null,
+      endDate: null,
+      PaginationParams: {
+        PageNumber: 1,
+        PageSize: pageSize,
+      },
+    };
+
+    await fetchDevices(payload);
+    message.success("تم إعادة تعيين الفلاتر بنجاح");
+  };
+
+  const handleGovernorateChange = async (e) => {
+    const governorateId = e.target.value;
+    setSelectedGovernorate(governorateId);
+    await fetchOffices(governorateId);
+  };
+
+  // Data fetching effects and callbacks
+  const fetchGovernorates = useCallback(async () => {
+    try {
+      const response = await axios.get(`${Url}/api/Governorate/dropdown`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setGovernorates(response.data);
+
+      if (isSupervisor) {
+        setSelectedGovernorate(profile.governorateId);
+        await fetchOffices(profile.governorateId);
+      }
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المحافظات");
+    }
+  }, [accessToken, isSupervisor, profile]);
+
+  const fetchOffices = async (governorateId) => {
+    if (!governorateId) {
+      setOffices([]);
+      setSelectedOffice(null);
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${Url}/api/Governorate/dropdown/${governorateId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (response.data && response.data[0] && response.data[0].offices) {
+        setOffices(response.data[0].offices);
+
+        if (isSupervisor) {
+          setSelectedOffice(profile.officeId);
+        }
+      }
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المكاتب");
+    }
   };
 
   useEffect(() => {
-    fetchAllDevices();
-  }, []);
+    fetchGovernorates();
+  }, [fetchGovernorates]);
 
-  const handleReset = () => {
-    setSerialDeviceNumber("");
-    setDeviceTypeId(null);
-    setDamagedTypeId(null);
-    setStartDate(null);
-    setEndDate(null);
-    setSelectedGovernorateId(null);
-    setSelectedOfficeId(null);
-    setOffices([]);
-    fetchAllDevices();
-  };
+  useEffect(() => {
+    const initialPayload = {
+      serialNumber: "",
+      officeId: isSupervisor ? profile.officeId : null,
+      governorateId: isSupervisor ? profile.governorateId : null,
+      startDate: null,
+      endDate: null,
+      PaginationParams: {
+        PageNumber: 1,
+        PageSize: pageSize,
+      },
+    };
 
-  const handleTableChange = (pagination) => {
-    const { current } = pagination;
-    handleSearch(current);
-  };
+    fetchDevices(initialPayload);
+  }, [isSupervisor, profile.officeId, profile.governorateId]);
 
+  // Table columns configuration
   const columns = [
-    {
-      title: "الرقم التسلسلي للجهاز",
-      dataIndex: "serialNumber",
-      key: "serialNumber",
-    },
-    {
-      title: "نوع الجهاز",
-      dataIndex: "deviceTypeName",
-      key: "deviceTypeName",
-    },
-    {
-      title: "سبب التلف",
-      dataIndex: "damagedDeviceTypesName",
-      key: "damagedDeviceTypesName",
-    },
     {
       title: "التاريخ",
       dataIndex: "date",
       key: "date",
-      render: (text) => text.split("T")[0],
+      className: "table-column-date",
+      render: (text) => {
+        const date = new Date(text);
+        return isNaN(date.getTime()) ? "تاريخ غير صالح" : date.toLocaleDateString("en-CA");
+      },
+    },
+    {
+      title: "المحافظة",
+      dataIndex: "governorateName",
+      key: "governorateName",
+      className: "table-column-governorate-name",
+    },
+    {
+      title: "المكتب",
+      dataIndex: "officeName",
+      key: "officeName",
+      className: "table-column-office-name",
+    },
+    {
+      title: "الرقم التسلسلي",
+      dataIndex: "serialNumber",
+      key: "serialNumber",
+      className: "table-column-serial-number",
     },
     {
       title: "التفاصيل",
       key: "details",
+      className: "table-column-details",
       render: (_, record) => (
         <Link
-          to="/damegedDevices/show"
+          to="/supervisor/devices/history/DeviceShow"
           state={{ id: record.id }}
           className="supervisor-devices-dameged-details-link"
         >
@@ -268,162 +260,149 @@ export default function SuperVisorDevices() {
 
   return (
     <div
-      className={`supervisor-passport-dameged-page ${
+      className={`supervisor-devices-dameged-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl"
     >
-      <h1 className="supervisor-passport-dameged-title">الأجهزة التالفة</h1>
+      <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
 
       <div className="toggle-search-button">
         <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "اِخفاء الحقول" : "اِظهار الحقول"}
+          {searchVisible ? "اخفاء الحقول" : "اظهار الحقول"}
         </Button>
       </div>
 
       <div
-        className={`supervisor-passport-dameged-filters ${
+        className={`supervisor-devices-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}
       >
-        <div className="filter-field">
-          <label>اسم المحافظة</label>
-          <Select
-            className="filter-dropdown"
-            value={selectedGovernorateId}
-            onChange={handleGovernorateChange}
-            allowClear
-            placeholder="اختر المحافظة"
-            loading={loading}
-          >
-            {governorates.map((gov) => (
-              <Option key={gov.id} value={gov.id}>
-                {gov.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
+        <form onSubmit={handleFormSubmit} className="supervisor-devices-dameged-form">
+          <div className="supervisor-devices-dameged-field-wrapper">
+            <label className="supervisor-devices-dameged-label">
+              المحافظة
+            </label>
+            <select
+              value={selectedGovernorate || ""}
+              onChange={handleGovernorateChange}
+              disabled={isSupervisor}
+              className="supervisor-devices-dameged-dropdown"
+            >
+              <option value="">اختر المحافظة</option>
+              {governorates.map((gov) => (
+                <option key={gov.id} value={gov.id}>
+                  {gov.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="filter-field">
-          <label>اسم المكتب</label>
-          <Select
-            className="filter-dropdown"
-            value={selectedOfficeId}
-            onChange={(value) => setSelectedOfficeId(value)}
-            allowClear
-            placeholder="اختر المكتب"
-            loading={loadingOffices}
-          >
-            {offices.map((office) => (
-              <Option key={office.id} value={office.id}>
-                {office.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
+          <div className="supervisor-devices-dameged-field-wrapper">
+            <label className="supervisor-devices-dameged-label">
+              اسم المكتب
+            </label>
+            <select
+              value={selectedOffice || ""}
+              onChange={(e) => setSelectedOffice(e.target.value)}
+              disabled={isSupervisor || !selectedGovernorate}
+              className="supervisor-devices-dameged-dropdown"
+            >
+              <option value="">اختر المكتب</option>
+              {offices.map((office) => (
+                <option key={office.id} value={office.id}>
+                  {office.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
-        <div className="filter-field">
-          <label>الرقم التسلسلي للجهاز</label>
-          <Input
-            value={serialDeviceNumber}
-            onChange={(e) => setSerialDeviceNumber(e.target.value)}
-            placeholder="ادخل الرقم التسلسلي"
-          />
-        </div>
+          <div className="supervisor-devices-dameged-field-wrapper">
+            <label className="supervisor-devices-dameged-label">
+              الرقم التسلسلي
+            </label>
+            <input
+              type="text"
+              name="serialNumber"
+              value={formData.serialNumber}
+              onChange={handleInputChange}
+              className="supervisor-devices-dameged-input"
+            />
+          </div>
 
-        <div className="filter-field">
-          <label>نوع الجهاز</label>
-          <Select
-            className="filter-dropdown"
-            value={deviceTypeId}
-            onChange={(value) => setDeviceTypeId(value)}
-            allowClear
-            placeholder="اختر نوع الجهاز"
-          >
-            {deviceTypes.map((type) => (
-              <Option key={type.id} value={type.id}>
-                {type.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
+          <div className="supervisor-devices-dameged-field-wrapper">
+            <label className="supervisor-devices-dameged-label">
+              التاريخ من
+            </label>
+            <input
+              type="date"
+              name="startDate"
+              value={formData.startDate || ""}
+              onChange={handleInputChange}
+              className="supervisor-devices-dameged-input"
+            />
+          </div>
 
-        <div className="filter-field">
-          <label>سبب التلف</label>
-          <Select
-            className="filter-dropdown"
-            value={damagedTypeId}
-            onChange={(value) => setDamagedTypeId(value)}
-            allowClear
-            placeholder="اختر سبب التلف"
-          >
-            {damagedTypes.map((type) => (
-              <Option key={type.id} value={type.id}>
-                {type.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
+          <div className="supervisor-devices-dameged-field-wrapper">
+            <label className="supervisor-devices-dameged-label">
+              التاريخ إلى
+            </label>
+            <input
+              type="date"
+              name="endDate"
+              value={formData.endDate || ""}
+              onChange={handleInputChange}
+              className="supervisor-devices-dameged-input"
+            />
+          </div>
 
-        <div className="filter-field">
-          <label>تاريخ البداية</label>
-          <DatePicker
-            onChange={(date) => setStartDate(date)}
-            style={{ width: "100%" }}
-          />
-        </div>
+          <div className="supervisor-device-filter-buttons">
+            <button type="submit" className="supervisor-devices-dameged-button">
+              ابحث
+            </button>
+            <button
+              type="button"
+              onClick={handleReset}
+              className="supervisor-devices-dameged-button"
+            >
+              إعادة تعيين
+            </button>
+          </div>
+        </form>
 
-        <div className="filter-field">
-          <label>تاريخ النهاية</label>
-          <DatePicker
-            onChange={(date) => setEndDate(date)}
-            style={{ width: "100%" }}
-          />
-        </div>
-
-        <div className="supervisor-device-filter-buttons">
-          <Button type="primary" onClick={() => handleSearch(1)}>
-            البحث
-          </Button>
-          <Button
-            type="primary"
-            onClick={handleReset}
-            style={{ marginLeft: "10px" }}
-          >
-            إعادة التعيين
-          </Button>
-          {hasCreatePermission && (
-            <Link to="/damegedDevices/add">
-              <Button type="primary" className="supervisor-filter-buttons">
-                اضافة جهاز تالف +
-              </Button>
-            </Link>
-          )}
-        </div>
+        {hasCreatePermission && (
+          <Link to="/supervisor/deviceAdd/supervisordeviceAdd">
+            <button className="supervisor-filter-buttons">
+              اضافة جهاز جديد +
+            </button>
+          </Link>
+        )}
       </div>
 
-      <div className="supervisor-passport-dameged-table-container">
+      <div className="supervisor-devices-dameged-table-container">
         <ConfigProvider direction="rtl">
           <Table
-            dataSource={devicesList}
+            dataSource={devices}
             columns={columns}
-            rowKey={(record) => record.id}
+            rowKey="id"
             bordered
-            loading={loading}
-            
             pagination={{
-              position:["bottomCenter"],
-              current: pagination.current,
-    pageSize: pagination.pageSize,
-    total: pagination.total,
-    onChange: handleTableChange,
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalDevices,
+              position: ["bottomCenter"],
+              onChange: (page) => {
+                setCurrentPage(page);
+                handleSearch(page);
+              },
             }}
-            
             locale={{ emptyText: "لا توجد بيانات" }}
-            className="supervisor-passport-dameged-table"
+            className="supervisor-devices-dameged-table"
           />
         </ConfigProvider>
       </div>
     </div>
   );
-}
+};
+
+export default SuperVisorDevices;

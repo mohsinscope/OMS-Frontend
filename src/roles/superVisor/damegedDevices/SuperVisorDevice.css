@@ -82,7 +82,7 @@
 /* Input and Dropdown Styling */
 .supervisor-devices-dameged-input,
 .supervisor-devices-dameged-dropdown {
-  width: 26.7%; /* Consistent width for inputs and dropdowns */
+  width: 200px; /* Consistent width for inputs and dropdowns */
   height: 45px; /* Slightly smaller height for better proportion */
   padding: 0 15px; /* Adjust padding for cleaner design */
   border-radius: 6px; /* Rounded corners for a modern look */
@@ -202,6 +202,9 @@
   width: 150px !important;
   background-color: #04aa6d !important;
   border: 2px solid #04aa6d;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
 }
 .supervisor-filter-buttons:hover {
   height: 45px;

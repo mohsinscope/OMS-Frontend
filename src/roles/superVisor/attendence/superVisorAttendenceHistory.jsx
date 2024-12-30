@@ -198,16 +198,6 @@ export default function SupervisorAttendanceHistory() {
       key: "date",
     },
     {
-      title: "عدد الموظفين الكلي",
-      dataIndex: "totalStaff",
-      key: "totalStaff",
-    },
-    {
-      title: "الحضور",
-      dataIndex: "shift",
-      key: "shift",
-    },
-    {
       title: "المحافظة",
       dataIndex: "governorateName",
       key: "governorateName",
@@ -216,6 +206,16 @@ export default function SupervisorAttendanceHistory() {
       title: "المكتب",
       dataIndex: "officeName",
       key: "officeName",
+    },
+    {
+      title: "عدد الموظفين الكلي",
+      dataIndex: "totalStaff",
+      key: "totalStaff",
+    },
+    {
+      title: "الحضور",
+      dataIndex: "shift",
+      key: "shift",
     },
     {
       title: "الإجراءات",
@@ -244,24 +244,6 @@ export default function SupervisorAttendanceHistory() {
         className={`supervisor-attendance-history-fields ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
-        <div className="filter-row">
-          <label>التاريخ من</label>
-          <DatePicker
-            placeholder=""
-            onChange={(date) => setStartDate(date)}
-            value={startDate}
-            style={{ width: "100%" }}
-          />
-        </div>
-        <div className="filter-row">
-          <label>التاريخ إلى</label>
-          <DatePicker
-            placeholder=""
-            onChange={(date) => setEndDate(date)}
-            value={endDate}
-            style={{ width: "100%" }}
-          />
-        </div>
         <div className="filter-row">
           <label>المحافظة</label>
           <select
@@ -292,6 +274,24 @@ export default function SupervisorAttendanceHistory() {
             ))}
           </select>
         </div>
+        <div className="filter-row">
+          <label>التاريخ من</label>
+          <DatePicker
+            placeholder=""
+            onChange={(date) => setStartDate(date)}
+            value={startDate}
+            style={{ width: "100%" }}
+          />
+        </div>
+        <div className="filter-row">
+          <label>التاريخ إلى</label>
+          <DatePicker
+            placeholder=""
+            onChange={(date) => setEndDate(date)}
+            value={endDate}
+            style={{ width: "100%" }}
+          />
+        </div>
         <div className="attendance-dropdown-wrapper">
           <label>نوع الدوام</label>
           <select
@@ -304,27 +304,27 @@ export default function SupervisorAttendanceHistory() {
             <option value={2}>مسائي</option>
           </select>
         </div>
-        <Button
-          className="attendance-add-button"
+        <button 
+          className="attendance-search-button"
           onClick={handleSearch}
           loading={isLoading}>
           البحث
-        </Button>
-        <Button
+        </button>
+        <button
           className="attendance-reset-button"
           onClick={handleReset}
           disabled={isLoading}>
           إعادة التعيين
-        </Button>
+        </button>
 
         {hasCreatePermission && (
           <Link to="AttendenceAdd">
-            <Button
-              className="attendance-search-button"
+            <button
+              className="attendance-add-button"
               disabled={isLoading}
               type="primary">
               اضافة حضور +
-            </Button>
+            </button>
           </Link>
         )}
       </div>

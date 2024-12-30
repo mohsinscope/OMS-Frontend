@@ -53,6 +53,56 @@ export default function SuperVisorPassport() {
     ).toISOString();
   };
 
+  const handleSearch = async () => {
+    const body = {
+      passportNumber: passportNumber || "",
+      damagedTypeId: damagedTypeId || null,
+      startDate: startDate ? formatDateToISO(startDate) : null,
+      endDate: endDate ? formatDateToISO(endDate) : null,
+      officeId: isSupervisor ? profile.officeId : (selectedOffice || null),
+      governorateId: isSupervisor ? profile.governorateId : (selectedGovernorate || null),
+      profileId: isSupervisor ? profile.profileId : null,
+      PaginationParams: {
+        PageNumber: pagination.current,
+        PageSize: pagination.pageSize,
+      },
+    };
+  
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        `${Url}/api/DamagedPassport/search`,
+        body,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+  
+      setPassportList(response.data);
+      const headers = response.headers;
+      setPagination((prev) => ({
+        ...prev,
+        total: parseInt(headers["totalItems"], 10) || 0,
+        pageSize: parseInt(headers["itemsPerPage"], 10) || 10,
+      }));
+  
+      if (response.data.length === 0) {
+        message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
+      }
+    } catch (error) {
+      console.error(
+        "Error fetching search results:",
+        error.response?.data || error.message
+      );
+      message.error("حدث خطأ أثناء البحث");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
@@ -87,55 +137,7 @@ export default function SuperVisorPassport() {
     handleSearch();
   }, [accessToken, isSupervisor, profile]);
 
-  const handleSearch = async () => {
-    const body = {
-      passportNumber: passportNumber || "",
-      damagedTypeId: damagedTypeId || null,
-      startDate: startDate ? formatDateToISO(startDate) : null,
-      endDate: endDate ? formatDateToISO(endDate) : null,
-      officeId: isSupervisor ? profile.officeId : selectedOffice,
-      governorateId: isSupervisor ? profile.governorateId : selectedGovernorate,
-      profileId: isSupervisor ? profile.profileId : null,
-      PaginationParams: {
-        PageNumber: pagination.current,
-        PageSize: pagination.pageSize,
-      },
-    };
 
-    try {
-      setLoading(true);
-      const response = await axios.post(
-        `${Url}/api/DamagedPassport/search`,
-        body,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      setPassportList(response.data);
-      const headers = response.headers;
-      setPagination((prev) => ({
-        ...prev,
-        total: parseInt(headers["totalItems"], 10) || 0,
-        pageSize: parseInt(headers["itemsPerPage"], 10) || 10,
-      }));
-
-      if (response.data.length === 0) {
-        message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
-      }
-    } catch (error) {
-      console.error(
-        "Error fetching search results:",
-        error.response?.data || error.message
-      );
-      message.error("حدث خطأ أثناء البحث");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleReset = () => {
     setPassportNumber("");
@@ -158,6 +160,25 @@ export default function SuperVisorPassport() {
 
   const columns = [
     {
+      title: "التاريخ",
+      dataIndex: "date",
+      key: "date",
+      className: "table-column-date",
+      render: (text) => new Date(text).toLocaleDateString("en-CA"),
+    },
+    {
+      title: "المحافظة",
+      dataIndex: "governorateName",
+      key: "governorateName",
+
+    },
+    {
+      title: "المكتب",
+      dataIndex: "officeName",
+      key: "officeName",
+
+    },
+    {
       title: "رقم الجواز",
       dataIndex: "passportNumber",
       key: "passportNumber",
@@ -168,13 +189,6 @@ export default function SuperVisorPassport() {
       dataIndex: "damagedTypeName",
       key: "damagedTypeName",
       className: "table-column-damage",
-    },
-    {
-      title: "التاريخ",
-      dataIndex: "date",
-      key: "date",
-      className: "table-column-date",
-      render: (text) => new Date(text).toLocaleDateString("en-CA"),
     },
     {
       title: "التفاصيل",

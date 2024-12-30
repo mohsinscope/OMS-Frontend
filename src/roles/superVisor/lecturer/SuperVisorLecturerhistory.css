@@ -101,6 +101,12 @@
   cursor: pointer;
   border-radius: 6px;
   font-size: large;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+}
+.supervisor-Lectur-button:hover{
+  transform: translateY(-2px); /* Lift effect */
+
 }
 .supervisor-add-Lectur-button {
   background-color: #04aa6d;
@@ -111,6 +117,16 @@
   cursor: pointer;
   border-radius: 6px;
   font-size: large;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+}
+.supervisor-add-Lectur-button:hover{
+  transform: translateY(-2px); /* Lift effect */
+  height: 45px;
+  width: 150px !important;
+  background-color: white !important;
+  color: #04aa6d !important;
+  border: #04aa6d 2px solid;
 }
 
 .supervisor-Lectur-table-container {

@@ -150,6 +150,12 @@
 .supervisor-damaged-passport-filter-buttons button {
   width: 110px;
   height: 45px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+}
+.supervisor-damaged-passport-filter-buttons button:hover{
+  transform: translateY(-2px); /* Lift effect */
+
 }
 
 .supervisor-passport-dameged-table-container table thead th {
