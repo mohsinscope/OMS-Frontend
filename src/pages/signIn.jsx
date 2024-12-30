@@ -84,6 +84,13 @@ const SignInPage = () => {
     }
   };
 
+  // Handle Enter key press
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !loading) {
+      handleSubmit();
+    }
+  };
+
   return (
     <div className="container">
       <div className="left-side">
@@ -104,6 +111,7 @@ const SignInPage = () => {
             name="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder="اسم المستخدم"
             className="input-field"
             disabled={loading} // Disable during loading
@@ -120,6 +128,7 @@ const SignInPage = () => {
               name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="كلمة السر"
               className="input-field-password"
               disabled={loading} // Disable during loading
