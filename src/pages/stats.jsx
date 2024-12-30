@@ -23,11 +23,11 @@ export default function Stats() {
   const [damagedPassportTypes, setDamagedPassportTypes] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [selectedDate, setSelectedDate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Fetch governorates data
   const fetchGovernorates = useCallback(async () => {
     try {
       const response = await axios.get(`${Url}/api/Governorate/dropdown`);
@@ -38,7 +38,6 @@ export default function Stats() {
     }
   }, []);
 
-  // Fetch offices for selected governorate
   const fetchOffices = useCallback(async (governorateId) => {
     if (!governorateId) {
       setAvailableOffices([]);
@@ -51,14 +50,13 @@ export default function Stats() {
       if (response.data && response.data[0] && response.data[0].offices) {
         setAvailableOffices(response.data[0].offices);
       }
-      setSelectedOffice(null); // Reset selected office when governorate changes
+      setSelectedOffice(null);
     } catch (error) {
       setError("Failed to fetch offices. Please try again later.");
       console.error("Offices fetch error:", error);
     }
   }, []);
 
-  // Handle governorate change
   const handleGovernorateChange = useCallback((governorateId) => {
     setSelectedGovernorate(governorateId || null);
     if (governorateId) {
@@ -69,7 +67,6 @@ export default function Stats() {
     }
   }, [fetchOffices]);
 
-  // Fetch types data
   const fetchTypesData = useCallback(async () => {
     try {
       const [deviceTypesRes, passportTypesRes] = await Promise.all([
@@ -79,14 +76,17 @@ export default function Stats() {
       
       setDamagedDeviceTypes(deviceTypesRes.data);
       setDamagedPassportTypes(passportTypesRes.data);
+      return true;
     } catch (error) {
       setError("Failed to fetch types data. Please try again later.");
       console.error("Types data fetch error:", error);
+      return false;
     }
   }, []);
 
-  // Fetch statistics data
   const fetchStatisticsData = useCallback(async () => {
+    if (selectedTab === "attendance") return;
+    
     setLoading(true);
     setError(null);
     
@@ -100,7 +100,7 @@ export default function Stats() {
         const body = {
           OfficeId: selectedOffice || null,
           GovernorateId: selectedGovernorate || null,
-          Date: `${selectedDate}T00:00:00Z`,
+          Date: selectedDate ? `${selectedDate}T00:00:00Z` : null,
           [selectedTab === "damagedDevices" ? "DamagedDeviceTypeId" : "DamagedTypeId"]: type.id
         };
         return axios.post(endpoint, body);
@@ -128,30 +128,41 @@ export default function Stats() {
     } finally {
       setLoading(false);
     }
-  }, [selectedTab, selectedOffice, selectedGovernorate, selectedDate, damagedDeviceTypes, damagedPassportTypes]);
+  }, [selectedTab, damagedDeviceTypes, damagedPassportTypes, selectedOffice, selectedGovernorate, selectedDate]);
 
-  // Handle tab change
-  const handleTabChange = useCallback(async (tab) => {
+  // Effect to fetch statistics when tab changes
+  useEffect(() => {
+    if (selectedTab !== "attendance" && isInitialized) {
+      fetchStatisticsData();
+    }
+  }, [selectedTab, isInitialized, fetchStatisticsData]);
+
+  const handleTabChange = useCallback((tab) => {
+    if (tab === selectedTab) return;
+    
     setChartData([]);
     setTotalItems(0);
     setError(null);
     setSelectedTab(tab);
-    
-    if (tab === "attendance") return;
-    
-    if ((tab === "damagedDevices" && damagedDeviceTypes.length === 0) ||
-        (tab === "damagedPassports" && damagedPassportTypes.length === 0)) {
-      await fetchTypesData();
-    }
-  }, [fetchTypesData]);
+  }, [selectedTab]);
 
-  // Initial data fetch
+  // Initial data load
   useEffect(() => {
     const initializeData = async () => {
-      await Promise.all([
-        fetchGovernorates(),
-        fetchTypesData()
-      ]);
+      setLoading(true);
+      try {
+        await fetchGovernorates();
+        const typesSuccess = await fetchTypesData();
+        
+        if (typesSuccess) {
+          setIsInitialized(true);
+        }
+      } catch (error) {
+        console.error("Initialization error:", error);
+        setError("Failed to initialize data. Please refresh the page.");
+      } finally {
+        setLoading(false);
+      }
     };
     
     initializeData();
@@ -195,8 +206,8 @@ export default function Stats() {
             <label>التاريخ</label>
             <input
               type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              value={selectedDate || ""}
+              onChange={(e) => setSelectedDate(e.target.value || null)}
               className="form-control"
             />
           </div>
@@ -246,14 +257,14 @@ export default function Stats() {
         </div>
       )}
 
-      <div className="stats-main-section" dir="rtl">
-        <div className="stats-chart-section">
-          <h2 className="stats-chart-title">
+          <h2 className="stats-chart-title" dir="rtl"style={{marginRight:"20px"}}>
             احصائيات {
               selectedTab === "damagedDevices" ? "الأجهزة التالفة" :
               selectedTab === "damagedPassports" ? "الجوازات التالفة" : "الحضور"
             }
           </h2>
+      <div className="stats-main-section" dir="rtl">
+        <div className="stats-chart-section">
           <div className="chart-container">
             {selectedTab === "attendance" ? (
               <AttendanceStats data={attendanceData} />
