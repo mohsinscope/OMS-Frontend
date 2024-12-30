@@ -248,7 +248,7 @@ const SuperVisorDevices = () => {
       className: "table-column-details",
       render: (_, record) => (
         <Link
-          to="/supervisor/devices/history/DeviceShow"
+          to="/damegedDevices/show"
           state={{ id: record.id }}
           className="supervisor-devices-dameged-details-link"
         >
