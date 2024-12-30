@@ -371,7 +371,7 @@ const SuperVisorDevices = () => {
         </form>
 
         {hasCreatePermission && (
-          <Link to="/supervisor/deviceAdd/supervisordeviceAdd">
+          <Link to="/damegedDevices/add">
             <button className="supervisor-filter-buttons">
               اضافة جهاز جديد +
             </button>
