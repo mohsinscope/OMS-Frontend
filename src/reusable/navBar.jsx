@@ -19,8 +19,7 @@ export default function NavBar({ onSidebarToggle }) {
         {/* Notification Icon */}
         <div
           className={`notification ${isNotificationsActive ? "active" : ""}`}
-          onClick={handleNotificationClick}
-        >
+          onClick={handleNotificationClick}>
           <Icons type="notification" width={38} height={20} color="black" />
           <span className="notification-badge"></span>
         </div>
@@ -28,7 +27,6 @@ export default function NavBar({ onSidebarToggle }) {
         {isNotificationsActive && (
           <div className="notification-content">
             <p>الاشعارات غير متوفرة في الوقت الحالي</p>
-           
           </div>
         )}
         {/* User Info */}
@@ -37,9 +35,8 @@ export default function NavBar({ onSidebarToggle }) {
           <h4>{profile?.position || "الموقع غير معروف"}</h4>
         </div>
         <div className="user-avatar">
-          <Link to="settings"> 
-          
-          <Icons type="user" width={48} height={48} color="#636AE8" />
+          <Link to="settings">
+            <Icons type="user" width={48} height={48} color="#636AE8" />
           </Link>
         </div>
       </div>
@@ -51,15 +48,11 @@ export default function NavBar({ onSidebarToggle }) {
           style={{ cursor: "pointer" }}
           onClick={() => {
             onSidebarToggle();
-          }}
-        >
-          
-          
+          }}>
           <Icons type="menu" width={45} height={45} />
-         
         </div>
         <Link to="landing-page">
-        <img src={Logo} alt="Logo" className="navbar-logo" />
+          <img src={Logo} alt="Logo" className="navbar-logo" />
         </Link>
       </div>
     </div>

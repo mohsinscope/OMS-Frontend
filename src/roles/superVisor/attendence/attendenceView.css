@@ -37,6 +37,10 @@
   flex-wrap: wrap;
   gap: 100px;
 }
+.Admin-user-add-model-container-form span {
+  display: flex;
+  gap: 10px;
+}
 .single-chart {
   display: flex;
   padding: 20px;
