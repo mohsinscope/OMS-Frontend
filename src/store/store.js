@@ -33,7 +33,9 @@ const useAuthStore = create((set) => ({
 
         const parsedProfile = JSON.parse(userProfile);
 
-        const roles = Array.isArray(payload.role) ? payload.role : [payload.role];
+        const roles = Array.isArray(payload.role)
+          ? payload.role
+          : [payload.role];
 
         set({
           user: {
@@ -45,7 +47,7 @@ const useAuthStore = create((set) => ({
           permissions: permissions ? JSON.parse(permissions) : {},
           isLoggedIn: true,
           accessToken: token,
-          isInitialized: true
+          isInitialized: true,
         });
       } catch (error) {
         localStorage.removeItem("accessToken");
