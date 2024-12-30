@@ -33,6 +33,7 @@ const AdminUserManagment = () => {
   const { searchVisible, toggleSearch } = useAuthStore();
   const { isSidebarCollapsed } = useAuthStore();
   const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedGovernorate, setSelectedGovernorate] = useState(null);
 
   // Fetch profiles with users and roles
   useEffect(() => {
@@ -60,17 +61,14 @@ const AdminUserManagment = () => {
     fetchProfilesWithUsersAndRoles();
   }, [accessToken]);
 
-  // Fetch roles and dropdown data
+  // Fetch roles and governorates
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [officesResponse, governoratesResponse, rolesResponse] =
-          await Promise.all([
-            axios.get(`${Url}/api/office`),
-            axios.get(`${Url}/api/Governorate`),
-            axios.get(`${Url}/api/profile/all-roles`),
-          ]);
-        setOffices(officesResponse.data);
+        const [governoratesResponse, rolesResponse] = await Promise.all([
+          axios.get(`${Url}/api/Governorate/dropdown`),
+          axios.get(`${Url}/api/profile/all-roles`),
+        ]);
         setGovernorates(governoratesResponse.data);
         setRoles(rolesResponse.data);
       } catch (error) {
@@ -80,6 +78,26 @@ const AdminUserManagment = () => {
     };
     fetchInitialData();
   }, []);
+
+  // Fetch offices when governorate changes
+  useEffect(() => {
+    const fetchOffices = async () => {
+      if (selectedGovernorate) {
+        try {
+          const response = await axios.get(`${Url}/api/Governorate/dropdown/${selectedGovernorate}`);
+          const officesData = response.data[0]?.offices || [];
+          setOffices(officesData);
+        } catch (error) {
+          console.error("Error fetching offices:", error);
+          message.error("Failed to load offices");
+        }
+      } else {
+        setOffices([]);
+      }
+    };
+
+    fetchOffices();
+  }, [selectedGovernorate]);
 
   const applyFilters = (filters) => {
     const { username, role, governorate, officeName } = filters;
@@ -114,7 +132,7 @@ const AdminUserManagment = () => {
       const payload = {
         userName: values.username,
         password: values.password,
-        roles: values.roles, // Allow multiple roles
+        roles: values.roles,
         fullName: values.fullName,
         position: parseInt(values.position, 10),
         officeId: parseInt(values.officeName, 10),
@@ -130,8 +148,7 @@ const AdminUserManagment = () => {
       setUserRecords((prev) => [...prev, response.data]);
       setFilteredRecords((prev) => [...prev, response.data]);
       message.success("تمت إضافة المستخدم بنجاح!");
-      setAddModalVisible(false);
-      form.resetFields();
+      closeAddModal();
     } catch (error) {
       console.error("Error adding user:", error.response?.data || error.message);
       message.error("فشل في إضافة المستخدم");
@@ -140,10 +157,11 @@ const AdminUserManagment = () => {
 
   const handleEditUser = (user) => {
     setSelectedUser(user);
+    setSelectedGovernorate(user.governorateId);
     form.setFieldsValue({
       username: user.username,
       fullName: user.fullName,
-      roles: user.roles, // Pre-fill roles for editing
+      roles: user.roles,
       position: user.position,
       governorate: user.governorateId,
       officeName: user.officeId,
@@ -156,17 +174,14 @@ const AdminUserManagment = () => {
     try {
       const updatedUser = {
         userId: selectedUser.userId,
-        userName: selectedUser.username, // Added userName field
+        userName: selectedUser.username,
         fullName: values.fullName,
         position: values.position,
-        officeId: values.officeName, // Renamed from officeName to officeId
-        governorateId: values.governorate, // Renamed from governorate to governorateId
-        roles: values.roles // Changed from Roles to roles (lowercase)
+        officeId: values.officeName,
+        governorateId: values.governorate,
+        roles: values.roles
       };
-      console.log(updatedUser)
-      console.log("Selected User:", selectedUser);
 
-      // Updated endpoint to use userId instead of id
       await axios.put(`${Url}/api/account/${selectedUser.userId}`, updatedUser, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -185,14 +200,25 @@ const AdminUserManagment = () => {
       );
       setUserRecords(updatedResponse.data);
       setFilteredRecords(updatedResponse.data);
-      setEditModalVisible(false);
-      form.resetFields();
+      closeEditModal();
     } catch (error) {
       console.error("Error updating user:", error);
       message.error("فشل في تحديث المستخدم");
     } finally {
       setLoading(false);
     }
+  };
+
+  const closeAddModal = () => {
+    setAddModalVisible(false);
+    setSelectedGovernorate(null);
+    form.resetFields();
+  };
+
+  const closeEditModal = () => {
+    setEditModalVisible(false);
+    setSelectedGovernorate(null);
+    form.resetFields();
   };
 
   const columns = [
@@ -321,10 +347,7 @@ const AdminUserManagment = () => {
           <Modal
             className="model-container"
             open={addModalVisible}
-            onCancel={() => {
-              setAddModalVisible(false);
-              form.resetFields();
-            }}
+            onCancel={closeAddModal}
             style={{ top: 10 }}
             footer={null}
           >
@@ -376,7 +399,7 @@ const AdminUserManagment = () => {
                 rules={[{ required: true, message: "يرجى اختيار المنصب" }]}
               >
                 <Select placeholder="اختر المنصب" style={{ height: 45 }}>
-                <Option value="1">Manager</Option>
+                  <Option value="1">Manager</Option>
                   <Option value="2">Director</Option>
                   <Option value="3">Supervisor</Option>
                   <Option value="4">Accontnt</Option>
@@ -392,7 +415,14 @@ const AdminUserManagment = () => {
                 label="المحافظة"
                 rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
               >
-                <Select placeholder="اختر المحافظة" style={{ height: 45 }}>
+                <Select 
+                  placeholder="اختر المحافظة" 
+                  style={{ height: 45 }}
+                  onChange={(value) => {
+                    setSelectedGovernorate(value);
+                    form.setFieldValue('officeName', undefined);
+                  }}
+                >
                   {governorates.map((gov) => (
                     <Option key={gov.id} value={gov.id}>
                       {gov.name}
@@ -405,7 +435,11 @@ const AdminUserManagment = () => {
                 label="اسم المكتب"
                 rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}
               >
-                <Select placeholder="اختر المكتب" style={{ height: 45 }}>
+                <Select 
+                  placeholder="اختر المكتب" 
+                  style={{ height: 45 }}
+                  disabled={!selectedGovernorate}
+                >
                   {offices.map((office) => (
                     <Option key={office.id} value={office.id}>
                       {office.name}
@@ -419,10 +453,8 @@ const AdminUserManagment = () => {
                 rules={[
                   { required: true, message: "يرجى إدخال كلمة السر" },
                   {
-                    pattern:
-                      /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
-                    message:
-                      "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية",
+                    pattern: /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
+                    message: "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية",
                   },
                   { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" },
                 ]}
@@ -440,9 +472,7 @@ const AdminUserManagment = () => {
                       if (!value || getFieldValue("password") === value) {
                         return Promise.resolve();
                       }
-                      return Promise.reject(
-                        new Error("كلمات السر غير متطابقة!")
-                      );
+                      return Promise.reject(new Error("كلمات السر غير متطابقة!"));
                     },
                   }),
                 ]}
@@ -461,10 +491,7 @@ const AdminUserManagment = () => {
           <Modal
             className="model-container"
             open={editModalVisible}
-            onCancel={() => {
-              setEditModalVisible(false);
-              form.resetFields();
-            }}
+            onCancel={closeEditModal}
             footer={null}
           >
             <Form
@@ -515,7 +542,6 @@ const AdminUserManagment = () => {
                   <Option value={7}>Sr.Controller</Option>
                   <Option value={8}>Project Coordinator</Option>
                   <Option value={9}>Operation Manager</Option>
-
                 </Select>
               </Form.Item>
               <Form.Item
@@ -523,7 +549,14 @@ const AdminUserManagment = () => {
                 label="المحافظة"
                 rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
               >
-                <Select placeholder="اختر المحافظة" style={{ height: 45 }}>
+                <Select 
+                  placeholder="اختر المحافظة" 
+                  style={{ height: 45 }}
+                  onChange={(value) => {
+                    setSelectedGovernorate(value);
+                    form.setFieldValue('officeName', undefined);
+                  }}
+                >
                   {governorates.map((gov) => (
                     <Option key={gov.id} value={gov.id}>
                       {gov.name}
@@ -536,7 +569,11 @@ const AdminUserManagment = () => {
                 label="اسم المكتب"
                 rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}
               >
-                <Select placeholder="اختر المكتب" style={{ height: 45 }}>
+                <Select 
+                  placeholder="اختر المكتب" 
+                  style={{ height: 45 }}
+                  disabled={!selectedGovernorate}
+                >
                   {offices.map((office) => (
                     <Option key={office.id} value={office.id}>
                       {office.name}
@@ -552,15 +589,10 @@ const AdminUserManagment = () => {
                   label="كلمة السر الجديدة"
                   rules={[
                     {
-                      pattern:
-                        /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
-                      message:
-                        "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية",
+                      pattern: /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
+                      message: "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية",
                     },
-                    {
-                      min: 8,
-                      message: "كلمة السر يجب أن تكون 8 أحرف على الأقل",
-                    },
+                    { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" },
                   ]}
                 >
                   <Input.Password placeholder="كلمة السر الجديدة" />
@@ -578,9 +610,7 @@ const AdminUserManagment = () => {
                         if (value === getFieldValue("newPassword")) {
                           return Promise.resolve();
                         }
-                        return Promise.reject(
-                          new Error("كلمات السر غير متطابقة!")
-                        );
+                        return Promise.reject(new Error("كلمات السر غير متطابقة!"));
                       },
                     }),
                   ]}
