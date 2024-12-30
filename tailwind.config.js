@@ -1,8 +1,18 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"], // Adjust paths as needed
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./public/index.html"
+  ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'bg-color': '#171a1f',
+      },
+      fontFamily: {
+        cairo: ['Cairo', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
-};
+}
