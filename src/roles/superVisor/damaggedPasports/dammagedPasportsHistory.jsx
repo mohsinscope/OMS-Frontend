@@ -1,8 +1,6 @@
 import "./dammagedPasportsHistory.css";
 import useAuthStore from "./../../../store/store";
-
 import usePermissionsStore from "./../../../store/permissionsStore";
-
 import React, { useState, useEffect } from "react";
 import {
   Table,
@@ -16,7 +14,6 @@ import {
 import { Link } from "react-router-dom";
 import axios from "axios";
 import Url from "./../../../store/url";
-import Lele from "./../../../reusable elements/icons.jsx";
 const { Option } = Select;
 
 export default function SuperVisorPassport() {
@@ -24,25 +21,25 @@ export default function SuperVisorPassport() {
   const { hasAnyPermission } = usePermissionsStore();
   const hasCreatePermission = hasAnyPermission("create");
 
+  // State management
   const [passportList, setPassportList] = useState([]);
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPassports, setTotalPassports] = useState(0);
+  const pageSize = 10;
+
+  // Filter states
   const [passportNumber, setPassportNumber] = useState("");
   const [damagedTypeId, setDamagedTypeId] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    total: 0,
-  });
-  const { searchVisible, toggleSearch } = useAuthStore();
 
+  const { searchVisible, toggleSearch } = useAuthStore();
   const isSupervisor = roles.includes("Supervisor");
 
   const formatDateToISO = (date) => {
@@ -53,7 +50,7 @@ export default function SuperVisorPassport() {
     ).toISOString();
   };
 
-  const handleSearch = async () => {
+  const handleSearch = async (page = 1) => {
     const body = {
       passportNumber: passportNumber || "",
       damagedTypeId: damagedTypeId || null,
@@ -63,11 +60,11 @@ export default function SuperVisorPassport() {
       governorateId: isSupervisor ? profile.governorateId : (selectedGovernorate || null),
       profileId: isSupervisor ? profile.profileId : null,
       PaginationParams: {
-        PageNumber: pagination.current,
-        PageSize: pagination.pageSize,
+        PageNumber: page,
+        PageSize: pageSize,
       },
     };
-  
+
     try {
       setLoading(true);
       const response = await axios.post(
@@ -80,18 +77,17 @@ export default function SuperVisorPassport() {
           },
         }
       );
-  
+
       setPassportList(response.data);
-      const headers = response.headers;
-      setPagination((prev) => ({
-        ...prev,
-        total: parseInt(headers["totalItems"], 10) || 0,
-        pageSize: parseInt(headers["itemsPerPage"], 10) || 10,
-      }));
-  
-      if (response.data.length === 0) {
-        message.warning("لا توجد نتائج تطابق الفلاتر المحددة");
+      
+      const paginationHeader = response.headers['pagination'];
+      if (paginationHeader) {
+        const paginationInfo = JSON.parse(paginationHeader);
+        setTotalPassports(paginationInfo.totalItems);
+      } else {
+        setTotalPassports(response.data.length);
       }
+
     } catch (error) {
       console.error(
         "Error fetching search results:",
@@ -100,6 +96,60 @@ export default function SuperVisorPassport() {
       message.error("حدث خطأ أثناء البحث");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleReset = async () => {
+    setPassportNumber("");
+    setDamagedTypeId(null);
+    setStartDate(null);
+    setEndDate(null);
+    setCurrentPage(1);
+    
+    if (!isSupervisor) {
+      setSelectedGovernorate(null);
+      setSelectedOffice(null);
+    }
+
+    const body = {
+      passportNumber: "",
+      damagedTypeId: null,
+      startDate: null,
+      endDate: null,
+      officeId: isSupervisor ? profile.officeId : null,
+      governorateId: isSupervisor ? profile.governorateId : null,
+      profileId: isSupervisor ? profile.profileId : null,
+      PaginationParams: {
+        PageNumber: 1,
+        PageSize: pageSize,
+      },
+    };
+
+    try {
+      const response = await axios.post(
+        `${Url}/api/DamagedPassport/search`,
+        body,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      setPassportList(response.data);
+      
+      const paginationHeader = response.headers['pagination'];
+      if (paginationHeader) {
+        const paginationInfo = JSON.parse(paginationHeader);
+        setTotalPassports(paginationInfo.totalItems);
+      } else {
+        setTotalPassports(response.data.length);
+      }
+
+      message.success("تم إعادة تعيين الفلاتر بنجاح");
+    } catch (error) {
+      message.error("حدث خطأ أثناء إعادة التعيين");
     }
   };
 
@@ -134,29 +184,25 @@ export default function SuperVisorPassport() {
     };
 
     fetchDropdownData();
-    handleSearch();
   }, [accessToken, isSupervisor, profile]);
 
+  useEffect(() => {
+    const initialPayload = {
+      passportNumber: "",
+      damagedTypeId: null,
+      startDate: null,
+      endDate: null,
+      officeId: isSupervisor ? profile.officeId : null,
+      governorateId: isSupervisor ? profile.governorateId : null,
+      profileId: isSupervisor ? profile.profileId : null,
+      PaginationParams: {
+        PageNumber: 1,
+        PageSize: pageSize,
+      },
+    };
 
-
-  const handleReset = () => {
-    setPassportNumber("");
-    setDamagedTypeId(null);
-    setStartDate(null);
-    setEndDate(null);
-    if (!isSupervisor) {
-      setSelectedGovernorate(null);
-      setSelectedOffice(null);
-    }
     handleSearch();
-  };
-
-  const handleTableChange = (paginationInfo) => {
-    setPagination((prev) => ({
-      ...prev,
-      current: paginationInfo.current,
-    }));
-  };
+  }, [isSupervisor, profile.officeId, profile.governorateId]);
 
   const columns = [
     {
@@ -170,13 +216,11 @@ export default function SuperVisorPassport() {
       title: "المحافظة",
       dataIndex: "governorateName",
       key: "governorateName",
-
     },
     {
       title: "المكتب",
       dataIndex: "officeName",
       key: "officeName",
-
     },
     {
       title: "رقم الجواز",
@@ -230,6 +274,7 @@ export default function SuperVisorPassport() {
             value={selectedGovernorate}
             onChange={setSelectedGovernorate}
             disabled={isSupervisor}>
+            <Option value="">اختر المحافظة</Option>
             {governorates.map((gov) => (
               <Option key={gov.id} value={gov.id}>
                 {gov.name}
@@ -245,6 +290,7 @@ export default function SuperVisorPassport() {
             value={selectedOffice}
             onChange={setSelectedOffice}
             disabled={isSupervisor}>
+            <Option value="">اختر المكتب</Option>
             {offices.map((office) => (
               <Option key={office.id} value={office.id}>
                 {office.name}
@@ -268,6 +314,7 @@ export default function SuperVisorPassport() {
             value={damagedTypeId}
             onChange={(value) => setDamagedTypeId(value)}
             allowClear>
+            <Option value="">اختر السبب</Option>
             {damagedTypes.map((type) => (
               <Option key={type.id} value={type.id}>
                 {type.name}
@@ -291,8 +338,9 @@ export default function SuperVisorPassport() {
             style={{ width: "100%" }}
           />
         </div>
+
         <div className="supervisor-damaged-passport-filter-buttons">
-          <Button type="primary" onClick={handleSearch}>
+          <Button type="primary" onClick={() => handleSearch(1)}>
             البحث
           </Button>
           <Button type="primary" onClick={handleReset}>
@@ -320,12 +368,15 @@ export default function SuperVisorPassport() {
             bordered
             loading={loading}
             pagination={{
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalPassports,
               position: ["bottomCenter"],
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
+              onChange: (page) => {
+                setCurrentPage(page);
+                handleSearch(page);
+              },
             }}
-            onChange={handleTableChange}
             locale={{ emptyText: "لا توجد بيانات" }}
             className="supervisor-passport-dameged-table"
           />

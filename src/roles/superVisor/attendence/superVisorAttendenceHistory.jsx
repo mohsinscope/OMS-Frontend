@@ -24,11 +24,10 @@ export default function SupervisorAttendanceHistory() {
   const [offices, setOffices] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    total: 0,
-  });
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+  const [totalRecords, setTotalRecords] = useState(0);
 
   const {
     isSidebarCollapsed,
@@ -77,7 +76,7 @@ export default function SupervisorAttendanceHistory() {
     fetchDropdowns();
   }, [token]);
 
-  const fetchAttendanceData = async (pageNumber = 1, pageSize = 10) => {
+  const fetchAttendanceData = async (pageNumber = 1) => {
     try {
       setIsLoading(true);
 
@@ -112,7 +111,15 @@ export default function SupervisorAttendanceHistory() {
       }
 
       const data = await response.json();
-      const totalItems = parseInt(response.headers.get("totalItems"), 10) || 0;
+
+      // Handle pagination from response headers
+      const paginationHeader = response.headers.get("pagination");
+      if (paginationHeader) {
+        const paginationInfo = JSON.parse(paginationHeader);
+        setTotalRecords(paginationInfo.totalItems);
+      } else {
+        setTotalRecords(data.length);
+      }
 
       const formattedData = data.map((item) => ({
         id: item.id,
@@ -138,12 +145,6 @@ export default function SupervisorAttendanceHistory() {
       }));
 
       setAttendanceData(formattedData);
-      setPagination((prev) => ({
-        ...prev,
-        current: pageNumber,
-        pageSize: pageSize,
-        total: totalItems,
-      }));
 
       if (data.length === 0) {
         setIsModalVisible(true);
@@ -157,18 +158,12 @@ export default function SupervisorAttendanceHistory() {
   };
 
   useEffect(() => {
-    fetchAttendanceData(pagination.current, pagination.pageSize);
+    fetchAttendanceData(currentPage);
   }, [isSupervisor, userGovernorateId, userOfficeId, governorates, offices]);
 
   const handleSearch = () => {
-    fetchAttendanceData(1, pagination.pageSize);
-  };
-
-  const formatDateForAPI = (date) => {
-    if (!date) return null;
-    const formattedDate = new Date(date);
-    formattedDate.setUTCHours(14, 0, 0, 0);
-    return formattedDate.toISOString();
+    setCurrentPage(1);
+    fetchAttendanceData(1);
   };
 
   const handleReset = () => {
@@ -179,12 +174,21 @@ export default function SupervisorAttendanceHistory() {
       setSelectedGovernorate(null);
       setSelectedOffice(null);
     }
-    fetchAttendanceData(1, pagination.pageSize);
+    setCurrentPage(1);
+    fetchAttendanceData(1);
     message.success("تمت إعادة التعيين بنجاح");
   };
 
-  const handleTableChange = (paginationInfo) => {
-    fetchAttendanceData(paginationInfo.current, paginationInfo.pageSize);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    fetchAttendanceData(page);
+  };
+
+  const formatDateForAPI = (date) => {
+    if (!date) return null;
+    const formattedDate = new Date(date);
+    formattedDate.setUTCHours(14, 0, 0, 0);
+    return formattedDate.toISOString();
   };
 
   const handleView = (record) => {
@@ -244,6 +248,7 @@ export default function SupervisorAttendanceHistory() {
         className={`supervisor-attendance-history-fields ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
+        {/* Filter Fields */}
         <div className="filter-row">
           <label>المحافظة</label>
           <select
@@ -277,7 +282,7 @@ export default function SupervisorAttendanceHistory() {
         <div className="filter-row">
           <label>التاريخ من</label>
           <DatePicker
-            placeholder=""
+            placeholder="التاريخ من"
             onChange={(date) => setStartDate(date)}
             value={startDate}
             style={{ width: "100%" }}
@@ -286,7 +291,7 @@ export default function SupervisorAttendanceHistory() {
         <div className="filter-row">
           <label>التاريخ إلى</label>
           <DatePicker
-            placeholder=""
+            placeholder="التاريخ إلى"
             onChange={(date) => setEndDate(date)}
             value={endDate}
             style={{ width: "100%" }}
@@ -304,7 +309,7 @@ export default function SupervisorAttendanceHistory() {
             <option value={2}>مسائي</option>
           </select>
         </div>
-        <button 
+        <button
           className="attendance-search-button"
           onClick={handleSearch}
           loading={isLoading}>
@@ -344,10 +349,10 @@ export default function SupervisorAttendanceHistory() {
             bordered
             pagination={{
               position: ["bottomCenter"],
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              onChange: handleTableChange,
+              current: currentPage,
+              pageSize: pageSize,
+              total: totalRecords,
+              onChange: handlePageChange,
             }}
             loading={isLoading}
           />
