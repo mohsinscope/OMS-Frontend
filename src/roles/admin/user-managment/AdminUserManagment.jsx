@@ -155,22 +155,26 @@ const AdminUserManagment = () => {
     setLoading(true);
     try {
       const updatedUser = {
-        ProfileId: selectedUser.id,
-        FullName: values.fullName,
-        Position: values.position,
-        OfficeId: values.officeName,
-        GovernorateId: values.governorate,
-        Roles: values.roles, // Handle multiple roles
+        userId: selectedUser.userId,
+        userName: selectedUser.username, // Added userName field
+        fullName: values.fullName,
+        position: values.position,
+        officeId: values.officeName, // Renamed from officeName to officeId
+        governorateId: values.governorate, // Renamed from governorate to governorateId
+        roles: values.roles // Changed from Roles to roles (lowercase)
       };
+      console.log(updatedUser)
+      console.log("Selected User:", selectedUser);
 
-      await axios.put(`${Url}/api/account/${selectedUser.id}`, updatedUser, {
+      // Updated endpoint to use userId instead of id
+      await axios.put(`${Url}/api/account/${selectedUser.userId}`, updatedUser, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-
+  
       message.success("تم تحديث المستخدم بنجاح!");
-
+  
       const updatedResponse = await axios.get(
         `${Url}/api/account/profiles-with-users-and-roles`,
         {
@@ -502,15 +506,15 @@ const AdminUserManagment = () => {
                 rules={[{ required: true, message: "يرجى اختيار المنصب" }]}
               >
                 <Select placeholder="اختر المنصب" style={{ height: 45 }}>
-                  <Option value="1">Manager</Option>
-                  <Option value="2">Director</Option>
-                  <Option value="3">Supervisor</Option>
-                  <Option value="4">Accontnt</Option>
-                  <Option value="5">FollowUpEmployee</Option>
-                  <Option value="6">Reporting Analyst</Option>
-                  <Option value="7">Sr.Controller</Option>
-                  <Option value="8">Project Coordinator</Option>
-                  <Option value="9">Operation Manager</Option>
+                  <Option value={1}>Manager</Option>
+                  <Option value={2}>Director</Option>
+                  <Option value={3}>Supervisor</Option>
+                  <Option value={4}>Accontnt</Option>
+                  <Option value={5}>FollowUpEmployee</Option>
+                  <Option value={6}>Reporting Analyst</Option>
+                  <Option value={7}>Sr.Controller</Option>
+                  <Option value={8}>Project Coordinator</Option>
+                  <Option value={9}>Operation Manager</Option>
 
                 </Select>
               </Form.Item>
