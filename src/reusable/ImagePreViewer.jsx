@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Image, Button, Modal } from "antd";
+import { Image, Button, Modal,ConfigProvider } from "antd";
 import { LeftOutlined, RightOutlined, DeleteOutlined } from "@ant-design/icons";
 import "./styles/imagePreViewer.css";
 
@@ -62,7 +62,9 @@ export default function ImagePreviewer({
   }
   return (
     <div className="image-previewer-container">
+      
       <div className="image-display">
+
         <Image
           width={defaultWidth}
           height={defaultHeight}
@@ -74,16 +76,7 @@ export default function ImagePreviewer({
       </div>
 
       <div className="image-pagination-controls">
-        <Button
-          icon={<LeftOutlined />}
-          onClick={handlePrevious}
-          disabled={currentIndex === 0}
-          className="pagination-button previous-button">
-          السابق
-        </Button>
-        <span className="pagination-info">
-          {currentIndex + 1} / {uploadedImages.length}
-        </span>
+      <ConfigProvider direction="rtl">
         <Button
           icon={<RightOutlined />}
           onClick={handleNext}
@@ -91,6 +84,17 @@ export default function ImagePreviewer({
           className="pagination-button next-button">
           التالي
         </Button>
+        <span className="pagination-info">
+          {currentIndex + 1} / {uploadedImages.length}
+        </span>
+        <Button
+          icon={<LeftOutlined />}
+          onClick={handlePrevious}
+          disabled={currentIndex === 0}
+          className="pagination-button previous-button">
+          السابق
+        </Button>
+        </ConfigProvider>
       </div>
 
       {onDeleteImage && (
@@ -114,6 +118,7 @@ export default function ImagePreviewer({
         cancelText="لا">
         <p>هل أنت متأكد أنك تريد حذف هذه الصورة؟</p>
       </Modal>
+     
     </div>
   );
 }
