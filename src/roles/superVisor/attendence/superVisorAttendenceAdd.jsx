@@ -84,7 +84,7 @@ export default function SuperVisorAttendanceAdd() {
         printingStaff: passportAttendance["الطباعة"],
         qualityStaff: passportAttendance["الجودة"],
         deliveryStaff: passportAttendance["التسليم"],
-        date: selectedDate ? `${selectedDate}T10:00:00Z` : null,
+        date: selectedDate ? `${selectedDate}T00:00:00Z` : null,
         note: notes,
         workingHours,
         governorateId,
