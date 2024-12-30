@@ -57,7 +57,7 @@ export default function ViewAttendance() {
         setAttendanceData2(attendsdata);
         form.setFieldsValue({
           ...data,
-          date: data.date ? data.date.replace(/:00.000Z$/, "") : "",
+          date: data.date ? data.date.replace(/:00.00.00Z$/, "") : "",
         });
       } catch (error) {
         console.error("Error fetching attendance details:", error);
