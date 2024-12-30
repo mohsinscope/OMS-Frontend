@@ -45,20 +45,21 @@ export default function ImagePreviewer({
   };
 
   const formatImageUrl = (url) => {
-    if (!url) return '';
+    if (!url) return ''; // Handle empty or undefined URLs
   
-    // Handle base64 or local file object
-    if (typeof url === 'string' && (url.startsWith('data:image') || url.startsWith('blob:'))) {
-      return url; // Return directly for base64 or blob URLs
+    // Return the URL directly for base64 or blob data
+    if (url.startsWith('data:image') || url.startsWith('blob:')) {
+      return url;
     }
   
-    return url.startsWith('http') ? url : `https://cdn-oms.scopesky.org/${url}`;
+    // Check if the URL is fully qualified (starts with http/https) or format it for the CDN
+    return url.match(/^https?:\/\//) ? url : `https://cdn-oms.scopesky.org/${url}`;
   };
-
-  if (!uploadedImages || uploadedImages.length === 0) {
+  
+  // Display a fallback message if no images are available
+  if (!uploadedImages?.length) {
     return <p>لا توجد صور للعرض</p>;
   }
-
   return (
     <div className="image-previewer-container">
       <div className="image-display">
