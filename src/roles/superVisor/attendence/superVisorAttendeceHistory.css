@@ -150,13 +150,36 @@
   width: 200px;
 }
 .attendance-add-button {
-  padding: 20px;
-}
-.attendance-search-button {
-  padding: 20px;
+  height: 45px;
+  width: 150px !important;
   background-color: #04aa6d !important;
-}
+  border: 2px solid #04aa6d;
+  color: white;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 
+
+}
+.attendance-add-button:hover{
+  transform: translateY(-2px); /* Lift effect */
+  background-color: white !important;
+  color: #04aa6d !important;
+  border: 2px solid #04aa6d !important;
+}
+.attendance-search-button,.attendance-reset-button {
+  background-color: #4880ff;
+  color: white;
+  padding: 5px 20px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+.attendance-search-button:hover ,.attendance-reset-button:hover{
+  transform: translateY(-2px); /* Lift effect */
+  
+
+}
 .html-dropdown {
   width: 200px;
   padding: 0 10px;
