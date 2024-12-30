@@ -5,7 +5,7 @@ import Layout from "./pages/LayOut.jsx";
 import useAuthStore from "./store/store.js";
 import SignInPage from "./pages/signIn.jsx";
 import Stats from "./pages/stats.jsx";
-import NotFound from "./pages/pageNotFound.jsx";
+import LandingPage from "./pages/landingPage.jsx";
 // Import all components
 import Dashboard from "./pages/dashBoard.jsx";
 import AdminExpenses from "./roles/admin/admin-expensess/adminExpensess.jsx";
@@ -28,7 +28,7 @@ import SuperVisorDammagePassportAdd from "./roles/superVisor/damaggedPasports/su
 
 import SuperVisorDevices from "./roles/superVisor/damegedDevices/SuperVisorDevice.jsx";
 import SuperVisorDeviceShow from "./roles/superVisor/damegedDevices/SuperVisorDeviceShow.jsx";
-import SuperVisorDevicesAdd from "./roles/superVisor/damegedDevices/SuperVisorDevicesAdd.jsx";
+import SuperVisorDevicesAdd from "./roles/superVisor/damegedDevices/superVisorDevicesAdd.jsx";
 
 import ManagerExpensesHistory from "./roles/Manager/Expensess/ManagerExpensessHistory.jsx";
 import ManagerExpensesView from "./roles/Manager/Expensess/ManagerExpensessView.jsx";
@@ -47,14 +47,17 @@ import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecture
 import LecturerShow from "./roles/superVisor/lecturer/SuperVisorLecturerShow.jsx";
 
 const App = () => {
+  // Centralized routes configuration
   const routes = [
     { path: "dashboard", element: <Dashboard /> },
     { path: "Stats", element: <Stats /> },
+    // Admin Routes
     { path: "admin/expenses", element: <AdminExpenses /> },
     { path: "admin/attendence", element: <AdminAttendance /> },
     { path: "admin/users", element: <AdminUserManagement /> },
     { path: "admin/listofvalues", element: <ListOfValueAdmin /> },
 
+    // Supervisor Routes
     {
       path: "supervisor/ExpensesRequests",
       element: <SuperVisorExpensesRequest />,
@@ -84,8 +87,14 @@ const App = () => {
       element: <SuperVisorDammagePassportAdd />,
     },
     { path: "/supervisor/damegedDevices", element: <SuperVisorDevices /> },
-    { path: "/damegedDevices/show", element: <SuperVisorDeviceShow /> },
-    { path: "/damegedDevices/add", element: <SuperVisorDevicesAdd /> },
+    {
+      path: "/damegedDevices/show",
+      element: <SuperVisorDeviceShow />,
+    },
+    {
+      path: "/damegedDevices/add",
+      element: <SuperVisorDevicesAdd />,
+    },
     {
       path: "/supervisor/lecturer/history",
       element: <SuperVisorLecturerhistory />,
@@ -99,6 +108,7 @@ const App = () => {
       element: <LecturerShow />,
     },
 
+    // Manager Routes
     { path: "manager/expensess", element: <ManagerExpensesHistory /> },
     { path: "manager/expensess/view", element: <ManagerExpensesView /> },
     {
@@ -112,9 +122,11 @@ const App = () => {
     { path: "manager/attendence", element: <ManagerAttendenceHistory /> },
     { path: "manager/attendence/view", element: <ManagerAttendenceView /> },
 
+    // dammage employee
     { path: "/employee_damage/damage/devices", element: <DammagedDevicess /> },
     { path: "/employee_damage/damage/pasports", element: <DammagedPasports /> },
 
+    //FollowUpEmployee
     {
       path: "/employee_expenses/expenses",
       element: <FollowUpEmployeeExpensess />,
@@ -124,10 +136,11 @@ const App = () => {
       element: <FollowUpEmployeeAttensence />,
     },
 
+    // Common Routes
     { path: "settings", element: <Settings /> },
     { path: "expenses-view", element: <ExpensessView /> },
+    { path: "landing-page", element: <LandingPage /> },
   ];
-
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -140,13 +153,15 @@ const App = () => {
   }, [initializeAuth]);
 
   if (isLoading) {
-    return null;
+    return null; // Or a loading spinner
   }
-
   return (
     <Router>
       <Routes>
+        {/* Public Route */}
         <Route path="/" element={<SignInPage />} />
+
+        {/* Protected Routes */}
         <Route
           path="/"
           element={
@@ -154,11 +169,11 @@ const App = () => {
               <Layout />
             </ProtectedRoute>
           }>
+          {/* Define nested protected routes */}
           {routes.map(({ path, element }, index) => (
             <Route key={index} path={path} element={element} />
           ))}
         </Route>
-        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
