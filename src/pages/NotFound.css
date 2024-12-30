@@ -1,0 +1,30 @@
+.not-found-container {
+  text-align: center;
+  margin-top: 100px;
+  font-family: Arial, sans-serif;
+}
+
+.not-found-container h1 {
+  font-size: 5rem;
+  color: #ff4d4f;
+}
+
+.not-found-container h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.not-found-container p {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+}
+
+.back-home-link {
+  font-size: 1.2rem;
+  color: #1890ff;
+  text-decoration: none;
+}
+
+.back-home-link:hover {
+  text-decoration: underline;
+}
