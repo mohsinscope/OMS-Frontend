@@ -46,6 +46,12 @@ export default function ImagePreviewer({
 
   const formatImageUrl = (url) => {
     if (!url) return '';
+  
+    // Handle base64 or local file object
+    if (typeof url === 'string' && (url.startsWith('data:image') || url.startsWith('blob:'))) {
+      return url; // Return directly for base64 or blob URLs
+    }
+  
     return url.startsWith('http') ? url : `https://cdn-oms.scopesky.org/${url}`;
   };
 

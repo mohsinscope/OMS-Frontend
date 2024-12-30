@@ -13,8 +13,8 @@ export default function Settings() {
   const [formData, setFormData] = useState({
     fullName: profile?.fullName || "غير معروف",
     username: user?.username || "ali",
-    governorate: user?.governorateName || "Basra",
-    office: user?.officeName || "Karadah",
+    governorate: profile?.governorateName || "Basra",
+    office: profile?.officeName || "Karadah",
   });
 
   const [passwordData, setPasswordData] = useState({
