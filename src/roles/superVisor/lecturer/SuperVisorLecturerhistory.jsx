@@ -55,8 +55,8 @@ const SuperVisorLecturerhistory = () => {
           endDate: payload.endDate || null,
           PaginationParams: {
             PageNumber: payload.PaginationParams.PageNumber,
-            PageSize: payload.PaginationParams.PageSize
-          }
+            PageSize: payload.PaginationParams.PageSize,
+          },
         },
         {
           headers: {
@@ -67,8 +67,8 @@ const SuperVisorLecturerhistory = () => {
 
       if (response.data) {
         setLectures(response.data);
-        
-        const paginationHeader = response.headers['pagination'];
+
+        const paginationHeader = response.headers["pagination"];
         if (paginationHeader) {
           const paginationInfo = JSON.parse(paginationHeader);
           setTotalLectures(paginationInfo.totalItems);
@@ -77,7 +77,7 @@ const SuperVisorLecturerhistory = () => {
         }
       }
     } catch (error) {
-      console.error('API Error:', error);
+      console.error("API Error:", error);
       message.error(
         `حدث خطأ أثناء جلب المحاضرات: ${
           error.response?.data?.message || error.message
@@ -89,8 +89,10 @@ const SuperVisorLecturerhistory = () => {
   const handleSearch = async (page = 1) => {
     const payload = {
       title: formData.title || "",
-      officeId: isSupervisor ? profile.officeId : (selectedOffice || null),
-      governorateId: isSupervisor ? profile.governorateId : (selectedGovernorate || null),
+      officeId: isSupervisor ? profile.officeId : selectedOffice || null,
+      governorateId: isSupervisor
+        ? profile.governorateId
+        : selectedGovernorate || null,
       startDate: formData.startDate ? formatToISO(formData.startDate) : null,
       endDate: formData.endDate ? formatToISO(formData.endDate) : null,
       PaginationParams: {
@@ -98,7 +100,7 @@ const SuperVisorLecturerhistory = () => {
         PageSize: pageSize,
       },
     };
-    
+
     await fetchLectures(payload);
   };
 
@@ -126,13 +128,16 @@ const SuperVisorLecturerhistory = () => {
     }
 
     try {
-      const response = await axios.get(`${Url}/api/Governorate/dropdown/${governorateId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      
+      const response = await axios.get(
+        `${Url}/api/Governorate/dropdown/${governorateId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
       if (response.data && response.data[0] && response.data[0].offices) {
         setOffices(response.data[0].offices);
-        
+
         if (isSupervisor) {
           setSelectedOffice(profile.officeId);
         }
@@ -152,8 +157,8 @@ const SuperVisorLecturerhistory = () => {
       endDate: null,
       PaginationParams: {
         PageNumber: 1,
-        PageSize: pageSize
-      }
+        PageSize: pageSize,
+      },
     };
 
     fetchLectures(initialPayload);
@@ -181,22 +186,22 @@ const SuperVisorLecturerhistory = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleReset = async () => {
     setFormData({ title: "", startDate: "", endDate: "" });
     setCurrentPage(1);
-    
+
     if (!isSupervisor) {
       setSelectedGovernorate(null);
       setSelectedOffice(null);
       setOffices([]);
     }
-    
+
     const payload = {
       title: "",
       officeId: isSupervisor ? profile.officeId : null,
@@ -208,7 +213,7 @@ const SuperVisorLecturerhistory = () => {
         PageSize: pageSize,
       },
     };
-    
+
     await fetchLectures(payload);
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
@@ -221,7 +226,9 @@ const SuperVisorLecturerhistory = () => {
       className: "table-column-date",
       render: (text) => {
         const date = new Date(text);
-        return isNaN(date.getTime()) ? "تاريخ غير صالح" : date.toLocaleDateString("en-CA");
+        return isNaN(date.getTime())
+          ? "تاريخ غير صالح"
+          : date.toLocaleDateString("en-CA");
       },
     },
     {
@@ -367,15 +374,14 @@ const SuperVisorLecturerhistory = () => {
               إعادة تعيين
             </button>
           </div>
+          {hasCreatePermission && (
+            <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
+              <button className="supervisor-add-Lectur-button">
+                اضافة محضر جديد +
+              </button>
+            </Link>
+          )}
         </form>
-
-        {hasCreatePermission && (
-          <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
-            <button className="supervisor-add-Lectur-button">
-              اضافة محضر جديد +
-            </button>
-          </Link>
-        )}
       </div>
 
       <div className="supervisor-Lectur-table-container">

@@ -22,6 +22,7 @@
   max-height: 300px;
   opacity: 1;
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-start;
   transition: max-height 0.6s ease, opacity 0.6s ease;
 }
@@ -158,16 +159,15 @@
   cursor: pointer;
   border-radius: 8px;
   transition: background-color 0.3s ease, transform 0.2s ease;
-
-
 }
-.attendance-add-button:hover{
+.attendance-add-button:hover {
   transform: translateY(-2px); /* Lift effect */
   background-color: white !important;
   color: #04aa6d !important;
   border: 2px solid #04aa6d !important;
 }
-.attendance-search-button,.attendance-reset-button {
+.attendance-search-button,
+.attendance-reset-button {
   background-color: #4880ff;
   color: white;
   padding: 5px 20px;
@@ -175,10 +175,9 @@
   text-decoration: none;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
-.attendance-search-button:hover ,.attendance-reset-button:hover{
+.attendance-search-button:hover,
+.attendance-reset-button:hover {
   transform: translateY(-2px); /* Lift effect */
-  
-
 }
 .html-dropdown {
   width: 200px;

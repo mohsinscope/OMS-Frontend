@@ -243,7 +243,11 @@ export default function SupervisorAttendanceHistory() {
       <div className="supervisor-attendance-history-title">
         <h1>الحضور</h1>
       </div>
-
+      <div className="toggle-search-button">
+        <Button type="primary" onClick={toggleSearch}>
+          {searchVisible ? "اِخفاء الحقول" : "اِظهار الحقول"}
+        </Button>
+      </div>
       <div
         className={`supervisor-attendance-history-fields ${
           searchVisible ? "animate-show" : "animate-hide"
@@ -332,12 +336,6 @@ export default function SupervisorAttendanceHistory() {
             </button>
           </Link>
         )}
-      </div>
-
-      <div className="toggle-search-button">
-        <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "اِخفاء الحقول" : "اِظهار الحقول"}
-        </Button>
       </div>
 
       <div className="supervisor-attendance-history-table">

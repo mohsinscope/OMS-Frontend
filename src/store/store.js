@@ -8,7 +8,7 @@ const useAuthStore = create((set) => ({
   isLoggedIn: false,
   accessToken: null,
   isSidebarCollapsed: false,
-  searchVisible: false,
+  searchVisible: true,
   isInitialized: false,
 
   initializeAuth: async () => {

@@ -112,10 +112,10 @@ export default function ViewAttendance() {
     }
   };
 
-  const renderChart = (title, count, total) => {
+  const renderChart = (title, count, total,numberOfAttendece) => {
     const data = [
       { name: "حاضر", value: count },
-      { name: "غائب", value: total - count },
+      { name: "غائب", value: count-total },
     ];
 
     const COLORS = ["#04AA6D", "#f44336"];
@@ -123,8 +123,8 @@ export default function ViewAttendance() {
     return (
       <div className="chart-card">
         <div className="chart-content">
-          <h3>{title}</h3>
-          <h2>{`${count} / ${total}`}</h2>
+          <h2>{title}  {numberOfAttendece}</h2>
+          <h3>{`الحاضرون ${total}`}</h3>
         </div>
         <PieChart width={120} height={120}>
           <Pie
@@ -234,37 +234,42 @@ export default function ViewAttendance() {
         <div className="charts-section">
           <div className="single-chart">
             {renderChart(
-              "موظفي الحسابات",
+              'محطات الحسابات',
+              attendanceData2?.data?.accountStaff,
               attendanceData.accountStaff,
               attendanceData2?.data?.accountStaff || 0
             )}
           </div>
           <div className="single-chart">
             {renderChart(
-              "موظفي الطباعة",
+              "محطات الطباعة",
+              attendanceData2?.data?.printingStaff,
               attendanceData.printingStaff,
               attendanceData2?.data?.printingStaff || 0
             )}
           </div>
           <div className="single-chart">
             {renderChart(
-              "موظفي الجودة",
+              "محطات الجودة",
+              attendanceData2?.data?.qualityStaff,
               attendanceData.qualityStaff,
               attendanceData2?.data?.qualityStaff || 0
             )}
           </div>
           <div className="single-chart">
             {renderChart(
-              "موظفي التسليم",
+              "محطات التسليم",
+              attendanceData2?.data?.deliveryStaff,
               attendanceData.deliveryStaff,
               attendanceData2?.data?.deliveryStaff || 0
             )}
           </div>
           <div className="single-chart">
             {renderChart(
-              "موظفي الاستلام",
+              "محطات الاستلام",
+              attendanceData2?.data?.receivingStaff,
               attendanceData.receivingStaff,
-              attendanceData2?.data?.receivingStaff || 0
+              attendanceData2?.data?.receivingStaff || 0,
             )}
           </div>
         </div>
@@ -384,12 +389,12 @@ export default function ViewAttendance() {
             </Form.Item>
             <Form.Item
               name="workingHours"
-              label="عدد ساعات العمل"
+              label="وقت العمل"
               rules={[
-                { required: true, message: "يرجى إدخال عدد ساعات العمل" },
+                { required: true, message: "يرجى إدخال وقت العمل" },
               ]}>
               <Select
-                placeholder="اختر عدد ساعات العمل"
+                placeholder="اختر وقت العمل"
                 style={{ width: "100%", height: "45px" }}>
                 <Select.Option value={3}>الكل</Select.Option>
                 <Select.Option value={1}>صباحي</Select.Option>

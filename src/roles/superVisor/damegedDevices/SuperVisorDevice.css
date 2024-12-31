@@ -169,7 +169,7 @@
 /* Filter Form Layout */
 .supervisor-devices-dameged-form {
   display: flex;
-  /* flex-wrap: wrap;  */
+  flex-wrap: wrap;
   justify-content: flex-start; /* Align filters to the start */
   align-items: flex-end; /* Align fields at the bottom for a consistent look */
   gap: 10px; /* Space between fields */
