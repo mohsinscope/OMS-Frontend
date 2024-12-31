@@ -139,7 +139,7 @@ const SuperVisorLecturerAdd = () => {
             <div className="add-Lecturer-fields-container">
               <Form.Item
                 name="title"
-                label="عنولن المحضر"
+                label="عنوان المحضر"
                 rules={[
                   { required: true, message: "يرجى إدخال عنولن المحضر" },
                 ]}>

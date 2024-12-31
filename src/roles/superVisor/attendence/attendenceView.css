@@ -14,6 +14,13 @@
   justify-content: start;
   gap: 50px;
 }
+.header{
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  align-items: start;
+  width: 100%;
+}
 .single-total-container {
   padding: 20px;
   display: flex;

@@ -55,6 +55,7 @@ export default function ViewAttendance() {
         const data = response.data;
         const attendsdata = response2;
         setAttendanceData(data);
+        console.log(attendanceData);
         setAttendanceData2(attendsdata);
         form.setFieldsValue({
           ...data,
@@ -87,7 +88,6 @@ export default function ViewAttendance() {
         governorateId: attendanceData.governorateId,
         profileId: attendanceData.profileId,
       };
-
       const response = await axios.put(
         `${Url}/api/Attendance/${id}`,
         updatedValues,
@@ -112,10 +112,10 @@ export default function ViewAttendance() {
     }
   };
 
-  const renderChart = (title, count, total,numberOfAttendece) => {
+  const renderChart = (title, count, total, numberOfAttendece) => {
     const data = [
       { name: "حاضر", value: count },
-      { name: "غائب", value: count-total },
+      { name: "غائب", value: count - total },
     ];
 
     const COLORS = ["#04AA6D", "#f44336"];
@@ -123,7 +123,9 @@ export default function ViewAttendance() {
     return (
       <div className="chart-card">
         <div className="chart-content">
-          <h2>{title}  {numberOfAttendece}</h2>
+          <h2>
+            {title} {numberOfAttendece}
+          </h2>
           <h3>{`الحاضرون ${total}`}</h3>
         </div>
         <PieChart width={120} height={120}>
@@ -214,6 +216,16 @@ export default function ViewAttendance() {
         <h1>
           التاريخ: {new Date(attendanceData.date).toLocaleDateString("en-CA")}
         </h1>
+        <h3>
+          المحافظة /{" "}
+          <span style={{ color: "blue", fontWeight: "bold" }}>
+            {attendanceData.governorateName}
+          </span>{" "}
+          | المكتب /{" "}
+          <span style={{ color: "blue", fontWeight: "bold" }}>
+            {attendanceData.officeName}
+          </span>
+        </h3>
       </div>
       <div className="attendence-buttons">
         <Button onClick={handleBack} className="back-button">
@@ -234,7 +246,7 @@ export default function ViewAttendance() {
         <div className="charts-section">
           <div className="single-chart">
             {renderChart(
-              'محطات الحسابات',
+              "محطات الحسابات",
               attendanceData2?.data?.accountStaff,
               attendanceData.accountStaff,
               attendanceData2?.data?.accountStaff || 0
@@ -269,7 +281,7 @@ export default function ViewAttendance() {
               "محطات الاستلام",
               attendanceData2?.data?.receivingStaff,
               attendanceData.receivingStaff,
-              attendanceData2?.data?.receivingStaff || 0,
+              attendanceData2?.data?.receivingStaff || 0
             )}
           </div>
         </div>
@@ -390,9 +402,7 @@ export default function ViewAttendance() {
             <Form.Item
               name="workingHours"
               label="وقت العمل"
-              rules={[
-                { required: true, message: "يرجى إدخال وقت العمل" },
-              ]}>
+              rules={[{ required: true, message: "يرجى إدخال وقت العمل" }]}>
               <Select
                 placeholder="اختر وقت العمل"
                 style={{ width: "100%", height: "45px" }}>
