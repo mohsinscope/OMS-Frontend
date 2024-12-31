@@ -102,11 +102,9 @@
   border-radius: 6px;
   font-size: large;
   transition: background-color 0.3s ease, transform 0.2s ease;
-
 }
-.supervisor-Lectur-button:hover{
+.supervisor-Lectur-button:hover {
   transform: translateY(-2px); /* Lift effect */
-
 }
 .supervisor-add-Lectur-button {
   background-color: #04aa6d;
@@ -118,9 +116,8 @@
   border-radius: 6px;
   font-size: large;
   transition: background-color 0.3s ease, transform 0.2s ease;
-
 }
-.supervisor-add-Lectur-button:hover{
+.supervisor-add-Lectur-button:hover {
   transform: translateY(-2px); /* Lift effect */
   height: 45px;
   width: 150px !important;
@@ -161,8 +158,9 @@
 }
 .supervisor-Lectur-form {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: row;
-  justify-content: center;
+  justify-content: start;
   align-items: end;
   gap: 10px;
 }

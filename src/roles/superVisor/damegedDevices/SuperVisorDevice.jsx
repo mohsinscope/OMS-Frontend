@@ -70,8 +70,8 @@ const SuperVisorDevices = () => {
 
       if (response.data) {
         setDevices(response.data);
-        
-        const paginationHeader = response.headers['pagination'];
+
+        const paginationHeader = response.headers["pagination"];
         if (paginationHeader) {
           const paginationInfo = JSON.parse(paginationHeader);
           setTotalDevices(paginationInfo.totalItems);
@@ -80,7 +80,7 @@ const SuperVisorDevices = () => {
         }
       }
     } catch (error) {
-      console.error('API Error:', error);
+      console.error("API Error:", error);
       message.error(
         `حدث خطأ أثناء جلب الأجهزة: ${
           error.response?.data?.message || error.message
@@ -93,8 +93,10 @@ const SuperVisorDevices = () => {
   const handleSearch = async (page = 1) => {
     const payload = {
       serialNumber: formData.serialNumber || "",
-      officeId: isSupervisor ? profile.officeId : (selectedOffice || null),
-      governorateId: isSupervisor ? profile.governorateId : (selectedGovernorate || null),
+      officeId: isSupervisor ? profile.officeId : selectedOffice || null,
+      governorateId: isSupervisor
+        ? profile.governorateId
+        : selectedGovernorate || null,
       startDate: formData.startDate ? formatToISO(formData.startDate) : null,
       endDate: formData.endDate ? formatToISO(formData.endDate) : null,
       PaginationParams: {
@@ -113,7 +115,7 @@ const SuperVisorDevices = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -176,9 +178,12 @@ const SuperVisorDevices = () => {
     }
 
     try {
-      const response = await axios.get(`${Url}/api/Governorate/dropdown/${governorateId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await axios.get(
+        `${Url}/api/Governorate/dropdown/${governorateId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
 
       if (response.data && response.data[0] && response.data[0].offices) {
         setOffices(response.data[0].offices);
@@ -221,7 +226,9 @@ const SuperVisorDevices = () => {
       className: "table-column-date",
       render: (text) => {
         const date = new Date(text);
-        return isNaN(date.getTime()) ? "تاريخ غير صالح" : date.toLocaleDateString("en-CA");
+        return isNaN(date.getTime())
+          ? "تاريخ غير صالح"
+          : date.toLocaleDateString("en-CA");
       },
     },
     {
@@ -250,8 +257,7 @@ const SuperVisorDevices = () => {
         <Link
           to="/damegedDevices/show"
           state={{ id: record.id }}
-          className="supervisor-devices-dameged-details-link"
-        >
+          className="supervisor-devices-dameged-details-link">
           عرض
         </Link>
       ),
@@ -263,8 +269,7 @@ const SuperVisorDevices = () => {
       className={`supervisor-devices-dameged-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl"
-    >
+      dir="rtl">
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
 
       <div className="toggle-search-button">
@@ -276,19 +281,17 @@ const SuperVisorDevices = () => {
       <div
         className={`supervisor-devices-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
-        }`}
-      >
-        <form onSubmit={handleFormSubmit} className="supervisor-devices-dameged-form">
+        }`}>
+        <form
+          onSubmit={handleFormSubmit}
+          className="supervisor-devices-dameged-form">
           <div className="supervisor-devices-dameged-field-wrapper">
-            <label className="supervisor-devices-dameged-label">
-              المحافظة
-            </label>
+            <label className="supervisor-devices-dameged-label">المحافظة</label>
             <select
               value={selectedGovernorate || ""}
               onChange={handleGovernorateChange}
               disabled={isSupervisor}
-              className="supervisor-devices-dameged-dropdown"
-            >
+              className="supervisor-devices-dameged-dropdown">
               <option value="">اختر المحافظة</option>
               {governorates.map((gov) => (
                 <option key={gov.id} value={gov.id}>
@@ -306,8 +309,7 @@ const SuperVisorDevices = () => {
               value={selectedOffice || ""}
               onChange={(e) => setSelectedOffice(e.target.value)}
               disabled={isSupervisor || !selectedGovernorate}
-              className="supervisor-devices-dameged-dropdown"
-            >
+              className="supervisor-devices-dameged-dropdown">
               <option value="">اختر المكتب</option>
               {offices.map((office) => (
                 <option key={office.id} value={office.id}>
@@ -363,20 +365,18 @@ const SuperVisorDevices = () => {
             <button
               type="button"
               onClick={handleReset}
-              className="supervisor-devices-dameged-button"
-            >
+              className="supervisor-devices-dameged-button">
               إعادة تعيين
             </button>
           </div>
+          {hasCreatePermission && (
+            <Link to="/damegedDevices/add">
+              <button className="supervisor-filter-buttons">
+                اضافة جهاز جديد +
+              </button>
+            </Link>
+          )}
         </form>
-
-        {hasCreatePermission && (
-          <Link to="/damegedDevices/add">
-            <button className="supervisor-filter-buttons">
-              اضافة جهاز جديد +
-            </button>
-          </Link>
-        )}
       </div>
 
       <div className="supervisor-devices-dameged-table-container">
