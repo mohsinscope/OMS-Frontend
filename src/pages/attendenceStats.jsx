@@ -91,7 +91,7 @@ const AttendanceStats = () => {
         GovernorateId: selectedGovernorate || null,
         OfficeId: selectedOffice || null,
         StaffType: "",
-        Date: `${selectedDate}T10:00:00Z`,
+        Date: `${selectedDate}T00:00:00Z`,
         PaginationParams: {
           PageNumber: 1,
           PageSize: 10
@@ -136,7 +136,7 @@ const AttendanceStats = () => {
   const fetchGovernorateStats = async (govList = []) => {
     try {
       const baseBody = {
-        Date: `${selectedDate}T10:00:00Z`,
+        Date: `${selectedDate}T00:00:00Z`,
         PaginationParams: { PageNumber: 1, PageSize: 10 }
       };
 
