@@ -11,9 +11,6 @@ const LandingPage = () => {
           <h1 className="title">
             اهلا بكم في نظام إدارة المكاتب
           </h1>
-          <p className="subtitle">
-            تم تطوير الموقع من قبل مطوري شركة سكوب سكاي
-          </p>
         </div>
 
         {/* Features List */}
@@ -35,6 +32,9 @@ const LandingPage = () => {
             title="الاشعارات"
           />
         </div>
+          <p className="subtitle" style={{textAlign:"center", marginTop:"10px "}}>
+            تم تطوير الموقع من قبل مطوري شركة سكوب سكاي
+          </p>
       </div>
     </div>
   );

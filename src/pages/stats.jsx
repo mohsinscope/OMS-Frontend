@@ -26,7 +26,6 @@ export default function Stats() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   const fetchGovernorates = useCallback(async () => {
     try {
@@ -130,13 +129,6 @@ export default function Stats() {
     }
   }, [selectedTab, damagedDeviceTypes, damagedPassportTypes, selectedOffice, selectedGovernorate, selectedDate]);
 
-  // Effect to fetch statistics when tab changes
-  useEffect(() => {
-    if (selectedTab !== "attendance" && isInitialized) {
-      fetchStatisticsData();
-    }
-  }, [selectedTab, isInitialized, fetchStatisticsData]);
-
   const handleTabChange = useCallback((tab) => {
     if (tab === selectedTab) return;
     
@@ -146,22 +138,15 @@ export default function Stats() {
     setSelectedTab(tab);
   }, [selectedTab]);
 
-  // Initial data load
+  // Initial data load - only fetch governorates and types
   useEffect(() => {
     const initializeData = async () => {
-      setLoading(true);
       try {
         await fetchGovernorates();
-        const typesSuccess = await fetchTypesData();
-        
-        if (typesSuccess) {
-          setIsInitialized(true);
-        }
+        await fetchTypesData();
       } catch (error) {
         console.error("Initialization error:", error);
         setError("Failed to initialize data. Please refresh the page.");
-      } finally {
-        setLoading(false);
       }
     };
     
@@ -257,12 +242,13 @@ export default function Stats() {
         </div>
       )}
 
-          <h2 className="stats-chart-title" dir="rtl"style={{marginRight:"20px"}}>
-            احصائيات {
-              selectedTab === "damagedDevices" ? "الأجهزة التالفة" :
-              selectedTab === "damagedPassports" ? "الجوازات التالفة" : "الحضور"
-            }
-          </h2>
+      <h2 className="stats-chart-title" dir="rtl" style={{marginRight:"20px"}}>
+        احصائيات {
+          selectedTab === "damagedDevices" ? "الأجهزة التالفة" :
+          selectedTab === "damagedPassports" ? "الجوازات التالفة" : "الحضور"
+        }
+      </h2>
+      
       <div className="stats-main-section" dir="rtl">
         <div className="stats-chart-section">
           <div className="chart-container">
@@ -277,7 +263,7 @@ export default function Stats() {
                     cy="50%"
                     innerRadius={100}
                     outerRadius={150}
-                    paddingAngle={5}
+                    paddingAngle={0}
                     dataKey="value"
                   >
                     {chartData.map((entry, index) => (
@@ -308,7 +294,7 @@ export default function Stats() {
                       cy="50%"
                       innerRadius={30}
                       outerRadius={50}
-                      paddingAngle={5}
+                      paddingAngle={0}
                       dataKey="value"
                     >
                       <Cell fill={COLORS[index % COLORS.length]} />
