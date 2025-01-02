@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, message, Button, ConfigProvider } from "antd";
+import { Table, message, Button, ConfigProvider, DatePicker } from "antd";
 import { Link } from "react-router-dom";
 import "./SuperVisorLecturerhistory.css";
 import useAuthStore from "./../../../store/store";
@@ -39,8 +39,7 @@ const SuperVisorLecturerhistory = () => {
 
   const formatToISO = (date) => {
     if (!date) return null;
-    const parsedDate = new Date(date);
-    return isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString();
+    return date.toISOString();
   };
 
   const fetchLectures = async (payload) => {
@@ -104,6 +103,14 @@ const SuperVisorLecturerhistory = () => {
     await fetchLectures(payload);
   };
 
+  const handleDateChange = (date, dateType) => {
+    setFormData((prev) => ({
+      ...prev,
+      [dateType]: date,
+    }));
+  };
+
+  // Rest of your existing functions...
   const fetchGovernorates = useCallback(async () => {
     try {
       const response = await axios.get(`${Url}/api/Governorate/dropdown`, {
@@ -147,7 +154,6 @@ const SuperVisorLecturerhistory = () => {
     }
   };
 
-  // Initial data load
   useEffect(() => {
     const initialPayload = {
       title: "",
@@ -193,7 +199,7 @@ const SuperVisorLecturerhistory = () => {
   };
 
   const handleReset = async () => {
-    setFormData({ title: "", startDate: "", endDate: "" });
+    setFormData({ title: "", startDate: null, endDate: null });
     setCurrentPage(1);
 
     if (!isSupervisor) {
@@ -339,12 +345,10 @@ const SuperVisorLecturerhistory = () => {
             <label htmlFor="startDate" className="supervisor-Lectur-label">
               التاريخ من
             </label>
-            <input
-              type="date"
-              id="startDate"
-              name="startDate"
-              value={formData.startDate || ""}
-              onChange={handleInputChange}
+            <DatePicker
+              placeholder="اختر التاريخ"
+              onChange={(date) => handleDateChange(date, 'startDate')}
+              value={formData.startDate}
               className="supervisor-Lectur-input"
             />
           </div>
@@ -353,12 +357,10 @@ const SuperVisorLecturerhistory = () => {
             <label htmlFor="endDate" className="supervisor-Lectur-label">
               التاريخ إلى
             </label>
-            <input
-              type="date"
-              id="endDate"
-              name="endDate"
-              value={formData.endDate || ""}
-              onChange={handleInputChange}
+            <DatePicker
+              placeholder="اختر التاريخ"
+              onChange={(date) => handleDateChange(date, 'endDate')}
+              value={formData.endDate}
               className="supervisor-Lectur-input"
             />
           </div>

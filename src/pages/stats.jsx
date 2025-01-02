@@ -1,5 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
+import { DatePicker } from "antd";
+import dayjs from 'dayjs';
 import axios from "axios";
 import "./stats.css";
 import Url from "./../store/url.js";
@@ -12,7 +14,7 @@ const COLORS = [
 ];
 
 export default function Stats() {
-  const { profile } = useAuthStore();
+  const { profile, isSidebarCollapsed } = useAuthStore();
   const [chartData, setChartData] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [selectedTab, setSelectedTab] = useState("damagedDevices");
@@ -96,10 +98,11 @@ export default function Stats() {
         : `${Url}/api/DamagedPassport/search/statistics`;
       
       const requests = types.map(type => {
+        const formattedDate = selectedDate ? selectedDate.format('YYYY-MM-DD') : null;
         const body = {
           OfficeId: selectedOffice || null,
           GovernorateId: selectedGovernorate || null,
-          Date: selectedDate ? `${selectedDate}T00:00:00Z` : null,
+          Date: formattedDate ? `${formattedDate}T00:00:00Z` : null,
           [selectedTab === "damagedDevices" ? "DamagedDeviceTypeId" : "DamagedTypeId"]: type.id
         };
         return axios.post(endpoint, body);
@@ -138,7 +141,6 @@ export default function Stats() {
     setSelectedTab(tab);
   }, [selectedTab]);
 
-  // Initial data load - only fetch governorates and types
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -158,8 +160,22 @@ export default function Stats() {
     fetchStatisticsData();
   };
 
+  const CustomTooltip = ({ active, payload }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="custom-tooltip bg-white shadow-lg p-2 rounded">
+          <p className="text-sm">{payload[0].payload.name}</p>
+          <p className="text-sm font-bold">{payload[0].value}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <div className="stats-container">
+    <div className={`stats-container ${
+      isSidebarCollapsed ? "stats-container-collapsed" : ""
+    }`}>
       <div className="stats-navbar" dir="rtl">
         <div className="small-stats-navbar-warber">
           <ul>
@@ -176,6 +192,12 @@ export default function Stats() {
               الجوازات التالفة
             </li>
             <li
+              className={`stats-navbar-item ${selectedTab === "officeAttendene" ? "active" : ""}`}
+              onClick={() => handleTabChange("officeAttendene")}
+            >
+              حضور المكتب
+            </li>
+            <li
               className={`stats-navbar-item ${selectedTab === "attendance" ? "active" : ""}`}
               onClick={() => handleTabChange("attendance")}
             >
@@ -187,15 +209,7 @@ export default function Stats() {
 
       {selectedTab !== "attendance" && (
         <form onSubmit={handleSubmit} className="stats-form" dir="rtl">
-          <div className="form-group">
-            <label>التاريخ</label>
-            <input
-              type="date"
-              value={selectedDate || ""}
-              onChange={(e) => setSelectedDate(e.target.value || null)}
-              className="form-control"
-            />
-          </div>
+       
 
           <div className="form-group">
             <label>المحافظة</label>
@@ -228,6 +242,15 @@ export default function Stats() {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="form-group">
+            <label>التاريخ</label>
+            <DatePicker
+              value={selectedDate}
+              onChange={(date) => setSelectedDate(date)}
+              className="form-control"
+              placeholder="اختر التاريخ"
+            />
           </div>
 
           <button type="submit" className="search-button" disabled={loading}>
@@ -270,7 +293,7 @@ export default function Stats() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                 </PieChart>
                 <h3>
                   إجمالي {selectedTab === "damagedDevices" ? "الأجهزة التالفة" : "الجوازات التالفة"}: {totalItems}
@@ -299,7 +322,7 @@ export default function Stats() {
                     >
                       <Cell fill={COLORS[index % COLORS.length]} />
                     </Pie>
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltip />} />
                   </PieChart>
                 </div>
                 <div>

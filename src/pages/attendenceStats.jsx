@@ -294,7 +294,7 @@ const AttendanceStats = () => {
   );
 
   return (
-    <div className="" dir="rtl">
+    <div className="attendence-container-stats" dir="rtl">
       <div className="attendance-filters-stats flex gap-4 mb-6">
         <div className="attendance-filter flex-1">
           <label className="filter-label mb-2 block">المحافظة</label>

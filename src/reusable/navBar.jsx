@@ -51,7 +51,7 @@ export default function NavBar({ onSidebarToggle }) {
           }}>
           <Icons type="menu" width={45} height={45} />
         </div>
-        <Link to="landing-page">
+        <Link to="/landing-page">
           <img src={Logo} alt="Logo" className="navbar-logo" />
         </Link>
       </div>

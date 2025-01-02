@@ -105,9 +105,7 @@ export default function Settings() {
 
   return (
     <div
-      className={`settings-container ${
-        isSidebarCollapsed ? "sidebar-collapsed" : "settings-container"
-      }`}
+      className="settings-container" 
       dir="rtl">
       <h1 className="settings-header">إعدادات الحساب</h1>
 
