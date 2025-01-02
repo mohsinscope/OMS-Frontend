@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Form, Input, Button, DatePicker, Select, message, Upload } from "antd";
+import {
+  Form,
+  Input,
+  Button,
+  DatePicker,
+  Select,
+  message,
+  Upload,
+  Modal,
+} from "antd";
 import axios from "axios";
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
@@ -16,6 +25,7 @@ const SuperVisorDammagePassportAdd = () => {
   const [fileList, setFileList] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const { isSidebarCollapsed } = useAuthStore();
   const { accessToken, profile } = useAuthStore();
   const [damagedTypes, setDamagedTypes] = useState([]);
@@ -55,7 +65,6 @@ const SuperVisorDammagePassportAdd = () => {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      console.log(sendPassportDetails);
       return response.data?.id || response.data;
     } catch (error) {
       throw new Error("Failed to add damaged passport.");
@@ -65,7 +74,7 @@ const SuperVisorDammagePassportAdd = () => {
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
       const formData = new FormData();
-      formData.append("file", file.originFileObj);
+      formData.append("file", file.originFileObj || file);
       formData.append("entityId", entityId);
       formData.append("EntityType", "DamagedPassport");
 
@@ -87,10 +96,6 @@ const SuperVisorDammagePassportAdd = () => {
     setIsSubmitting(true);
 
     try {
-      if (!profileId || !governorateId || !officeId) {
-        throw new Error("Missing user profile details. Please log in again.");
-      }
-
       const payload = {
         passportNumber: values.passportNumber,
         date: values.date
@@ -127,18 +132,97 @@ const SuperVisorDammagePassportAdd = () => {
   };
 
   const handleFileChange = (info) => {
-    const updatedFiles = info.fileList;
-    setFileList(updatedFiles);
+    const updatedFiles = info.fileList.filter((file) => {
+      if (!["image/jpeg", "image/png"].includes(file.type)) {
+        message.error("فقط الصور من النوع JPG/PNG مسموحة.");
+        return false;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        message.error("حجم الملف يجب أن يكون أقل من 5 ميجابايت.");
+        return false;
+      }
+      return true;
+    });
 
-    const previews = updatedFiles.map((file) =>
+    const newPreviews = updatedFiles.map((file) =>
       file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
     );
-    setPreviewUrls(previews);
+
+    setPreviewUrls((prev) => [...prev, ...newPreviews]);
+    setFileList((prev) => [...prev, ...updatedFiles]);
   };
 
   const handleDeleteImage = (index) => {
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== index));
+    setPreviewUrls((prev) => {
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
     setFileList((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const onScanHandler = async () => {
+    if (isScanning) return;
+    setIsScanning(true);
+
+    try {
+      const response = await axios.get(
+        `http://localhost:11234/api/ScanApi/ScannerPrint`,
+        {
+          responseType: "json",
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const base64Data = response.data?.Data;
+      if (!base64Data) {
+        throw new Error("No data received from scanner.");
+      }
+
+      const blob = await fetch(`data:image/jpeg;base64,${base64Data}`).then(
+        (res) => res.blob()
+      );
+
+      const scannedFile = new File([blob], `scanned-image-${Date.now()}.jpeg`, {
+        type: "image/jpeg",
+      });
+
+      const scannedPreviewUrl = URL.createObjectURL(blob);
+
+      setFileList((prev) => [
+        ...prev,
+        {
+          uid: `scanned-${Date.now()}`,
+          name: scannedFile.name,
+          status: "done",
+          originFileObj: scannedFile,
+        },
+      ]);
+
+      setPreviewUrls((prev) => [...prev, scannedPreviewUrl]);
+
+      message.success("تم إضافة الصورة الممسوحة بنجاح!");
+    } catch (error) {
+      Modal.error({
+        title: "خطأ",
+        content: (
+          <div>
+            <p>يرجى ربط الماسح الضوئي أو تنزيل الخدمة من الرابط التالي:</p>
+            <a
+              href="https://cdn-oms.scopesky.org/services/ScannerPolaris_WinSetup.msi"
+              target="_blank"
+              rel="noopener noreferrer">
+              تنزيل الخدمة
+            </a>
+          </div>
+        ),
+        okText: "حسنًا",
+      });
+    } finally {
+      setIsScanning(false);
+    }
   };
 
   return (
@@ -185,8 +269,7 @@ const SuperVisorDammagePassportAdd = () => {
               <Form.Item
                 name="note"
                 label="ملاحظات"
-                rules={[{ required: false }]}
-                style={{ width: "450px", height: "150px" }}>
+                rules={[{ required: false }]}>
                 <Input.TextArea
                   placeholder="أدخل الملاحظات"
                   style={{ width: "450px", maxHeight: "650px" }}
@@ -194,7 +277,7 @@ const SuperVisorDammagePassportAdd = () => {
               </Form.Item>
             </div>
             <h1 className="SuperVisor-title-conatiner">
-              اضافة صورة الجواز التالف
+              إضافة صورة الجواز التالف
             </h1>
             <div className="add-image-section">
               <div className="dragger-container">
@@ -203,10 +286,12 @@ const SuperVisorDammagePassportAdd = () => {
                   rules={[
                     {
                       validator: (_, value) =>
-                        fileList && fileList.length > 0
+                        fileList.length > 0 || previewUrls.length > 0
                           ? Promise.resolve()
                           : Promise.reject(
-                              new Error("يرجى تحميل صورة واحدة على الأقل")
+                              new Error(
+                                "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
+                              )
                             ),
                     },
                   ]}>
@@ -219,6 +304,17 @@ const SuperVisorDammagePassportAdd = () => {
                     <p className="ant-upload-drag-icon">📂</p>
                     <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
                   </Dragger>
+                  <Button
+                    type="primary"
+                    style={{
+                      width: "267px",
+                      height: "45px",
+                      marginTop: "10px",
+                    }}
+                    onClick={onScanHandler}
+                    disabled={isScanning}>
+                    {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
+                  </Button>
                 </Form.Item>
               </div>
               <div className="image-preivwer-container">

@@ -66,9 +66,10 @@
 
 .filter-row {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: start;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: start;
+  align-items: end;
   gap: 10px;
 }
 .attendance-dropdown-wrapper {
