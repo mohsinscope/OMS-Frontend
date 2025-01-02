@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { Image, Button, Modal,ConfigProvider } from "antd";
-import { LeftOutlined, RightOutlined, DeleteOutlined } from "@ant-design/icons";
+import { Image, Button, Modal, ConfigProvider, Tooltip } from "antd";
+import { LeftOutlined, RightOutlined, DeleteOutlined, LinkOutlined } from "@ant-design/icons";
 import "./styles/imagePreViewer.css";
+import unamed from './../assets/unnamed.png';
 
 export default function ImagePreviewer({
-  uploadedImages,
+  uploadedImages, // Array of URLs or File objects
   onDeleteImage,
   defaultWidth = 400,
   defaultHeight = 200,
@@ -13,7 +14,7 @@ export default function ImagePreviewer({
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
 
   useEffect(() => {
-    setCurrentIndex(0); // Reset the index when images change
+    setCurrentIndex(0);
   }, [uploadedImages]);
 
   const handleNext = () => {
@@ -45,80 +46,147 @@ export default function ImagePreviewer({
   };
 
   const formatImageUrl = (url) => {
-    if (!url) return ''; // Handle empty or undefined URLs
-  
-    // Return the URL directly for base64 or blob data
-    if (url.startsWith('data:image') || url.startsWith('blob:')) {
+    if (!url) return '';
+
+    // Handle local file objects
+    if (url instanceof File) {
+      return URL.createObjectURL(url);
+    }
+
+    // Handle Base64 or blob URLs
+    if (url.startsWith('data:') || url.startsWith('blob:')) {
       return url;
     }
-  
-    // Check if the URL is fully qualified (starts with http/https) or format it for the CDN
+
+    // Handle remote database URLs
     return url.match(/^https?:\/\//) ? url : `https://cdn-oms.scopesky.org/${url}`;
   };
-  
-  // Display a fallback message if no images are available
+
+  const isPDF = (url) => {
+    if (!url) return false;
+
+    // Handle local file object
+    if (url instanceof File) {
+      return url.type === "application/pdf";
+    }
+
+    // Handle Base64 or blob URLs
+    if (url.startsWith("data:")) {
+      return url.includes("application/pdf");
+    }
+
+    // Normalize URL for comparison
+    const lowercaseUrl = url.toLowerCase();
+
+    // Check if the file name ends with ".pdf"
+    if (lowercaseUrl.endsWith(".pdf")) return true;
+
+    // Handle query parameters in URLs
+    const queryIndex = lowercaseUrl.indexOf("?");
+    const cleanUrl = queryIndex > -1 ? lowercaseUrl.substring(0, queryIndex) : lowercaseUrl;
+
+    const fileExtension = cleanUrl.split(".").pop();
+    return fileExtension === "pdf";
+  };
+
+  const handleOpenPDF = () => {
+    const url = formatImageUrl(uploadedImages[currentIndex]);
+    window.open(url, '_blank');
+  };
+
   if (!uploadedImages?.length) {
     return <p>لا توجد صور للعرض</p>;
   }
+
+  const currentUrl = uploadedImages[currentIndex];
+  const isCurrentPDF = isPDF(currentUrl);
+
   return (
     <div className="image-previewer-container">
-      
+   
       <div className="image-display">
-
-        <Image
+        {isCurrentPDF ? (<>
+        
+       
+          <Image
+            width={defaultWidth}
+            height={defaultHeight}
+            src={unamed}
+            alt="PDF Placeholder"
+            className="image-preview-item"
+            fallback={unamed}
+          />
+        </>
+        ) : (<>
+                 <div className="pdf-indicator">
+          <Tooltip title="فتح PDF">
+            <Button
+              type="primary"
+              icon={<LinkOutlined />}
+              onClick={handleOpenPDF}
+              className="open-pdf-button"
+            >
+              فتح الملف
+            </Button>
+          </Tooltip>
+ 
+            <Image
           width={defaultWidth}
           height={defaultHeight}
-          src={formatImageUrl(uploadedImages[currentIndex])}
-          alt={`Image ${currentIndex + 1}`}
+          src={formatImageUrl(currentUrl)}
+          alt={`File ${currentIndex + 1}`}
           className="image-preview-item"
           style={{ objectFit: "contain" }}
+          fallback={unamed}
         />
+              </div> </>
+        )}
       </div>
-
       <div className="image-pagination-controls">
-      <ConfigProvider direction="rtl">
-        <Button
-          icon={<RightOutlined />}
-          onClick={handleNext}
-          disabled={currentIndex === uploadedImages.length - 1}
-          className="pagination-button next-button">
-          التالي
-        </Button>
-        <span className="pagination-info">
-          {currentIndex + 1} / {uploadedImages.length}
-        </span>
-        <Button
-          icon={<LeftOutlined />}
-          onClick={handlePrevious}
-          disabled={currentIndex === 0}
-          className="pagination-button previous-button">
-          السابق
-        </Button>
+        <ConfigProvider direction="rtl">
+          <Button
+            icon={<RightOutlined />}
+            onClick={handleNext}
+            disabled={currentIndex === uploadedImages.length - 1}
+            className="pagination-button next-button"
+          >
+            التالي
+          </Button>
+          <span className="pagination-info">
+            {currentIndex + 1} / {uploadedImages.length}
+          </span>
+          <Button
+            icon={<LeftOutlined />}
+            onClick={handlePrevious}
+            disabled={currentIndex === 0}
+            className="pagination-button previous-button"
+          >
+            السابق
+          </Button>
         </ConfigProvider>
       </div>
-
       {onDeleteImage && (
         <div className="image-delete-button-container">
           <Button
             icon={<DeleteOutlined />}
             onClick={showDeleteConfirm}
             danger
-            className="delete-button">
+            className="delete-button"
+          >
             حذف
           </Button>
         </div>
       )}
-
       <Modal
         title="تأكيد الحذف"
         visible={isDeleteConfirmVisible}
         onOk={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
         okText="نعم"
-        cancelText="لا">
+        cancelText="لا"
+      >
         <p>هل أنت متأكد أنك تريد حذف هذه الصورة؟</p>
       </Modal>
-     
     </div>
   );
 }
