@@ -1,4 +1,7 @@
 /* Attendance Stats Container */
+.attendence-container-stats{
+  width: 100%;
+}
 .attendance-filters-stats {
     display: flex;
     gap: 24px;
