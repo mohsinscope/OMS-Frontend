@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, message, Button, ConfigProvider } from "antd";
+import { Table, message, Button, ConfigProvider, DatePicker } from "antd";
 import { Link } from "react-router-dom";
 import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store";
@@ -41,8 +41,7 @@ const SuperVisorDevices = () => {
   // Date formatting helper
   const formatToISO = (date) => {
     if (!date) return null;
-    const parsedDate = new Date(date);
-    return isNaN(parsedDate.getTime()) ? null : parsedDate.toISOString();
+    return date.toISOString();
   };
 
   // API calls and data fetching
@@ -121,8 +120,15 @@ const SuperVisorDevices = () => {
     }));
   };
 
+  const handleDateChange = (date, dateType) => {
+    setFormData((prev) => ({
+      ...prev,
+      [dateType]: date,
+    }));
+  };
+
   const handleReset = async () => {
-    setFormData({ serialNumber: "", startDate: "", endDate: "" });
+    setFormData({ serialNumber: "", startDate: null, endDate: null });
     setCurrentPage(1);
 
     if (!isSupervisor) {
@@ -336,11 +342,10 @@ const SuperVisorDevices = () => {
             <label className="supervisor-devices-dameged-label">
               التاريخ من
             </label>
-            <input
-              type="date"
-              name="startDate"
-              value={formData.startDate || ""}
-              onChange={handleInputChange}
+            <DatePicker
+              placeholder="اختر التاريخ"
+              onChange={(date) => handleDateChange(date, 'startDate')}
+              value={formData.startDate}
               className="supervisor-devices-dameged-input"
             />
           </div>
@@ -349,11 +354,10 @@ const SuperVisorDevices = () => {
             <label className="supervisor-devices-dameged-label">
               التاريخ إلى
             </label>
-            <input
-              type="date"
-              name="endDate"
-              value={formData.endDate || ""}
-              onChange={handleInputChange}
+            <DatePicker
+              placeholder="اختر التاريخ"
+              onChange={(date) => handleDateChange(date, 'endDate')}
+              value={formData.endDate}
               className="supervisor-devices-dameged-input"
             />
           </div>

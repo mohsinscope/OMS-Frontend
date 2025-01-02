@@ -83,7 +83,7 @@ const DynamicSidebar = ({
           style={{ cursor: "pointer" }}>
           <Icons
             type={item.icon}
-            color={isActive ? activeColor : "currentColor"}
+            color={isActive ? "#1677ff" : "currentColor"}
           />
           <h3 style={{ color: isActive ? activeColor : "" }}>{item.label}</h3>
         </div>
