@@ -144,26 +144,25 @@ const SuperVisorDammageDeviceAdd = () => {
 
   const handleFileChange = (info) => {
     const updatedFiles = info.fileList.filter((file) => {
-      if (!["image/jpeg", "image/png"].includes(file.type)) {
-        message.error("Only JPG/PNG images are allowed.");
-        return false;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        message.error("File size must be less than 5 MB.");
-        return false;
-      }
       return true;
     });
 
-    // Revoke previous blob URLs
-    previewUrls.forEach((url) => URL.revokeObjectURL(url));
+    // إزالة التكرارات
+    const uniqueFiles = updatedFiles.filter(
+      (newFile) =>
+        !fileList.some(
+          (existingFile) =>
+            existingFile.name === newFile.name &&
+            existingFile.lastModified === newFile.lastModified
+        )
+    );
 
-    const previews = updatedFiles.map((file) =>
+    const newPreviews = uniqueFiles.map((file) =>
       file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
     );
 
-    setPreviewUrls([...previews, ...previewUrls]);
-    setFileList(updatedFiles);
+    setPreviewUrls((prev) => [...prev, ...newPreviews]);
+    setFileList((prev) => [...prev, ...uniqueFiles]);
   };
 
   const handleDeleteImage = (index) => {
@@ -192,10 +191,9 @@ const SuperVisorDammageDeviceAdd = () => {
 
       const base64Data = response.data?.Data;
       if (!base64Data) {
-        throw new Error("No data received from scanner.");
+        throw new Error("لم يتم استلام بيانات من الماسح الضوئي.");
       }
 
-      // Decode Base64 and create a Blob
       const blob = await fetch(`data:image/jpeg;base64,${base64Data}`).then(
         (res) => res.blob()
       );
@@ -204,21 +202,28 @@ const SuperVisorDammageDeviceAdd = () => {
         type: "image/jpeg",
       });
 
-      const scannedPreviewUrl = URL.createObjectURL(blob);
+      // تحقق من عدم تكرار الصورة
+      if (
+        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
+      ) {
+        const scannedPreviewUrl = URL.createObjectURL(blob);
 
-      setFileList((prev) => [
-        ...prev,
-        {
-          uid: `scanned-${Date.now()}`,
-          name: scannedFile.name,
-          status: "done",
-          originFileObj: scannedFile,
-        },
-      ]);
+        setFileList((prev) => [
+          ...prev,
+          {
+            uid: `scanned-${Date.now()}`,
+            name: scannedFile.name,
+            status: "done",
+            originFileObj: scannedFile,
+          },
+        ]);
 
-      setPreviewUrls((prev) => [...prev, scannedPreviewUrl]);
+        setPreviewUrls((prev) => [...prev, scannedPreviewUrl]);
 
-      message.success("تم إضافة الصورة الممسوحة بنجاح!");
+        message.success("تم إضافة الصورة الممسوحة بنجاح!");
+      } else {
+        message.info("تم بالفعل إضافة هذه الصورة.");
+      }
     } catch (error) {
       Modal.error({
         title: "خطأ",
@@ -247,6 +252,7 @@ const SuperVisorDammageDeviceAdd = () => {
       setIsScanning(false);
     }
   };
+
   return (
     <div
       className={`supervisor-devices-add-container ${
