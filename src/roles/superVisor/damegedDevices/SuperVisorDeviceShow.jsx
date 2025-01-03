@@ -281,8 +281,8 @@ const SuperVisorDeviceShow = () => {
               <span className="note-details-label">صور الجهاز:</span>
               <ImagePreviewer
                 uploadedImages={images}
-                defaultWidth={1000}
-                defaultHeight={600}
+                defaultWidth={600}
+                defaultHeight={300}
               />
             </div>
           )}

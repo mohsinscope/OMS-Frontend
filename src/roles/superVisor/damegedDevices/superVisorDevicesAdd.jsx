@@ -349,7 +349,7 @@ const SuperVisorDammageDeviceAdd = () => {
                   onClick={onScanHandler}
                   disabled={isScanning}
                   style={{
-                    width: "267px",
+                    width: "100%",
                     height: "45px",
                     marginTop: "10px",
                     marginBottom: "10px",
@@ -359,8 +359,8 @@ const SuperVisorDammageDeviceAdd = () => {
               </Form.Item>
               <ImagePreviewer
                 uploadedImages={previewUrls}
-                defaultWidth={1000}
-                defaultHeight={600}
+                defaultWidth={600}
+                defaultHeight={300}
                 onDeleteImage={handleDeleteImage}
               />
             </div>

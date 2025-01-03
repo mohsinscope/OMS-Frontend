@@ -243,8 +243,8 @@ const DammagedPasportsShow = () => {
             <div className="image-preview-container">
               <ImagePreviewer
                 uploadedImages={images}
-                defaultWidth={700}
-                defaultHeight={600}
+                defaultWidth={600}
+                defaultHeight={300}
               />
             </div>
           )}

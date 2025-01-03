@@ -21,13 +21,12 @@
   background-color: #f5f5f5;
   border-radius: 4px;
   margin-bottom: 8px;
-
 }
-.image-preivwer-container{
-  width: 80%;
-  margin-left: 200px;
+.image-preivwer-container {
+  width: 50%;
+  /* margin-left: 200px; */
 }
 
-.dragger-container{
+.dragger-container {
   width: 22%;
 }
