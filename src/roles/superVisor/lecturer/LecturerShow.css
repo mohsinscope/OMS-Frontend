@@ -36,7 +36,7 @@
 }
 
 .image-lecture-container {
-  width: 100%;
+  width: 50%;
 }
 
 .information-lecture-container {
@@ -212,13 +212,13 @@
   }
 
   .details-lecture-container {
-    width: 100%;
+    width: 50%;
     margin-top: 10px;
     order: 1;
   }
 
   .image-lecture-container {
-    width: 100%;
+    width: 50%;
     order: 2;
   }
 

@@ -223,8 +223,8 @@ const LecturerShow = () => {
               <span className="note-details-label">صورة المحضر:</span>
               <ImagePreviewer
                 uploadedImages={images}
-                defaultWidth={1000}
-                defaultHeight={600}
+                defaultWidth={600}
+                defaultHeight={300}
               />
             </div>
           )}

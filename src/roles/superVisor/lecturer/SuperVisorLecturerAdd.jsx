@@ -251,7 +251,7 @@ const SuperVisorLecturerAdd = () => {
                 value="لا يوجد"
                 rules={[{ message: "يرجى إدخال الملاحظات" }]}>
                 <Input.TextArea
-                  style={{ height: "150px", width: "600px" }}
+                  style={{ height: "150px", width: "500px" }}
                   defaultValue={"لا يوجد"}
                 />
               </Form.Item>
@@ -290,7 +290,7 @@ const SuperVisorLecturerAdd = () => {
                   onClick={onScanHandler}
                   disabled={isScanning}
                   style={{
-                    width: "267px",
+                    width: "100%",
                     height: "45px",
                     marginTop: "10px",
                     marginBottom: "10px",
@@ -300,8 +300,8 @@ const SuperVisorLecturerAdd = () => {
               </Form.Item>
               <ImagePreviewer
                 uploadedImages={previewUrls}
-                defaultWidth={1000}
-                defaultHeight={600}
+                defaultWidth={600}
+                defaultHeight={300}
                 onDeleteImage={handleDeleteImage}
               />
             </div>

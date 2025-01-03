@@ -324,9 +324,10 @@ const SuperVisorDammagePassportAdd = () => {
                   <Button
                     type="primary"
                     style={{
-                      width: "267px",
+                      width: "100%",
                       height: "45px",
                       marginTop: "10px",
+                      marginBottom: "10px",
                     }}
                     onClick={onScanHandler}
                     disabled={isScanning}>
@@ -337,8 +338,8 @@ const SuperVisorDammagePassportAdd = () => {
               <div className="image-preivwer-container">
                 <ImagePreviewer
                   uploadedImages={previewUrls}
-                  defaultWidth={1000}
-                  defaultHeight={600}
+                  defaultWidth={600}
+                  defaultHeight={300}
                   onDeleteImage={handleDeleteImage}
                 />
               </div>
