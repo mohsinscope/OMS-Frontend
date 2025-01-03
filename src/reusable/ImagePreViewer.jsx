@@ -106,17 +106,28 @@ export default function ImagePreviewer({
    
       <div className="image-display">
         {isCurrentPDF ? (<>
-        
-       
-          <Image
-            width={defaultWidth}
-            height={defaultHeight}
-            src={unamed}
-            alt="PDF Placeholder"
-            className="image-preview-item"
-            fallback={unamed}
-          />
-        </>
+                 <div className="pdf-indicator">
+          <Tooltip title="فتح PDF">
+            <Button
+              type="primary"
+              icon={<LinkOutlined />}
+              onClick={handleOpenPDF}
+              className="open-pdf-button"
+            >
+              فتح الملف
+            </Button>
+          </Tooltip>
+ 
+            <Image
+          width={defaultWidth}
+          height={defaultHeight}
+          src={formatImageUrl(currentUrl)}
+          alt={`File ${currentIndex + 1}`}
+          className="image-preview-item"
+          style={{ objectFit: "contain" }}
+          fallback={unamed}
+        />
+              </div> </>
         ) : (<>
                  <div className="pdf-indicator">
           <Tooltip title="فتح PDF">
@@ -166,6 +177,7 @@ export default function ImagePreviewer({
         </ConfigProvider>
       </div>
       {onDeleteImage && (
+        <ConfigProvider direction="rtl">
         <div className="image-delete-button-container">
           <Button
             icon={<DeleteOutlined />}
@@ -175,8 +187,9 @@ export default function ImagePreviewer({
           >
             حذف
           </Button>
-        </div>
+        </div></ConfigProvider>
       )}
+      <ConfigProvider direction="rtl">
       <Modal
         title="تأكيد الحذف"
         visible={isDeleteConfirmVisible}
@@ -186,7 +199,7 @@ export default function ImagePreviewer({
         cancelText="لا"
       >
         <p>هل أنت متأكد أنك تريد حذف هذه الصورة؟</p>
-      </Modal>
+      </Modal></ConfigProvider>
     </div>
   );
 }
