@@ -104,23 +104,25 @@ const SuperVisorLecturerAdd = () => {
 
   const handleFileChange = (info) => {
     const updatedFiles = info.fileList.filter((file) => {
-      if (!["image/jpeg", "image/png"].includes(file.type)) {
-        message.error("فقط الصور من النوع JPG/PNG مسموحة.");
-        return false;
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        message.error("حجم الملف يجب أن يكون أقل من 5 ميجابايت.");
-        return false;
-      }
       return true;
     });
 
-    const newPreviews = updatedFiles.map((file) =>
+    // إزالة التكرارات
+    const uniqueFiles = updatedFiles.filter(
+      (newFile) =>
+        !fileList.some(
+          (existingFile) =>
+            existingFile.name === newFile.name &&
+            existingFile.lastModified === newFile.lastModified
+        )
+    );
+
+    const newPreviews = uniqueFiles.map((file) =>
       file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
     );
 
     setPreviewUrls((prev) => [...prev, ...newPreviews]);
-    setFileList((prev) => [...prev, ...updatedFiles]);
+    setFileList((prev) => [...prev, ...uniqueFiles]);
   };
 
   const handleDeleteImage = (index) => {
@@ -160,21 +162,28 @@ const SuperVisorLecturerAdd = () => {
         type: "image/jpeg",
       });
 
-      const scannedPreviewUrl = URL.createObjectURL(blob);
+      // تحقق من عدم تكرار الصورة
+      if (
+        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
+      ) {
+        const scannedPreviewUrl = URL.createObjectURL(blob);
 
-      setFileList((prev) => [
-        ...prev,
-        {
-          uid: `scanned-${Date.now()}`,
-          name: scannedFile.name,
-          status: "done",
-          originFileObj: scannedFile,
-        },
-      ]);
+        setFileList((prev) => [
+          ...prev,
+          {
+            uid: `scanned-${Date.now()}`,
+            name: scannedFile.name,
+            status: "done",
+            originFileObj: scannedFile,
+          },
+        ]);
 
-      setPreviewUrls((prev) => [...prev, scannedPreviewUrl]);
+        setPreviewUrls((prev) => [...prev, scannedPreviewUrl]);
 
-      message.success("تم إضافة الصورة الممسوحة بنجاح!");
+        message.success("تم إضافة الصورة الممسوحة بنجاح!");
+      } else {
+        message.info("تم بالفعل إضافة هذه الصورة.");
+      }
     } catch (error) {
       Modal.error({
         title: "خطأ",
