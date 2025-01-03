@@ -177,6 +177,7 @@ export default function ImagePreviewer({
         </ConfigProvider>
       </div>
       {onDeleteImage && (
+        <ConfigProvider direction="rtl">
         <div className="image-delete-button-container">
           <Button
             icon={<DeleteOutlined />}
@@ -186,8 +187,9 @@ export default function ImagePreviewer({
           >
             حذف
           </Button>
-        </div>
+        </div></ConfigProvider>
       )}
+      <ConfigProvider direction="rtl">
       <Modal
         title="تأكيد الحذف"
         visible={isDeleteConfirmVisible}
@@ -197,7 +199,7 @@ export default function ImagePreviewer({
         cancelText="لا"
       >
         <p>هل أنت متأكد أنك تريد حذف هذه الصورة؟</p>
-      </Modal>
+      </Modal></ConfigProvider>
     </div>
   );
 }
