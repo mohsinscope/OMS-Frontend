@@ -15,6 +15,7 @@ import "./LecturerShow.css";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 import Lele from "./../../../reusable elements/icons.jsx";
+
 const LecturerShow = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -25,8 +26,12 @@ const LecturerShow = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [form] = Form.useForm();
-  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
+  const { isSidebarCollapsed, accessToken, profile, permissions } =
+    useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
+
+  const hasUpdatePermission = permissions.includes("Lu");
+  const hasDeletePermission = permissions.includes("Ld");
 
   useEffect(() => {
     if (!lectureId) {
@@ -160,16 +165,20 @@ const LecturerShow = () => {
             <Lele type="back" />
             الرجوع
           </Button>
-          <Button
-            onClick={() => setDeleteModalVisible(true)}
-            className="delete-button-lecture">
-            حذف <Lele type="delete" />
-          </Button>
-          <Button
-            onClick={() => setEditModalVisible(true)}
-            className="edit-button-lecture">
-            تعديل <Lele type="edit" />
-          </Button>
+          {hasDeletePermission && (
+            <Button
+              onClick={() => setDeleteModalVisible(true)}
+              className="delete-button-lecture">
+              حذف <Lele type="delete" />
+            </Button>
+          )}
+          {hasUpdatePermission && (
+            <Button
+              onClick={() => setEditModalVisible(true)}
+              className="edit-button-lecture">
+              تعديل <Lele type="edit" />
+            </Button>
+          )}
         </div>
       </div>
 

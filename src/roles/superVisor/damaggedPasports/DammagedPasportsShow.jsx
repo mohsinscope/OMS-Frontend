@@ -30,13 +30,12 @@ const DammagedPasportsShow = () => {
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [form] = Form.useForm();
 
-  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
-  const { hasAnyPermission } = usePermissionsStore();
+  const { isSidebarCollapsed, accessToken, profile,permissions } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
 
-  const hasUpdatePermission = hasAnyPermission("update");
-  const hasDeletePermission = hasAnyPermission("delete");
-
+ 
+  const hasUpdatePermission = permissions.includes("DPu");
+  const hasDeletePermission = permissions.includes("DPd");
   useEffect(() => {
     if (!passportId) {
       message.error("معرف الجواز غير موجود.");

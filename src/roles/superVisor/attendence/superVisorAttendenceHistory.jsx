@@ -10,6 +10,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
 import usePermissionsStore from "./../../../store/permissionsStore";
+import axios from "axios"; // Import axios
 import "./superVisorAttendeceHistory.css";
 import Url from "./../../../store/url.js";
 
@@ -35,7 +36,7 @@ export default function SupervisorAttendanceHistory() {
     roles,
     searchVisible,
     toggleSearch,
-    token,
+    accessToken,
   } = useAuthStore();
 
   const { hasAnyPermission } = usePermissionsStore();
@@ -51,22 +52,19 @@ export default function SupervisorAttendanceHistory() {
   useEffect(() => {
     const fetchDropdowns = async () => {
       try {
-        const govResponse = await fetch(`${Url}/api/Governorate/dropdown`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const govResponse = await axios.get(`${Url}/api/Governorate/dropdown`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         });
-        const officeResponse = await fetch(`${Url}/api/Office/dropdown`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const officeResponse = await axios.get(`${Url}/api/Office/dropdown`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         });
 
-        if (!govResponse.ok || !officeResponse.ok) {
-          throw new Error("Failed to fetch dropdown data");
-        }
-
-        const govData = await govResponse.json();
-        const officeData = await officeResponse.json();
-
-        setGovernorates(govData);
-        setOffices(officeData);
+        setGovernorates(govResponse.data);
+        setOffices(officeResponse.data);
       } catch (error) {
         console.error("Error fetching dropdowns:", error);
         message.error("حدث خطأ أثناء جلب البيانات");
@@ -74,7 +72,7 @@ export default function SupervisorAttendanceHistory() {
     };
 
     fetchDropdowns();
-  }, [token]);
+  }, [accessToken]);
 
   const fetchAttendanceData = async (pageNumber = 1) => {
     try {
@@ -84,44 +82,37 @@ export default function SupervisorAttendanceHistory() {
         workingHours,
         officeId: isSupervisor ? userOfficeId : selectedOffice,
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
-        startDate: formatDateForAPI(startDate),
-        endDate: formatDateForAPI(endDate),
+        startDate: startDate ? formatDateForAPI(startDate) : null,
+        endDate: endDate ? formatDateForAPI(endDate) : null,
         PaginationParams: {
           PageNumber: pageNumber,
           PageSize: pageSize,
         },
       };
+      
+      // Log the payload to check the body being sent
+      console.log("Payload for search request:", searchBody);
 
-      const response = await fetch(`${Url}/api/Attendance/search`, {
-        method: "POST",
+      // Log the payload to check the body being sent
+      console.log("token:", accessToken);
+      // Using axios for POST request
+      const response = await axios.post(`${Url}/api/Attendance/search`, searchBody, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(searchBody),
       });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          message.error("الرجاء تسجيل الدخول مرة أخرى");
-          navigate("/login");
-          return;
-        }
-        throw new Error("Failed to fetch attendance data");
-      }
-
-      const data = await response.json();
-
       // Handle pagination from response headers
-      const paginationHeader = response.headers.get("pagination");
+      const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
         setTotalRecords(paginationInfo.totalItems);
       } else {
-        setTotalRecords(data.length);
+        setTotalRecords(response.data.length);
       }
 
-      const formattedData = data.map((item) => ({
+      const formattedData = response.data.map((item) => ({
         id: item.id,
         date: new Date(item.date).toLocaleDateString("en-CA"),
         totalStaff:
@@ -135,7 +126,9 @@ export default function SupervisorAttendanceHistory() {
             ? "صباحي"
             : item.workingHours === 2
             ? "مسائي"
-            : "الكل",
+            : item.workingHours === 3
+            ? "الكل"
+            : "غير معروف",
         governorateName:
           governorates.find((gov) => gov.id === item.governorateId)?.name ||
           "غير معروف",
@@ -146,7 +139,7 @@ export default function SupervisorAttendanceHistory() {
 
       setAttendanceData(formattedData);
 
-      if (data.length === 0) {
+      if (response.data.length === 0) {
         setIsModalVisible(true);
       }
     } catch (error) {
@@ -308,6 +301,7 @@ export default function SupervisorAttendanceHistory() {
             value={workingHours}
             onChange={(e) => setWorkingHours(Number(e.target.value))}
             style={{ padding: "0" }}>
+
             <option value={3}>الكل</option>
             <option value={1}>صباحي</option>
             <option value={2}>مسائي</option>

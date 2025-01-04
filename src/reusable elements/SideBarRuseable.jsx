@@ -15,13 +15,12 @@ const DynamicSidebar = ({
   logoutClassName,
 }) => {
   const navigate = useNavigate();
-  const { roles, isLoggedIn, isSidebarCollapsed } = useAuthStore();
+  const { permissions, isLoggedIn, isSidebarCollapsed } = useAuthStore();
   const [visibleMenuItems, setVisibleMenuItems] = useState([]);
   const [visibleCommonItems, setVisibleCommonItems] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Set initialized after a short delay to ensure store is hydrated
     const timer = setTimeout(() => {
       setIsInitialized(true);
     }, 100);
@@ -33,7 +32,7 @@ const DynamicSidebar = ({
     if (!isInitialized) return;
 
     const filterMenuItems = () => {
-      if (!isLoggedIn || !roles || roles.length === 0) {
+      if (!isLoggedIn || !permissions || permissions.length === 0) {
         setVisibleMenuItems([]);
         setVisibleCommonItems(
           COMMON_MENU_ITEMS.filter((item) => item.role.length === 0)
@@ -42,20 +41,15 @@ const DynamicSidebar = ({
       }
 
       const accessibleMenuItems = MENU_ITEMS.filter((item) => {
-        if (!item.role || item.role.length === 0) return true;
-        return item.role.some((role) => roles.includes(role));
+        if (!item.requiredPermission) return true;
+        return permissions.includes(item.requiredPermission);
       });
       setVisibleMenuItems(accessibleMenuItems);
-
-      const accessibleCommonItems = COMMON_MENU_ITEMS.filter((item) => {
-        if (!item.role || item.role.length === 0) return true;
-        return item.role.some((role) => roles.includes(role));
-      });
-      setVisibleCommonItems(accessibleCommonItems);
+      setVisibleCommonItems(COMMON_MENU_ITEMS);
     };
 
     filterMenuItems();
-  }, [roles, isLoggedIn, isInitialized]);
+  }, [permissions, isLoggedIn, isInitialized]);
 
   const handleMenuClick = (path, action) => {
     if (action === "logout") {
@@ -69,7 +63,7 @@ const DynamicSidebar = ({
     (item, index) => {
       const isActive =
         currentPath === item.path ||
-        (currentPath.startsWith(item.path) && item.path !== "/"); // للتأكد من التطابق الجزئي
+        (currentPath.startsWith(item.path) && item.path !== "/");
       const activeColor = "#1677ff";
       const itemClass = `${menuItemClassName || "menu-item"} ${
         isActive ? activeMenuItemClassName || "active" : ""
@@ -93,7 +87,7 @@ const DynamicSidebar = ({
   );
 
   if (!isInitialized) {
-    return null; // Or return a loading spinner
+    return null;
   }
 
   if (!isLoggedIn && visibleCommonItems.length === 0) {

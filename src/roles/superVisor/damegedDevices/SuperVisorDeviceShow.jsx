@@ -14,7 +14,6 @@ import axios from "axios";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./../lecturer/LecturerShow.css";
 import useAuthStore from "./../../../store/store";
-import usePermissionsStore from "./../../../store/permissionsStore";
 import Url from "./../../../store/url.js";
 import Lele from "./../../../reusable elements/icons.jsx";
 
@@ -32,12 +31,14 @@ const SuperVisorDeviceShow = () => {
   const [deviceTypes, setDeviceTypes] = useState([]);
   const [form] = Form.useForm();
 
-  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
-  const { hasAnyPermission } = usePermissionsStore();
+  const { isSidebarCollapsed, accessToken, profile, permissions } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
 
-  const hasUpdatePermission = hasAnyPermission("update");
-  const hasDeletePermission = hasAnyPermission("delete");
+
+  const hasUpdatePermission = permissions.includes("DDu");
+  const hasDeletePermission = permissions.includes("DDd");
+
+
 
   useEffect(() => {
     if (!deviceId) {

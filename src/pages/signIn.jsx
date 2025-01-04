@@ -9,70 +9,76 @@ import BASE_URL from "../store/url.js";
 
 const SignInPage = () => {
   const navigate = useNavigate();
+
+  // Local state
   const [loginError, setLoginError] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
-  const [loading, setLoading] = useState(false); // State to handle loading state
+  const [loading, setLoading] = useState(false);
 
-  // Access global store functions and state
+  // Zustand store actions and state
   const { login, isLoggedIn } = useAuthStore();
 
+  // Navigate to the landing page if logged in
   const navigateToStats = useCallback(() => {
     if (window.location.pathname !== "/landing-page") {
-      navigate("/landing-page"); // Redirect to stats after login
+      navigate("/landing-page");
     }
   }, [navigate]);
 
+  // Redirect if already logged in
   useEffect(() => {
     if (isLoggedIn) {
-      navigateToStats(); // Redirect to stats if already logged in
+      navigateToStats();
     }
   }, [isLoggedIn, navigateToStats]);
 
-  const fetchUserProfile = async (token) => {
+  // Fetch user profile after successful login
+  const fetchUserProfile = async (accessToken) => {
     try {
       const response = await axios.get(`${BASE_URL}/api/profile/user-profile`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       });
-  
-      const userProfile = response.data;
-      console.log("User Profile Response:", userProfile);
-  
-      // Default permissions object if your API doesn't provide it
-      const permissions = userProfile.permissions || {};
-  
-      // Save profile data to the global store with all required parameters
-      login(token, userProfile, permissions);
-      navigateToStats();
+      return response.data;
     } catch (error) {
       console.error("Failed to fetch user profile:", error);
-      setLoginError("فشل استرداد ملف تعريف المستخدم.");
+      throw new Error("فشل استرداد ملف تعريف المستخدم.");
     }
   };
 
+  // Handle login form submission
   const handleSubmit = async () => {
     if (!username || !password) {
       setLoginError("يرجى إدخال اسم المستخدم وكلمة السر");
       return;
     }
 
-    setLoading(true); // Set loading state
-    setLoginError(""); // Reset error state
+    setLoading(true);
+    setLoginError("");
 
     try {
-      const response = await axios.post(`${BASE_URL}/api/account/login`, {
+      // 1. Perform login request
+      const loginResponse = await axios.post(`${BASE_URL}/api/account/login`, {
         username,
         password,
       });
 
-      const { token } = response.data;
-      console.log("Login Response:", response.data);
+      const { accessToken, refreshToken } = loginResponse.data;
 
-      // Fetch user profile data with the token
-      await fetchUserProfile(token);
+      // 2. Fetch user profile using the access token
+      const userProfile = await fetchUserProfile(accessToken);
+
+      // 3. Extract permissions from the user profile or set defaults
+      const permissions = userProfile.permissions || [];
+
+      // 4. Save the data in Zustand store
+      login(accessToken, refreshToken, userProfile, permissions);
+
+      // 5. Navigate to the landing page
+      navigateToStats();
     } catch (error) {
       console.error("Login failed:", error);
       const errorMessage =
@@ -80,29 +86,33 @@ const SignInPage = () => {
         "فشل تسجيل الدخول. يرجى التحقق من البيانات.";
       setLoginError(errorMessage);
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false);
     }
   };
 
-  // Handle Enter key press
+  // Handle 'Enter' key press for form submission
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !loading) {
+    if (e.key === "Enter" && !loading) {
       handleSubmit();
     }
   };
 
   return (
     <div className="container">
+      {/* Left side with logo and title */}
       <div className="left-side">
         <img src={Logo} alt="ScopeSky Logo" className="logo" />
-        <h1 style={{marginLeft:"6%"}}>نظام إدارة المكاتب</h1>
+        <h1 style={{ marginLeft: "6%" }}>نظام إدارة المكاتب</h1>
       </div>
 
+      {/* Right side with login form */}
       <div className="right-side">
         <h2>سجل الدخول</h2>
+
+        {/* Display login error if exists */}
         {loginError && <div className="error-message">{loginError}</div>}
 
-        {/* Username Field */}
+        {/* Username input */}
         <div className="input-wrapper" dir="rtl">
           <label htmlFor="username">اسم المستخدم</label>
           <input
@@ -114,11 +124,11 @@ const SignInPage = () => {
             onKeyDown={handleKeyDown}
             placeholder="اسم المستخدم"
             className="input-field"
-            disabled={loading} // Disable during loading
+            disabled={loading}
           />
         </div>
 
-        {/* Password Field */}
+        {/* Password input with toggle visibility */}
         <div className="input-wrapper" dir="rtl">
           <label htmlFor="password">كلمة السر</label>
           <div className="password-field-login">
@@ -131,13 +141,13 @@ const SignInPage = () => {
               onKeyDown={handleKeyDown}
               placeholder="كلمة السر"
               className="input-field-password"
-              disabled={loading} // Disable during loading
+              disabled={loading}
             />
             <button
               type="button"
               className="toggle-password"
               onClick={() => setPasswordVisible(!passwordVisible)}
-              disabled={loading} // Disable during loading
+              disabled={loading}
             >
               <Icons
                 type={passwordVisible ? "eye-off" : "eye"}
@@ -148,10 +158,11 @@ const SignInPage = () => {
           </div>
         </div>
 
+        {/* Login button */}
         <button
           onClick={handleSubmit}
           className={`login-btn ${loading ? "loading" : ""}`}
-          disabled={loading} // Disable button during loading
+          disabled={loading}
         >
           {loading ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
         </button>

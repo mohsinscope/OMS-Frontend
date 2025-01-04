@@ -22,14 +22,13 @@ export default function ViewAttendance() {
   const location = useLocation();
   const navigate = useNavigate();
   const id = location.state?.id;
-  const { isSidebarCollapsed, accessToken } = useAuthStore();
-  const { hasAnyPermission } = usePermissionsStore();
+  const { isSidebarCollapsed, accessToken, permissions } = useAuthStore();
   const [attendanceData, setAttendanceData] = useState(null);
   const [attendanceData2, setAttendanceData2] = useState(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [form] = Form.useForm();
 
-  const hasUpdatePermission = hasAnyPermission("update");
+  const hasUpdatePermission = permissions.includes("Au");
 
   const handleBack = () => {
     navigate(-1);

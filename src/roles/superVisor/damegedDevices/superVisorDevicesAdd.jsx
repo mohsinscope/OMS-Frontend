@@ -77,6 +77,19 @@ const SuperVisorDammageDeviceAdd = () => {
     navigate(-1);
   };
 
+  const rollbackDamagedDevice = async (entityId) => {
+    try {
+      await axios.delete(`${Url}/api/DamagedDevice/${entityId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      console.log("Damaged device rolled back successfully.");
+    } catch (error) {
+      console.error("Failed to rollback damaged device:", error);
+    }
+  };
+
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
       const formData = new FormData();
@@ -92,7 +105,7 @@ const SuperVisorDammageDeviceAdd = () => {
           },
         });
       } catch (error) {
-        throw new Error("Failed to attach files.");
+        throw new Error("فشل في إرفاق الملفات.");
       }
     }
   };
@@ -123,16 +136,22 @@ const SuperVisorDammageDeviceAdd = () => {
       });
 
       const entityId = response.data?.id || response.data;
-      if (!entityId) throw new Error("Failed to retrieve entity ID.");
+      if (!entityId) throw new Error("فشل في استرداد معرف الكيان.");
 
-      if (fileList.length > 0) {
-        await attachFiles(entityId);
-        message.success("تم إرسال البيانات والمرفقات بنجاح");
-      } else {
-        message.success("تم إرسال البيانات بنجاح بدون مرفقات");
+      try {
+        if (fileList.length > 0) {
+          await attachFiles(entityId);
+          message.success("تم إرسال البيانات والمرفقات بنجاح");
+        } else {
+          message.success("تم إرسال البيانات بنجاح بدون مرفقات");
+        }
+        navigate(-1);
+      } catch (attachmentError) {
+        await rollbackDamagedDevice(entityId); // Rollback damaged device on attachment failure
+        throw new Error(
+          "فشل في إرفاق الملفات. تم إلغاء إنشاء الجهاز التالف لضمان سلامة البيانات."
+        );
       }
-
-      navigate(-1);
     } catch (error) {
       message.error(
         error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"
@@ -147,7 +166,6 @@ const SuperVisorDammageDeviceAdd = () => {
       return true;
     });
 
-    // إزالة التكرارات
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
         !fileList.some(
@@ -202,7 +220,6 @@ const SuperVisorDammageDeviceAdd = () => {
         type: "image/jpeg",
       });
 
-      // تحقق من عدم تكرار الصورة
       if (
         !fileList.some((existingFile) => existingFile.name === scannedFile.name)
       ) {
@@ -270,9 +287,7 @@ const SuperVisorDammageDeviceAdd = () => {
             <Form.Item
               name="serialNumber"
               label="الرقم التسلسلي"
-              rules={[
-                { required: true, message: "يرجى إدخال الرقم التسلسلي" },
-              ]}>
+              rules={[{ required: true, message: "يرجى إدخال الرقم التسلسلي" }]}>
               <Input placeholder="أدخل الرقم التسلسلي" />
             </Form.Item>
             <Form.Item
