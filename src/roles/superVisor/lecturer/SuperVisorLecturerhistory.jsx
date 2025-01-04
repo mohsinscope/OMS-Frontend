@@ -3,7 +3,6 @@ import { Table, message, Button, ConfigProvider, DatePicker } from "antd";
 import { Link } from "react-router-dom";
 import "./SuperVisorLecturerhistory.css";
 import useAuthStore from "./../../../store/store";
-import usePermissionsStore from "./../../../store/permissionsStore";
 import axios from "axios";
 import Url from "./../../../store/url.js";
 
@@ -15,10 +14,11 @@ const SuperVisorLecturerhistory = () => {
     searchVisible,
     toggleSearch,
     roles,
+    permissions,
   } = useAuthStore();
 
-  const { hasAnyPermission } = usePermissionsStore();
-  const hasCreatePermission = hasAnyPermission("create");
+  // Check permissions
+  const hasCreatePermission = permissions.includes("Lc");
   const isSupervisor = roles.includes("Supervisor");
 
   const [lectures, setLectures] = useState([]);
@@ -110,7 +110,6 @@ const SuperVisorLecturerhistory = () => {
     }));
   };
 
-  // Rest of your existing functions...
   const fetchGovernorates = useCallback(async () => {
     try {
       const response = await axios.get(`${Url}/api/Governorate/dropdown`, {

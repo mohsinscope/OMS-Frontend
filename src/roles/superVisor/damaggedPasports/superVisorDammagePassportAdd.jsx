@@ -26,11 +26,11 @@ const SuperVisorDammagePassportAdd = () => {
   const [previewUrls, setPreviewUrls] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  const { isSidebarCollapsed } = useAuthStore();
-  const { accessToken, profile } = useAuthStore();
+  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
   const [damagedTypes, setDamagedTypes] = useState([]);
   const { profileId, governorateId, officeId } = profile || {};
 
+  // Fetch damaged types
   useEffect(() => {
     const fetchDamagedTypes = async () => {
       try {
@@ -57,6 +57,21 @@ const SuperVisorDammagePassportAdd = () => {
     navigate(-1);
   };
 
+  // Rollback damaged passport if attachment upload fails
+  const rollbackDamagedPassport = async (entityId) => {
+    try {
+      await axios.delete(`${Url}/api/DamagedPassport/${entityId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      console.log("Damaged passport rolled back successfully.");
+    } catch (error) {
+      console.error("Failed to rollback damaged passport:", error);
+    }
+  };
+
+  // Create damaged passport
   const sendPassportDetails = async (payload) => {
     try {
       const response = await axios.post(`${Url}/api/DamagedPassport`, payload, {
@@ -71,6 +86,7 @@ const SuperVisorDammagePassportAdd = () => {
     }
   };
 
+  // Upload attachments
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
       const formData = new FormData();
@@ -91,6 +107,7 @@ const SuperVisorDammagePassportAdd = () => {
     }
   };
 
+  // Form submission handler
   const handleFormSubmit = async (values) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -114,14 +131,20 @@ const SuperVisorDammagePassportAdd = () => {
         throw new Error("Failed to retrieve entity ID from the response.");
       }
 
-      if (fileList.length > 0) {
-        await attachFiles(entityId);
-        message.success("تم إرسال البيانات والمرفقات بنجاح");
-      } else {
-        message.success("تم إرسال البيانات بنجاح بدون مرفقات");
+      try {
+        if (fileList.length > 0) {
+          await attachFiles(entityId);
+          message.success("تم إرسال البيانات والمرفقات بنجاح");
+        } else {
+          message.success("تم إرسال البيانات بنجاح بدون مرفقات");
+        }
+        navigate(-1);
+      } catch (attachmentError) {
+        await rollbackDamagedPassport(entityId); // Rollback damaged passport on attachment failure
+        throw new Error(
+          "فشل في إرفاق الملفات. تم إلغاء إنشاء الجواز التالف لضمان سلامة البيانات."
+        );
       }
-
-      navigate(-1);
     } catch (error) {
       message.error(
         error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"
@@ -131,12 +154,9 @@ const SuperVisorDammagePassportAdd = () => {
     }
   };
 
+  // File handling functions
   const handleFileChange = (info) => {
-    const updatedFiles = info.fileList.filter((file) => {
-      return true;
-    });
-
-    // إزالة التكرارات
+    const updatedFiles = info.fileList.filter((file) => true);
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
         !fileList.some(
@@ -191,7 +211,6 @@ const SuperVisorDammagePassportAdd = () => {
         type: "image/jpeg",
       });
 
-      // تحقق من عدم تكرار الصورة
       if (
         !fileList.some((existingFile) => existingFile.name === scannedFile.name)
       ) {
@@ -244,18 +263,18 @@ const SuperVisorDammagePassportAdd = () => {
 
   return (
     <div
-      className={`supervisor-damaged-passport-add-containe ${
+      className={`supervisor-damaged-passport-add-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
-      <h1 className="SuperVisor-title-conatiner">إضافة جواز تالف</h1>
+      <h1 className="SuperVisor-title-container">إضافة جواز تالف</h1>
       <div className="add-details-container">
         <Form
           form={form}
           onFinish={handleFormSubmit}
           layout="vertical"
           style={{ direction: "rtl", display: "flex", gap: "30px" }}>
-          <div className="add-damegedpassport-section-container">
+          <div className="add-damagedpassport-section-container">
             <div className="add-passport-fields-container">
               <Form.Item
                 name="passportNumber"
@@ -293,7 +312,7 @@ const SuperVisorDammagePassportAdd = () => {
                 />
               </Form.Item>
             </div>
-            <h1 className="SuperVisor-title-conatiner">
+            <h1 className="SuperVisor-title-container">
               إضافة صورة الجواز التالف
             </h1>
             <div className="add-image-section">
@@ -335,7 +354,7 @@ const SuperVisorDammagePassportAdd = () => {
                   </Button>
                 </Form.Item>
               </div>
-              <div className="image-preivwer-container">
+              <div className="image-previewer-container">
                 <ImagePreviewer
                   uploadedImages={previewUrls}
                   defaultWidth={600}

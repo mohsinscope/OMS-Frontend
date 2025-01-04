@@ -17,9 +17,9 @@ import Url from "./../../../store/url";
 const { Option } = Select;
 
 export default function SuperVisorPassport() {
-  const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
-  const { hasAnyPermission } = usePermissionsStore();
-  const hasCreatePermission = hasAnyPermission("create");
+  const { isSidebarCollapsed, accessToken, profile, roles,permissions } = useAuthStore();
+  // Check permissions
+  const hasCreatePermission = permissions.includes("DPc");
 
   // State management
   const [passportList, setPassportList] = useState([]);

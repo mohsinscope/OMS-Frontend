@@ -13,12 +13,14 @@ const SuperVisorDevices = () => {
     accessToken,
     profile,
     searchVisible,
+    permissions,
     toggleSearch,
     roles,
+    
   } = useAuthStore();
 
-  const { hasAnyPermission } = usePermissionsStore();
-  const hasCreatePermission = hasAnyPermission("create");
+  // Check permissions
+  const hasCreatePermission = permissions.includes("DDc");
   const isSupervisor = roles.includes("Supervisor");
 
   // State setup

@@ -1,115 +1,213 @@
 import { create } from "zustand";
+import axios from "axios";
+import BASE_URL from "./url.js";
 
-const useAuthStore = create((set) => ({
+// Constants
+const TOKEN_REFRESH_INTERVAL = 90 * 1000; // 1.5 minutes
+const MAX_REFRESH_RETRIES = 3;
+
+// Cache variables
+let tokenRefreshTimer = null;
+let refreshRetryCount = 0;
+
+// Helper to parse JWT
+const parseToken = (token) => {
+  if (!token) return null;
+  try {
+    const base64Url = token.split(".")[1];
+    const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+    return JSON.parse(atob(base64));
+  } catch (error) {
+    console.error("Token parsing error:", error);
+    return null;
+  }
+};
+
+// Zustand store
+const useAuthStore = create((set, get) => ({
   user: null,
   profile: null,
   roles: [],
   permissions: {},
   isLoggedIn: false,
   accessToken: null,
-  isSidebarCollapsed: false,
-  searchVisible: true,
+  refreshToken: null,
   isInitialized: false,
+  isRefreshing: false,
+  searchVisible: true,
 
-  initializeAuth: async () => {
-    const token = localStorage.getItem("accessToken");
-    const userProfile = localStorage.getItem("userProfile");
-    const permissions = localStorage.getItem("permissions");
+  // Refresh the access token
+  refreshAccessToken: async () => {
+    console.log("[Token Refresh] Attempting token refresh...");
+    if (get().isRefreshing) {
+      console.log("[Token Refresh] Already in progress");
+      return get().accessToken;
+    }
 
-    if (token && userProfile) {
-      try {
-        const base64Url = token.split(".")[1];
-        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-        const payload = JSON.parse(atob(base64));
+    set({ isRefreshing: true });
 
-        const currentTime = Math.floor(Date.now() / 1000);
-        if (payload.exp && payload.exp < currentTime) {
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("userProfile");
-          localStorage.removeItem("permissions");
-          set({ isInitialized: true });
-          return;
-        }
+    try {
+      const currentAccessToken = localStorage.getItem("accessToken");
+      const currentRefreshToken = localStorage.getItem("refreshToken");
 
-        const parsedProfile = JSON.parse(userProfile);
-
-        const roles = Array.isArray(payload.role)
-          ? payload.role
-          : [payload.role];
-
-        set({
-          user: {
-            id: payload.nameid || null,
-            username: payload.unique_name || "Guest",
-          },
-          profile: parsedProfile,
-          roles,
-          permissions: permissions ? JSON.parse(permissions) : {},
-          isLoggedIn: true,
-          accessToken: token,
-          isInitialized: true,
-        });
-      } catch (error) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("userProfile");
-        localStorage.removeItem("permissions");
-        set({ isInitialized: true });
+      if (!currentAccessToken || !currentRefreshToken) {
+        console.error("[Token Refresh] Missing tokens for refresh");
+        throw new Error("Missing tokens");
       }
-    } else {
+
+      console.log("[Token Refresh] Sending request to refresh token...");
+      const response = await axios.post(`${BASE_URL}/api/account/refresh-token`, {
+        AccessToken: currentAccessToken,
+        RefreshToken: currentRefreshToken,
+      });
+
+      const { accessToken, refreshToken } = response.data;
+
+      if (!accessToken || !refreshToken) {
+        console.error("[Token Refresh] Invalid response from server", response.data);
+        throw new Error("Invalid token response");
+      }
+
+      console.log("[Token Refresh] Successfully refreshed tokens");
+
+      // Reset retry count
+      refreshRetryCount = 0;
+
+      // Update storage
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+
+      // Update store
+      set({
+        accessToken,
+        refreshToken,
+        isRefreshing: false,
+      });
+
+      return accessToken;
+    } catch (error) {
+      console.error("[Token Refresh] Failed:", error);
+
+      // Retry logic
+      if (refreshRetryCount < MAX_REFRESH_RETRIES) {
+        refreshRetryCount++;
+        console.log(`[Token Refresh] Retrying (${refreshRetryCount}/${MAX_REFRESH_RETRIES})...`);
+        await new Promise((resolve) => setTimeout(resolve, 1000 * refreshRetryCount));
+        return await get().refreshAccessToken();
+      }
+
+      console.warn("[Token Refresh] Maximum retries reached");
+      set({ isRefreshing: false });
+
+      // Do not log out, allow user to continue without refreshing
+      return null;
+    }
+  },
+
+  // Start token refresh timer
+  startTokenRefreshTimer: () => {
+    console.log("[Token Timer] Starting refresh timer...");
+    if (tokenRefreshTimer) {
+      clearInterval(tokenRefreshTimer);
+    }
+
+    tokenRefreshTimer = setInterval(async () => {
+      console.log("[Token Timer] Triggering token refresh...");
+      try {
+        await get().refreshAccessToken();
+      } catch (error) {
+        console.error("[Token Timer] Token refresh failed:", error);
+      }
+    }, TOKEN_REFRESH_INTERVAL);
+
+    console.log("[Token Timer] Refresh timer started");
+  },
+
+  // Stop token refresh timer
+  stopTokenRefreshTimer: () => {
+    if (tokenRefreshTimer) {
+      clearInterval(tokenRefreshTimer);
+      tokenRefreshTimer = null;
+      console.log("[Token Timer] Refresh timer stopped");
+    }
+  },
+
+  // Initialize authentication
+  initializeAuth: async () => {
+    const accessToken = localStorage.getItem("accessToken");
+    const refreshToken = localStorage.getItem("refreshToken");
+    const userProfileStr = localStorage.getItem("userProfile");
+
+    if (!accessToken || !refreshToken || !userProfileStr) {
+      set({ isInitialized: true });
+      return;
+    }
+
+    try {
+      const tokenPayload = parseToken(accessToken);
+      const userProfile = JSON.parse(userProfileStr);
+      const roles = Array.isArray(tokenPayload.role) ? tokenPayload.role : [tokenPayload.role];
+
+      set({
+        user: {
+          id: tokenPayload.nameid || null,
+          username: tokenPayload.unique_name || "Guest",
+        },
+        profile: userProfile,
+        roles,
+        permissions: tokenPayload.Permission || [],
+        isLoggedIn: true,
+        accessToken,
+        refreshToken,
+        isInitialized: true,
+      });
+
+      console.log("[Auth] Initialization successful, starting refresh timer...");
+      get().startTokenRefreshTimer();
+    } catch (error) {
+      console.error("[Auth] Initialization failed:", error);
       set({ isInitialized: true });
     }
   },
 
-  login: (token, userProfile, permissions) => {
+  // Handle login
+  login: async (accessToken, refreshToken, userProfile) => {
     try {
-      const base64Url = token.split(".")[1];
-      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-      const payload = JSON.parse(atob(base64));
+      const tokenPayload = parseToken(accessToken);
 
-      const parsedProfile = {
-        ...userProfile,
-        governorateId: userProfile.governorateId || null,
-        governorateName: userProfile.governorateName || "غير معروف",
-        officeId: userProfile.officeId || null,
-        officeName: userProfile.officeName || "غير معروف",
-      };
-
-      const roles = Array.isArray(payload.role) ? payload.role : [payload.role];
-
-      localStorage.setItem("accessToken", token);
-      localStorage.setItem("userProfile", JSON.stringify(parsedProfile));
-      localStorage.setItem("permissions", JSON.stringify(permissions));
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+      localStorage.setItem("userProfile", JSON.stringify(userProfile));
 
       set({
         user: {
-          id: payload.nameid || null,
-          username: payload.unique_name || "Guest",
+          id: tokenPayload.nameid || null,
+          username: tokenPayload.unique_name || "Guest",
         },
-        profile: parsedProfile,
-        roles,
-        permissions,
+        profile: userProfile,
+        roles: Array.isArray(tokenPayload.role) ? tokenPayload.role : [tokenPayload.role],
+        permissions: tokenPayload.Permission || [],
         isLoggedIn: true,
-        accessToken: token,
+        accessToken,
+        refreshToken,
       });
+
+      console.log("[Auth] Login successful, starting refresh timer...");
+      get().startTokenRefreshTimer();
     } catch (error) {
-      set({
-        user: null,
-        profile: null,
-        roles: [],
-        permissions: {},
-        isLoggedIn: false,
-        accessToken: null,
-      });
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("userProfile");
-      localStorage.removeItem("permissions");
+      console.error("[Auth] Login failed:", error);
+      throw error;
     }
   },
 
+  // Handle logout
   logout: () => {
+    get().stopTokenRefreshTimer();
+
     localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("userProfile");
-    localStorage.removeItem("permissions");
+
     set({
       user: null,
       profile: null,
@@ -117,13 +215,11 @@ const useAuthStore = create((set) => ({
       permissions: {},
       isLoggedIn: false,
       accessToken: null,
+      refreshToken: null,
     });
+
+    console.log("[Auth] User logged out");
   },
-
-  toggleSidebar: () =>
-    set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
-
-  toggleSearch: () => set((state) => ({ searchVisible: !state.searchVisible })),
 }));
 
 export default useAuthStore;

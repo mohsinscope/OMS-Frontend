@@ -69,10 +69,10 @@ const usePermissionsStore = create(() => ({
   },
 
   // Helper functions for common permission checks
-  canRead: (resource) => usePermissionsStore.getState().hasPermission(resource, "read"),
-  canCreate: (resource) => usePermissionsStore.getState().hasPermission(resource, "create"),
-  canUpdate: (resource) => usePermissionsStore.getState().hasPermission(resource, "update"),
-  canDelete: (resource) => usePermissionsStore.getState().hasPermission(resource, "delete"),
+  canRead: (resource) => usePermissionsStore.getState().hasPermission(resource, "r"),
+  canCreate: (resource) => usePermissionsStore.getState().hasPermission(resource, "c"),
+  canUpdate: (resource) => usePermissionsStore.getState().hasPermission(resource, "u"),
+  canDelete: (resource) => usePermissionsStore.getState().hasPermission(resource, "d"),
   canApprove: (resource) => usePermissionsStore.getState().hasPermission(resource, "approve"),
   canExport: (resource) => usePermissionsStore.getState().hasPermission(resource, "export"),
 }));

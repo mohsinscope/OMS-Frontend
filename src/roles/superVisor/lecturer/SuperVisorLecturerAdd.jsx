@@ -25,6 +25,20 @@ const SuperVisorLecturerAdd = () => {
     navigate(-1);
   };
 
+  // Rollback function to delete a lecture
+  const rollbackLecture = async (entityId) => {
+    try {
+      await axios.delete(`${Url}/api/Lecture/${entityId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      console.log("Lecture rolled back successfully.");
+    } catch (error) {
+      console.error("Failed to rollback lecture:", error);
+    }
+  };
+
   const sendLectureDetails = async (payload) => {
     try {
       const response = await axios.post(`${Url}/api/Lecture`, payload, {
@@ -85,14 +99,20 @@ const SuperVisorLecturerAdd = () => {
         throw new Error("فشل في استرداد معرف الكيان من الاستجابة.");
       }
 
-      if (fileList.length > 0) {
-        await attachFiles(entityId);
-        message.success("تم إرسال البيانات والمرفقات بنجاح.");
-      } else {
-        message.success("تم إرسال البيانات بنجاح بدون مرفقات.");
+      try {
+        if (fileList.length > 0) {
+          await attachFiles(entityId);
+          message.success("تم إرسال البيانات والمرفقات بنجاح.");
+        } else {
+          message.success("تم إرسال البيانات بنجاح بدون مرفقات.");
+        }
+        navigate(-1);
+      } catch (attachmentError) {
+        await rollbackLecture(entityId); // Rollback lecture on attachment failure
+        throw new Error(
+          "فشل في إرفاق الملفات. تم إلغاء إنشاء المحضر لضمان سلامة البيانات."
+        );
       }
-
-      navigate(-1);
     } catch (error) {
       message.error(
         error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات."
@@ -107,7 +127,6 @@ const SuperVisorLecturerAdd = () => {
       return true;
     });
 
-    // إزالة التكرارات
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
         !fileList.some(
@@ -162,7 +181,6 @@ const SuperVisorLecturerAdd = () => {
         type: "image/jpeg",
       });
 
-      // تحقق من عدم تكرار الصورة
       if (
         !fileList.some((existingFile) => existingFile.name === scannedFile.name)
       ) {
