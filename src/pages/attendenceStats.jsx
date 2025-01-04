@@ -243,56 +243,55 @@ const AttendanceStats = () => {
     return null;
   };
 
-  // Render chart function
-  const renderChart = (data, title) => (
-    <AttendanceCard>
-      <h3 className="attendance-chart-title text-xl mb-6 text-center font-bold">{title}</h3>
-      <div className="" style={{ height: '600px' }}>
-        <BarChart
-          width={800}
-          height={550}
-          data={data}
-          layout="vertical"
-          margin={{ top: 10, right: 30, left: 150, bottom: 10 }}
-          barSize={20}
-        >
-          <XAxis
-            type="number"
-            axisLine={false}
-            tickLine={false}
-            tick={false}
-            domain={[0, 'dataMax + 5']}
-          />
-          <YAxis
-            dataKey="name"
-            type="category"
-            width={140}
-            tick={{
-              fill: '#000000',
-              fontSize: 14,
-              dx: -60
-            }}
-            orientation="left"
-            axisLine={false}
-            tickLine={false}
-          />
-          <Tooltip content={<CustomTooltip />} cursor={false} />
-          <Bar
-            dataKey="value"
-            fill="#6366f1"
-            radius={[0, 4, 4, 0]}
-            label={{
-              position: 'right',
-              fill: '#000000',
-              fontSize: 14,
-              dx: 20
-            }}
-          />
-        </BarChart>
-      </div>
-    </AttendanceCard>
-  );
-
+// Update the renderChart function
+// Update the renderChart function
+const renderChart = (data, title) => (
+  <AttendanceCard>
+    <h3 className="attendance-chart-title text-xl mb-6 text-center font-bold">{title}</h3>
+    <div className="bar-chart-container">
+      <BarChart
+        width={600}
+        height={500}
+        data={data}
+        layout="vertical"
+        margin={{ top: 5, right: 30, left: 0, bottom: 5 }} // Removed left margin
+        barSize={20}
+      >
+        <XAxis 
+          type="number"
+          axisLine={false}
+          tickLine={false}
+          tick={false}
+          domain={[0, 'dataMax + 5']}
+        />
+        <YAxis
+          dataKey="name"
+          type="category"
+          axisLine={false}
+          tickLine={false}
+          tick={{
+            fill: '#000000',
+            fontSize: 14,
+            dx: -10  // Adjusted text position
+          }}
+          width={120}  // Adjusted width for text
+        />
+        <Tooltip content={<CustomTooltip />} cursor={false} />
+        <Bar
+          dataKey="value"
+          fill="#6366f1"
+          radius={[0, 4, 4, 0]}
+          label={{
+            position: 'right',
+            fill: '#000000',
+            fontSize: 14,
+            dx: 10
+          }}
+        />
+      </BarChart>
+    </div>
+  </AttendanceCard>
+);
   return (
     <div className="attendence-container-stats" dir="rtl">
       <div className="attendance-filters-stats flex gap-4 mb-6">

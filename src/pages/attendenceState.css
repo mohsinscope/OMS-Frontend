@@ -145,12 +145,10 @@
   /* Charts Section */
   .attendance-charts-stats {
     display: flex;
-    justify-content: end;
-    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
     gap: 24px;
     margin-top: 30px;
   }
-  
+  .attendance-card{}
   .attendance-chart-title {
     color: #111827;
     font-size: 1.25rem;
@@ -193,8 +191,8 @@
     }
   
     .attendance-filters-stats {
-      flex-direction: column;
-      align-items: stretch;
+        flex-direction: column;
+        align-items: stretch;
     }
   
     .attendance-filter {
@@ -205,3 +203,98 @@
   .stats-chart-title{
     margin: 10px 0;
   }
+  .attendance-charts-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 30px;
+    flex-wrap: wrap;
+    width: 100%; /* Full width at 100% scaling */
+  }
+  
+  .attendance-charts-stats .attendance-card {
+    flex: 1;
+    min-width: calc(50% - 12px);
+    background: white;
+    border: 1px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 24px;
+    height: auto;
+    overflow: hidden;
+  }
+  
+  .stats-chart-section {
+    width: 100%;
+    min-height: 600px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Specific style for pie chart section */
+.stats-chart-section:has(.recharts-pie) {
+  width: 600px;
+  margin: 0 auto;
+}
+  /* Chart container */
+  .recharts-wrapper {
+    margin: 0 auto;
+    direction: ltr;
+  }
+  
+  /* Responsive adjustments */
+  @media screen and (min-width: 1280px) {
+    .attendance-charts-stats {
+
+    }
+  
+    .stats-chart-section {
+      transform: none; /* No scaling at 100% */
+    }
+  }
+  
+  /* Handle 125% scaling */
+  @media screen and (min-resolution: 120dpi) {
+    .attendance-charts-stats {
+      width: 100%;
+      margin-left: auto;
+      margin-right: auto;
+      
+    }
+    .chart-container{
+      margin: 10px 20px;
+    }
+   
+    .recharts-surface {
+      padding-left: 0 !important;
+    }
+    .stats-chart-section {
+    
+    }
+  }
+  
+  /* Chart title */
+  .attendance-chart-title {
+    color: #111827;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  
+  /* Bar chart styling */
+  .recharts-bar-rectangle {
+    fill: #4880ff;
+  }
+  
+  /* Text elements */
+  .recharts-text {
+    font-family: inherit;
+    font-size: 0.875rem;
+  }
+  
+  /* Custom tooltip */
+  .custom-tooltip {
+    background: white;
+    border-radius: 4px;
+    padding: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
