@@ -1,142 +1,122 @@
-.supervisor-damaged-passport-add-containe {
-  margin-top: 6%;
-  margin-right: 20px;
-  margin-left: 20px;
-  margin-bottom: 20px;
+.supervisor-damaged-passport-add-container {
+  margin: 6% 20px 20px;
   padding: 20px;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  /* background-color: orange; */
+  width: calc(100% - 40px);
 }
-.add-damegedpassport-section-container {
+
+.add-damagedpassport-section-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
   width: 100%;
+  min-height: min-content;
+  gap: 20px;
 }
+
 .add-passport-fields-container {
-  background-color: #ffff;
+  background-color: #fff;
   padding: 40px;
   border-radius: 15px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 50px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
 }
+
 .add-image-section {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  background-color: #ffff;
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  background-color: #fff;
   gap: 30px;
   padding: 40px;
-  width: 100%;
-}
-.dragger-container {
-  width: 40%;
-  height: 200px;
-}
-.image-preivwer-container {
-  width: 50%;
-}
-.supervisor-form-inputfield-container {
-  display: "flex";
-}
-.add-details-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-}
-.add-details-container input {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 267px;
-  height: 45px;
+  border-radius: 15px;
 }
 
-.supervisor-damaged-passport-add-containe h1 {
+.dragger-container {
+  width: 100%;
+  min-height: 200px;
+}
+
+.image-previewer-container {
+  width: 100%;
+  min-height: 300px;
+}
+
+.SuperVisor-title-container {
+  margin: 20px 0;
   font-weight: bold;
   text-align: start;
-  margin-top: 20px;
-  margin-bottom: 20px;
   width: 100%;
   color: #333;
 }
-.SuperVisor-title-conatiner {
-  margin-bottom: 10px;
-  margin-top: 10px;
-  font-weight: bold;
-  text-align: start;
-  width: 100%;
-  color: #333;
-}
-.submit-button {
-  width: 150px;
+
+.submit-button, .add-back-button {
+  min-width: 150px;
   height: 45px;
-  background-color: #4880ff;
   border-radius: 8px;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.submit-button {
+  background-color: #4880ff;
   border: none;
   color: white;
-  cursor: pointer;
-  font-size: 16px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
-.add-back-button {
-  width: 150px;
+.image-previewer-section {
+  display: flex;
+  justify-content: flex-start;
+  margin: 30px 0;
+  gap: 30px;
+}
+
+/* Form Controls */
+.ant-form-item {
+  margin-bottom: 0;
+}
+
+.ant-input, 
+.ant-select, 
+.ant-picker {
+  width: 100%;
   height: 45px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 16px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  border: 1px solid #bcc1ca;
+  border-radius: 6px;
 }
 
-.ant-upload-drag-icon {
-  font-size: 24px;
-  color: #4880ff;
+.ant-input-textarea {
+  width: 100%;
+  min-height: 100px;
 }
 
 .ant-upload.ant-upload-drag {
   padding: 20px;
-  border: 1px dashed #333;
+  border: 1px dashed #bcc1ca;
   background-color: #fafafa;
   border-radius: 8px;
   transition: all 0.3s ease;
 }
 
 .ant-upload.ant-upload-drag:hover {
-  border-color: #0056b3;
+  border-color: #4880ff;
 }
 
-.image-previewer-section {
-  display: flex !important;
-  justify-content: space-between;
-  margin-top: 30px;
-  margin-bottom: 30px;
-  gap: 30px;
+/* RTL Support */
+[dir="rtl"] .supervisor-damaged-passport-add-container {
+  text-align: right;
 }
 
-input,
-select {
-  width: 100%;
-  height: 45px;
-  /* padding: 10px; */
-  border: 1px solid #bcc1ca;
-  border-radius: 6px;
-  box-sizing: border-box;
-}
-
-.add-details-container Form label {
-  font-family: "Cairo", sans-serif;
-}
-.add-details-container form {
-  width: 100%;
+/* Responsive Design */
+@media (max-width: 768px) {
+  .add-image-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .add-passport-fields-container {
+    grid-template-columns: 1fr;
+  }
 }
