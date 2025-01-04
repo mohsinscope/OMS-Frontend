@@ -15,7 +15,7 @@ const DynamicSidebar = ({
   logoutClassName,
 }) => {
   const navigate = useNavigate();
-  const { permissions, isLoggedIn, isSidebarCollapsed } = useAuthStore();
+  const { permissions, roles, isLoggedIn, isSidebarCollapsed } = useAuthStore();
   const [visibleMenuItems, setVisibleMenuItems] = useState([]);
   const [visibleCommonItems, setVisibleCommonItems] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -32,7 +32,7 @@ const DynamicSidebar = ({
     if (!isInitialized) return;
 
     const filterMenuItems = () => {
-      if (!isLoggedIn || !permissions || permissions.length === 0) {
+      if (!isLoggedIn || (!permissions && !roles) || (permissions?.length === 0 && roles?.length === 0)) {
         setVisibleMenuItems([]);
         setVisibleCommonItems(
           COMMON_MENU_ITEMS.filter((item) => item.role.length === 0)
@@ -41,15 +41,23 @@ const DynamicSidebar = ({
       }
 
       const accessibleMenuItems = MENU_ITEMS.filter((item) => {
-        if (!item.requiredPermission) return true;
-        return permissions.includes(item.requiredPermission);
+        // Check for role-based access first
+        if (item.role && item.role.length > 0) {
+          return item.role.some(role => roles.includes(role));
+        }
+        // Then check for permission-based access
+        if (item.requiredPermission) {
+          return permissions.includes(item.requiredPermission);
+        }
+        return false; // If neither role nor permission is specified, hide the item
       });
+      
       setVisibleMenuItems(accessibleMenuItems);
       setVisibleCommonItems(COMMON_MENU_ITEMS);
     };
 
     filterMenuItems();
-  }, [permissions, isLoggedIn, isInitialized]);
+  }, [permissions, roles, isLoggedIn, isInitialized]);
 
   const handleMenuClick = (path, action) => {
     if (action === "logout") {
