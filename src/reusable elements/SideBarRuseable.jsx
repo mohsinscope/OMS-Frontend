@@ -15,7 +15,7 @@ const DynamicSidebar = ({
   logoutClassName,
 }) => {
   const navigate = useNavigate();
-  const { permissions, roles, isLoggedIn, isSidebarCollapsed } = useAuthStore();
+  const { permissions, roles, isLoggedIn, isSidebarCollapsed,toggleSidebar } = useAuthStore();
   const [visibleMenuItems, setVisibleMenuItems] = useState([]);
   const [visibleCommonItems, setVisibleCommonItems] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);

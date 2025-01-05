@@ -35,8 +35,8 @@ const useAuthStore = create((set, get) => ({
   isInitialized: false,
   isRefreshing: false,
   searchVisible: true,
-
-  // Refresh the access token
+  isSidebarCollapsed: false,
+    // Refresh the access token
   refreshAccessToken: async () => {
     console.log("[Token Refresh] Attempting token refresh...");
     if (get().isRefreshing) {
@@ -103,7 +103,11 @@ const useAuthStore = create((set, get) => ({
       return null;
     }
   },
-
+  toggleSidebar: () => {
+    set((state) => ({
+      isSidebarCollapsed: !state.isSidebarCollapsed
+    }));
+  },
   // Start token refresh timer
   startTokenRefreshTimer: () => {
     console.log("[Token Timer] Starting refresh timer...");

@@ -1,6 +1,13 @@
 // menuConfig.js
 export const MENU_ITEMS = [
   {
+    label: "الاحصائيات",
+    icon: "stats",
+    path: "/Stats",
+    requiredPermission: "Rr",
+    role: []
+  },
+  {
     label: "الحضور",
     icon: "attendence",
     path: "/supervisor/Attendence",
@@ -28,6 +35,7 @@ export const MENU_ITEMS = [
     requiredPermission: "Lr",
     role: []
   },
+
   {
     label: "ادارة القيم",
     icon: "data",

@@ -280,11 +280,7 @@ const SuperVisorDevices = () => {
       dir="rtl">
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
 
-      <div className="toggle-search-button">
-        <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "اخفاء الحقول" : "اظهار الحقول"}
-        </Button>
-      </div>
+     
 
       <div
         className={`supervisor-devices-dameged-filters ${
