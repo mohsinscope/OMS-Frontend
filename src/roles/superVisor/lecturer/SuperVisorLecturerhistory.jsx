@@ -12,7 +12,6 @@ const SuperVisorLecturerhistory = () => {
     accessToken,
     profile,
     searchVisible,
-    toggleSearch,
     roles,
     permissions,
   } = useAuthStore();
@@ -28,6 +27,9 @@ const SuperVisorLecturerhistory = () => {
 
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [lectureTypes, setLectureTypes] = useState([]);
+  
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
 
@@ -35,6 +37,8 @@ const SuperVisorLecturerhistory = () => {
     title: "",
     startDate: null,
     endDate: null,
+    companyId: null,
+    lectureTypeId: null,
   });
 
   const formatToISO = (date) => {
@@ -52,6 +56,8 @@ const SuperVisorLecturerhistory = () => {
           governorateId: payload.governorateId || null,
           startDate: payload.startDate || null,
           endDate: payload.endDate || null,
+          companyId: payload.companyId || null,
+          lectureTypeId: payload.lectureTypeId || null,
           PaginationParams: {
             PageNumber: payload.PaginationParams.PageNumber,
             PageSize: payload.PaginationParams.PageSize,
@@ -66,7 +72,6 @@ const SuperVisorLecturerhistory = () => {
 
       if (response.data) {
         setLectures(response.data);
-
         const paginationHeader = response.headers["pagination"];
         if (paginationHeader) {
           const paginationInfo = JSON.parse(paginationHeader);
@@ -89,11 +94,11 @@ const SuperVisorLecturerhistory = () => {
     const payload = {
       title: formData.title || "",
       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-      governorateId: isSupervisor
-        ? profile.governorateId
-        : selectedGovernorate || null,
+      governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
       startDate: formData.startDate ? formatToISO(formData.startDate) : null,
       endDate: formData.endDate ? formatToISO(formData.endDate) : null,
+      companyId: formData.companyId || null,
+      lectureTypeId: formData.lectureTypeId || null,
       PaginationParams: {
         PageNumber: page,
         PageSize: pageSize,
@@ -125,6 +130,41 @@ const SuperVisorLecturerhistory = () => {
       message.error("حدث خطأ أثناء جلب بيانات المحافظات");
     }
   }, [accessToken, isSupervisor, profile]);
+
+  const fetchCompanies = async () => {
+    try {
+      const response = await axios.get(`${Url}/api/Company`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setCompanies(response.data);
+      
+      // Reset lecture types when companies are fetched
+      setLectureTypes([]);
+      setFormData(prev => ({
+        ...prev,
+        companyId: null,
+        lectureTypeId: null
+      }));
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات الشركات");
+    }
+  };
+
+  const handleCompanyChange = (companyId) => {
+    setFormData(prev => ({
+      ...prev,
+      companyId,
+      lectureTypeId: null // Reset lecture type when company changes
+    }));
+
+    // Find selected company and update lecture types
+    const selectedCompany = companies.find(company => company.id === companyId);
+    if (selectedCompany) {
+      setLectureTypes(selectedCompany.lectureTypes || []);
+    } else {
+      setLectureTypes([]);
+    }
+  };
 
   const fetchOffices = async (governorateId) => {
     if (!governorateId) {
@@ -160,6 +200,8 @@ const SuperVisorLecturerhistory = () => {
       governorateId: isSupervisor ? profile.governorateId : null,
       startDate: null,
       endDate: null,
+      companyId: null,
+      lectureTypeId: null,
       PaginationParams: {
         PageNumber: 1,
         PageSize: pageSize,
@@ -171,6 +213,7 @@ const SuperVisorLecturerhistory = () => {
 
   useEffect(() => {
     fetchGovernorates();
+    fetchCompanies();
   }, [fetchGovernorates]);
 
   const handlePageChange = (page) => {
@@ -196,7 +239,13 @@ const SuperVisorLecturerhistory = () => {
   };
 
   const handleReset = async () => {
-    setFormData({ title: "", startDate: null, endDate: null });
+    setFormData({
+      title: "",
+      startDate: null,
+      endDate: null,
+      companyId: null,
+      lectureTypeId: null
+    });
     setCurrentPage(1);
 
     if (!isSupervisor) {
@@ -211,6 +260,8 @@ const SuperVisorLecturerhistory = () => {
       governorateId: isSupervisor ? profile.governorateId : null,
       startDate: null,
       endDate: null,
+      companyId: null,
+      lectureTypeId: null,
       PaginationParams: {
         PageNumber: 1,
         PageSize: pageSize,
@@ -222,6 +273,12 @@ const SuperVisorLecturerhistory = () => {
   };
 
   const columns = [
+    {
+      title: "عنوان المحضر",
+      dataIndex: "title",
+      key: "title",
+      className: "table-column-Lecturer-address",
+    },
     {
       title: "التاريخ",
       dataIndex: "date",
@@ -235,21 +292,27 @@ const SuperVisorLecturerhistory = () => {
       },
     },
     {
-      title: "المحافظة",
-      dataIndex: "governorateName",
-      key: "governorateName",
-      className: "table-column-Lecturer-address",
-    },
-    {
       title: "المكتب",
       dataIndex: "officeName",
       key: "officeName",
       className: "table-column-Lecturer-address",
     },
     {
-      title: "عنوان المحضر",
-      dataIndex: "title",
-      key: "Lectur",
+      title: "المحافظة",
+      dataIndex: "governorateName",
+      key: "governorateName",
+      className: "table-column-Lecturer-address",
+    },
+    {
+      title: "اسم الشركة",
+      dataIndex: "companyName",
+      key: "companyName",
+      className: "table-column-Lecturer-address",
+    },
+    {
+      title: "نوع المحضر",
+      dataIndex: "lectureTypeName",
+      key: "lectureTypeName",
       className: "table-column-Lecturer-address",
     },
     {
@@ -290,8 +353,7 @@ const SuperVisorLecturerhistory = () => {
               onChange={handleGovernorateChange}
               disabled={isSupervisor}
               className="supervisor-Lectur-select"
-              placeholder="اختر المحافظة"
-              >
+              placeholder="اختر المحافظة">
               {governorates.map((gov) => (
                 <Select.Option key={gov.id} value={gov.id}>
                   {gov.name}
@@ -310,11 +372,47 @@ const SuperVisorLecturerhistory = () => {
               onChange={(value) => setSelectedOffice(value)}
               disabled={isSupervisor || !selectedGovernorate}
               className="supervisor-Lectur-select"
-              placeholder="اختر المكتب"
               >
               {offices.map((office) => (
                 <Select.Option key={office.id} value={office.id}>
                   {office.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="supervisor-Lectur-field-wrapper">
+            <label htmlFor="company" className="supervisor-Lectur-label">
+              الشركة
+            </label>
+            <Select
+              id="company"
+              value={formData.companyId || undefined}
+              onChange={handleCompanyChange}
+              className="supervisor-Lectur-select"
+            >
+              {companies.map((company) => (
+                <Select.Option key={company.id} value={company.id}>
+                  {company.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="supervisor-Lectur-field-wrapper">
+            <label htmlFor="lectureType" className="supervisor-Lectur-label">
+              نوع المحضر
+            </label>
+            <Select
+              id="lectureType"
+              value={formData.lectureTypeId || undefined}
+              onChange={(value) => setFormData(prev => ({ ...prev, lectureTypeId: value }))}
+              className="supervisor-Lectur-select"
+              disabled={!formData.companyId}
+              >
+              {lectureTypes.map((type) => (
+                <Select.Option key={type.id} value={type.id}>
+                  {type.name}
                 </Select.Option>
               ))}
             </Select>
@@ -339,29 +437,17 @@ const SuperVisorLecturerhistory = () => {
             <DatePicker
               id="startDate"
               placeholder="اختر التاريخ"
-              onChange={(date) => handleDateChange(date, 'startDate')}
-              value={formData.startDate}
-              className="supervisor-Lectur-input"
-              style={{ width: '100%' }}
-            />
-          </div>
-
-          <div className="supervisor-Lectur-field-wrapper">
-            <label htmlFor="endDate" className="supervisor-Lectur-label">
-              التاريخ إلى
-            </label>
-            <DatePicker
-              id="endDate"
-              placeholder="اختر التاريخ"
               onChange={(date) => handleDateChange(date, 'endDate')}
               value={formData.endDate}
               className="supervisor-Lectur-input"
-              style={{ width: '100%' }}
             />
           </div>
 
           <div className="supervisor-Lectur-buttons">
-            <Button type="primary" htmlType="submit" className="supervisor-Lectur-button">
+            <Button 
+              type="primary" 
+              htmlType="submit" 
+              className="supervisor-Lectur-button">
               ابحث
             </Button>
             <Button
@@ -370,6 +456,7 @@ const SuperVisorLecturerhistory = () => {
               إعادة تعيين
             </Button>
           </div>
+          
           {hasCreatePermission && (
             <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
               <Button type="primary" className="supervisor-add-Lectur-button">

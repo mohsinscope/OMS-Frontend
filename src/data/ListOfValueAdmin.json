@@ -25,5 +25,16 @@
       "icon": "passport",
       "path": "/admin/passport-dammage-types"
     }
+    ,
+    {
+      "label": "الشركات",
+      "icon": "passport",
+      "path": "/admin/companies"
+    },
+    {
+      "label": "انواع المحاضر",
+      "icon": "passport",
+      "path": "/admin/lecture-types"
+    }
   ]
 }

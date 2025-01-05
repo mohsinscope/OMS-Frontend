@@ -392,3 +392,38 @@
   color: white !important;
   transition: all 0.1s ease-in-out;
 }
+
+
+.model-container-lecture-edit form{
+  display: flex;
+  flex-direction: column ;
+  align-items: start;
+}
+
+.model-container-lecture-edit form input{
+  width: 500px  ;
+}
+.model-container-lecture-edit form textarea{
+  width: 550px !important ;
+}
+
+.model-container-lecture-edit form .ant-select-selection-item{
+  width: 477px;
+
+}
+
+
+.model-container-lecture-edit form .ant-picker{
+  width: 552px !important;
+
+}
+
+.model-container-lecture-edit .ant-select-selector{
+  width: 550px !important;
+
+}
+
+.model-container-lecture-edit .ant-row {
+  margin-bottom: 10px;
+  margin-top: 10px;
+}

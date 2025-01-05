@@ -105,7 +105,36 @@ const Config = {
       { name: "description", label: "التفاصيل", type: "text" },
     ],
   },
- 
+ "/admin/companies": {
+    getEndpoint: "/api/company",
+    postEndpoint: "/api/company/add",
+    putEndpoint: (id) => `/api/company/${id}`,
+    deleteEndpoint: (id) => `/api/company/${id}`,
+    columns: [
+      { title: "اسم الشركة", dataIndex: "name", key: "name" }
+    ],
+    formFields: [
+      { name: "name", label: "اسم الشركة", type: "text" }
+    ]
+  },
+
+  "/admin/lecture-types": {
+    getEndpoint: "/api/Company",
+    postEndpoint: "/api/company/add-lecture-type",
+    columns: [
+      { title: "نوع المحضر", dataIndex: "name", key: "name" },
+      { title: "الشركة", dataIndex: "companyName", key: "companyName" }
+    ],
+    formFields: [
+      { name: "name", label: "نوع المحضر", type: "text" },
+      { 
+        name: "companyId", 
+        label: "الشركة", 
+        type: "dropdown",
+        optionsEndpoint: "/api/company?PageNumber=1&PageSize=100"
+      }
+    ]
+  },
  
 };
 

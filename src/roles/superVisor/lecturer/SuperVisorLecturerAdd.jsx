@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Form, Input, Button, DatePicker, message, Upload, Modal } from "antd";
+import { Form, Input, Button, DatePicker, message, Upload, Modal, Select } from "antd";
 import axios from "axios";
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
@@ -17,15 +17,41 @@ const SuperVisorLecturerAdd = () => {
   const [previewUrls, setPreviewUrls] = useState([]);
   const [isScanning, setIsScanning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [lectureTypes, setLectureTypes] = useState([]);
   const { isSidebarCollapsed } = useAuthStore();
   const { accessToken, profile } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      try {
+        const response = await axios.get(`${Url}/api/Company`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        setCompanies(response.data);
+      } catch (error) {
+        message.error("فشل في جلب قائمة الشركات");
+      }
+    };
+
+    fetchCompanies();
+  }, [accessToken]);
+
+  const handleCompanyChange = (companyId) => {
+    setSelectedCompany(companyId);
+    const company = companies.find(c => c.id === companyId);
+    setLectureTypes(company?.lectureTypes || []);
+    form.setFieldValue('lectureTypeId', undefined);
+  };
 
   const handleBack = () => {
     navigate(-1);
   };
 
-  // Rollback function to delete a lecture
   const rollbackLecture = async (entityId) => {
     try {
       await axios.delete(`${Url}/api/Lecture/${entityId}`, {
@@ -85,12 +111,14 @@ const SuperVisorLecturerAdd = () => {
       const payload = {
         title: values.title,
         date: values.date
-          ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
-          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
+          ? values.date.format("YYYY-MM-DDTHH:mm:ss")
+          : moment().format("YYYY-MM-DDTHH:mm:ss"),
         officeId,
         governorateId,
         profileId,
-        note: values.note ? values.note : "لا يوجد",
+        companyId: selectedCompany,
+        lectureTypeId: values.lectureTypeId,
+        note: values.note || "لا يوجد",
       };
 
       const entityId = await sendLectureDetails(payload);
@@ -108,7 +136,7 @@ const SuperVisorLecturerAdd = () => {
         }
         navigate(-1);
       } catch (attachmentError) {
-        await rollbackLecture(entityId); // Rollback lecture on attachment failure
+        await rollbackLecture(entityId);
         throw new Error(
           "فشل في إرفاق الملفات. تم إلغاء إنشاء المحضر لضمان سلامة البيانات."
         );
@@ -254,6 +282,39 @@ const SuperVisorLecturerAdd = () => {
                 ]}>
                 <Input placeholder="أدخل عنوان المحضر" />
               </Form.Item>
+
+              <Form.Item
+                name="companyId"
+                label="الشركة"
+                rules={[{ required: true, message: "يرجى اختيار الشركة" }]}>
+                <Select
+                  placeholder="اختر الشركة"
+                  style={{ width: "267px", height: "45px" }}
+                  onChange={handleCompanyChange}>
+                  {companies.map(company => (
+                    <Select.Option key={company.id} value={company.id}>
+                      {company.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="lectureTypeId"
+                label="نوع المحضر"
+                rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
+                <Select
+                  placeholder="اختر نوع المحضر"
+                  style={{ width: "267px", height: "45px" }}
+                  disabled={!selectedCompany || lectureTypes.length === 0}>
+                  {lectureTypes.map(type => (
+                    <Select.Option key={type.id} value={type.id}>
+                      {type.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
               <Form.Item
                 name="date"
                 label="التاريخ"
@@ -261,19 +322,22 @@ const SuperVisorLecturerAdd = () => {
                 <DatePicker
                   placeholder="اختر التاريخ"
                   style={{ width: "267px", height: "45px" }}
+                  showTime
+                  format="YYYY-MM-DD HH:mm:ss"
                 />
               </Form.Item>
+
               <Form.Item
                 name="note"
                 label="ملاحظات"
-                value="لا يوجد"
+                initialValue="لا يوجد"
                 rules={[{ message: "يرجى إدخال الملاحظات" }]}>
                 <Input.TextArea
                   style={{ height: "150px", width: "500px" }}
-                  defaultValue={"لا يوجد"}
                 />
               </Form.Item>
             </div>
+
             <h1 className="SuperVisor-Lecturer-title-conatiner">
               إضافة صورة محضر
             </h1>
