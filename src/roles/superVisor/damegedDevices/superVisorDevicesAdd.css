@@ -167,6 +167,7 @@
 }
 
 .uplaod-item-damaged-device-container {
+  width: 100%;
   display: flex;
   background-color: white;
   padding: 50px;

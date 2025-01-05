@@ -20,7 +20,6 @@ import SuperVisorExpensesHistory from "./roles/superVisor/expenses/SuperVisorExp
 import SuperVisorAttendenceHistory from "./roles/superVisor/attendence/superVisorAttendenceHistory.jsx";
 import SuperVisorAttendenceAdd from "./roles/superVisor/attendence/superVisorAttendenceAdd.jsx";
 import ViewAttendance from "./roles/superVisor/attendence/attendenceView.jsx";
-import SuperVisorAttendenceEdit from "./roles/superVisor/attendence/editAttendence.jsx";
 
 import SuperVisorDamagedpasportsHistory from "./roles/superVisor/damaggedPasports/dammagedPasportsHistory.jsx";
 import DammagedPasportsShow from "./roles/superVisor/damaggedPasports/DammagedPasportsShow.jsx";
@@ -69,10 +68,7 @@ const App = () => {
       element: <SuperVisorAttendenceAdd />,
     },
     { path: "attendance/view", element: <ViewAttendance /> },
-    {
-      path: "attendance/view/editattendence",
-      element: <SuperVisorAttendenceEdit />,
-    },
+   
 
     {
       path: "/supervisor/damagedpasportshistory",
