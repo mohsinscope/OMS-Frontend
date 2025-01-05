@@ -268,7 +268,7 @@ const SuperVisorDammagePassportAdd = () => {
       }`}
       dir="rtl">
       <h1 className="SuperVisor-title-container">إضافة جواز تالف</h1>
-      <div className="add-details-container">
+      <div className="add-details-container" style={{width:"100%"}}>
         <Form
           form={form}
           onFinish={handleFormSubmit}

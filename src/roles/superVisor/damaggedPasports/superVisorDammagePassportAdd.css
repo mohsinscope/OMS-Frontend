@@ -4,14 +4,15 @@
   border-radius: 8px;
   display: flex;
   flex-direction: column;
-  width: calc(100% - 40px);
+  width: 99%;
 }
-
+.supervisor-damaged-passport-add-container.sidebar-collapsed{
+  width: 105%;
+}
 .add-damagedpassport-section-container {
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: min-content;
   gap: 20px;
 }
 
@@ -19,8 +20,8 @@
   background-color: #fff;
   padding: 40px;
   border-radius: 15px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  display: flex;
+  width: 100%;
   gap: 30px;
 }
 
