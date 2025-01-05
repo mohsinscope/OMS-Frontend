@@ -71,6 +71,7 @@
     align-items: self-start;
     margin: 20px 20px;
     gap: 20px;
+    justify-content: start;
   }
   
   .chart-container {
@@ -316,4 +317,26 @@
 
   .stats-container-collapsed{
     width: 108%;
+  }
+
+  .summary-card-attendence{
+    background-color: white;
+    height: 200px;
+    width: 400px;
+    display: flex;
+
+    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    border-radius: 16px;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 12px;
+    transition: all 0.3s ease;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .summary-card-attendence:hover {
+    transform: translateY(-4px);
+    box-shadow: rgba(0, 0, 0, 0.15) 0px 8px 24px;
   }

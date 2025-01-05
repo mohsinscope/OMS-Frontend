@@ -1,20 +1,19 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import { DatePicker } from "antd";
-import dayjs from 'dayjs';
 import axios from "axios";
 import "./stats.css";
 import Url from "./../store/url.js";
 import useAuthStore from "./../store/store.js";
 import AttendanceStats from './attendenceStats.jsx';
-
+import './stats.css';
 const COLORS = [
   "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0",
   "#FF5722", "#00BCD4", "#E91E63", "#3F51B5", "#CDDC39"
 ];
 
 export default function Stats() {
-  const { profile, isSidebarCollapsed } = useAuthStore();
+  const { profile, accessToken, isSidebarCollapsed } = useAuthStore();
   const [chartData, setChartData] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [selectedTab, setSelectedTab] = useState("damagedDevices");
@@ -26,18 +25,26 @@ export default function Stats() {
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [workingHours, setWorkingHours] = useState(3);
+  const [officeAttendanceData, setOfficeAttendanceData] = useState(null);
 
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axios.get(`${Url}/api/Governorate/dropdown`);
+      const response = await axios.get(`${Url}/api/Governorate/dropdown`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
       setGovernorates(response.data);
     } catch (error) {
       setError("Failed to fetch governorates. Please try again later.");
       console.error("Governorates fetch error:", error);
     }
-  }, []);
+  }, [accessToken]);
 
   const fetchOffices = useCallback(async (governorateId) => {
     if (!governorateId) {
@@ -47,7 +54,11 @@ export default function Stats() {
     }
 
     try {
-      const response = await axios.get(`${Url}/api/Governorate/dropdown/${governorateId}`);
+      const response = await axios.get(`${Url}/api/Governorate/dropdown/${governorateId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      });
       if (response.data && response.data[0] && response.data[0].offices) {
         setAvailableOffices(response.data[0].offices);
       }
@@ -56,7 +67,7 @@ export default function Stats() {
       setError("Failed to fetch offices. Please try again later.");
       console.error("Offices fetch error:", error);
     }
-  }, []);
+  }, [accessToken]);
 
   const handleGovernorateChange = useCallback((governorateId) => {
     setSelectedGovernorate(governorateId || null);
@@ -71,8 +82,16 @@ export default function Stats() {
   const fetchTypesData = useCallback(async () => {
     try {
       const [deviceTypesRes, passportTypesRes] = await Promise.all([
-        axios.get(`${Url}/api/damageddevicetype/all`),
-        axios.get(`${Url}/api/damagedtype/all`)
+        axios.get(`${Url}/api/damageddevicetype/all`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        }),
+        axios.get(`${Url}/api/damagedtype/all`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        })
       ]);
       
       setDamagedDeviceTypes(deviceTypesRes.data);
@@ -83,10 +102,51 @@ export default function Stats() {
       console.error("Types data fetch error:", error);
       return false;
     }
-  }, []);
+  }, [accessToken]);
 
   const fetchStatisticsData = useCallback(async () => {
     if (selectedTab === "attendance") return;
+    
+    if (selectedTab === "officeAttendene") {
+      setLoading(true);
+      setError(null);
+      try {
+        if (!selectedOffice) {
+          setError("الرجاء اختيار المكتب");
+          return;
+        }
+        if (!selectedDate) {
+          setError("الرجاء اختيار التاريخ");
+          return;
+        }
+
+        const response = await axios.post(`${Url}/api/Attendance/statistics/office`, {
+          officeId: selectedOffice,
+          workingHours: workingHours,
+          date: `${selectedDate.format('YYYY-MM-DD')}T00:00:00Z`
+        }, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
+
+        setOfficeAttendanceData(response.data);
+        
+        // Set chart data for the main pie chart
+        setChartData([
+          { name: 'عدد المحطات الكلي', value: response.data.totalStaffInOffice },
+          { name: 'عدد حضور الموظفين الكلي', value: response.data.availableStaffInOffice }
+        ]);
+        
+        setTotalItems(response.data.totalStaffInOffice);
+      } catch (error) {
+        setError("Failed to fetch office attendance statistics. Please try again later.");
+        console.error("Office attendance statistics fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
     
     setLoading(true);
     setError(null);
@@ -98,14 +158,18 @@ export default function Stats() {
         : `${Url}/api/DamagedPassport/search/statistics`;
       
       const requests = types.map(type => {
-        const formattedDate = selectedDate ? selectedDate.format('YYYY-MM-DD') : null;
         const body = {
           OfficeId: selectedOffice || null,
           GovernorateId: selectedGovernorate || null,
-          Date: formattedDate ? `${formattedDate}T00:00:00Z` : null,
+          StartDate: startDate ? `${startDate.format('YYYY-MM-DD')}T00:00:00Z` : null,
+          EndDate: endDate ? `${endDate.format('YYYY-MM-DD')}T00:00:00Z` : null,
           [selectedTab === "damagedDevices" ? "DamagedDeviceTypeId" : "DamagedTypeId"]: type.id
         };
-        return axios.post(endpoint, body);
+        return axios.post(endpoint, body, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`
+          }
+        });
       });
 
       const responses = await Promise.all(requests);
@@ -130,7 +194,7 @@ export default function Stats() {
     } finally {
       setLoading(false);
     }
-  }, [selectedTab, damagedDeviceTypes, damagedPassportTypes, selectedOffice, selectedGovernorate, selectedDate]);
+  }, [selectedTab, damagedDeviceTypes, damagedPassportTypes, selectedOffice, selectedGovernorate, startDate, endDate, accessToken, workingHours, selectedDate]);
 
   const handleTabChange = useCallback((tab) => {
     if (tab === selectedTab) return;
@@ -139,6 +203,10 @@ export default function Stats() {
     setTotalItems(0);
     setError(null);
     setSelectedTab(tab);
+    setStartDate(null);
+    setEndDate(null);
+    setSelectedDate(null);
+    setOfficeAttendanceData(null);
   }, [selectedTab]);
 
   useEffect(() => {
@@ -171,11 +239,40 @@ export default function Stats() {
     }
     return null;
   };
+  const AttendanceDonutChart = ({ title, total, present }) => (
+    <div className="bg-white rounded-lg p-4 shadow-sm" style={{ display: 'flex', justifyContent: 'space-between', alignItems: "center" }}>
+      <div>
+        <h3 className="text-xl font-bold">{title} {total}</h3>
+        <div className="text-lg font-bold mt-4">
+          الحاضرون {present}
+        </div>
+      </div>
+      <div>
+        <PieChart width={200} height={200}>
+          <Pie
+            data={[
+              { name: 'عددالمحطات الفارغة', value: total - present },
+              { name: 'الحاضرون', value: present }
+            ]}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={80}
+            startAngle={90}
+            endAngle={-270}
+            dataKey="value"
+          >
+            <Cell fill="#FF5252" />
+            <Cell fill="#4CAF50" />
+          </Pie>
+          <Tooltip content={<CustomTooltip />} />
+        </PieChart>
+      </div>
+    </div>
+  );
 
   return (
-    <div className={`stats-container ${
-      isSidebarCollapsed ? "stats-container-collapsed" : ""
-    }`}>
+    <div className={`stats-container ${isSidebarCollapsed ? "stats-container-collapsed" : ""}`}>
       <div className="stats-navbar" dir="rtl">
         <div className="small-stats-navbar-warber">
           <ul>
@@ -209,8 +306,6 @@ export default function Stats() {
 
       {selectedTab !== "attendance" && (
         <form onSubmit={handleSubmit} className="stats-form" dir="rtl">
-       
-
           <div className="form-group">
             <label>المحافظة</label>
             <select
@@ -243,17 +338,55 @@ export default function Stats() {
               ))}
             </select>
           </div>
-          <div className="form-group">
-            <label>التاريخ</label>
-            <DatePicker
-              value={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
-              className="form-control"
-              placeholder="اختر التاريخ"
-            />
-          </div>
 
-          <button type="submit" className="search-button" disabled={loading}>
+          {(selectedTab === "damagedDevices" || selectedTab === "damagedPassports") ? (
+            <>
+              <div className="form-group">
+                <label>التاريخ من</label>
+                <DatePicker
+                  value={startDate}
+                  onChange={(date) => setStartDate(date)}
+                  className="form-control"
+                  placeholder="اختر التاريخ"
+                />
+              </div>
+              <div className="form-group">
+                <label>التاريخ الى</label>
+                <DatePicker
+                  value={endDate}
+                  onChange={(date) => setEndDate(date)}
+                  className="form-control"
+                  placeholder="اختر التاريخ"
+                />
+              </div>
+            </>
+          ) : selectedTab === "officeAttendene" && (
+            <>
+              <div className="form-group">
+                <label>وقت الدوام</label>
+                <select
+                  value={workingHours}
+                  onChange={(e) => setWorkingHours(Number(e.target.value))}
+                  className="form-control"
+                >
+                  <option value={1}>صباحي</option>
+                  <option value={2}>مسائي</option>
+                  <option value={3}>الكل</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>التاريخ</label>
+                <DatePicker
+                  value={selectedDate}
+                  onChange={(date) => setSelectedDate(date)}
+                  className="form-control"
+                  placeholder="اختر التاريخ"
+                />
+              </div>
+            </>
+          )}
+
+<button type="submit" className="search-button" disabled={loading}>
             {loading ? 'جاري البحث...' : 'ابحث'}
           </button>
         </form>
@@ -268,7 +401,8 @@ export default function Stats() {
       <h2 className="stats-chart-title" dir="rtl" style={{marginRight:"20px"}}>
         احصائيات {
           selectedTab === "damagedDevices" ? "الأجهزة التالفة" :
-          selectedTab === "damagedPassports" ? "الجوازات التالفة" : "الحضور"
+          selectedTab === "damagedPassports" ? "الجوازات التالفة" :
+          selectedTab === "officeAttendene" ? "حضور المكتب" : "الحضور"
         }
       </h2>
       
@@ -289,14 +423,17 @@ export default function Stats() {
                     paddingAngle={0}
                     dataKey="value"
                   >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
+                 <Cell fill="#FF5252" />  {/* Red for total stations */}
+                 <Cell fill="#4CAF50" />  {/* Green for attendance */}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
-                <h3>
-                  إجمالي {selectedTab === "damagedDevices" ? "الأجهزة التالفة" : "الجوازات التالفة"}: {totalItems}
+                <h3 className="text-center mt-4">
+                  {selectedTab === "officeAttendene" ? (
+                    `إجمالي عدد المحطات: ${totalItems} عدد الحضور الكلي : ${officeAttendanceData?.availableStaffInOffice}  `
+                  ) : (
+                    `إجمالي ${selectedTab === "damagedDevices" ? "الأجهزة التالفة" : "الجوازات التالفة"}: ${totalItems}`
+                  )}
                 </h3>
               </>
             ) : !loading && (
@@ -305,7 +442,49 @@ export default function Stats() {
           </div>
         </div>
 
-        {selectedTab !== "attendance" && chartData.length > 0 && (
+        {selectedTab === "officeAttendene" && officeAttendanceData ? (
+          <div className="stats-summary">
+            <div className="summary-card-attendence">
+
+            <AttendanceDonutChart 
+              title="محطات الاستلام"
+              total={officeAttendanceData.receivingStaffTotal}
+              present={officeAttendanceData.receivingStaffAvailable}
+            />
+            </div>
+            <div className="summary-card-attendence">
+            <AttendanceDonutChart 
+              title="محطات الحسابات"
+              total={officeAttendanceData.accountStaffTotal}
+              present={officeAttendanceData.accountStaffAvailable}
+            />
+            </div>
+            <div className="summary-card-attendence">
+            <AttendanceDonutChart 
+              title="محطات الطباعة"
+              total={officeAttendanceData.printingStaffTotal}
+              present={officeAttendanceData.printingStaffAvailable}
+            />
+             </div>
+             <div className="summary-card-attendence">
+
+            <AttendanceDonutChart 
+              title="محطات الجودة"
+              total={officeAttendanceData.qualityStaffTotal}
+              present={officeAttendanceData.qualityStaffAvailable}
+            />
+                         </div>
+                         <div className="summary-card-attendence">
+
+            <AttendanceDonutChart 
+              title="محطات التسليم"
+              total={officeAttendanceData.deliveryStaffTotal}
+              present={officeAttendanceData.deliveryStaffAvailable}
+            />
+                                     </div>
+
+          </div>
+        ) : selectedTab !== "attendance" && selectedTab !== "officeAttendene" && chartData.length > 0 && (
           <div className="stats-summary">
             {chartData.map((item, index) => (
               <div key={index} className="summary-card">

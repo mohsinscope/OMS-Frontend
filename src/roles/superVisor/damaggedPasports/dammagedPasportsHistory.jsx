@@ -258,11 +258,7 @@ export default function SuperVisorPassport() {
       }`}
       dir="rtl">
       <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
-      <div className="toggle-search-button">
-        <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "اِخفاء الحقول" : "اِظهار الحقول"}
-        </Button>
-      </div>
+
       <div
         className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"

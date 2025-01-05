@@ -277,11 +277,6 @@ const SuperVisorLecturerhistory = () => {
       dir="rtl">
       <h1 className="supervisor-Lectur-title">المحاضر</h1>
 
-      <div className="toggle-search-button">
-        <Button type="primary" onClick={toggleSearch}>
-          {searchVisible ? "اخفاء الحقول" : "اظهار الحقول"}
-        </Button>
-      </div>
 
       <div
         className={`supervisor-Lectur-filters ${
