@@ -12,7 +12,6 @@ import {
 } from "antd";
 import axios from "axios";
 import Dashboard from "./../../../pages/dashBoard.jsx";
-import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx";
 import "./AdminUserManagment.css";
 import useAuthStore from "./../../../store/store.js";
 import Url from "./../../../store/url.js";
@@ -30,7 +29,6 @@ const AdminUserManagment = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [form] = Form.useForm();
   const { accessToken } = useAuthStore();
-  const { searchVisible, toggleSearch } = useAuthStore();
   const { isSidebarCollapsed } = useAuthStore();
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
@@ -318,47 +316,49 @@ const AdminUserManagment = () => {
       >
         <h1 className="admin-header">إدارة المستخدمين</h1>
 
-        <div
-          className={`filter-section ${
-            searchVisible ? "animate-show" : "animate-hide"
-          }`}
-        >
-          <TextFieldForm
-            fields={[
-              { name: "username", label: "اسم المستخدم", type: "text" },
-              {
-                name: "role",
-                label: "الصلاحيات",
-                type: "dropdown",
-                options: roles.map((role) => ({ value: role, label: role })),
-              },
-              {
-                name: "governorate",
-                label: "المحافظة",
-                type: "text",
-              },
-              {
-                name: "officeName",
-                label: "اسم المكتب",
-                type: "text",
-              },
-            ]}
-            onFormSubmit={applyFilters}
-            onReset={resetFilters}
-            formClassName="filter-row"
-            inputClassName="filter-input"
-            dropdownClassName="filter-dropdown"
-            fieldWrapperClassName="filter-field-wrapper"
-            buttonClassName="filter-button"
-          />
-        </div>
+        <div>
+          <Form layout="inline" onFinish={applyFilters} onReset={resetFilters}>
+            <Form.Item label="اسم المستخدم" name="username">
+              <Input placeholder="اسم المستخدم" />
+            </Form.Item>
 
-        <div className="toggle-search-button">
-          <Button
+            <Form.Item label="الصلاحيات" name="role">
+              <Select placeholder="اختر الصلاحيات" allowClear>
+                {roles.map((role) => (
+                  <Option key={role} value={role}>
+                    {role}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item label="المحافظة" name="governorate">
+              <Select placeholder="اختر المحافظة" allowClear>
+                {governorates.map((gov) => (
+                  <Option key={gov.id} value={gov.name}>
+                    {gov.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item label="اسم المكتب" name="officeName">
+              <Input placeholder="اسم المكتب" />
+            </Form.Item>
+
+            <Form.Item>
+              <Button type="primary" htmlType="submit"style={{ marginLeft: 8,height:"45px",width: "170px" }}>
+                بحث
+              </Button>
+              <Button htmlType="reset" style={{ marginLeft: 8,height:"45px",width: "170px" }}>
+                إعادة تعيين
+              </Button>
+            <Button
             type="primary"
             className="usermanagemenr-adduser"
             style={{
               width: "170px",
+              height:"45px",
               backgroundColor: "#04AA6D",
               border: "none",
             }}
@@ -366,10 +366,12 @@ const AdminUserManagment = () => {
           >
             إضافة مستخدم +
           </Button>
-          <Button type="primary" onClick={toggleSearch}>
-            {searchVisible ? " البحث" : " البحث"}
-          </Button>
+            </Form.Item>
+          </Form>
         </div>
+
+        
+   
 
         <div className="data-table-container">
           <Spin spinning={loading}>
@@ -402,18 +404,14 @@ const AdminUserManagment = () => {
               <Form.Item
                 name="username"
                 label="اسم المستخدم"
-                rules={[
-                  { required: true, message: "يرجى إدخال اسم المستخدم" },
-                ]}
+                rules={[{ required: true, message: "يرجى إدخال اسم المستخدم" }]}
               >
                 <Input placeholder="اسم المستخدم" />
               </Form.Item>
               <Form.Item
                 name="fullName"
                 label="الاسم الكامل"
-                rules={[
-                  { required: true, message: "يرجى إدخال الاسم الكامل" },
-                ]}
+                rules={[{ required: true, message: "يرجى إدخال الاسم الكامل" }]}
               >
                 <Input placeholder="الاسم الكامل" />
               </Form.Item>
@@ -456,12 +454,12 @@ const AdminUserManagment = () => {
                 label="المحافظة"
                 rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
               >
-                <Select 
-                  placeholder="اختر المحافظة" 
+                <Select
+                  placeholder="اختر المحافظة"
                   style={{ height: 45 }}
                   onChange={(value) => {
                     setSelectedGovernorate(value);
-                    form.setFieldValue('officeName', undefined);
+                    form.setFieldValue("officeName", undefined);
                   }}
                 >
                   {governorates.map((gov) => (
@@ -476,8 +474,8 @@ const AdminUserManagment = () => {
                 label="اسم المكتب"
                 rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}
               >
-                <Select 
-                  placeholder="اختر المكتب" 
+                <Select
+                  placeholder="اختر المكتب"
                   style={{ height: 45 }}
                   disabled={!selectedGovernorate}
                 >
@@ -522,146 +520,6 @@ const AdminUserManagment = () => {
               </Form.Item>
               <Button type="primary" htmlType="submit" block>
                 إضافة
-              </Button>
-            </Form>
-          </Modal>
-        </ConfigProvider>
-
-        {/* Edit User Modal */}
-        <ConfigProvider direction="rtl">
-          <Modal
-            className="model-container"
-            open={editModalVisible}
-            onCancel={closeEditModal}
-            footer={null}
-          >
-            <Form
-              form={form}
-              onFinish={handleSaveEdit}
-              layout="vertical"
-              className="Admin-user-add-model-conatiner-form"
-            >
-              <h1>تعديل المستخدم</h1>
-              <Form.Item
-                name="fullName"
-                label="الاسم الكامل"
-                rules={[
-                  { required: true, message: "يرجى إدخال الاسم الكامل" },
-                ]}
-              >
-                <Input placeholder="الاسم الكامل" />
-              </Form.Item>
-              <Form.Item
-                name="roles"
-                label="الصلاحيات"
-                rules={[{ required: true, message: "يرجى اختيار الصلاحيات" }]}
-              >
-                <Select
-                  mode="multiple"
-                  placeholder="اختر الصلاحيات"
-                  style={{ height: 45 }}
-                >
-                  {roles.map((role) => (
-                    <Option key={role} value={role}>
-                      {role}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item
-                name="position"
-                label="المنصب"
-                rules={[{ required: true, message: "يرجى اختيار المنصب" }]}
-              >
-                <Select placeholder="اختر المنصب" style={{ height: 45 }}>
-                  <Option value={1}>Manager</Option>
-                  <Option value={2}>Director</Option>
-                  <Option value={3}>Supervisor</Option>
-                  <Option value={4}>Accontnt</Option>
-                  <Option value={5}>FollowUpEmployee</Option>
-                  <Option value={6}>Reporting Analyst</Option>
-                  <Option value={7}>Sr.Controller</Option>
-                  <Option value={8}>Project Coordinator</Option>
-                  <Option value={9}>Operation Manager</Option>
-                </Select>
-              </Form.Item>
-              <Form.Item
-                name="governorate"
-                label="المحافظة"
-                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
-              >
-                <Select 
-                  placeholder="اختر المحافظة" 
-                  style={{ height: 45 }}
-                  onChange={(value) => {
-                    setSelectedGovernorate(value);
-                    form.setFieldValue('officeName', undefined);
-                  }}
-                >
-                  {governorates.map((gov) => (
-                    <Option key={gov.id} value={gov.id}>
-                      {gov.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-              <Form.Item
-                name="officeName"
-                label="اسم المكتب"
-                rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}
-              >
-                <Select 
-                  placeholder="اختر المكتب" 
-                  style={{ height: 45 }}
-                  disabled={!selectedGovernorate}
-                >
-                  {offices.map((office) => (
-                    <Option key={office.id} value={office.id}>
-                      {office.name}
-                    </Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <div className="border-t mt-4 pt-4">
-                <h3 className="mb-4">اعادة تعيين كلمة السر</h3>
-                <Form.Item
-                  name="newPassword"
-                  label="كلمة السر الجديدة"
-                  rules={[
-                    {
-                      pattern: /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
-                      message: "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية",
-                    },
-                    { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" },
-                  ]}
-                >
-                  <Input.Password placeholder="كلمة السر الجديدة" />
-                </Form.Item>
-                <Form.Item
-                  name="confirmNewPassword"
-                  label="تأكيد كلمة السر الجديدة"
-                  dependencies={["newPassword"]}
-                  rules={[
-                    ({ getFieldValue }) => ({
-                      validator(_, value) {
-                        if (!value || !getFieldValue("newPassword")) {
-                          return Promise.resolve();
-                        }
-                        if (value === getFieldValue("newPassword")) {
-                          return Promise.resolve();
-                        }
-                        return Promise.reject(new Error("كلمات السر غير متطابقة!"));
-                      },
-                    }),
-                  ]}
-                >
-                  <Input.Password placeholder="تأكيد كلمة السر الجديدة" />
-                </Form.Item>
-              </div>
-
-              <Button type="primary" htmlType="submit" block>
-                حفظ التعديلات
               </Button>
             </Form>
           </Modal>
