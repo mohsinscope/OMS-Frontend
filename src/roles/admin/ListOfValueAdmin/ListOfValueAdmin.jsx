@@ -429,6 +429,7 @@
                   key={field.name}
                   name={field.name}
                   label={field.label}
+                  style={{marginTop:"20px"}}
                   rules={[
                     { required: true, message: `الرجاء إدخال ${field.label}` },
                   ]}
@@ -436,7 +437,7 @@
                   {renderFormField(field)}
                 </Form.Item>
               ))}
-              <Form.Item>
+              <Form.Item  style={{marginTop:"20px"}}>
                 <Space style={{ justifyContent: "flex-end", width: "100%" }}>
                   <Button onClick={() => setIsModalOpen(false)}>إلغاء</Button>
                   <Button type="primary" htmlType="submit" loading={loading}>
