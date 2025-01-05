@@ -6,11 +6,12 @@ import {
   message,
   DatePicker,
   ConfigProvider,
+  Select,
 } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
 import usePermissionsStore from "./../../../store/permissionsStore";
-import axios from "axios"; // Import axios
+import axios from "axios";
 import "./superVisorAttendeceHistory.css";
 import Url from "./../../../store/url.js";
 
@@ -89,13 +90,7 @@ export default function SupervisorAttendanceHistory() {
           PageSize: pageSize,
         },
       };
-      
-      // Log the payload to check the body being sent
-      console.log("Payload for search request:", searchBody);
 
-      // Log the payload to check the body being sent
-      console.log("token:", accessToken);
-      // Using axios for POST request
       const response = await axios.post(`${Url}/api/Attendance/search`, searchBody, {
         headers: {
           "Content-Type": "application/json",
@@ -103,7 +98,6 @@ export default function SupervisorAttendanceHistory() {
         },
       });
 
-      // Handle pagination from response headers
       const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
@@ -241,37 +235,40 @@ export default function SupervisorAttendanceHistory() {
         className={`supervisor-attendance-history-fields ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
-        {/* Filter Fields */}
         <div className="filter-row">
           <label>المحافظة</label>
-          <select
+          <Select
             className="html-dropdown"
             value={isSupervisor ? userGovernorateId : selectedGovernorate}
-            onChange={(e) => setSelectedGovernorate(e.target.value)}
-            disabled={isSupervisor}>
-            <option value=""></option>
+            onChange={(value) => setSelectedGovernorate(value)}
+            disabled={isSupervisor}
+    >
+            <Select.Option value=""></Select.Option>
             {governorates.map((gov) => (
-              <option key={gov.id} value={gov.id}>
+              <Select.Option key={gov.id} value={gov.id}>
                 {gov.name}
-              </option>
+              </Select.Option>
             ))}
-          </select>
+          </Select>
         </div>
+
         <div className="filter-row">
           <label>المكتب</label>
-          <select
+          <Select
             className="html-dropdown"
             value={isSupervisor ? userOfficeId : selectedOffice}
-            onChange={(e) => setSelectedOffice(e.target.value)}
-            disabled={isSupervisor}>
-            <option value=""></option>
+            onChange={(value) => setSelectedOffice(value)}
+            disabled={isSupervisor}
+      >
+            <Select.Option value=""></Select.Option>
             {offices.map((office) => (
-              <option key={office.id} value={office.id}>
+              <Select.Option key={office.id} value={office.id}>
                 {office.name}
-              </option>
+              </Select.Option>
             ))}
-          </select>
+          </Select>
         </div>
+
         <div className="filter-row">
           <label>التاريخ من</label>
           <DatePicker
@@ -281,6 +278,7 @@ export default function SupervisorAttendanceHistory() {
             style={{ width: "100%" }}
           />
         </div>
+
         <div className="filter-row">
           <label>التاريخ إلى</label>
           <DatePicker
@@ -290,40 +288,42 @@ export default function SupervisorAttendanceHistory() {
             style={{ width: "100%" }}
           />
         </div>
+
         <div className="attendance-dropdown-wrapper">
           <label>نوع الدوام</label>
-          <select
-            className="attendance-dropdown"
+          <Select
+            className="html-dropdown"
             value={workingHours}
-            onChange={(e) => setWorkingHours(Number(e.target.value))}
-            style={{ padding: "0" }}>
-
-            <option value={3}>الكل</option>
-            <option value={1}>صباحي</option>
-            <option value={2}>مسائي</option>
-          </select>
+            onChange={(value) => setWorkingHours(value)}
+            >
+            <Select.Option value={3}>الكل</Select.Option>
+            <Select.Option value={1}>صباحي</Select.Option>
+            <Select.Option value={2}>مسائي</Select.Option>
+          </Select>
         </div>
-        <button
+
+        <Button
           className="attendance-search-button"
           onClick={handleSearch}
           loading={isLoading}>
           البحث
-        </button>
-        <button
+        </Button>
+
+        <Button
           className="attendance-reset-button"
           onClick={handleReset}
           disabled={isLoading}>
           إعادة التعيين
-        </button>
+        </Button>
 
         {hasCreatePermission && (
           <Link to="AttendenceAdd">
-            <button
+            <Button
               className="attendance-add-button"
               disabled={isLoading}
               type="primary">
               اضافة حضور +
-            </button>
+            </Button>
           </Link>
         )}
       </div>

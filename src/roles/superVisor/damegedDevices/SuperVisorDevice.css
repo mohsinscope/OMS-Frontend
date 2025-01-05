@@ -84,7 +84,6 @@
 .supervisor-devices-dameged-dropdown {
   width: 200px; /* Consistent width for inputs and dropdowns */
   height: 45px; /* Slightly smaller height for better proportion */
-  padding: 0 15px; /* Adjust padding for cleaner design */
   border-radius: 6px; /* Rounded corners for a modern look */
   border: 1px solid #ccc; /* Neutral border color */
   font-size: 14px; /* Slightly smaller font for compact layout */

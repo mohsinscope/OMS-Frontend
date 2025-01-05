@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, message, Button, ConfigProvider, DatePicker } from "antd";
+import { Table, message, Button, ConfigProvider, DatePicker, Select, Input } from "antd";
 import { Link } from "react-router-dom";
 import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store";
@@ -16,7 +16,6 @@ const SuperVisorDevices = () => {
     permissions,
     toggleSearch,
     roles,
-    
   } = useAuthStore();
 
   // Check permissions
@@ -114,11 +113,10 @@ const SuperVisorDevices = () => {
     handleSearch();
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
+  const handleInputChange = (value) => {
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      serialNumber: value
     }));
   };
 
@@ -155,10 +153,9 @@ const SuperVisorDevices = () => {
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
-  const handleGovernorateChange = async (e) => {
-    const governorateId = e.target.value;
-    setSelectedGovernorate(governorateId);
-    await fetchOffices(governorateId);
+  const handleGovernorateChange = async (value) => {
+    setSelectedGovernorate(value);
+    await fetchOffices(value);
   };
 
   // Data fetching effects and callbacks
@@ -280,8 +277,6 @@ const SuperVisorDevices = () => {
       dir="rtl">
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
 
-     
-
       <div
         className={`supervisor-devices-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
@@ -291,47 +286,47 @@ const SuperVisorDevices = () => {
           className="supervisor-devices-dameged-form">
           <div className="supervisor-devices-dameged-field-wrapper">
             <label className="supervisor-devices-dameged-label">المحافظة</label>
-            <select
-              value={selectedGovernorate || ""}
+            <Select
+              value={selectedGovernorate || undefined}
               onChange={handleGovernorateChange}
               disabled={isSupervisor}
-              className="supervisor-devices-dameged-dropdown">
-              <option value="">اختر المحافظة</option>
+              className="supervisor-devices-dameged-dropdown"
+              placeholder="اختر المحافظة"
+           >
               {governorates.map((gov) => (
-                <option key={gov.id} value={gov.id}>
+                <Select.Option key={gov.id} value={gov.id}>
                   {gov.name}
-                </option>
+                </Select.Option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="supervisor-devices-dameged-field-wrapper">
             <label className="supervisor-devices-dameged-label">
               اسم المكتب
             </label>
-            <select
-              value={selectedOffice || ""}
-              onChange={(e) => setSelectedOffice(e.target.value)}
+            <Select
+              value={selectedOffice || undefined}
+              onChange={(value) => setSelectedOffice(value)}
               disabled={isSupervisor || !selectedGovernorate}
-              className="supervisor-devices-dameged-dropdown">
-              <option value="">اختر المكتب</option>
+              className="supervisor-devices-dameged-dropdown"
+              placeholder="اختر المكتب"
+           >
               {offices.map((office) => (
-                <option key={office.id} value={office.id}>
+                <Select.Option key={office.id} value={office.id}>
                   {office.name}
-                </option>
+                </Select.Option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="supervisor-devices-dameged-field-wrapper">
             <label className="supervisor-devices-dameged-label">
               الرقم التسلسلي
             </label>
-            <input
-              type="text"
-              name="serialNumber"
+            <Input
               value={formData.serialNumber}
-              onChange={handleInputChange}
+              onChange={(e) => handleInputChange(e.target.value)}
               className="supervisor-devices-dameged-input"
             />
           </div>
@@ -345,6 +340,7 @@ const SuperVisorDevices = () => {
               onChange={(date) => handleDateChange(date, 'startDate')}
               value={formData.startDate}
               className="supervisor-devices-dameged-input"
+              style={{ width: '100%' }}
             />
           </div>
 
@@ -357,25 +353,25 @@ const SuperVisorDevices = () => {
               onChange={(date) => handleDateChange(date, 'endDate')}
               value={formData.endDate}
               className="supervisor-devices-dameged-input"
+              style={{ width: '100%' }}
             />
           </div>
 
           <div className="supervisor-device-filter-buttons">
-            <button type="submit" className="supervisor-devices-dameged-button">
+            <Button type="primary" htmlType="submit" className="supervisor-devices-dameged-button">
               ابحث
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
               onClick={handleReset}
               className="supervisor-devices-dameged-button">
               إعادة تعيين
-            </button>
+            </Button>
           </div>
           {hasCreatePermission && (
             <Link to="/damegedDevices/add">
-              <button className="supervisor-filter-buttons">
+              <Button type="primary" className="supervisor-filter-buttons">
                 اضافة جهاز جديد +
-              </button>
+              </Button>
             </Link>
           )}
         </form>

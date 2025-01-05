@@ -13,8 +13,16 @@ const AttendanceCard = ({ children, className = '' }) => (
 );
 
 const AttendanceStats = () => {
-  const { profile } = useAuthStore();
+  const { profile, accessToken } = useAuthStore();
   
+  // Configure axios headers with the token
+  const getAuthHeaders = () => ({
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    }
+  });
+
   const getYesterdayDate = () => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -42,11 +50,14 @@ const AttendanceStats = () => {
     eveningShiftPercentage: 0
   });
 
-  // Fetch governorates list
+  // Fetch governorates list with auth
   const fetchGovernorates = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${Url}/api/Governorate/dropdown`);
+      const response = await axios.get(
+        `${Url}/api/Governorate/dropdown`,
+        getAuthHeaders()
+      );
       setGovernorates(response.data);
       return response.data;
     } catch (error) {
@@ -57,7 +68,7 @@ const AttendanceStats = () => {
     }
   };
 
-  // Fetch offices for selected governorate
+  // Fetch offices for selected governorate with auth
   const fetchOffices = async (governorateId) => {
     if (!governorateId) {
       setOffices([]);
@@ -67,7 +78,10 @@ const AttendanceStats = () => {
 
     try {
       setLoading(true);
-      const response = await axios.get(`${Url}/api/Governorate/dropdown/${governorateId}`);
+      const response = await axios.get(
+        `${Url}/api/Governorate/dropdown/${governorateId}`,
+        getAuthHeaders()
+      );
       if (response.data && response.data.length > 0 && response.data[0].offices) {
         setOffices(response.data[0].offices);
       } else {
@@ -83,7 +97,7 @@ const AttendanceStats = () => {
     }
   };
 
-  // Fetch attendance statistics
+  // Fetch attendance statistics with auth
   const fetchAttendanceStats = async () => {
     setNoDataMessage(false);
     try {
@@ -107,15 +121,15 @@ const AttendanceStats = () => {
         axios.post(`${Url}/api/Attendance/search/statistics`, {
           ...baseBody,
           WorkingHours: 3
-        }),
+        }, getAuthHeaders()),
         axios.post(`${Url}/api/Attendance/search/statistics`, {
           ...baseBody,
           WorkingHours: 1
-        }),
+        }, getAuthHeaders()),
         axios.post(`${Url}/api/Attendance/search/statistics`, {
           ...baseBody,
           WorkingHours: 2
-        })
+        }, getAuthHeaders())
       ]);
 
       setAttendanceStats({
@@ -132,7 +146,7 @@ const AttendanceStats = () => {
     }
   };
 
-  // Fetch governorate statistics
+  // Fetch governorate statistics with auth
   const fetchGovernorateStats = async (govList = []) => {
     try {
       const baseBody = {
@@ -151,12 +165,12 @@ const AttendanceStats = () => {
             ...baseBody,
             GovernorateId: gov.id,
             WorkingHours: 1
-          }),
+          }, getAuthHeaders()),
           axios.post(`${Url}/api/Attendance/search/statistics`, {
             ...baseBody,
             GovernorateId: gov.id,
             WorkingHours: 2
-          })
+          }, getAuthHeaders())
         ]);
 
         morningStatsData.push({
@@ -170,7 +184,6 @@ const AttendanceStats = () => {
         });
       }
 
-      // Sort data from highest to lowest value
       const sortedMorningData = morningStatsData.sort((a, b) => b.value - a.value);
       const sortedEveningData = eveningStatsData.sort((a, b) => b.value - a.value);
       
@@ -243,55 +256,54 @@ const AttendanceStats = () => {
     return null;
   };
 
-// Update the renderChart function
-// Update the renderChart function
-const renderChart = (data, title) => (
-  <AttendanceCard>
-    <h3 className="attendance-chart-title text-xl mb-6 text-center font-bold">{title}</h3>
-    <div className="bar-chart-container">
-      <BarChart
-        width={600}
-        height={500}
-        data={data}
-        layout="vertical"
-        margin={{ top: 5, right: 30, left: 0, bottom: 5 }} // Removed left margin
-        barSize={20}
-      >
-        <XAxis 
-          type="number"
-          axisLine={false}
-          tickLine={false}
-          tick={false}
-          domain={[0, 'dataMax + 5']}
-        />
-        <YAxis
-          dataKey="name"
-          type="category"
-          axisLine={false}
-          tickLine={false}
-          tick={{
-            fill: '#000000',
-            fontSize: 14,
-            dx: -10  // Adjusted text position
-          }}
-          width={120}  // Adjusted width for text
-        />
-        <Tooltip content={<CustomTooltip />} cursor={false} />
-        <Bar
-          dataKey="value"
-          fill="#6366f1"
-          radius={[0, 4, 4, 0]}
-          label={{
-            position: 'right',
-            fill: '#000000',
-            fontSize: 14,
-            dx: 10
-          }}
-        />
-      </BarChart>
-    </div>
-  </AttendanceCard>
-);
+  // Render chart function
+  const renderChart = (data, title) => (
+    <AttendanceCard>
+      <h3 className="attendance-chart-title text-xl mb-6 text-center font-bold">{title}</h3>
+      <div className="bar-chart-container">
+        <BarChart
+          width={600}
+          height={500}
+          data={data}
+          layout="vertical"
+          margin={{ top: 5, right: 30, left: 0, bottom: 5 }}
+          barSize={20}
+        >
+          <XAxis 
+            type="number"
+            axisLine={false}
+            tickLine={false}
+            tick={false}
+            domain={[0, 'dataMax + 5']}
+          />
+          <YAxis
+            dataKey="name"
+            type="category"
+            axisLine={false}
+            tickLine={false}
+            tick={{
+              fill: '#000000',
+              fontSize: 14,
+              dx: -10
+            }}
+            width={120}
+          />
+          <Tooltip content={<CustomTooltip />} cursor={false} />
+          <Bar
+            dataKey="value"
+            fill="#6366f1"
+            radius={[0, 4, 4, 0]}
+            label={{
+              position: 'right',
+              fill: '#000000',
+              fontSize: 14,
+              dx: 10
+            }}
+          />
+        </BarChart>
+      </div>
+    </AttendanceCard>
+  );
   return (
     <div className="attendence-container-stats" dir="rtl">
       <div className="attendance-filters-stats flex gap-4 mb-6">
@@ -346,7 +358,7 @@ const renderChart = (data, title) => (
             disabled={loading}
             className="attendance-search-button w-full"
           >
-            <Search size={20} />
+            <Search size={0} />
             {loading ? 'جاري البحث...' : 'ابحث'}
           </button>
         </div>

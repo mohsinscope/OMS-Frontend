@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Table, message, Button, ConfigProvider, DatePicker } from "antd";
+import { Table, message, Button, ConfigProvider, DatePicker, Select, Input } from "antd";
 import { Link } from "react-router-dom";
 import "./SuperVisorLecturerhistory.css";
 import useAuthStore from "./../../../store/store";
@@ -178,10 +178,9 @@ const SuperVisorLecturerhistory = () => {
     handleSearch(page);
   };
 
-  const handleGovernorateChange = async (e) => {
-    const governorateId = e.target.value;
-    setSelectedGovernorate(governorateId);
-    await fetchOffices(governorateId);
+  const handleGovernorateChange = async (value) => {
+    setSelectedGovernorate(value);
+    await fetchOffices(value);
   };
 
   const handleFormSubmit = (e) => {
@@ -189,11 +188,10 @@ const SuperVisorLecturerhistory = () => {
     handleSearch();
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
+  const handleInputChange = (value) => {
+    setFormData(prev => ({
       ...prev,
-      [name]: value,
+      title: value
     }));
   };
 
@@ -277,7 +275,6 @@ const SuperVisorLecturerhistory = () => {
       dir="rtl">
       <h1 className="supervisor-Lectur-title">المحاضر</h1>
 
-
       <div
         className={`supervisor-Lectur-filters ${
           searchVisible ? "animate-show" : "animate-hide"
@@ -287,50 +284,50 @@ const SuperVisorLecturerhistory = () => {
             <label htmlFor="governorate" className="supervisor-Lectur-label">
               المحافظة
             </label>
-            <select
+            <Select
               id="governorate"
-              value={selectedGovernorate || ""}
+              value={selectedGovernorate || undefined}
               onChange={handleGovernorateChange}
               disabled={isSupervisor}
-              className="supervisor-Lectur-select">
-              <option value="">اختر المحافظة</option>
+              className="supervisor-Lectur-select"
+              placeholder="اختر المحافظة"
+              >
               {governorates.map((gov) => (
-                <option key={gov.id} value={gov.id}>
+                <Select.Option key={gov.id} value={gov.id}>
                   {gov.name}
-                </option>
+                </Select.Option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="supervisor-Lectur-field-wrapper">
             <label htmlFor="office" className="supervisor-Lectur-label">
               اسم المكتب
             </label>
-            <select
+            <Select
               id="office"
-              value={selectedOffice || ""}
-              onChange={(e) => setSelectedOffice(e.target.value)}
+              value={selectedOffice || undefined}
+              onChange={(value) => setSelectedOffice(value)}
               disabled={isSupervisor || !selectedGovernorate}
-              className="supervisor-Lectur-select">
-              <option value="">اختر المكتب</option>
+              className="supervisor-Lectur-select"
+              placeholder="اختر المكتب"
+              >
               {offices.map((office) => (
-                <option key={office.id} value={office.id}>
+                <Select.Option key={office.id} value={office.id}>
                   {office.name}
-                </option>
+                </Select.Option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div className="supervisor-Lectur-field-wrapper">
             <label htmlFor="title" className="supervisor-Lectur-label">
               عنوان المحضر
             </label>
-            <input
-              type="text"
+            <Input
               id="title"
-              name="title"
               value={formData.title}
-              onChange={handleInputChange}
+              onChange={(e) => handleInputChange(e.target.value)}
               className="supervisor-Lectur-input"
             />
           </div>
@@ -340,10 +337,12 @@ const SuperVisorLecturerhistory = () => {
               التاريخ من
             </label>
             <DatePicker
+              id="startDate"
               placeholder="اختر التاريخ"
               onChange={(date) => handleDateChange(date, 'startDate')}
               value={formData.startDate}
               className="supervisor-Lectur-input"
+              style={{ width: '100%' }}
             />
           </div>
 
@@ -352,29 +351,30 @@ const SuperVisorLecturerhistory = () => {
               التاريخ إلى
             </label>
             <DatePicker
+              id="endDate"
               placeholder="اختر التاريخ"
               onChange={(date) => handleDateChange(date, 'endDate')}
               value={formData.endDate}
               className="supervisor-Lectur-input"
+              style={{ width: '100%' }}
             />
           </div>
 
           <div className="supervisor-Lectur-buttons">
-            <button type="submit" className="supervisor-Lectur-button">
+            <Button type="primary" htmlType="submit" className="supervisor-Lectur-button">
               ابحث
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
               onClick={handleReset}
               className="supervisor-Lectur-button">
               إعادة تعيين
-            </button>
+            </Button>
           </div>
           {hasCreatePermission && (
             <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
-              <button className="supervisor-add-Lectur-button">
+              <Button type="primary" className="supervisor-add-Lectur-button">
                 اضافة محضر جديد +
-              </button>
+              </Button>
             </Link>
           )}
         </form>
