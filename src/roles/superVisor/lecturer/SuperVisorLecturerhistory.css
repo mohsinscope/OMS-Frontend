@@ -187,3 +187,6 @@
   border-radius: 6px;
   font-size: large;
 }
+.supervisor-Lectur-field-wrapper .ant-select{
+    width: 200px !important;
+}

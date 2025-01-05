@@ -62,7 +62,7 @@
   .attendance-filters-stats button {
     background-color: #4880ff;
     color: white;
-    min-width: 120px;
+    width: 150px;
     height: 45px;
     border: none;
     border-radius: 8px;
@@ -231,7 +231,6 @@
   /* Specific style for pie chart section */
 .stats-chart-section:has(.recharts-pie) {
   width: 600px;
-  margin: 0 auto;
 }
   /* Chart container */
   .recharts-wrapper {
@@ -298,3 +297,4 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
   
+ 
