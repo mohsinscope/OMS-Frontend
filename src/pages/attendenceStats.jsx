@@ -42,6 +42,7 @@ const AttendanceStats = () => {
   });
   const [attendanceStats, setAttendanceStats] = useState({
     totalStaffCount: 0,
+    totalStaffInOffice: 0,
     availableStaff: 0,
     availableStaffPercentage: 0,
     availableMorningShiftStaff: 0,
@@ -134,6 +135,7 @@ const AttendanceStats = () => {
 
       setAttendanceStats({
         totalStaffCount: response.data.totalStaffCount,
+        totalStaffInOffice: response.data.totalStaffInOffice,
         availableStaff: response.data.availableStaff,
         availableStaffPercentage: response.data.availableStaffPercentage,
         availableMorningShiftStaff: morningResponse.data.availableStaff,
@@ -304,6 +306,7 @@ const AttendanceStats = () => {
       </div>
     </AttendanceCard>
   );
+
   return (
     <div className="attendence-container-stats" dir="rtl">
       <div className="attendance-filters-stats flex gap-4 mb-6">
@@ -358,7 +361,7 @@ const AttendanceStats = () => {
             disabled={loading}
             className="attendance-search-button w-full"
           >
-            <Search size={0} />
+            <Search size={20} />
             {loading ? 'جاري البحث...' : 'ابحث'}
           </button>
         </div>
@@ -367,18 +370,23 @@ const AttendanceStats = () => {
       <div className="attendance-summary-cards attendance-card-container-stats flex flex-wrap gap-4 mb-6">
         <AttendanceCard className='card-attendence-stats-container'>
           <h3 className="attendance-summary-title text-lg mb-2">عدد المحطات الكلي</h3>
-          <p className="attendance-summary-value text-3xl font-bold">{attendanceStats.totalStaffCount}</p>
+          <p className="attendance-summary-value text-3xl font-bold">
+            {selectedOffice ? attendanceStats.totalStaffInOffice : attendanceStats.totalStaffCount}
+          </p>
         </AttendanceCard>
+        
         <AttendanceCard className='card-attendence-stats-container'>
           <h3 className="attendance-summary-title text-lg mb-2">عدد الحضور الكلي</h3>
           <p className="attendance-summary-value text-3xl font-bold">{attendanceStats.availableStaff}</p>
           <p className="attendance-percentage text-lg mt-2 text-gray-500">{attendanceStats.availableStaffPercentage}%</p>
         </AttendanceCard>
+        
         <AttendanceCard className='card-attendence-stats-container'>
           <h3 className="attendance-summary-title text-lg mb-2">الموظفين في الشفت الصباحي</h3>
           <p className="attendance-summary-value text-3xl font-bold">{attendanceStats.availableMorningShiftStaff}</p>
           <p className="attendance-percentage text-lg mt-2 text-gray-500">{attendanceStats.morningShiftPercentage}%</p>
         </AttendanceCard>
+        
         <AttendanceCard className='card-attendence-stats-container'>
           <h3 className="attendance-summary-title text-lg mb-2">الموظفين في الشفت المسائي</h3>
           <p className="attendance-summary-value text-3xl font-bold">{attendanceStats.availableEveningShiftStaff}</p>
