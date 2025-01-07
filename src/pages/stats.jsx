@@ -11,7 +11,12 @@ const COLORS = [
   "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0",
   "#FF5722", "#00BCD4", "#E91E63", "#3F51B5", "#CDDC39"
 ];
-
+// Define your chart data
+const chartData = [
+  { name: "اجهزة تالفة", value: 400 },
+  { name: "جوازات تالفة", value: 300 },
+  // Add more data as needed
+];
 export default function Stats() {
   const { profile, accessToken, isSidebarCollapsed } = useAuthStore();
   const [chartData, setChartData] = useState([]);
@@ -423,8 +428,9 @@ export default function Stats() {
                     paddingAngle={0}
                     dataKey="value"
                   >
-                 <Cell fill="#FF5252" />  {/* Red for total stations */}
-                 <Cell fill="#4CAF50" />  {/* Green for attendance */}
+        {chartData.map((entry, index) => (
+          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+        ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
