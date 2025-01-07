@@ -65,11 +65,12 @@ const SuperVisorLecturerhistory = () => {
         },
         {
           headers: {
+            'Content-Type': 'application/json',  // Explicitly set the content type to JSON
             Authorization: `Bearer ${accessToken}`,
           },
         }
       );
-
+  
       if (response.data) {
         setLectures(response.data);
         const paginationHeader = response.headers["pagination"];
@@ -83,13 +84,10 @@ const SuperVisorLecturerhistory = () => {
     } catch (error) {
       console.error("API Error:", error);
       message.error(
-        `حدث خطأ أثناء جلب المحاضرات: ${
-          error.response?.data?.message || error.message
-        }`
+        `حدث خطأ أثناء جلب المحاضرات: ${error.response?.data?.message || error.message}`
       );
     }
   };
-
   const handleSearch = async (page = 1) => {
     const payload = {
       title: formData.title || "",

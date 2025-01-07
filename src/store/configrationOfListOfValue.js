@@ -108,9 +108,9 @@ const Config = {
  "/admin/companies": {
     getEndpoint: "/api/company",
     postEndpoint: "/api/company/add",
-    putEndpoint: (id) => `/api/company/${id}`,
+    
     deleteEndpoint: (id) => `/api/company/${id}`,
-    columns: [
+        columns: [
       { title: "اسم الشركة", dataIndex: "name", key: "name" }
     ],
     formFields: [
@@ -121,6 +121,9 @@ const Config = {
   "/admin/lecture-types": {
     getEndpoint: "/api/Company",
     postEndpoint: "/api/company/add-lecture-type",
+    putEndpoint: (id) => `/api/company/lectureType/${id}`,
+    deleteEndpoint: (id) => `/api/company/lectureType/${id}`,
+
     columns: [
       { title: "نوع المحضر", dataIndex: "name", key: "name" },
       { title: "الشركة", dataIndex: "companyName", key: "companyName" }

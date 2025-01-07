@@ -62,14 +62,15 @@ const SuperVisorDevices = () => {
         },
         {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+            'Content-Type': 'application/json',  // Ensure it's always set to JSON
+            'Authorization': `Bearer ${accessToken}`,
+          }
         }
       );
-
+  
       if (response.data) {
         setDevices(response.data);
-
+  
         const paginationHeader = response.headers["pagination"];
         if (paginationHeader) {
           const paginationInfo = JSON.parse(paginationHeader);
@@ -87,6 +88,7 @@ const SuperVisorDevices = () => {
       );
     }
   };
+  
 
   // Event handlers
   const handleSearch = async (page = 1) => {
@@ -161,7 +163,10 @@ const SuperVisorDevices = () => {
   const fetchGovernorates = useCallback(async () => {
     try {
       const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        }
       });
       setGovernorates(response.data);
 
@@ -185,7 +190,10 @@ const SuperVisorDevices = () => {
       const response = await axiosInstance.get(
         `${Url}/api/Governorate/dropdown/${governorateId}`,
         {
-          headers: { Authorization: `Bearer ${accessToken}` },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          }
         }
       );
 

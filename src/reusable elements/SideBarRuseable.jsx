@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/store";
 import { MENU_ITEMS, COMMON_MENU_ITEMS } from "../config/menuConfig";
 import Icons from "./icons";
+import axios from "axios";
+import Url from "../store/url";
 import "./../pages/dashboard.css";
 
 const DynamicSidebar = ({
@@ -15,7 +17,7 @@ const DynamicSidebar = ({
   logoutClassName,
 }) => {
   const navigate = useNavigate();
-  const { permissions, roles, isLoggedIn, isSidebarCollapsed,toggleSidebar } = useAuthStore();
+  const { permissions, roles, isLoggedIn, isSidebarCollapsed, toggleSidebar } = useAuthStore();
   const [visibleMenuItems, setVisibleMenuItems] = useState([]);
   const [visibleCommonItems, setVisibleCommonItems] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -34,9 +36,7 @@ const DynamicSidebar = ({
     const filterMenuItems = () => {
       if (!isLoggedIn || (!permissions && !roles) || (permissions?.length === 0 && roles?.length === 0)) {
         setVisibleMenuItems([]);
-        setVisibleCommonItems(
-          COMMON_MENU_ITEMS.filter((item) => item.role.length === 0)
-        );
+        setVisibleCommonItems(COMMON_MENU_ITEMS.filter((item) => item.role.length === 0));
         return;
       }
 
@@ -51,7 +51,7 @@ const DynamicSidebar = ({
         }
         return false; // If neither role nor permission is specified, hide the item
       });
-      
+
       setVisibleMenuItems(accessibleMenuItems);
       setVisibleCommonItems(COMMON_MENU_ITEMS);
     };
@@ -59,7 +59,45 @@ const DynamicSidebar = ({
     filterMenuItems();
   }, [permissions, roles, isLoggedIn, isInitialized]);
 
-  const handleMenuClick = (path, action) => {
+  // Function to refresh the token
+  const refreshTokenAPI = async () => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    try {
+      const response = await axios.post(
+        `${Url}/api/account/refresh-token`,
+        {
+          AccessToken: localStorage.getItem("accessToken"),
+          RefreshToken: refreshToken,
+        }
+      );
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", newRefreshToken);
+      return true;
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      onLogout(); // Logout if refresh token fails
+      return false;
+    }
+  };
+
+  // Function to check if token is expired
+  const tokenIsExpired = (token) => {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const expirationTime = payload.exp * 1000; // Convert expiration to milliseconds
+    return Date.now() > expirationTime;
+  };
+
+  const handleMenuClick = async (path, action) => {
+    const token = localStorage.getItem("accessToken");
+
+    // If token is expired or not available, refresh the token
+    if (!token || tokenIsExpired(token)) {
+      const tokenRefreshed = await refreshTokenAPI();
+      if (!tokenRefreshed) return; // If refresh fails, stop the navigation
+    }
+
+    // If refresh is successful or token is valid, navigate to the path
     if (action === "logout") {
       onLogout();
     } else if (path) {
@@ -82,11 +120,9 @@ const DynamicSidebar = ({
           key={item.path || index}
           className={itemClass}
           onClick={() => handleMenuClick(item.path, item.action)}
-          style={{ cursor: "pointer" }}>
-          <Icons
-            type={item.icon}
-            color={isActive ? "#1677ff" : "currentColor"}
-          />
+          style={{ cursor: "pointer" }}
+        >
+          <Icons type={item.icon} color={isActive ? "#1677ff" : "currentColor"} />
           <h3 style={{ color: isActive ? activeColor : "" }}>{item.label}</h3>
         </div>
       );
@@ -106,7 +142,8 @@ const DynamicSidebar = ({
     <div
       className={`${sidebarClassName || "sidebar"} ${
         isSidebarCollapsed ? "collapsed" : ""
-      }`}>
+      }`}
+    >
       {visibleMenuItems.length > 0 && (
         <div className="sidebar-top">
           {visibleMenuItems.map(renderMenuItem)}

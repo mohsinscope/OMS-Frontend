@@ -13,7 +13,7 @@ import {
   Select,
   Space,
 } from "antd";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import axios from "axios";
 import Url from "./../../../store/url.js";
 import Config from "./../../../store/configrationOfListOfValue.js";
 import useAuthStore from "./../../../store/store.js";
@@ -40,7 +40,7 @@ export default function ListOfValueAdmin() {
     total: 0,
   });
 
-  const api = axiosInstance.create({
+  const api = axios.create({
     baseURL: Url,
   });
 
@@ -178,15 +178,68 @@ export default function ListOfValueAdmin() {
     }
   }, [currentPath]);
 
-  const handleItemClick = (item) => {
+  const handleItemClick = async (item) => {
     const selected = Config[item.path];
     if (!selected) {
       message.error("لم يتم العثور على التكوين المطلوب");
       return;
     }
+  
+    // Step 1: Check if the token is valid before navigating
+    const isTokenValid = await checkTokenValidity();
+  
+    if (!isTokenValid) {
+      // Step 2: Refresh the token if it's invalid or expired
+      const newAccessToken = await refreshAccessToken();
+      if (!newAccessToken) {
+        message.error("حدث خطأ في تجديد التوكن. الرجاء تسجيل الدخول مرة أخرى.");
+        return;
+      }
+    }
+  
+    // Step 3: Update current path and navigate
     setCurrentPath(item.path);
     setSelectedConfig(selected);
     setCurrentLabel(item.label);
+    navigate(item.path);  // Navigate to the selected path
+  };
+  
+  // Function to check token validity (custom logic can be added here)
+  const checkTokenValidity = async () => {
+    const token = localStorage.getItem('accessToken');
+    // Example check, could be a server-side validation or checking token expiration
+    return token ? true : false;
+  };
+  
+  // Function to refresh the token by making a request to the refresh-token endpoint
+  const refreshAccessToken = async () => {
+    const currentAccessToken = localStorage.getItem('accessToken');
+    const currentRefreshToken = localStorage.getItem('refreshToken');
+  
+    if (!currentAccessToken || !currentRefreshToken) {
+      console.log('[Axios] No tokens available for refresh');
+      return null;
+    }
+  
+    try {
+      const response = await axios.post(`${Url}/api/account/refresh-token`, {
+        AccessToken: currentAccessToken,
+        RefreshToken: currentRefreshToken,
+      });
+  
+      const { accessToken: newAccessToken } = response.data;
+  
+      if (newAccessToken) {
+        // Store the new access token
+        localStorage.setItem('accessToken', newAccessToken);
+        return newAccessToken;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('[Axios] Failed to refresh token:', error);
+      return null;
+    }
   };
 
   const createPayload = (values) => {
@@ -429,7 +482,9 @@ export default function ListOfValueAdmin() {
           >
             <Form
               form={form}
+              className="dammaged-passport-container-edit-modal"
               onFinish={isEditMode ? handleUpdate : handleAdd}
+              
               layout="vertical"
             >
               {formFields.map((field) => (
