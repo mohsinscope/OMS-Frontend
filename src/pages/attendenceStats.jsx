@@ -3,8 +3,8 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { Search } from 'lucide-react';
 import './attendenceState.css';
 import useAuthStore from './../store/store.js';
-import axios from 'axios';
 import Url from './../store/url.js';
+import axiosInstance from './../intercepters/axiosInstance.js';
 
 const AttendanceCard = ({ children, className = '' }) => (
   <div className={`attendance-card bg-white rounded-lg shadow-sm p-4 ${className}`}>
@@ -54,7 +54,7 @@ const AttendanceStats = () => {
   const fetchGovernorates = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(
+      const response = await axiosInstance.get(
         `${Url}/api/Governorate/dropdown`,
         getAuthHeaders()
       );
@@ -78,7 +78,7 @@ const AttendanceStats = () => {
 
     try {
       setLoading(true);
-      const response = await axios.get(
+      const response = await axiosInstance.get(
         `${Url}/api/Governorate/dropdown/${governorateId}`,
         getAuthHeaders()
       );
@@ -118,15 +118,15 @@ const AttendanceStats = () => {
       }
 
       const [response, morningResponse, eveningResponse] = await Promise.all([
-        axios.post(`${Url}/api/Attendance/search/statistics`, {
+        axiosInstance.post(`${Url}/api/Attendance/search/statistics`, {
           ...baseBody,
           WorkingHours: 3
         }, getAuthHeaders()),
-        axios.post(`${Url}/api/Attendance/search/statistics`, {
+        axiosInstance.post(`${Url}/api/Attendance/search/statistics`, {
           ...baseBody,
           WorkingHours: 1
         }, getAuthHeaders()),
-        axios.post(`${Url}/api/Attendance/search/statistics`, {
+        axiosInstance.post(`${Url}/api/Attendance/search/statistics`, {
           ...baseBody,
           WorkingHours: 2
         }, getAuthHeaders())
@@ -161,12 +161,12 @@ const AttendanceStats = () => {
 
       for (const gov of governoratesToUse) {
         const [morningResponse, eveningResponse] = await Promise.all([
-          axios.post(`${Url}/api/Attendance/search/statistics`, {
+          axiosInstance.post(`${Url}/api/Attendance/search/statistics`, {
             ...baseBody,
             GovernorateId: gov.id,
             WorkingHours: 1
           }, getAuthHeaders()),
-          axios.post(`${Url}/api/Attendance/search/statistics`, {
+          axiosInstance.post(`${Url}/api/Attendance/search/statistics`, {
             ...baseBody,
             GovernorateId: gov.id,
             WorkingHours: 2

@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import { DatePicker } from "antd";
-import axios from "axios";
+
+import axiosInstance from './../intercepters/axiosInstance.js';
 import "./stats.css";
 import Url from "./../store/url.js";
 import useAuthStore from "./../store/store.js";
@@ -11,7 +12,12 @@ const COLORS = [
   "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0",
   "#FF5722", "#00BCD4", "#E91E63", "#3F51B5", "#CDDC39"
 ];
-
+// Define your chart data
+const chartData = [
+  { name: "اجهزة تالفة", value: 400 },
+  { name: "جوازات تالفة", value: 300 },
+  // Add more data as needed
+];
 export default function Stats() {
   const { profile, accessToken, isSidebarCollapsed } = useAuthStore();
   const [chartData, setChartData] = useState([]);
@@ -34,7 +40,7 @@ export default function Stats() {
 
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axios.get(`${Url}/api/Governorate/dropdown`, {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -54,7 +60,7 @@ export default function Stats() {
     }
 
     try {
-      const response = await axios.get(`${Url}/api/Governorate/dropdown/${governorateId}`, {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${governorateId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`
         }
@@ -82,12 +88,12 @@ export default function Stats() {
   const fetchTypesData = useCallback(async () => {
     try {
       const [deviceTypesRes, passportTypesRes] = await Promise.all([
-        axios.get(`${Url}/api/damageddevicetype/all`, {
+        axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
         }),
-        axios.get(`${Url}/api/damagedtype/all`, {
+        axiosInstance.get(`${Url}/api/damagedtype/all`, {
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -120,7 +126,7 @@ export default function Stats() {
           return;
         }
 
-        const response = await axios.post(`${Url}/api/Attendance/statistics/office`, {
+        const response = await axiosInstance.post(`${Url}/api/Attendance/statistics/office`, {
           officeId: selectedOffice,
           workingHours: workingHours,
           date: `${selectedDate.format('YYYY-MM-DD')}T00:00:00Z`
@@ -165,7 +171,7 @@ export default function Stats() {
           EndDate: endDate ? `${endDate.format('YYYY-MM-DD')}T00:00:00Z` : null,
           [selectedTab === "damagedDevices" ? "DamagedDeviceTypeId" : "DamagedTypeId"]: type.id
         };
-        return axios.post(endpoint, body, {
+        return axiosInstance.post(endpoint, body, {
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -423,8 +429,9 @@ export default function Stats() {
                     paddingAngle={0}
                     dataKey="value"
                   >
-                 <Cell fill="#FF5252" />  {/* Red for total stations */}
-                 <Cell fill="#4CAF50" />  {/* Green for attendance */}
+        {chartData.map((entry, index) => (
+          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+        ))}
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
