@@ -23,12 +23,12 @@ const Config = {
         key: "printingStaff",
       },
       {
-        title: "موظفوا الجودة",
+        title: "موظفو الجودة",
         dataIndex: "qualityStaff",
         key: "qualityStaff",
       },
       {
-        title: "موظفو التوصيل",
+        title: "موظفو التسليم",
         dataIndex: "deliveryStaff",
         key: "deliveryStaff",
       },
