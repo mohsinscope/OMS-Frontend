@@ -3,7 +3,7 @@ import { Table, message, Button, ConfigProvider, DatePicker, Select, Input } fro
 import { Link } from "react-router-dom";
 import "./SuperVisorLecturerhistory.css";
 import useAuthStore from "./../../../store/store";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Url from "./../../../store/url.js";
 
 const SuperVisorLecturerhistory = () => {
@@ -48,7 +48,7 @@ const SuperVisorLecturerhistory = () => {
 
   const fetchLectures = async (payload) => {
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         `${Url}/api/Lecture/search`,
         {
           title: payload.title || "",
@@ -117,7 +117,7 @@ const SuperVisorLecturerhistory = () => {
 
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axios.get(`${Url}/api/Governorate/dropdown`, {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setGovernorates(response.data);
@@ -133,7 +133,7 @@ const SuperVisorLecturerhistory = () => {
 
   const fetchCompanies = async () => {
     try {
-      const response = await axios.get(`${Url}/api/Company`, {
+      const response = await axiosInstance.get(`${Url}/api/Company`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setCompanies(response.data);
@@ -174,7 +174,7 @@ const SuperVisorLecturerhistory = () => {
     }
 
     try {
-      const response = await axios.get(
+      const response = await axiosInstance.get(
         `${Url}/api/Governorate/dropdown/${governorateId}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },

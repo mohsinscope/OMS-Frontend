@@ -10,7 +10,7 @@ import {
   Spin,
   ConfigProvider,
 } from "antd";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Dashboard from "./../../../pages/dashBoard.jsx";
 import "./AdminUserManagment.css";
 import useAuthStore from "./../../../store/store.js";
@@ -39,7 +39,7 @@ const AdminUserManagment = () => {
       console.log("Fetching profiles...");
       setLoading(true);
       try {
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           `${Url}/api/account/profiles-with-users-and-roles`,
           {
             headers: {
@@ -57,7 +57,7 @@ const AdminUserManagment = () => {
           const newToken = await useAuthStore.getState().refreshAccessToken();
           if (newToken) {
             try {
-              const retryResponse = await axios.get(
+              const retryResponse = await axiosInstance.get(
                 `${Url}/api/account/profiles-with-users-and-roles`,
                 {
                   headers: {
@@ -93,8 +93,8 @@ const AdminUserManagment = () => {
       console.log("Fetching roles and governorates...");
       try {
         const [governoratesResponse, rolesResponse] = await Promise.all([
-          axios.get(`${Url}/api/Governorate/dropdown`),
-          axios.get(`${Url}/api/profile/all-roles`),
+          axiosInstance.get(`${Url}/api/Governorate/dropdown`),
+          axiosInstance.get(`${Url}/api/profile/all-roles`),
         ]);
         console.log("Governorates:", governoratesResponse.data);
         console.log("Roles:", rolesResponse.data);
@@ -115,7 +115,7 @@ const AdminUserManagment = () => {
       if (selectedGovernorate) {
         console.log(`Fetching offices for governorate: ${selectedGovernorate}`);
         try {
-          const response = await axios.get(
+          const response = await axiosInstance.get(
             `${Url}/api/Governorate/dropdown/${selectedGovernorate}`
           );
           console.log("Offices:", response.data[0]?.offices || []);
@@ -171,7 +171,7 @@ const AdminUserManagment = () => {
         governorateId: values.governorate,
       };
 
-      const response = await axios.post(`${Url}/api/account/register`, payload, {
+      const response = await axiosInstance.post(`${Url}/api/account/register`, payload, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -217,7 +217,7 @@ const AdminUserManagment = () => {
         roles: values.roles,
       };
 
-      await axios.put(`${Url}/api/account/${selectedUser.userId}`, updatedUser, {
+      await axiosInstance.put(`${Url}/api/account/${selectedUser.userId}`, updatedUser, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -226,7 +226,7 @@ const AdminUserManagment = () => {
       console.log("User updated successfully.");
       message.success("تم تحديث المستخدم بنجاح!");
 
-      const updatedResponse = await axios.get(
+      const updatedResponse = await axiosInstance.get(
         `${Url}/api/account/profiles-with-users-and-roles`,
         {
           headers: {
@@ -398,7 +398,7 @@ const AdminUserManagment = () => {
               form={form}
               onFinish={handleAddUser}
               layout="vertical"
-              className="Admin-user-add-model-conatiner-form"
+              className="dammaged-passport-container-edit-modal"
             >
               <h1>اضافة مستخدم جديد</h1>
               <Form.Item

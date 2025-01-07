@@ -11,11 +11,10 @@ import {
   ConfigProvider,
   Select,
 } from "antd";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Lele from "./../../../reusable elements/icons.jsx";
 import "./attendenceView.css";
 import useAuthStore from "./../../../store/store";
-import usePermissionsStore from "./../../../store/permissionsStore";
 import Url from "./../../../store/url.js";
 
 export default function ViewAttendance() {
@@ -37,12 +36,12 @@ export default function ViewAttendance() {
   useEffect(() => {
     const fetchAttendanceDetails = async () => {
       try {
-        const response = await axios.get(`${Url}/api/Attendance/${id}`, {
+        const response = await axiosInstance.get(`${Url}/api/Attendance/${id}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
-        const response2 = await axios.get(
+        const response2 = await axiosInstance.get(
           `${Url}/api/office/${response.data.officeId}`,
           {
             headers: {
@@ -87,7 +86,7 @@ export default function ViewAttendance() {
         governorateId: attendanceData.governorateId,
         profileId: attendanceData.profileId,
       };
-      const response = await axios.put(
+      const response = await axiosInstance.put(
         `${Url}/api/Attendance/${id}`,
         updatedValues,
         {
@@ -297,7 +296,7 @@ export default function ViewAttendance() {
             form={form}
             onFinish={handleSaveEdit}
             layout="vertical"
-            className="Admin-user-add-model-container-form">
+            className="dammaged-passport-container-edit-modal">
             <Form.Item
               name="receivingStaff"
               label={

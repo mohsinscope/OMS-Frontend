@@ -13,7 +13,7 @@ import {
   Select,
   Space,
 } from "antd";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Url from "./../../../store/url.js";
 import Config from "./../../../store/configrationOfListOfValue.js";
 import useAuthStore from "./../../../store/store.js";
@@ -40,7 +40,7 @@ export default function ListOfValueAdmin() {
     total: 0,
   });
 
-  const api = axios.create({
+  const api = axiosInstance.create({
     baseURL: Url,
   });
 

@@ -10,7 +10,7 @@ import {
   Select,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./../lecturer/LecturerShow.css";
 import useAuthStore from "./../../../store/store";
@@ -50,7 +50,7 @@ const SuperVisorDeviceShow = () => {
     const fetchDeviceDetails = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           `${Url}/api/DamagedDevice/${deviceId}`,
           {
             headers: {
@@ -73,7 +73,7 @@ const SuperVisorDeviceShow = () => {
 
     const fetchDeviceImages = async () => {
       try {
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           `${Url}/api/Attachment/DamagedDevice/${deviceId}`,
           {
             headers: {
@@ -90,7 +90,7 @@ const SuperVisorDeviceShow = () => {
 
     const fetchDamagedTypes = async () => {
       try {
-        const response = await axios.get(`${Url}/api/damageddevicetype/all`, {
+        const response = await axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -108,7 +108,7 @@ const SuperVisorDeviceShow = () => {
 
     const fetchDeviceTypes = async () => {
       try {
-        const response = await axios.get(`${Url}/api/devicetype`, {
+        const response = await axiosInstance.get(`${Url}/api/devicetype`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -146,7 +146,7 @@ const SuperVisorDeviceShow = () => {
         profileId: profileId,
       };
       console.log(updatedValues);
-      await axios.put(`${Url}/api/DamagedDevice/${deviceId}`, updatedValues, {
+      await axiosInstance.put(`${Url}/api/DamagedDevice/${deviceId}`, updatedValues, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -162,7 +162,7 @@ const SuperVisorDeviceShow = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${Url}/api/DamagedDevice/${deviceId}`, {
+      await axiosInstance.delete(`${Url}/api/DamagedDevice/${deviceId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -301,7 +301,7 @@ const SuperVisorDeviceShow = () => {
             form={form}
             onFinish={handleSaveEdit}
             layout="vertical"
-            className="Admin-user-add-model-container-form">
+            className="dammaged-passport-container-edit-modal">
             <Form.Item
               name="serialNumber"
               label="الرقم التسلسلي"

@@ -10,7 +10,7 @@ import {
   Upload,
   Modal,
 } from "antd";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
 import moment from "moment";
@@ -35,7 +35,7 @@ const SuperVisorDammageDeviceAdd = () => {
   useEffect(() => {
     const fetchDeviceTypes = async () => {
       try {
-        const response = await axios.get(`${Url}/api/devicetype`, {
+        const response = await axiosInstance.get(`${Url}/api/devicetype`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -53,7 +53,7 @@ const SuperVisorDammageDeviceAdd = () => {
 
     const fetchDamagedTypes = async () => {
       try {
-        const response = await axios.get(`${Url}/api/damageddevicetype/all`, {
+        const response = await axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -79,7 +79,7 @@ const SuperVisorDammageDeviceAdd = () => {
 
   const rollbackDamagedDevice = async (entityId) => {
     try {
-      await axios.delete(`${Url}/api/DamagedDevice/${entityId}`, {
+      await axiosInstance.delete(`${Url}/api/DamagedDevice/${entityId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -98,7 +98,7 @@ const SuperVisorDammageDeviceAdd = () => {
       formData.append("EntityType", "DamagedDevice");
 
       try {
-        await axios.post(`${Url}/api/Attachment/add-attachment`, formData, {
+        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${accessToken}`,
@@ -128,7 +128,7 @@ const SuperVisorDammageDeviceAdd = () => {
         profileId,
       };
 
-      const response = await axios.post(`${Url}/api/DamagedDevice`, payload, {
+      const response = await axiosInstance.post(`${Url}/api/DamagedDevice`, payload, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
@@ -196,7 +196,7 @@ const SuperVisorDammageDeviceAdd = () => {
     setIsScanning(true);
 
     try {
-      const response = await axios.get(
+      const response = await axiosInstance.get(
         `http://localhost:11234/api/ScanApi/ScannerPrint`,
         {
           responseType: "json",

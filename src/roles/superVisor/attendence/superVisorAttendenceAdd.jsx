@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, Modal, message, Input, DatePicker } from "antd";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import "./superVisorAteensenceAdd.css";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
@@ -32,7 +32,7 @@ export default function SuperVisorAttendanceAdd() {
   useEffect(() => {
     const fetchEmployeeNumbers = async () => {
       try {
-        const response = await axios.get(`${Url}/api/office/${officeId}`, {
+        const response = await axiosInstance.get(`${Url}/api/office/${officeId}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -92,10 +92,9 @@ export default function SuperVisorAttendanceAdd() {
         profileId,
       };
 
-      console.log("Access Token:", accessToken);
 
       // Make sure the token is passed in the headers correctly
-      const response = await axios.post(`${Url}/api/Attendance`, dataToSend, {
+      const response = await axiosInstance.post(`${Url}/api/Attendance`, dataToSend, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
