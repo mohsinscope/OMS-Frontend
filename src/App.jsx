@@ -6,6 +6,10 @@ import useAuthStore from "./store/store.js";
 import SignInPage from "./pages/signIn.jsx";
 import Stats from "./pages/stats.jsx";
 import LandingPage from "./pages/landingPage.jsx";
+
+
+import axiosInstance from './intercepters/axiosInstance.js';
+
 // Import all components
 import Dashboard from "./pages/dashBoard.jsx";
 import AdminExpenses from "./roles/admin/admin-expensess/adminExpensess.jsx";
@@ -137,20 +141,43 @@ const App = () => {
     { path: "expenses-view", element: <ExpensessView /> },
     { path: "landing-page", element: <LandingPage /> },
   ];
+
+
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const init = async () => {
-      await initializeAuth();
-      setIsLoading(false);
+      try {
+        // Make axios instance available globally
+        window.axios = axiosInstance;
+        
+        // Initialize auth state
+        await initializeAuth();
+        
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Initialization error:', error);
+        setError(error.message || 'Failed to initialize application');
+        setIsLoading(false);
+      }
     };
+
     init();
   }, [initializeAuth]);
 
   if (isLoading) {
-    return null; // Or a loading spinner
+    return <div>Loading...</div>;
   }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
+
+
+
+
   return (
     <Router>
       <Routes>

@@ -10,7 +10,7 @@ import {
   Upload,
   Modal,
 } from "antd";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
 import moment from "moment";
@@ -34,7 +34,7 @@ const SuperVisorDammagePassportAdd = () => {
   useEffect(() => {
     const fetchDamagedTypes = async () => {
       try {
-        const response = await axios.get(`${Url}/api/damagedtype/all`, {
+        const response = await axiosInstance.get(`${Url}/api/damagedtype/all`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -60,7 +60,7 @@ const SuperVisorDammagePassportAdd = () => {
   // Rollback damaged passport if attachment upload fails
   const rollbackDamagedPassport = async (entityId) => {
     try {
-      await axios.delete(`${Url}/api/DamagedPassport/${entityId}`, {
+      await axiosInstance.delete(`${Url}/api/DamagedPassport/${entityId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -74,7 +74,7 @@ const SuperVisorDammagePassportAdd = () => {
   // Create damaged passport
   const sendPassportDetails = async (payload) => {
     try {
-      const response = await axios.post(`${Url}/api/DamagedPassport`, payload, {
+      const response = await axiosInstance.post(`${Url}/api/DamagedPassport`, payload, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
@@ -95,7 +95,7 @@ const SuperVisorDammagePassportAdd = () => {
       formData.append("EntityType", "DamagedPassport");
 
       try {
-        await axios.post(`${Url}/api/Attachment/add-attachment`, formData, {
+        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${accessToken}`,
@@ -187,7 +187,7 @@ const SuperVisorDammagePassportAdd = () => {
     setIsScanning(true);
 
     try {
-      const response = await axios.get(
+      const response = await axiosInstance.get(
         `http://localhost:11234/api/ScanApi/ScannerPrint`,
         {
           responseType: "json",

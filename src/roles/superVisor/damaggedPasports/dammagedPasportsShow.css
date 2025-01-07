@@ -87,3 +87,27 @@
 .back-button:hover {
   background-color: #3068c9;
 }
+
+
+.dammaged-passport-container-edit-modal{
+  display: flex;
+  flex-direction: column ; 
+  justify-content: start;
+  align-items: start;
+
+}
+
+.dammaged-passport-container-edit-modal input{
+  width: 450px !important;
+
+}
+
+.dammaged-passport-container-edit-modal .ant-select{
+  width: 450px !important;
+
+}
+
+.dammaged-passport-container-edit-modal .ant-form-item-control-input-content{
+  width: 450px !important;
+margin-bottom: 20px;
+}

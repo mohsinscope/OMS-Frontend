@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Input, Button, DatePicker, message, Upload, Modal, Select } from "antd";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
 import moment from "moment";
@@ -27,7 +27,7 @@ const SuperVisorLecturerAdd = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await axios.get(`${Url}/api/Company`, {
+        const response = await axiosInstance.get(`${Url}/api/Company`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -54,7 +54,7 @@ const SuperVisorLecturerAdd = () => {
 
   const rollbackLecture = async (entityId) => {
     try {
-      await axios.delete(`${Url}/api/Lecture/${entityId}`, {
+      await axiosInstance.delete(`${Url}/api/Lecture/${entityId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -67,7 +67,7 @@ const SuperVisorLecturerAdd = () => {
 
   const sendLectureDetails = async (payload) => {
     try {
-      const response = await axios.post(`${Url}/api/Lecture`, payload, {
+      const response = await axiosInstance.post(`${Url}/api/Lecture`, payload, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
@@ -87,7 +87,7 @@ const SuperVisorLecturerAdd = () => {
       formData.append("EntityType", "Lecture");
 
       try {
-        await axios.post(`${Url}/api/Attachment/add-attachment`, formData, {
+        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
           headers: {
             "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${accessToken}`,
@@ -185,7 +185,7 @@ const SuperVisorLecturerAdd = () => {
     setIsScanning(true);
 
     try {
-      const response = await axios.get(
+      const response = await axiosInstance.get(
         `http://localhost:11234/api/ScanApi/ScannerPrint`,
         {
           responseType: "json",

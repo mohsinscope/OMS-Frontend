@@ -1,6 +1,5 @@
 import "./dammagedPasportsHistory.css";
 import useAuthStore from "./../../../store/store";
-import usePermissionsStore from "./../../../store/permissionsStore";
 import React, { useState, useEffect } from "react";
 import {
   Table,
@@ -12,7 +11,7 @@ import {
   ConfigProvider,
 } from "antd";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Url from "./../../../store/url";
 const { Option } = Select;
 
@@ -67,7 +66,7 @@ export default function SuperVisorPassport() {
 
     try {
       setLoading(true);
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         `${Url}/api/DamagedPassport/search`,
         body,
         {
@@ -126,7 +125,7 @@ export default function SuperVisorPassport() {
     };
 
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         `${Url}/api/DamagedPassport/search`,
         body,
         {

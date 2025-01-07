@@ -11,7 +11,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
 import usePermissionsStore from "./../../../store/permissionsStore";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import "./superVisorAttendeceHistory.css";
 import Url from "./../../../store/url.js";
 
@@ -53,12 +53,12 @@ export default function SupervisorAttendanceHistory() {
   useEffect(() => {
     const fetchDropdowns = async () => {
       try {
-        const govResponse = await axios.get(`${Url}/api/Governorate/dropdown`, {
+        const govResponse = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
         });
-        const officeResponse = await axios.get(`${Url}/api/Office/dropdown`, {
+        const officeResponse = await axiosInstance.get(`${Url}/api/Office/dropdown`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -91,7 +91,7 @@ export default function SupervisorAttendanceHistory() {
         },
       };
 
-      const response = await axios.post(`${Url}/api/Attendance/search`, searchBody, {
+      const response = await axiosInstance.post(`${Url}/api/Attendance/search`, searchBody, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,

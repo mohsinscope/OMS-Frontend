@@ -11,7 +11,7 @@ import {
   Select,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./LecturerShow.css";
 import useAuthStore from "./../../../store/store";
@@ -41,7 +41,7 @@ const LecturerShow = () => {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await axios.get(`${Url}/api/Company`, {
+        const response = await axiosInstance.get(`${Url}/api/Company`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -64,7 +64,7 @@ const LecturerShow = () => {
     const fetchLectureDetails = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(`${Url}/api/Lecture/${lectureId}`, {
+        const response = await axiosInstance.get(`${Url}/api/Lecture/${lectureId}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -98,7 +98,7 @@ const LecturerShow = () => {
 
     const fetchLectureImages = async () => {
       try {
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           `${Url}/api/Attachment/Lecture/${lectureId}`,
           {
             headers: {
@@ -141,7 +141,7 @@ const LecturerShow = () => {
         lectureTypeId: values.lectureTypeId
       };
 
-      await axios.put(`${Url}/api/Lecture/${lectureId}`, updatedValues, {
+      await axiosInstance.put(`${Url}/api/Lecture/${lectureId}`, updatedValues, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -151,7 +151,7 @@ const LecturerShow = () => {
       setEditModalVisible(false);
       
       // Refresh lecture data
-      const response = await axios.get(`${Url}/api/Lecture/${lectureId}`, {
+      const response = await axiosInstance.get(`${Url}/api/Lecture/${lectureId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -168,7 +168,7 @@ const LecturerShow = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${Url}/api/Lecture/${lectureId}`, {
+      await axiosInstance.delete(`${Url}/api/Lecture/${lectureId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },

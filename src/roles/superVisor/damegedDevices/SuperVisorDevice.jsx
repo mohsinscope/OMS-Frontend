@@ -3,8 +3,7 @@ import { Table, message, Button, ConfigProvider, DatePicker, Select, Input } fro
 import { Link } from "react-router-dom";
 import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store";
-import usePermissionsStore from "./../../../store/permissionsStore";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Url from "./../../../store/url.js";
 
 const SuperVisorDevices = () => {
@@ -48,7 +47,7 @@ const SuperVisorDevices = () => {
   // API calls and data fetching
   const fetchDevices = async (payload) => {
     try {
-      const response = await axios.post(
+      const response = await axiosInstance.post(
         `${Url}/api/DamagedDevice/search`,
         {
           serialNumber: payload.serialNumber || "",
@@ -161,7 +160,7 @@ const SuperVisorDevices = () => {
   // Data fetching effects and callbacks
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axios.get(`${Url}/api/Governorate/dropdown`, {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setGovernorates(response.data);
@@ -183,7 +182,7 @@ const SuperVisorDevices = () => {
     }
 
     try {
-      const response = await axios.get(
+      const response = await axiosInstance.get(
         `${Url}/api/Governorate/dropdown/${governorateId}`,
         {
           headers: { Authorization: `Bearer ${accessToken}` },

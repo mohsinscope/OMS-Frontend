@@ -10,11 +10,10 @@ import {
   Select,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosInstance from './../../../intercepters/axiosInstance.js';
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./dammagedPasportsShow.css";
 import useAuthStore from "./../../../store/store";
-import usePermissionsStore from "./../../../store/permissionsStore";
 import Url from "./../../../store/url.js";
 import Lele from "./../../../reusable elements/icons.jsx";
 
@@ -46,7 +45,7 @@ const DammagedPasportsShow = () => {
     const fetchPassportDetails = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           `${Url}/api/DamagedPassport/${passportId}`,
           {
             headers: {
@@ -69,7 +68,7 @@ const DammagedPasportsShow = () => {
 
     const fetchPassportImages = async () => {
       try {
-        const response = await axios.get(
+        const response = await axiosInstance.get(
           `${Url}/api/Attachment/DamagedPassport/${passportId}`,
           {
             headers: {
@@ -86,7 +85,7 @@ const DammagedPasportsShow = () => {
 
     const fetchDamagedTypes = async () => {
       try {
-        const response = await axios.get(`${Url}/api/damagedtype/all`, {
+        const response = await axiosInstance.get(`${Url}/api/damagedtype/all`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
@@ -123,7 +122,7 @@ const DammagedPasportsShow = () => {
       };
       console.log(updatedValues);
 
-      await axios.put(
+      await axiosInstance.put(
         `${Url}/api/DamagedPassport/${passportId}`,
         updatedValues,
         {
@@ -143,7 +142,7 @@ const DammagedPasportsShow = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`${Url}/api/DamagedPassport/${passportId}`, {
+      await axiosInstance.delete(`${Url}/api/DamagedPassport/${passportId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
@@ -250,7 +249,10 @@ const DammagedPasportsShow = () => {
         </div>
       </div>
 
+        <div className="dammaged-passport-container-edit-modal">
       <ConfigProvider direction="rtl">
+
+       
         <Modal
           className="model-container"
           open={editModalVisible}
@@ -261,12 +263,12 @@ const DammagedPasportsShow = () => {
             form={form}
             onFinish={handleSaveEdit}
             layout="vertical"
-            className="Admin-user-add-model-container-form">
+            className="dammaged-passport-container-edit-modal">
             <Form.Item
               name="passportNumber"
               label="رقم الجواز"
               rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
-              <input placeholder="رقم الجواز" />
+              <Input placeholder="رقم الجواز"/>
             </Form.Item>
             <Form.Item
               name="damagedTypeId"
@@ -310,6 +312,7 @@ const DammagedPasportsShow = () => {
           <p>هل أنت متأكد أنك تريد حذف هذا الجواز؟</p>
         </Modal>
       </ConfigProvider>
+        </div>
     </div>
   );
 };
