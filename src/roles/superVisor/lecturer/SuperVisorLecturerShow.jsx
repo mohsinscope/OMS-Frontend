@@ -302,18 +302,10 @@ const LecturerShow = () => {
             />
           </div>
           <div className="details-row">
-            <span className="details-label">نوع المحاضرة:</span>
+            <span className="details-label">نوع المحضر:</span>
             <input
               className="details-value"
               value={lectureData.lectureTypeName}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">اسم المحاضر:</span>
-            <input
-              className="details-value"
-              value={lectureData.profileFullName}
               disabled
             />
           </div>
