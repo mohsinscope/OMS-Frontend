@@ -39,8 +39,8 @@ const Config = {
       { name: "receivingStaff", label: "موظفو الاستلام", type: "number" },
       { name: "accountStaff", label: "موظفو الحسابات", type: "number" },
       { name: "printingStaff", label: "موظفو الطباعة", type: "number" },
-      { name: "qualityStaff", label: "موظفوا الجودة", type: "number" },
-      { name: "deliveryStaff", label: "موظفو التوصيل", type: "number" },
+      { name: "qualityStaff", label: "موظفو الجودة", type: "number" },
+      { name: "deliveryStaff", label: "موظفو التسليم", type: "number" },
       {
         name: "governorateId",
         label: "رقم المحافظة",

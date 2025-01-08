@@ -71,7 +71,7 @@
 
 .image-previewer-section {
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   margin: 30px 0;
   gap: 30px;
 }
