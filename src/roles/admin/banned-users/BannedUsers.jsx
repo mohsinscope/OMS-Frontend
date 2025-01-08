@@ -48,7 +48,7 @@ export default function BannedUsers() {
       title: 'وقت انتهاء الحظر',
       dataIndex: 'lockoutEnd',
       key: 'lockoutEnd',
-      render: (text) => new Date(text).toLocaleString('ar-SA'),
+      render: (text) => new Date(text).toLocaleString('En'),
     },
     {
       title: 'الدقائق المتبقية',
