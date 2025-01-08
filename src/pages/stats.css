@@ -315,9 +315,12 @@
   
 
   .stats-container-collapsed{
-    width: 108%;
+    
+    width: 109%;
   }
-
+  .stats-container-collapsed .stats-navbar{
+    margin-top: 4%;
+  }
   .summary-card-attendence{
     background-color: white;
     height: 200px;
