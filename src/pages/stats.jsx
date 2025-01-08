@@ -140,8 +140,8 @@ export default function Stats() {
         
         // Set chart data for the main pie chart
         setChartData([
-          { name: 'عدد المحطات الكلي', value: response.data.totalStaffInOffice },
-          { name: 'عدد حضور الموظفين الكلي', value: response.data.availableStaffInOffice }
+          { name: 'عدد الحضور الكلي ', value: response.data.availableStaffInOffice },
+          { name: 'عدد الغياب', value: response.data.totalStaffInOffice - response.data.availableStaffInOffice}
         ]);
         
         setTotalItems(response.data.totalStaffInOffice);
