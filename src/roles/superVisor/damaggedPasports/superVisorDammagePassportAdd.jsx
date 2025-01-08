@@ -26,11 +26,56 @@ const SuperVisorDammagePassportAdd = () => {
   const [previewUrls, setPreviewUrls] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
-  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
   const [damagedTypes, setDamagedTypes] = useState([]);
+  const [governate, setGovernate] = useState([]);
+  const [offices, setOffices] = useState([]);
+  
+  const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
+  const isSupervisor = roles?.includes("Supervisor");
 
-  // Fetch damaged types
+  // Set initial form values for supervisor
+  useEffect(() => {
+    if (isSupervisor && profile) {
+      form.setFieldsValue({
+        governorateId: governorateId,
+        officeId: officeId
+      });
+    }
+
+    const fetchGovernorateData = async () => {
+      try {
+        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/351c197b-1666-4528-acb8-dd6270b9497f`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+    
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          const governorateData = response.data[0];
+          setGovernate([{
+            value: governorateData.id,
+            label: governorateData.name,
+          }]);
+          
+          if (governorateData.id === governorateId) {
+            setOffices(
+              governorateData.offices.map(office => ({
+                value: office.id,
+                label: office.name,
+              }))
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching governorate data:", error);
+        message.error("فشل تحميل المحافظات");
+      }
+    };
+
+    fetchGovernorateData();
+  }, [isSupervisor, profile, form, governorateId, officeId, accessToken]);
+
   useEffect(() => {
     const fetchDamagedTypes = async () => {
       try {
@@ -53,11 +98,34 @@ const SuperVisorDammagePassportAdd = () => {
     fetchDamagedTypes();
   }, [accessToken]);
 
+  const fetchOffices = async (selectedGovernorateId) => {
+    if (!selectedGovernorateId) return;
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${selectedGovernorateId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        const governorateData = response.data[0];
+        setOffices(
+          governorateData.offices.map(office => ({
+            value: office.id,
+            label: office.name,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching offices:", error);
+      message.error("فشل تحميل المكاتب");
+    }
+  };
+
   const handleBack = () => {
     navigate(-1);
   };
 
-  // Rollback damaged passport if attachment upload fails
   const rollbackDamagedPassport = async (entityId) => {
     try {
       await axiosInstance.delete(`${Url}/api/DamagedPassport/${entityId}`, {
@@ -65,28 +133,11 @@ const SuperVisorDammagePassportAdd = () => {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      console.log("Damaged passport rolled back successfully.");
     } catch (error) {
       console.error("Failed to rollback damaged passport:", error);
     }
   };
 
-  // Create damaged passport
-  const sendPassportDetails = async (payload) => {
-    try {
-      const response = await axiosInstance.post(`${Url}/api/DamagedPassport`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      return response.data?.id || response.data;
-    } catch (error) {
-      throw new Error("Failed to add damaged passport.");
-    }
-  };
-
-  // Upload attachments
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
       const formData = new FormData();
@@ -94,20 +145,15 @@ const SuperVisorDammagePassportAdd = () => {
       formData.append("entityId", entityId);
       formData.append("EntityType", "DamagedPassport");
 
-      try {
-        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-      } catch (error) {
-        throw new Error("Failed to attach files.");
-      }
+      await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
     }
   };
 
-  // Form submission handler
   const handleFormSubmit = async (values) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -119,17 +165,21 @@ const SuperVisorDammagePassportAdd = () => {
           ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
           : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
         damagedTypeId: values.damagedTypeId,
-        officeId,
-        governorateId,
+        officeId: isSupervisor ? officeId : values.officeId,
+        governorateId: isSupervisor ? governorateId : values.governorateId,
         profileId,
         note: values.note || "",
       };
 
-      const entityId = await sendPassportDetails(payload);
+      const response = await axiosInstance.post(`${Url}/api/DamagedPassport`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
-      if (!entityId) {
-        throw new Error("Failed to retrieve entity ID from the response.");
-      }
+      const entityId = response.data?.id || response.data;
+      if (!entityId) throw new Error("Failed to retrieve entity ID.");
 
       try {
         if (fileList.length > 0) {
@@ -140,24 +190,20 @@ const SuperVisorDammagePassportAdd = () => {
         }
         navigate(-1);
       } catch (attachmentError) {
-        await rollbackDamagedPassport(entityId); // Rollback damaged passport on attachment failure
+        await rollbackDamagedPassport(entityId);
         throw new Error(
           "فشل في إرفاق الملفات. تم إلغاء إنشاء الجواز التالف لضمان سلامة البيانات."
         );
       }
     } catch (error) {
-      message.error(
-        error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"
-      );
+      message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // File handling functions
   const handleFileChange = (info) => {
-    const updatedFiles = info.fileList.filter((file) => true);
-    const uniqueFiles = updatedFiles.filter(
+    const uniqueFiles = info.fileList.filter(
       (newFile) =>
         !fileList.some(
           (existingFile) =>
@@ -211,9 +257,7 @@ const SuperVisorDammagePassportAdd = () => {
         type: "image/jpeg",
       });
 
-      if (
-        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
-      ) {
+      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -227,7 +271,6 @@ const SuperVisorDammagePassportAdd = () => {
         ]);
 
         setPreviewUrls((prev) => [...prev, scannedPreviewUrl]);
-
         message.success("تم إضافة الصورة الممسوحة بنجاح!");
       } else {
         message.info("تم بالفعل إضافة هذه الصورة.");
@@ -277,11 +320,44 @@ const SuperVisorDammagePassportAdd = () => {
           <div className="add-damagedpassport-section-container">
             <div className="add-passport-fields-container">
               <Form.Item
+                name="governorateId"
+                label="اسم المحافظة"
+                initialValue={isSupervisor ? governorateId : governate[0]?.value}
+                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
+                <Select 
+                  placeholder="اختر المحافظة" 
+                  disabled={isSupervisor} 
+                  style={{ width: "267px", height: "45px" }} 
+                  options={isSupervisor ? [{ value: governorateId, label: governate.find(g => g.value === governorateId)?.label }] : governate}
+                  onChange={(value) => {
+                    if (!isSupervisor) {
+                      fetchOffices(value);
+                      form.setFieldValue('officeId', undefined);
+                    }
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="officeId"
+                label="اسم المكتب"
+                initialValue={isSupervisor ? officeId : undefined}
+                rules={[{ required: true, message: "يرجى اختيار المكتب" }]}>
+                <Select 
+                  placeholder="اختر المكتب" 
+                  disabled={isSupervisor} 
+                  style={{ width: "267px", height: "45px" }} 
+                  options={isSupervisor ? [{ value: officeId, label: offices.find(o => o.value === officeId)?.label }] : offices}
+                />
+              </Form.Item>
+
+              <Form.Item
                 name="passportNumber"
                 label="رقم الجواز"
                 rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
                 <Input placeholder="أدخل رقم الجواز" />
               </Form.Item>
+
               <Form.Item
                 name="damagedTypeId"
                 label="سبب التلف"
@@ -293,6 +369,7 @@ const SuperVisorDammagePassportAdd = () => {
                   style={{ width: "267px", height: "45px" }}
                 />
               </Form.Item>
+
               <Form.Item
                 name="date"
                 label="التاريخ"
@@ -302,6 +379,7 @@ const SuperVisorDammagePassportAdd = () => {
                   style={{ width: "267px", height: "45px" }}
                 />
               </Form.Item>
+
               <Form.Item
                 name="note"
                 label="ملاحظات"
@@ -312,6 +390,7 @@ const SuperVisorDammagePassportAdd = () => {
                 />
               </Form.Item>
             </div>
+
             <h1 className="SuperVisor-title-container">
               إضافة صورة الجواز التالف
             </h1>
