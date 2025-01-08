@@ -58,15 +58,17 @@ const LecturerShow = () => {
 
   const fetchLectureDetails = async () => {
     try {
-      const response = await axiosInstance.get(`${Url}/api/Lecture/${lectureId}`);
+      const response = await axiosInstance.get(
+        `${Url}/api/Lecture/${lectureId}`
+      );
       const lecture = response.data;
       setLectureData(lecture);
-  
+
       // Store initial values
       setInitialCompanyId(lecture.companyId);
       setInitialLectureTypeId(lecture.lectureTypeId);
       setInitialLectureTypeName(lecture.lectureTypeName);
-  
+
       // Set form values
       form.setFieldsValue({
         ...lecture,
@@ -77,7 +79,7 @@ const LecturerShow = () => {
           label: lecture.lectureTypeName,
         },
       });
-  
+
       // Preload lecture types
       const selectedCompany = companies.find((c) => c.id === lecture.companyId);
       if (selectedCompany) {
@@ -109,17 +111,17 @@ const LecturerShow = () => {
       navigate(-1);
       return;
     }
-  
+
     const initializeData = async () => {
       setLoading(true);
-  
+
       try {
         // Fetch companies first
         await fetchCompanies();
-  
+
         // Fetch lecture details after companies are loaded
         await fetchLectureDetails();
-  
+
         // Finally, fetch images
         await fetchLectureImages();
       } catch (error) {
@@ -128,7 +130,7 @@ const LecturerShow = () => {
         setLoading(false);
       }
     };
-  
+
     initializeData();
   }, [lectureId, navigate]);
   const handleCompanyChange = (value) => {
@@ -234,23 +236,25 @@ const LecturerShow = () => {
           )}
           {hasUpdatePermission && (
             <Button
-  onClick={() => {
-    // Reset company and lecture type to their initial values
-    form.setFieldsValue({
-      companyId: initialCompanyId,
-      lectureTypeId: initialLectureTypeId
-    });
+              onClick={() => {
+                // Reset company and lecture type to their initial values
+                form.setFieldsValue({
+                  companyId: initialCompanyId,
+                  lectureTypeId: initialLectureTypeId,
+                });
 
-    // Preload lecture types based on the initial company
-    const selectedCompany = companies.find((c) => c.id === initialCompanyId);
-    setLectureTypes(selectedCompany?.lectureTypes || []);
+                // Preload lecture types based on the initial company
+                const selectedCompany = companies.find(
+                  (c) => c.id === initialCompanyId
+                );
+                setLectureTypes(selectedCompany?.lectureTypes || []);
 
-    // Open the edit modal
-    setEditModalVisible(true);
-  }}
-  className="edit-button-lecture">
-  تعديل <Lele type="edit" />
-</Button>
+                // Open the edit modal
+                setEditModalVisible(true);
+              }}
+              className="edit-button-lecture">
+              تعديل <Lele type="edit" />
+            </Button>
           )}
         </div>
       </div>
@@ -351,9 +355,7 @@ const LecturerShow = () => {
             initialValues={{
               ...lectureData,
               date: moment(lectureData?.date),
-            }
-            
-            }>
+            }}>
             <Form.Item
               name="title"
               label="عنوان المحضر"
@@ -361,7 +363,7 @@ const LecturerShow = () => {
               <Input.TextArea placeholder="عنوان المحضر" />
             </Form.Item>
 
-      <Form.Item
+            <Form.Item
               name="date"
               label="التاريخ"
               rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
@@ -381,24 +383,24 @@ const LecturerShow = () => {
               </Select>
             </Form.Item>
             <Form.Item
-  name="lectureTypeId"
-  label="نوع المحضر"
-  rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
-  <Select
-    placeholder="اختر نوع المحضر"
-    disabled={!form.getFieldValue("companyId")}
-    labelInValue // Enable labelInValue
-    onChange={(value) => {
-      // Update the form field with the selected value
-      form.setFieldValue("lectureTypeId", value.key);
-    }}>
-    {lectureTypes.map((type) => (
-      <Select.Option key={type.id} value={type.id}>
-        {type.name}
-      </Select.Option>
-    ))}
-  </Select>
-</Form.Item>
+              name="lectureTypeId"
+              label="نوع المحضر"
+              rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
+              <Select
+                placeholder="اختر نوع المحضر"
+                disabled={!form.getFieldValue("companyId")}
+                labelInValue // Enable labelInValue
+                onChange={(value) => {
+                  // Update the form field with the selected value
+                  form.setFieldValue("lectureTypeId", value.key);
+                }}>
+                {lectureTypes.map((type) => (
+                  <Select.Option key={type.id} value={type.id}>
+                    {type.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
 
             <Form.Item name="note" label="الملاحظات">
               <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />
@@ -437,6 +439,7 @@ const LecturerShow = () => {
             )}
 
             <Button
+              onClick={() => window.location.reload()}
               type="primary"
               htmlType="submit"
               block
