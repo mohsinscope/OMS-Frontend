@@ -6,7 +6,7 @@ import useAuthStore from "./store/store.js";
 import SignInPage from "./pages/signIn.jsx";
 import Stats from "./pages/stats.jsx";
 import LandingPage from "./pages/landingPage.jsx";
-
+import NotFound from './pages/pageNotFound.jsx';
 
 import axiosInstance from './intercepters/axiosInstance.js';
 //admin
@@ -198,6 +198,9 @@ const App = () => {
           {routes.map(({ path, element }, index) => (
             <Route key={index} path={path} element={element} />
           ))}
+          
+          {/* 404 route */}
+          <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
     </Router>
