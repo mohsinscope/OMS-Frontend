@@ -20,11 +20,52 @@ const SuperVisorLecturerAdd = () => {
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [lectureTypes, setLectureTypes] = useState([]);
-  const { isSidebarCollapsed } = useAuthStore();
-  const { accessToken, profile } = useAuthStore();
-  const { profileId, governorateId, officeId } = profile || {};
+  const [governate, setGovernate] = useState([]);
+  const [offices, setOffices] = useState([]);
 
+  const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
+  const { profileId, governorateId, officeId } = profile || {};
+  const isSupervisor = roles?.includes("Supervisor");
+
+  // Set initial form values for supervisor and fetch data
   useEffect(() => {
+    if (isSupervisor && profile) {
+      form.setFieldsValue({
+        governorateId: governorateId,
+        officeId: officeId
+      });
+    }
+
+    const fetchGovernorateData = async () => {
+      try {
+        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/351c197b-1666-4528-acb8-dd6270b9497f`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+    
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          const governorateData = response.data[0];
+          setGovernate([{
+            value: governorateData.id,
+            label: governorateData.name,
+          }]);
+          
+          if (governorateData.id === governorateId) {
+            setOffices(
+              governorateData.offices.map(office => ({
+                value: office.id,
+                label: office.name,
+              }))
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching governorate data:", error);
+        message.error("فشل تحميل المحافظات");
+      }
+    };
+
     const fetchCompanies = async () => {
       try {
         const response = await axiosInstance.get(`${Url}/api/Company`, {
@@ -38,8 +79,33 @@ const SuperVisorLecturerAdd = () => {
       }
     };
 
+    fetchGovernorateData();
     fetchCompanies();
-  }, [accessToken]);
+  }, [accessToken, governorateId, profile, isSupervisor, form, officeId]);
+
+  const fetchOffices = async (selectedGovernorateId) => {
+    if (!selectedGovernorateId) return;
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${selectedGovernorateId}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        const governorateData = response.data[0];
+        setOffices(
+          governorateData.offices.map(office => ({
+            value: office.id,
+            label: office.name,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching offices:", error);
+      message.error("فشل تحميل المكاتب");
+    }
+  };
 
   const handleCompanyChange = (companyId) => {
     setSelectedCompany(companyId);
@@ -59,7 +125,6 @@ const SuperVisorLecturerAdd = () => {
           Authorization: `Bearer ${accessToken}`,
         },
       });
-      console.log("Lecture rolled back successfully.");
     } catch (error) {
       console.error("Failed to rollback lecture:", error);
     }
@@ -113,8 +178,8 @@ const SuperVisorLecturerAdd = () => {
         date: values.date
           ? values.date.format("YYYY-MM-DDTHH:mm:ss")
           : moment().format("YYYY-MM-DDTHH:mm:ss"),
-        officeId,
-        governorateId,
+        officeId: isSupervisor ? officeId : values.officeId,
+        governorateId: isSupervisor ? governorateId : values.governorateId,
         profileId,
         companyId: selectedCompany,
         lectureTypeId: values.lectureTypeId,
@@ -151,10 +216,7 @@ const SuperVisorLecturerAdd = () => {
   };
 
   const handleFileChange = (info) => {
-    const updatedFiles = info.fileList.filter((file) => {
-      return true;
-    });
-
+    const updatedFiles = info.fileList.filter((file) => true);
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
         !fileList.some(
@@ -209,9 +271,7 @@ const SuperVisorLecturerAdd = () => {
         type: "image/jpeg",
       });
 
-      if (
-        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
-      ) {
+      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -225,7 +285,6 @@ const SuperVisorLecturerAdd = () => {
         ]);
 
         setPreviewUrls((prev) => [...prev, scannedPreviewUrl]);
-
         message.success("تم إضافة الصورة الممسوحة بنجاح!");
       } else {
         message.info("تم بالفعل إضافة هذه الصورة.");
@@ -274,6 +333,38 @@ const SuperVisorLecturerAdd = () => {
           style={{ direction: "rtl", display: "flex", gap: "30px" }}>
           <div className="add-Lecturer-section-container">
             <div className="add-Lecturer-fields-container">
+              <Form.Item
+                name="governorateId"
+                label="اسم المحافظة"
+                initialValue={isSupervisor ? governorateId : governate[0]?.value}
+                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
+                <Select 
+                  placeholder="اختر المحافظة" 
+                  disabled={isSupervisor} 
+                  style={{ width: "267px", height: "45px" }} 
+                  options={isSupervisor ? [{ value: governorateId, label: governate.find(g => g.value === governorateId)?.label }] : governate}
+                  onChange={(value) => {
+                    if (!isSupervisor) {
+                      fetchOffices(value);
+                      form.setFieldValue('officeId', undefined);
+                    }
+                  }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="officeId"
+                label="اسم المكتب"
+                initialValue={isSupervisor ? officeId : undefined}
+                rules={[{ required: true, message: "يرجى اختيار المكتب" }]}>
+                <Select 
+                  placeholder="اختر المكتب" 
+                  disabled={isSupervisor} 
+                  style={{ width: "267px", height: "45px" }} 
+                  options={isSupervisor ? [{ value: officeId, label: offices.find(o => o.value === officeId)?.label }] : offices}
+                />
+              </Form.Item>
+
               <Form.Item
                 name="title"
                 label="عنوان المحضر"

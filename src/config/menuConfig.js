@@ -49,6 +49,13 @@ export const MENU_ITEMS = [
     path: "/admin/users",
     requiredPermission: null,
     role: ["Admin"]
+  },
+  {
+    label:  "ادارة الحظر",
+    icon: "ban",
+    path: "/admin/ban",
+    requiredPermission: null,
+    role: ["Admin"]
   }
 ];
 
