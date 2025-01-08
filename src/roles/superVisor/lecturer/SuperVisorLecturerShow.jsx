@@ -355,14 +355,13 @@ const LecturerShow = () => {
               label="نوع المحاضرة"
               rules={[{ required: true, message: "يرجى اختيار نوع المحاضرة" }]}>
               <Select
-                placeholder="اختر نوع المحضر"
+                placeholder="اختر نوع المحاضرة"
                 disabled={!form.getFieldValue("companyId")}>
                 {lectureTypes.map((type) => (
                   <Select.Option key={type.id} value={type.id}>
                     {type.name}
                   </Select.Option>
                 ))}
-                {console.log(lectureTypes)}
               </Select>
             </Form.Item>
 
