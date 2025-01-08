@@ -75,6 +75,7 @@ button {
   justify-content: center;
 }
 .image-pagination-controls {
+  margin-bottom: 20px;
   display: flex;
   justify-content: center;
   gap: 30px;
