@@ -302,17 +302,16 @@ const LecturerShow = () => {
 
       <ConfigProvider direction="rtl">
         <Modal
-          className="model-container-lecture-edit"
+          className="model-container"
           open={editModalVisible}
           onCancel={() => setEditModalVisible(false)}
-          footer={null}
-          width={600}>
+          footer={null}>
           <h1>تعديل المحضر</h1>
           <Form
             form={form}
             onFinish={handleSaveEdit}
             layout="vertical"
-            className="Admin-user-add-model-conatiner-form"
+            className="dammaged-passport-container-edit-modal"
             initialValues={{
               ...lectureData,
               date: moment(lectureData?.date),
@@ -369,9 +368,20 @@ const LecturerShow = () => {
             <Form.Item name="note" label="الملاحظات">
               <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />
             </Form.Item>
-
+            <Upload
+              beforeUpload={(file) => {
+                handleImageUpload(file);
+                return false;
+              }}>
+              <Button
+                style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+                type="primary"
+                icon={<UploadOutlined />}>
+                استبدال الصورة
+              </Button>
+            </Upload>
             {images.length > 0 && (
-              <div className="image-section">
+              <>
                 <span className="note-details-label">صور المحضر:</span>
                 <ImagePreviewer
                   uploadedImages={images.map((img) => img.url)}
@@ -388,17 +398,7 @@ const LecturerShow = () => {
                   defaultWidth="100%"
                   defaultHeight={300}
                 />
-
-                <Upload
-                  beforeUpload={(file) => {
-                    handleImageUpload(file);
-                    return false;
-                  }}>
-                  <Button icon={<UploadOutlined />} type="primary">
-                    استبدال الصورة
-                  </Button>
-                </Upload>
-              </div>
+              </>
             )}
 
             <Button
