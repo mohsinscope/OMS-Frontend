@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Spin,
   message,
@@ -47,9 +47,11 @@ const SuperVisorDeviceShow = () => {
   const hasUpdatePermission = permissions.includes("DDu");
   const hasDeletePermission = permissions.includes("DDd");
 
-  const fetchData = async () => {
-    if (!deviceId || !accessToken) return;
+  const isFetched = useRef(false); // Prevent multiple fetches
 
+  const fetchData = async () => {
+    if (!deviceId || !accessToken || isFetched.current) return;
+    isFetched.current = true; // Mark as fetched
     setLoading(true);
     try {
       const [
@@ -76,7 +78,7 @@ const SuperVisorDeviceShow = () => {
       setImagesData(imagesData);
       setImages(imagesData.map((image) => image.filePath));
 
-      if (imagesData.length > 0) {
+      if (!imageData.imageId && imagesData.length > 0) {
         setImageData({
           imageId: imagesData[0].id,
           entityId: imagesData[0].entityId,
@@ -106,13 +108,8 @@ const SuperVisorDeviceShow = () => {
   };
 
   useEffect(() => {
-    if (!deviceId) {
-      message.error("معرف الجهاز غير موجود");
-      navigate(-1);
-      return;
-    }
     fetchData();
-  }, [deviceId, accessToken, navigate]);
+  }, [deviceId]); // Ensure no dynamic dependencies like `imageData`
 
   const handleImageUpload = async (file) => {
     if (!imageData.imageId) {
@@ -288,7 +285,8 @@ const SuperVisorDeviceShow = () => {
                 uploadedImages={images}
                 onImageSelect={(index) => {
                   const selectedImage = imagesData[index];
-                  if (selectedImage) {
+                  // Only update state if the selected image is different
+                  if (selectedImage && selectedImage.id !== imageData.imageId) {
                     setImageData({
                       imageId: selectedImage.id,
                       entityId: selectedImage.entityId,
@@ -368,7 +366,10 @@ const SuperVisorDeviceShow = () => {
                   uploadedImages={images}
                   onImageSelect={(index) => {
                     const selectedImage = imagesData[index];
-                    if (selectedImage) {
+                    if (
+                      selectedImage &&
+                      selectedImage.id !== imageData.imageId
+                    ) {
                       setImageData({
                         imageId: selectedImage.id,
                         entityId: selectedImage.entityId,
