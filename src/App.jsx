@@ -9,13 +9,15 @@ import LandingPage from "./pages/landingPage.jsx";
 
 
 import axiosInstance from './intercepters/axiosInstance.js';
+//admin
+import AdminUserManagement from "./roles/admin/user-managment/AdminUserManagment.jsx";
+import ListOfValueAdmin from "./roles/admin/ListOfValueAdmin/ListOfValueAdmin.jsx";
+import BannedUsers from './roles/admin/banned-users/BannedUsers.jsx';
 
 // Import all components
 import Dashboard from "./pages/dashBoard.jsx";
 import AdminExpenses from "./roles/admin/admin-expensess/adminExpensess.jsx";
 import AdminAttendance from "./roles/admin/admin-attendence/adminAttendence.jsx";
-import AdminUserManagement from "./roles/admin/user-managment/AdminUserManagment.jsx";
-import ListOfValueAdmin from "./roles/admin/ListOfValueAdmin/ListOfValueAdmin.jsx";
 import Settings from "./reusable/settings.jsx";
 import ExpensessView from "./reusable/ExpensessView.jsx";
 
@@ -59,7 +61,7 @@ const App = () => {
     { path: "admin/attendence", element: <AdminAttendance /> },
     { path: "admin/users", element: <AdminUserManagement /> },
     { path: "admin/listofvalues", element: <ListOfValueAdmin /> },
-
+    { path: "/admin/ban", element: <BannedUsers /> },
     // Supervisor Routes
     {
       path: "supervisor/ExpensesRequests",
