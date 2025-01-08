@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Image, Button, Modal, ConfigProvider, Tooltip } from "antd";
-import { LeftOutlined, RightOutlined, DeleteOutlined, LinkOutlined } from "@ant-design/icons";
+import {
+  LeftOutlined,
+  RightOutlined,
+  DeleteOutlined,
+  LinkOutlined,
+} from "@ant-design/icons";
 import "./styles/imagePreViewer.css";
-import unamed from './../assets/unnamed.png';
+import unamed from "./../assets/unnamed.png";
 
 export default function ImagePreviewer({
   uploadedImages, // Array of URLs or File objects
@@ -16,9 +21,10 @@ export default function ImagePreviewer({
 
   useEffect(() => {
     if (onImageSelect) {
-      onImageSelect(currentIndex); // Notify parent of the selected image index
+      // Only call onImageSelect if the index changes
+      onImageSelect(currentIndex);
     }
-  }, [currentIndex, onImageSelect]);
+  }, [currentIndex]); // Removed `onImageSelect` from the dependency array
 
   const handleNext = () => {
     if (currentIndex < uploadedImages.length - 1) {
@@ -49,7 +55,7 @@ export default function ImagePreviewer({
   };
 
   const formatImageUrl = (url) => {
-    if (!url) return '';
+    if (!url) return "";
 
     // Handle local file objects
     if (url instanceof File) {
@@ -57,12 +63,14 @@ export default function ImagePreviewer({
     }
 
     // Handle Base64 or blob URLs
-    if (url.startsWith('data:') || url.startsWith('blob:')) {
+    if (url.startsWith("data:") || url.startsWith("blob:")) {
       return url;
     }
 
     // Handle remote database URLs
-    return url.match(/^https?:\/\//) ? url : `https://cdn-oms.scopesky.org/${url}`;
+    return url.match(/^https?:\/\//)
+      ? url
+      : `https://cdn-oms.scopesky.org/${url}`;
   };
 
   const isPDF = (url) => {
@@ -86,7 +94,8 @@ export default function ImagePreviewer({
 
     // Handle query parameters in URLs
     const queryIndex = lowercaseUrl.indexOf("?");
-    const cleanUrl = queryIndex > -1 ? lowercaseUrl.substring(0, queryIndex) : lowercaseUrl;
+    const cleanUrl =
+      queryIndex > -1 ? lowercaseUrl.substring(0, queryIndex) : lowercaseUrl;
 
     const fileExtension = cleanUrl.split(".").pop();
     return fileExtension === "pdf";
@@ -94,7 +103,7 @@ export default function ImagePreviewer({
 
   const handleOpenPDF = () => {
     const url = formatImageUrl(uploadedImages[currentIndex]);
-    window.open(url, '_blank');
+    window.open(url, "_blank");
   };
 
   if (!uploadedImages?.length) {
@@ -106,54 +115,40 @@ export default function ImagePreviewer({
 
   return (
     <div className="image-previewer-container">
-   
       <div className="image-display">
-        {isCurrentPDF ? (<>
-                 <div className="pdf-indicator">
-          <Tooltip title="فتح PDF">
-            <Button
-              type="primary"
-              icon={<LinkOutlined />}
-              onClick={handleOpenPDF}
-              className="open-pdf-button"
-            >
-              فتح الملف
-            </Button>
-          </Tooltip>
- 
-            <Image
-          width={defaultWidth}
-          height={defaultHeight}
-          src={formatImageUrl(currentUrl)}
-          alt={`File ${currentIndex + 1}`}
-          className="image-preview-item"
-          style={{ objectFit: "contain" }}
-          fallback={unamed}
-        />
-              </div> </>
-        ) : (<>
-                 <div className="pdf-indicator">
-          <Tooltip title="فتح PDF">
-            <Button
-              type="primary"
-              icon={<LinkOutlined />}
-              onClick={handleOpenPDF}
-              className="open-pdf-button"
-            >
-              فتح الملف
-            </Button>
-          </Tooltip>
- 
-            <Image
-          width={defaultWidth}
-          height={defaultHeight}
-          src={formatImageUrl(currentUrl)}
-          alt={`File ${currentIndex + 1}`}
-          className="image-preview-item"
-          style={{ objectFit: "contain" }}
-          fallback={unamed}
-        />
-              </div> </>
+        {isCurrentPDF ? (
+          <>
+            <div className="pdf-indicator">
+              <Tooltip title="فتح PDF">
+                <Button
+                  type="primary"
+                  icon={<LinkOutlined />}
+                  onClick={handleOpenPDF}
+                  className="open-pdf-button">
+                  فتح الملف
+                </Button>
+              </Tooltip>
+              <Image
+                width={defaultWidth}
+                height={defaultHeight}
+                src={formatImageUrl(currentUrl)}
+                alt={`File ${currentIndex + 1}`}
+                className="image-preview-item"
+                style={{ objectFit: "contain" }}
+                fallback={unamed}
+              />
+            </div>
+          </>
+        ) : (
+          <Image
+            width={defaultWidth}
+            height={defaultHeight}
+            src={formatImageUrl(currentUrl)}
+            alt={`File ${currentIndex + 1}`}
+            className="image-preview-item"
+            style={{ objectFit: "contain" }}
+            fallback={unamed}
+          />
         )}
       </div>
       <div className="image-pagination-controls">
@@ -162,8 +157,7 @@ export default function ImagePreviewer({
             icon={<RightOutlined />}
             onClick={handleNext}
             disabled={currentIndex === uploadedImages.length - 1}
-            className="pagination-button next-button"
-          >
+            className="pagination-button next-button">
             التالي
           </Button>
           <span className="pagination-info">
@@ -173,36 +167,35 @@ export default function ImagePreviewer({
             icon={<LeftOutlined />}
             onClick={handlePrevious}
             disabled={currentIndex === 0}
-            className="pagination-button previous-button"
-          >
+            className="pagination-button previous-button">
             السابق
           </Button>
         </ConfigProvider>
       </div>
       {onDeleteImage && (
         <ConfigProvider direction="rtl">
-        <div className="image-delete-button-container">
-          <Button
-            icon={<DeleteOutlined />}
-            onClick={showDeleteConfirm}
-            danger
-            className="delete-button"
-          >
-            حذف
-          </Button>
-        </div></ConfigProvider>
+          <div className="image-delete-button-container">
+            <Button
+              icon={<DeleteOutlined />}
+              onClick={showDeleteConfirm}
+              danger
+              className="delete-button">
+              حذف
+            </Button>
+          </div>
+        </ConfigProvider>
       )}
       <ConfigProvider direction="rtl">
-      <Modal
-        title="تأكيد الحذف"
-        visible={isDeleteConfirmVisible}
-        onOk={handleDeleteConfirm}
-        onCancel={handleDeleteCancel}
-        okText="نعم"
-        cancelText="لا"
-      >
-        <p>هل أنت متأكد أنك تريد حذف هذه الصورة؟</p>
-      </Modal></ConfigProvider>
+        <Modal
+          title="تأكيد الحذف"
+          visible={isDeleteConfirmVisible}
+          onOk={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+          okText="نعم"
+          cancelText="لا">
+          <p>هل أنت متأكد أنك تريد حذف هذه الصورة؟</p>
+        </Modal>
+      </ConfigProvider>
     </div>
   );
 }
