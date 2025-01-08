@@ -8,127 +8,141 @@ import {
   Button,
   ConfigProvider,
   Select,
+  Upload,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
-import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
-import "./../lecturer/LecturerShow.css";
-import useAuthStore from "./../../../store/store";
-import Url from "./../../../store/url.js";
-import Lele from "./../../../reusable elements/icons.jsx";
+import { UploadOutlined } from "@ant-design/icons";
+import axiosInstance from "../../../intercepters/axiosInstance.js";
+import ImagePreviewer from "../../../reusable/ImagePreViewer.jsx";
+import "../lecturer/LecturerShow.css";
+import useAuthStore from "../../../store/store";
+import Url from "../../../store/url.js";
+import Lele from "../../../reusable elements/icons.jsx";
 
 const SuperVisorDeviceShow = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const deviceId = location.state?.id;
+
   const [deviceData, setDeviceData] = useState(null);
   const [images, setImages] = useState([]);
+  const [imagesData, setImagesData] = useState([]);
+  const [imageData, setImageData] = useState({
+    imageId: "",
+    entityId: "",
+    entityType: "DamagedDevice",
+  });
   const [loading, setLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [deviceTypes, setDeviceTypes] = useState([]);
+
   const [form] = Form.useForm();
 
-  const { isSidebarCollapsed, accessToken, profile, permissions } = useAuthStore();
+  const { isSidebarCollapsed, accessToken, profile, permissions } =
+    useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
-
 
   const hasUpdatePermission = permissions.includes("DDu");
   const hasDeletePermission = permissions.includes("DDd");
 
+  const fetchData = async () => {
+    if (!deviceId || !accessToken) return;
 
+    setLoading(true);
+    try {
+      const [
+        deviceResponse,
+        imagesResponse,
+        damagedTypesResponse,
+        deviceTypesResponse,
+      ] = await Promise.all([
+        axiosInstance.get(`${Url}/api/DamagedDevice/${deviceId}`),
+        axiosInstance.get(`${Url}/api/Attachment/DamagedDevice/${deviceId}`),
+        axiosInstance.get(`${Url}/api/damageddevicetype/all`),
+        axiosInstance.get(`${Url}/api/devicetype`),
+      ]);
+
+      const device = deviceResponse.data;
+      const formattedDate = device.date
+        ? new Date(device.date).toISOString().split("T")[0]
+        : "";
+
+      setDeviceData({ ...device, date: formattedDate });
+      form.setFieldsValue({ ...device, date: formattedDate });
+
+      const imagesData = imagesResponse.data;
+      setImagesData(imagesData);
+      setImages(imagesData.map((image) => image.filePath));
+
+      if (imagesData.length > 0) {
+        setImageData({
+          imageId: imagesData[0].id,
+          entityId: imagesData[0].entityId,
+          entityType: "DamagedDevice",
+        });
+      }
+
+      setDamagedTypes(
+        damagedTypesResponse.data.map((type) => ({
+          value: type.id,
+          label: type.name,
+        }))
+      );
+
+      setDeviceTypes(
+        deviceTypesResponse.data.map((type) => ({
+          value: type.id,
+          label: type.name,
+        }))
+      );
+    } catch (error) {
+      message.error("حدث خطأ أثناء تحميل البيانات");
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!deviceId) {
-      message.error("معرف الجهاز غير موجود.");
+      message.error("معرف الجهاز غير موجود");
       navigate(-1);
       return;
     }
+    fetchData();
+  }, [deviceId, accessToken, navigate]);
 
-    const fetchDeviceDetails = async () => {
-      setLoading(true);
-      try {
-        const response = await axiosInstance.get(
-          `${Url}/api/DamagedDevice/${deviceId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const device = response.data;
-        const formattedDate = device.date
-          ? new Date(device.date).toISOString().slice(0, 19) + "Z"
-          : "";
-        setDeviceData({ ...device, date: formattedDate });
-        form.setFieldsValue({ ...device, date: formattedDate });
-      } catch (error) {
-        message.error("حدث خطأ أثناء جلب تفاصيل الجهاز.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleImageUpload = async (file) => {
+    if (!imageData.imageId) {
+      message.error("لم يتم العثور على معرف الصورة");
+      return;
+    }
 
-    const fetchDeviceImages = async () => {
-      try {
-        const response = await axiosInstance.get(
-          `${Url}/api/Attachment/DamagedDevice/${deviceId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const imageUrls = response.data.map((image) => image.filePath);
-        setImages(imageUrls);
-      } catch (error) {
-        message.error("حدث خطأ أثناء جلب صور الجهاز.");
-      }
-    };
+    try {
+      const formData = new FormData();
+      formData.append("entityId", deviceId);
+      formData.append("entityType", "DamagedDevice");
+      formData.append("file", file);
 
-    const fetchDamagedTypes = async () => {
-      try {
-        const response = await axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
+      await axiosInstance.put(
+        `${Url}/api/attachment/${imageData.imageId}`,
+        formData,
+        {
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "multipart/form-data",
           },
-        });
-        setDamagedTypes(
-          response.data.map((type) => ({
-            value: type.id,
-            label: type.name,
-          }))
-        );
-      } catch (error) {
-        message.error("خطأ في جلب أنواع التلف للأجهزة.");
-      }
-    };
+        }
+      );
 
-    const fetchDeviceTypes = async () => {
-      try {
-        const response = await axiosInstance.get(`${Url}/api/devicetype`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        setDeviceTypes(
-          response.data.map((type) => ({
-            value: type.id,
-            label: type.name,
-          }))
-        );
-      } catch (error) {
-        message.error("خطأ في جلب أنواع الأجهزة.");
-      }
-    };
-
-    fetchDeviceTypes();
-    fetchDamagedTypes();
-    fetchDeviceDetails();
-    fetchDeviceImages();
-  }, [deviceId, accessToken, navigate, form]);
+      message.success("تم تحديث الصورة بنجاح");
+      await fetchData();
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      message.error("حدث خطأ أثناء تعديل الصورة");
+    }
+  };
 
   const handleSaveEdit = async (values) => {
     try {
@@ -136,47 +150,40 @@ const SuperVisorDeviceShow = () => {
         id: deviceId,
         serialNumber: values.serialNumber,
         date: values.date
-          ? new Date(values.date).toISOString().slice(0, 19) + "Z"
+          ? new Date(values.date).toISOString()
           : deviceData.date,
         damagedDeviceTypeId: values.damagedDeviceTypeId,
         deviceTypeId: values.deviceTypeId,
         note: values.note || "",
-        officeId: officeId,
-        governorateId: governorateId,
-        profileId: profileId,
+        officeId,
+        governorateId,
+        profileId,
       };
-      console.log(updatedValues);
-      await axiosInstance.put(`${Url}/api/DamagedDevice/${deviceId}`, updatedValues, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+
+      await axiosInstance.put(
+        `${Url}/api/DamagedDevice/${deviceId}`,
+        updatedValues
+      );
 
       message.success("تم تحديث بيانات الجهاز بنجاح");
       setEditModalVisible(false);
-      setDeviceData((prev) => ({ ...prev, ...updatedValues }));
+      await fetchData();
     } catch (error) {
-      message.error("حدث خطأ أثناء تعديل بيانات الجهاز.");
+      console.error("Error saving edit:", error);
+      message.error("حدث خطأ أثناء تعديل بيانات الجهاز");
     }
   };
 
   const handleDelete = async () => {
     try {
-      await axiosInstance.delete(`${Url}/api/DamagedDevice/${deviceId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      await axiosInstance.delete(`${Url}/api/DamagedDevice/${deviceId}`);
       message.success("تم حذف الجهاز بنجاح");
       setDeleteModalVisible(false);
       navigate(-1);
     } catch (error) {
-      message.error("حدث خطأ أثناء حذف الجهاز.");
+      console.error("Error deleting device:", error);
+      message.error("حدث خطأ أثناء حذف الجهاز");
     }
-  };
-
-  const handleBack = () => {
-    navigate(-1);
   };
 
   if (loading) {
@@ -200,7 +207,7 @@ const SuperVisorDeviceShow = () => {
       <div className="title-container">
         <h1>تفاصيل الجهاز</h1>
         <div className="edit-button-and-delete">
-          <Button onClick={handleBack} className="back-button">
+          <Button onClick={() => navigate(-1)} className="back-button">
             <Lele type="back" />
             الرجوع
           </Button>
@@ -228,23 +235,19 @@ const SuperVisorDeviceShow = () => {
             <input
               className="details-value"
               value={deviceData.serialNumber}
-              disabled
+              readOnly
             />
           </div>
           <div className="details-row">
             <span className="details-label">التاريخ:</span>
-            <input
-              className="details-value"
-              value={new Date(deviceData.date).toLocaleDateString("en-CA")}
-              disabled
-            />
+            <input className="details-value" value={deviceData.date} readOnly />
           </div>
           <div className="details-row">
             <span className="details-label">نوع الجهاز:</span>
             <input
               className="details-value"
               value={deviceData.deviceTypeName}
-              disabled
+              readOnly
             />
           </div>
           <div className="details-row">
@@ -256,7 +259,7 @@ const SuperVisorDeviceShow = () => {
                   (type) => type.value === deviceData.damagedDeviceTypeId
                 )?.label || "غير معروف"
               }
-              disabled
+              readOnly
             />
           </div>
           <div className="details-row">
@@ -264,7 +267,7 @@ const SuperVisorDeviceShow = () => {
             <input
               className="details-value"
               value={deviceData.officeName}
-              disabled
+              readOnly
             />
           </div>
           <div className="details-row">
@@ -272,16 +275,27 @@ const SuperVisorDeviceShow = () => {
             <textarea
               className="textarea-value"
               value={deviceData.note || "لا توجد ملاحظات"}
-              disabled
+              readOnly
             />
           </div>
         </div>
+
         <div className="image-lecture-container">
           {images.length > 0 && (
             <div className="image-device-preview-container">
               <span className="note-details-label">صور الجهاز:</span>
               <ImagePreviewer
                 uploadedImages={images}
+                onImageSelect={(index) => {
+                  const selectedImage = imagesData[index];
+                  if (selectedImage) {
+                    setImageData({
+                      imageId: selectedImage.id,
+                      entityId: selectedImage.entityId,
+                      entityType: "DamagedDevice",
+                    });
+                  }
+                }}
                 defaultWidth={600}
                 defaultHeight={300}
               />
@@ -292,11 +306,11 @@ const SuperVisorDeviceShow = () => {
 
       <ConfigProvider direction="rtl">
         <Modal
-          className="model-container"
+          title="تعديل بيانات الجهاز"
           open={editModalVisible}
           onCancel={() => setEditModalVisible(false)}
-          footer={null}>
-          <h1>تعديل بيانات الجهاز</h1>
+          footer={null}
+          className="model-container">
           <Form
             form={form}
             onFinish={handleSaveEdit}
@@ -308,42 +322,66 @@ const SuperVisorDeviceShow = () => {
               rules={[
                 { required: true, message: "يرجى إدخال الرقم التسلسلي" },
               ]}>
-              <Input placeholder="الرقم التسلسلي" />
+              <Input />
             </Form.Item>
+
             <Form.Item
               name="deviceTypeId"
               label="نوع الجهاز"
               rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}>
-              <Select
-                style={{ height: "45px" }}
-                options={deviceTypes}
-                placeholder="اختر نوع الجهاز"
-                allowClear
-              />
+              <Select options={deviceTypes} />
             </Form.Item>
+
             <Form.Item
               name="damagedDeviceTypeId"
               label="نوع الضرر"
               rules={[{ required: true, message: "يرجى اختيار نوع الضرر" }]}>
-              <Select
-                style={{ height: "45px" }}
-                options={damagedTypes}
-                placeholder="اختر نوع الضرر"
-                allowClear
-              />
+              <Select options={damagedTypes} />
             </Form.Item>
+
             <Form.Item
               name="date"
               label="التاريخ"
               rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-              <Input placeholder="التاريخ" type="date" />
+              <Input type="date" />
             </Form.Item>
-            <Form.Item
-              name="note"
-              label="الملاحظات"
-              rules={[{ required: false }]}>
-              <Input.TextArea placeholder="أدخل الملاحظات" />
+
+            <Form.Item name="note" label="الملاحظات">
+              <Input.TextArea />
             </Form.Item>
+            <Upload
+              beforeUpload={(file) => {
+                handleImageUpload(file);
+                return false;
+              }}>
+              <Button
+                style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+                type="primary"
+                icon={<UploadOutlined />}>
+                استبدال الصورة
+              </Button>
+            </Upload>
+            {images.length > 0 && (
+              <>
+                <span className="note-details-label">صور الجهاز:</span>
+                <ImagePreviewer
+                  uploadedImages={images}
+                  onImageSelect={(index) => {
+                    const selectedImage = imagesData[index];
+                    if (selectedImage) {
+                      setImageData({
+                        imageId: selectedImage.id,
+                        entityId: selectedImage.entityId,
+                        entityType: "DamagedDevice",
+                      });
+                    }
+                  }}
+                  defaultWidth="100%"
+                  defaultHeight={300}
+                />
+              </>
+            )}
+
             <Button type="primary" htmlType="submit" block>
               حفظ التعديلات
             </Button>

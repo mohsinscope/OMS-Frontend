@@ -9,20 +9,28 @@ import {
   ConfigProvider,
   DatePicker,
   Select,
+  Upload,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import { UploadOutlined } from "@ant-design/icons";
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./LecturerShow.css";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 import Lele from "./../../../reusable elements/icons.jsx";
-import moment from 'moment';
+import moment from "moment";
 
 const LecturerShow = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const lectureId = location.state?.id;
+
+  const [imageData, setImageData] = useState({
+    imageId: "",
+    entityId: "",
+    entityType: "Lecture",
+  });
   const [lectureData, setLectureData] = useState(null);
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -30,101 +38,109 @@ const LecturerShow = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [companies, setCompanies] = useState([]);
   const [lectureTypes, setLectureTypes] = useState([]);
+
   const [form] = Form.useForm();
 
-  const { isSidebarCollapsed, accessToken, profile, permissions } = useAuthStore();
-  
+  const { isSidebarCollapsed, permissions } = useAuthStore();
   const hasUpdatePermission = permissions.includes("Lu");
   const hasDeletePermission = permissions.includes("Ld");
 
-  // Fetch companies on component mount
-  useEffect(() => {
-    const fetchCompanies = async () => {
-      try {
-        const response = await axiosInstance.get(`${Url}/api/Company`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        setCompanies(response.data);
-      } catch (error) {
-        message.error("Failed to fetch companies");
+  const fetchCompanies = async () => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Company`);
+      setCompanies(response.data);
+    } catch (error) {
+      message.error("فشل في جلب بيانات الشركات");
+    }
+  };
+
+  const fetchLectureDetails = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Lecture/${lectureId}`
+      );
+      const lecture = response.data;
+      setLectureData(lecture);
+
+      const selectedCompany = companies.find((c) => c.id === lecture.companyId);
+      if (selectedCompany) {
+        setLectureTypes(selectedCompany.lectureTypes || []);
       }
-    };
-    fetchCompanies();
-  }, [accessToken]);
+
+      form.setFieldsValue({
+        ...lecture,
+        date: moment(lecture.date),
+        companyId: lecture.companyId,
+        lectureTypeId: lecture.lectureTypeId,
+      });
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب تفاصيل المحضر");
+    }
+  };
+
+  const fetchLectureImages = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Attachment/Lecture/${lectureId}`
+      );
+      const imageUrls = response.data.map((image) => ({
+        url: image.filePath,
+        id: image.id,
+      }));
+      setImages(imageUrls);
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب صور المحضر");
+    }
+  };
 
   useEffect(() => {
     if (!lectureId) {
-      message.error("معرف المحضر غير موجود.");
+      message.error("معرف المحضر غير موجود");
       navigate(-1);
       return;
     }
 
-    const fetchLectureDetails = async () => {
-      setLoading(true);
-      try {
-        const response = await axiosInstance.get(`${Url}/api/Lecture/${lectureId}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        const lecture = response.data;
-        setLectureData(lecture);
-        
-        // Set initial lecture types based on selected company
-        const selectedCompany = companies.find(c => c.id === lecture.companyId);
-        if (selectedCompany) {
-          setLectureTypes(selectedCompany.lectureTypes || []);
-        }
-
-        // Set form values for editing
-        form.setFieldsValue({
-          ...lecture,
-          date: moment(lecture.date),
-          companyId: lecture.companyId,
-          lectureTypeId: lecture.lectureTypeId
-        });
-      } catch (error) {
-        message.error(
-          `حدث خطأ أثناء جلب تفاصيل المحضر: ${
-            error.response?.data?.message || error.message
-          }`
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchLectureImages = async () => {
-      try {
-        const response = await axiosInstance.get(
-          `${Url}/api/Attachment/Lecture/${lectureId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const imageUrls = response.data.map((image) => image.filePath);
-        setImages(imageUrls);
-      } catch (error) {
-        message.error(
-          `حدث خطأ أثناء جلب صور المحضر: ${
-            error.response?.data?.message || error.message
-          }`
-        );
-      }
-    };
-
-    fetchLectureDetails();
-    fetchLectureImages();
-  }, [lectureId, accessToken, navigate, form, companies]);
+    setLoading(true);
+    Promise.all([
+      fetchCompanies(),
+      fetchLectureDetails(),
+      fetchLectureImages(),
+    ]).finally(() => setLoading(false));
+  }, [lectureId]);
 
   const handleCompanyChange = (value) => {
-    const selectedCompany = companies.find(c => c.id === value);
+    const selectedCompany = companies.find((c) => c.id === value);
     setLectureTypes(selectedCompany?.lectureTypes || []);
-    form.setFieldValue('lectureTypeId', undefined);
+    form.setFieldValue("lectureTypeId", undefined);
+  };
+
+  const handleImageUpload = async (file) => {
+    if (!imageData.imageId) {
+      message.error("لم يتم تحديد الصورة");
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append("entityId", lectureId);
+      formData.append("entityType", "Lecture");
+      formData.append("file", file);
+
+      await axiosInstance.put(
+        `${Url}/api/attachment/${imageData.imageId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      message.success("تم تحديث الصورة بنجاح");
+      await fetchLectureImages();
+    } catch (error) {
+      message.error("حدث خطأ أثناء تعديل الصورة");
+    }
   };
 
   const handleSaveEdit = async (values) => {
@@ -138,55 +154,27 @@ const LecturerShow = () => {
         governorateId: lectureData.governorateId,
         profileId: lectureData.profileId,
         companyId: values.companyId,
-        lectureTypeId: values.lectureTypeId
+        lectureTypeId: values.lectureTypeId,
       };
 
-      await axiosInstance.put(`${Url}/api/Lecture/${lectureId}`, updatedValues, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      
+      await axiosInstance.put(`${Url}/api/Lecture/${lectureId}`, updatedValues);
       message.success("تم تحديث المحضر بنجاح");
       setEditModalVisible(false);
-      
-      // Refresh lecture data
-      const response = await axiosInstance.get(`${Url}/api/Lecture/${lectureId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      setLectureData(response.data);
+      await fetchLectureDetails();
     } catch (error) {
-      message.error(
-        `حدث خطأ أثناء تعديل المحضر: ${
-          error.response?.data?.message || error.message
-        }`
-      );
+      message.error("حدث خطأ أثناء تعديل المحضر");
     }
   };
 
   const handleDelete = async () => {
     try {
-      await axiosInstance.delete(`${Url}/api/Lecture/${lectureId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      await axiosInstance.delete(`${Url}/api/Lecture/${lectureId}`);
       message.success("تم حذف المحضر بنجاح");
       setDeleteModalVisible(false);
       navigate(-1);
     } catch (error) {
-      message.error(
-        `حدث خطأ أثناء حذف المحضر: ${
-          error.response?.data?.message || error.message
-        }`
-      );
+      message.error("حدث خطأ أثناء حذف المحضر");
     }
-  };
-
-  const handleBack = () => {
-    navigate(-1);
   };
 
   if (loading) {
@@ -210,7 +198,7 @@ const LecturerShow = () => {
       <div className="title-container">
         <h1>تفاصيل المحضر</h1>
         <div className="edit-button-and-delete">
-          <Button onClick={handleBack} className="back-button">
+          <Button onClick={() => navigate(-1)} className="back-button">
             <Lele type="back" />
             الرجوع
           </Button>
@@ -245,7 +233,7 @@ const LecturerShow = () => {
             <span className="details-label">التاريخ:</span>
             <input
               className="details-value"
-              value={new Date(lectureData.date).toLocaleDateString("ar-EG")}
+              value={moment(lectureData.date).format("YYYY-MM-DD HH:mm")}
               disabled
             />
           </div>
@@ -303,7 +291,7 @@ const LecturerShow = () => {
             <div className="image-lecture-preview-container">
               <span className="note-details-label">صور المحضر:</span>
               <ImagePreviewer
-                uploadedImages={images}
+                uploadedImages={images.map((img) => img.url)}
                 defaultWidth={600}
                 defaultHeight={300}
               />
@@ -311,7 +299,7 @@ const LecturerShow = () => {
           )}
         </div>
       </div>
-        
+
       <ConfigProvider direction="rtl">
         <Modal
           className="model-container-lecture-edit"
@@ -327,7 +315,7 @@ const LecturerShow = () => {
             className="Admin-user-add-model-conatiner-form"
             initialValues={{
               ...lectureData,
-              date: moment(lectureData?.date)
+              date: moment(lectureData?.date),
             }}>
             <Form.Item
               name="title"
@@ -339,12 +327,14 @@ const LecturerShow = () => {
             <Form.Item
               name="date"
               label="التاريخ"
-              rules={[{ required: true, message: "يرجى إدخال التاريخ والوقت" }]}>
-              <DatePicker 
+              rules={[
+                { required: true, message: "يرجى إدخال التاريخ والوقت" },
+              ]}>
+              <DatePicker
                 showTime
                 format="YYYY-MM-DD HH:mm"
                 placeholder="اختر التاريخ والوقت"
-                style={{ width: '100%' }}
+                style={{ width: "100%" }}
               />
             </Form.Item>
 
@@ -352,11 +342,8 @@ const LecturerShow = () => {
               name="companyId"
               label="الشركة"
               rules={[{ required: true, message: "يرجى اختيار الشركة" }]}>
-              <Select
-                placeholder="اختر الشركة"
-                onChange={handleCompanyChange}
-                style={{ width: '100%' }}>
-                {companies.map(company => (
+              <Select placeholder="اختر الشركة" onChange={handleCompanyChange}>
+                {companies.map((company) => (
                   <Select.Option key={company.id} value={company.id}>
                     {company.name}
                   </Select.Option>
@@ -370,9 +357,8 @@ const LecturerShow = () => {
               rules={[{ required: true, message: "يرجى اختيار نوع المحاضرة" }]}>
               <Select
                 placeholder="اختر نوع المحاضرة"
-                disabled={!form.getFieldValue('companyId')}
-                style={{ width: '100%' }}>
-                {lectureTypes.map(type => (
+                disabled={!form.getFieldValue("companyId")}>
+                {lectureTypes.map((type) => (
                   <Select.Option key={type.id} value={type.id}>
                     {type.name}
                   </Select.Option>
@@ -380,18 +366,44 @@ const LecturerShow = () => {
               </Select>
             </Form.Item>
 
-            <Form.Item
-              name="note"
-              label="الملاحظات">
-              <Input.TextArea 
-                placeholder="أدخل الملاحظات"
-                rows={4}
-              />
+            <Form.Item name="note" label="الملاحظات">
+              <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />
             </Form.Item>
 
-            <Button 
-              type="primary" 
-              htmlType="submit" 
+            {images.length > 0 && (
+              <div className="image-section">
+                <span className="note-details-label">صور المحضر:</span>
+                <ImagePreviewer
+                  uploadedImages={images.map((img) => img.url)}
+                  onImageSelect={(index) => {
+                    const selectedImage = images[index];
+                    if (selectedImage) {
+                      setImageData({
+                        imageId: selectedImage.id,
+                        entityId: lectureId,
+                        entityType: "Lecture",
+                      });
+                    }
+                  }}
+                  defaultWidth="100%"
+                  defaultHeight={300}
+                />
+
+                <Upload
+                  beforeUpload={(file) => {
+                    handleImageUpload(file);
+                    return false;
+                  }}>
+                  <Button icon={<UploadOutlined />} type="primary">
+                    استبدال الصورة
+                  </Button>
+                </Upload>
+              </div>
+            )}
+
+            <Button
+              type="primary"
+              htmlType="submit"
               block
               className="submit-button">
               حفظ التعديلات

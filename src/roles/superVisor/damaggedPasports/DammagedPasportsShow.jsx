@@ -8,16 +8,23 @@ import {
   Button,
   ConfigProvider,
   Select,
+  Upload,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import { UploadOutlined } from "@ant-design/icons";
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./dammagedPasportsShow.css";
-import useAuthStore from "./../../../store/store";
-import Url from "./../../../store/url.js";
+import useAuthStore from "../../../store/store";
+import Url from "../../../store/url";
 import Lele from "./../../../reusable elements/icons.jsx";
 
-const DammagedPasportsShow = () => {
+const DamagedPassportsShow = () => {
+  const [imageData, setImageData] = useState({
+    imageId: "",
+    entityId: "",
+    entityType: "DamagedPassport",
+  });
   const location = useLocation();
   const navigate = useNavigate();
   const passportId = location.state?.id;
@@ -29,12 +36,67 @@ const DammagedPasportsShow = () => {
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [form] = Form.useForm();
 
-  const { isSidebarCollapsed, accessToken, profile,permissions } = useAuthStore();
+  const { isSidebarCollapsed, accessToken, profile, permissions } =
+    useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
 
- 
   const hasUpdatePermission = permissions.includes("DPu");
   const hasDeletePermission = permissions.includes("DPd");
+
+  const fetchPassportDetails = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/DamagedPassport/${passportId}`
+      );
+      const passport = response.data;
+      const formattedDate = passport.date
+        ? new Date(passport.date).toISOString().split("T")[0]
+        : "";
+      setPassportData({ ...passport, date: formattedDate });
+      form.setFieldsValue({ ...passport, date: formattedDate });
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب تفاصيل الجواز.");
+    }
+  };
+
+  const fetchPassportImages = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Attachment/DamagedPassport/${passportId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      const imageUrls = response.data.map((image) => ({
+        url: image.filePath,
+        id: image.id,
+      }));
+      setImages(imageUrls);
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب صور الجواز.");
+    }
+  };
+
+  const fetchDamagedTypes = async () => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/damagedtype/all`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      setDamagedTypes(
+        response.data.map((type) => ({
+          value: type.id,
+          label: type.name,
+        }))
+      );
+    } catch (error) {
+      message.error("خطأ في جلب أنواع التلف للجوازات.");
+    }
+  };
+
   useEffect(() => {
     if (!passportId) {
       message.error("معرف الجواز غير موجود.");
@@ -42,69 +104,41 @@ const DammagedPasportsShow = () => {
       return;
     }
 
-    const fetchPassportDetails = async () => {
-      setLoading(true);
-      try {
-        const response = await axiosInstance.get(
-          `${Url}/api/DamagedPassport/${passportId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const passport = response.data;
-        const formattedDate = passport.date
-          ? new Date(passport.date).toISOString().slice(0, 19) + "Z"
-          : "";
-        setPassportData({ ...passport, date: formattedDate });
-        form.setFieldsValue({ ...passport, date: formattedDate });
-      } catch (error) {
-        message.error("حدث خطأ أثناء جلب تفاصيل الجواز.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    setLoading(true);
+    Promise.all([
+      fetchPassportDetails(),
+      fetchPassportImages(),
+      fetchDamagedTypes(),
+    ]).finally(() => setLoading(false));
+  }, [passportId, navigate]);
 
-    const fetchPassportImages = async () => {
-      try {
-        const response = await axiosInstance.get(
-          `${Url}/api/Attachment/DamagedPassport/${passportId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const imageUrls = response.data.map((image) => image.filePath);
-        setImages(imageUrls);
-      } catch (error) {
-        message.error("حدث خطأ أثناء جلب صور الجواز.");
-      }
-    };
+  const handleImageUpload = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("entityId", imageData.entityId);
+      formData.append("entityType", "DamagedPassport");
+      formData.append("file", file);
 
-    const fetchDamagedTypes = async () => {
-      try {
-        const response = await axiosInstance.get(`${Url}/api/damagedtype/all`, {
+      console.log("Uploading image with data:", imageData);
+
+      await axiosInstance.put(
+        `${Url}/api/attachment/${imageData.imageId}`, // Use updated imageId
+        formData,
+        {
           headers: {
             Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "multipart/form-data",
           },
-        });
-        setDamagedTypes(
-          response.data.map((type) => ({
-            value: type.id,
-            label: type.name,
-          }))
-        );
-      } catch (error) {
-        message.error("خطأ في جلب أنواع التلف للجوازات.");
-      }
-    };
+        }
+      );
 
-    fetchPassportDetails();
-    fetchPassportImages();
-    fetchDamagedTypes();
-  }, [passportId, accessToken, navigate, form]);
+      message.success("تم تحديث الصورة بنجاح");
+      await fetchPassportImages(); // Refresh images after upload
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      message.error("حدث خطأ أثناء تعديل الصورة");
+    }
+  };
 
   const handleSaveEdit = async (values) => {
     try {
@@ -112,15 +146,14 @@ const DammagedPasportsShow = () => {
         id: passportId,
         passportNumber: values.passportNumber,
         date: values.date
-          ? new Date(values.date).toISOString().slice(0, 19) + "Z"
+          ? new Date(values.date).toISOString()
           : passportData.date,
-        note: values.notes ? values.notes : "لا يوجد",
+        note: values.notes || "لا يوجد",
         damagedTypeId: values.damagedTypeId,
-        governorateId: governorateId,
-        officeId: officeId,
-        profileId: profileId,
+        governorateId,
+        officeId,
+        profileId,
       };
-      console.log(updatedValues);
 
       await axiosInstance.put(
         `${Url}/api/DamagedPassport/${passportId}`,
@@ -134,7 +167,7 @@ const DammagedPasportsShow = () => {
 
       message.success("تم تحديث بيانات الجواز بنجاح");
       setEditModalVisible(false);
-      setPassportData((prev) => ({ ...prev, ...updatedValues }));
+      await fetchPassportDetails();
     } catch (error) {
       message.error("حدث خطأ أثناء تعديل بيانات الجواز.");
     }
@@ -153,10 +186,6 @@ const DammagedPasportsShow = () => {
     } catch (error) {
       message.error("حدث خطأ أثناء حذف الجواز.");
     }
-  };
-
-  const handleBack = () => {
-    navigate(-1);
   };
 
   if (loading) {
@@ -180,7 +209,7 @@ const DammagedPasportsShow = () => {
       <div className="title-container">
         <h1>تفاصيل الجواز التالف</h1>
         <div className="edit-button-and-delete">
-          <Button onClick={handleBack} className="back-button">
+          <Button onClick={() => navigate(-1)} className="back-button">
             <Lele type="back" />
             الرجوع
           </Button>
@@ -240,7 +269,7 @@ const DammagedPasportsShow = () => {
           {images.length > 0 && (
             <div className="image-preview-container">
               <ImagePreviewer
-                uploadedImages={images}
+                uploadedImages={images.map((img) => img.url)}
                 defaultWidth={600}
                 defaultHeight={300}
               />
@@ -249,72 +278,102 @@ const DammagedPasportsShow = () => {
         </div>
       </div>
 
-        <div className="dammaged-passport-container-edit-modal">
-      <ConfigProvider direction="rtl">
+      <div className="dammaged-passport-container-edit-modal">
+        <ConfigProvider direction="rtl">
+          <Modal
+            className="model-container"
+            open={editModalVisible}
+            onCancel={() => setEditModalVisible(false)}
+            footer={null}>
+            <h1>تعديل بيانات الجواز</h1>
+            <Form
+              form={form}
+              onFinish={handleSaveEdit}
+              layout="vertical"
+              className="dammaged-passport-container-edit-modal">
+              <Form.Item
+                name="passportNumber"
+                label="رقم الجواز"
+                rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
+                <Input placeholder="رقم الجواز" />
+              </Form.Item>
+              <Form.Item
+                name="damagedTypeId"
+                label="سبب التلف"
+                rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}>
+                <Select
+                  style={{ height: "45px" }}
+                  options={damagedTypes}
+                  placeholder="اختر سبب التلف"
+                  allowClear
+                />
+              </Form.Item>
+              <Form.Item
+                name="date"
+                label="التاريخ"
+                rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
+                <input placeholder="التاريخ" type="date" />
+              </Form.Item>
+              <Form.Item
+                name="notes"
+                label="الملاحظات"
+                rules={[{ required: false }]}>
+                <Input.TextArea
+                  placeholder="أدخل الملاحظات"
+                  defaultValue={"لا يوجد"}
+                />
+              </Form.Item>
+              <Upload
+                beforeUpload={(file) => {
+                  handleImageUpload(file);
+                  return false;
+                }}>
+                <Button
+                  style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+                  type="primary"
+                  icon={<UploadOutlined />}>
+                  استبدال الصورة
+                </Button>
+              </Upload>
+              {images.length > 0 && (
+                <>
+                  <span className="note-details-label">صور الجواز التالف:</span>
+                  <ImagePreviewer
+                    uploadedImages={images.map((img) => img.url)}
+                    onImageSelect={(index) => {
+                      const selectedImage = images[index]; // Correctly map selected index to image data
+                      if (selectedImage) {
+                        setImageData({
+                          imageId: selectedImage.id, // Set the correct imageId
+                          entityId: selectedImage.entityId || passportId, // Ensure entityId is set
+                          entityType: "DamagedPassport", // Maintain entityType
+                        });
+                      }
+                    }}
+                    defaultWidth="100%"
+                    defaultHeight={300}
+                  />
+                </>
+              )}
+              <Button type="primary" htmlType="submit" block>
+                حفظ التعديلات
+              </Button>
+            </Form>
+          </Modal>
 
-       
-        <Modal
-          className="model-container"
-          open={editModalVisible}
-          onCancel={() => setEditModalVisible(false)}
-          footer={null}>
-          <h1>تعديل بيانات الجواز</h1>
-          <Form
-            form={form}
-            onFinish={handleSaveEdit}
-            layout="vertical"
-            className="dammaged-passport-container-edit-modal">
-            <Form.Item
-              name="passportNumber"
-              label="رقم الجواز"
-              rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
-              <Input placeholder="رقم الجواز"/>
-            </Form.Item>
-            <Form.Item
-              name="damagedTypeId"
-              label="سبب التلف"
-              rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}>
-              <Select
-                style={{ height: "45px" }}
-                options={damagedTypes}
-                placeholder="اختر سبب التلف"
-                allowClear
-              />
-            </Form.Item>
-            <Form.Item
-              name="date"
-              label="التاريخ"
-              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-              <input placeholder="التاريخ" type="date" />
-            </Form.Item>
-            <Form.Item
-              name="notes"
-              label="الملاحظات"
-              rules={[{ required: false }]}>
-              <Input.TextArea
-                placeholder="أدخل الملاحظات"
-                defaultValue={"لا يوجد"}
-              />
-            </Form.Item>
-            <Button type="primary" htmlType="submit" block>
-              حفظ التعديلات
-            </Button>
-          </Form>
-        </Modal>
-
-        <Modal
-          title="تأكيد الحذف"
-          open={deleteModalVisible}
-          onOk={handleDelete}
-          onCancel={() => setDeleteModalVisible(false)}
-          okText="حذف"
-          cancelText="إلغاء">
-          <p>هل أنت متأكد أنك تريد حذف هذا الجواز؟</p>
-        </Modal>
-      </ConfigProvider>
-        </div>
+          <Modal
+            title="تأكيد الحذف"
+            open={deleteModalVisible}
+            onOk={handleDelete}
+            onCancel={() => setDeleteModalVisible(false)}
+            okText="حذف"
+            cancelText="إلغاء">
+            <p>هل أنت متأكد أنك تريد حذف هذا الجواز؟</p>
+          </Modal>
+        </ConfigProvider>
+      </div>
     </div>
   );
 };
 
-export default DammagedPasportsShow;
+export default DamagedPassportsShow;
