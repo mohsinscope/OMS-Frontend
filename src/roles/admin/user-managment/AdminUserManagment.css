@@ -247,7 +247,7 @@
 }
 
 .filter-buttons button {
-  width: 130px;
+  width: 140px !important;
   height: 45px;
   background-color: #4880ff;
   border-radius: 8px;
