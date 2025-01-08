@@ -65,6 +65,15 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    if (error.response?.status === 403) {
+      console.log('[Axios] Forbidden access:', error.response.data);
+      // Use the appropriate navigation method
+      if (navigator) {
+        navigator('/forbidden');
+      }
+      return Promise.reject(error);
+    }
+
     // If error is a 401 and the request is to the refresh token endpoint, log out immediately
     if (error.response?.status === 401 && originalRequest.url === '/api/account/refresh-token') {
       console.log('[Axios] Refresh token request failed, logging out');
