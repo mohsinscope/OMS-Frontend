@@ -383,7 +383,11 @@ const SuperVisorDeviceShow = () => {
               </>
             )}
 
-            <Button type="primary" htmlType="submit" block>
+            <Button
+              onClick={() => window.location.reload()}
+              type="primary"
+              htmlType="submit"
+              block>
               حفظ التعديلات
             </Button>
           </Form>
