@@ -16,7 +16,7 @@ const NotFound = () => {
         {/* Title and Message */}
         <h2 className="not-found-title">عذراً، الصفحة غير موجودة</h2>
         <p className="not-found-message">
-          الصفحة التي تحاول الوصول إليها غير موجودة في نظام إدارة الطلبات. 
+          الصفحة التي تحاول الوصول إليها غير موجودة في نظام إدارة المكاتب. 
           يمكنك العودة إلى الصفحة الرئيسية أو التواصل مع الدعم الفني إذا كنت تعتقد أن هناك مشكلة
         </p>
 
@@ -26,10 +26,7 @@ const NotFound = () => {
             <Home size={20} />
             <span>العودة إلى الرئيسية</span>
           </Link>
-          <Link to="/support" className="not-found-button not-found-button-secondary">
-            <HelpCircle size={20} />
-            <span>اتصل بالدعم</span>
-          </Link>
+      
         </div>
       </div>
     </div>
