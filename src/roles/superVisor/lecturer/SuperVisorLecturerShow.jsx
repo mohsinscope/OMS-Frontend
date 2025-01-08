@@ -352,10 +352,10 @@ const LecturerShow = () => {
 
             <Form.Item
               name="lectureTypeId"
-              label="نوع المحاضرة"
-              rules={[{ required: true, message: "يرجى اختيار نوع المحاضرة" }]}>
+              label="نوع المحضر"
+              rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
               <Select
-                placeholder="اختر نوع المحاضرة"
+                placeholder="اختر نوع المحضر"
                 disabled={!form.getFieldValue("companyId")}>
                 {lectureTypes.map((type) => (
                   <Select.Option key={type.id} value={type.id}>
