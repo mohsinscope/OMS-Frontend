@@ -6,6 +6,7 @@ import unamed from './../assets/unnamed.png';
 
 export default function ImagePreviewer({
   uploadedImages, // Array of URLs or File objects
+  onImageSelect,
   onDeleteImage,
   defaultWidth = 400,
   defaultHeight = 200,
@@ -14,8 +15,10 @@ export default function ImagePreviewer({
   const [isDeleteConfirmVisible, setIsDeleteConfirmVisible] = useState(false);
 
   useEffect(() => {
-    setCurrentIndex(0);
-  }, [uploadedImages]);
+    if (onImageSelect) {
+      onImageSelect(currentIndex); // Notify parent of the selected image index
+    }
+  }, [currentIndex, onImageSelect]);
 
   const handleNext = () => {
     if (currentIndex < uploadedImages.length - 1) {
