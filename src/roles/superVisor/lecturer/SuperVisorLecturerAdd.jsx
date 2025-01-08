@@ -406,17 +406,13 @@ const SuperVisorLecturerAdd = () => {
                 </Select>
               </Form.Item>
 
-              <Form.Item
-                name="date"
-                label="التاريخ"
-                rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
-                <DatePicker
-                  placeholder="اختر التاريخ"
-                  style={{ width: "267px", height: "45px" }}
-                  showTime
-                  format="YYYY-MM-DD HH:mm:ss"
-                />
-              </Form.Item>
+        
+                    <Form.Item
+                      name="date"
+                      label="التاريخ"
+                      rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
+                      <DatePicker style={{ width: "100%" }} />
+                    </Form.Item>
 
               <Form.Item
                 name="note"

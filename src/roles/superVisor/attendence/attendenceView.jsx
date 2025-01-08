@@ -184,7 +184,7 @@ export default function ViewAttendance() {
             cy="50%"
             innerRadius={100}
             outerRadius={150}
-            paddingAngle={5}
+            paddingAngle={0}
             dataKey="value">
             {data.map((entry, index) => (
               <Cell

@@ -7,7 +7,7 @@ import SignInPage from "./pages/signIn.jsx";
 import Stats from "./pages/stats.jsx";
 import LandingPage from "./pages/landingPage.jsx";
 import NotFound from './pages/pageNotFound.jsx';
-
+import Forbidden from './pages/forbidden.jsx';
 import axiosInstance from './intercepters/axiosInstance.js';
 //admin
 import AdminUserManagement from "./roles/admin/user-managment/AdminUserManagment.jsx";
@@ -142,6 +142,8 @@ const App = () => {
     { path: "settings", element: <Settings /> },
     { path: "expenses-view", element: <ExpensessView /> },
     { path: "landing-page", element: <LandingPage /> },
+    { path: "/forbidden", element: <Forbidden /> },
+
   ];
 
 
