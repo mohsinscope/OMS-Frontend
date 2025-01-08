@@ -145,9 +145,9 @@
 .supervisor-add-damageddevice-button {
   display: flex;
   justify-content: space-between;
-  align-items: center;
   gap: 20px;
   margin-top: 30px;
+  width: 100%;
 }
 
 .form-item-damaged-device-container {
