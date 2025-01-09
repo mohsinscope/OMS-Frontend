@@ -47,12 +47,11 @@ const SuperVisorDeviceShow = () => {
   const hasUpdatePermission = permissions.includes("DDu");
   const hasDeletePermission = permissions.includes("DDd");
 
-  const isFetched = useRef(false); // Prevent multiple fetches
-
   const fetchData = async () => {
-    if (!deviceId || !accessToken || isFetched.current) return;
-    isFetched.current = true; // Mark as fetched
+    if (!deviceId || !accessToken) return;
+
     setLoading(true);
+
     try {
       const [
         deviceResponse,
@@ -81,7 +80,7 @@ const SuperVisorDeviceShow = () => {
       if (!imageData.imageId && imagesData.length > 0) {
         setImageData({
           imageId: imagesData[0].id,
-          entityId: imagesData[0].entityId,
+          entityId: deviceId,
           entityType: "DamagedDevice",
         });
       }
@@ -109,7 +108,7 @@ const SuperVisorDeviceShow = () => {
 
   useEffect(() => {
     fetchData();
-  }, [deviceId]); // Ensure no dynamic dependencies like `imageData`
+  }, [deviceId]);
 
   const handleImageUpload = async (file) => {
     if (!imageData.imageId) {
@@ -134,6 +133,8 @@ const SuperVisorDeviceShow = () => {
       );
 
       message.success("تم تحديث الصورة بنجاح");
+
+      // Re-fetch the images to update the modal
       await fetchData();
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -285,7 +286,6 @@ const SuperVisorDeviceShow = () => {
                 uploadedImages={images}
                 onImageSelect={(index) => {
                   const selectedImage = imagesData[index];
-                  // Only update state if the selected image is different
                   if (selectedImage && selectedImage.id !== imageData.imageId) {
                     setImageData({
                       imageId: selectedImage.id,
@@ -347,6 +347,7 @@ const SuperVisorDeviceShow = () => {
             <Form.Item name="note" label="الملاحظات">
               <Input.TextArea />
             </Form.Item>
+
             <Upload
               beforeUpload={(file) => {
                 handleImageUpload(file);
@@ -359,6 +360,7 @@ const SuperVisorDeviceShow = () => {
                 استبدال الصورة
               </Button>
             </Upload>
+
             {images.length > 0 && (
               <>
                 <span className="note-details-label">صور الجهاز:</span>
@@ -383,11 +385,7 @@ const SuperVisorDeviceShow = () => {
               </>
             )}
 
-            <Button
-              onClick={() => window.location.reload()}
-              type="primary"
-              htmlType="submit"
-              block>
+            <Button type="primary" htmlType="submit" block>
               حفظ التعديلات
             </Button>
           </Form>
