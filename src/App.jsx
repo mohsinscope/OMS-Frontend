@@ -35,8 +35,9 @@ import SuperVisorDevices from "./roles/superVisor/damegedDevices/SuperVisorDevic
 import SuperVisorDeviceShow from "./roles/superVisor/damegedDevices/SuperVisorDeviceShow.jsx";
 import SuperVisorDevicesAdd from "./roles/superVisor/damegedDevices/superVisorDevicesAdd.jsx";
 
+
+import ManagerExpensesView from './roles/superVisor/expenses/ManagerExpensessView.jsx';
 import ManagerExpensesHistory from "./roles/Manager/Expensess/ManagerExpensessHistory.jsx";
-import ManagerExpensesView from "./roles/Manager/Expensess/ManagerExpensessView.jsx";
 import ManagerExpensesRequests from "./roles/Manager/Expensess/ManagerExpensessRequists.jsx";
 import ManagerExpensesRequestView from "./roles/Manager/Expensess/ManagerExpensessRequistView.jsx";
 import ManagerAttendenceHistory from "./roles/Manager/attendence/ManagerAttendenceHistory.jsx";

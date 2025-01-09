@@ -8,6 +8,9 @@ import axios from "axios";
 import Url from "../store/url";
 import "./../pages/dashboard.css";
 
+// Create an axios instance with interceptor
+const axiosInstance = axios.create();
+
 const DynamicSidebar = ({
   onLogout,
   currentPath,
@@ -21,6 +24,64 @@ const DynamicSidebar = ({
   const [visibleMenuItems, setVisibleMenuItems] = useState([]);
   const [visibleCommonItems, setVisibleCommonItems] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Function to refresh the token
+  const refreshTokenAPI = async () => {
+    if (isRefreshing) return null;
+    
+    setIsRefreshing(true);
+    const refreshToken = localStorage.getItem("refreshToken");
+    
+    try {
+      const response = await axios.post(
+        `${Url}/api/account/refresh-token`,
+        {
+          AccessToken: localStorage.getItem("accessToken"),
+          RefreshToken: refreshToken,
+        }
+      );
+      const { accessToken, refreshToken: newRefreshToken } = response.data;
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", newRefreshToken);
+      setIsRefreshing(false);
+      return accessToken;
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+      setIsRefreshing(false);
+      onLogout(); // Logout if refresh token fails
+      return null;
+    }
+  };
+
+  // Setup axios interceptor for handling 401 errors
+  useEffect(() => {
+    const interceptor = axiosInstance.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const originalRequest = error.config;
+        
+        // If error is 401 and we haven't tried to refresh the token yet
+        if (error.response?.status === 401 && !originalRequest._retry) {
+          originalRequest._retry = true;
+          
+          const newToken = await refreshTokenAPI();
+          if (newToken) {
+            // Update the authorization header with the new token
+            originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            return axiosInstance(originalRequest);
+          }
+        }
+        
+        return Promise.reject(error);
+      }
+    );
+
+    // Cleanup interceptor on component unmount
+    return () => {
+      axiosInstance.interceptors.response.eject(interceptor);
+    };
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,15 +102,13 @@ const DynamicSidebar = ({
       }
 
       const accessibleMenuItems = MENU_ITEMS.filter((item) => {
-        // Check for role-based access first
         if (item.role && item.role.length > 0) {
           return item.role.some(role => roles.includes(role));
         }
-        // Then check for permission-based access
         if (item.requiredPermission) {
           return permissions.includes(item.requiredPermission);
         }
-        return false; // If neither role nor permission is specified, hide the item
+        return false;
       });
 
       setVisibleMenuItems(accessibleMenuItems);
@@ -59,45 +118,27 @@ const DynamicSidebar = ({
     filterMenuItems();
   }, [permissions, roles, isLoggedIn, isInitialized]);
 
-  // Function to refresh the token
-  const refreshTokenAPI = async () => {
-    const refreshToken = localStorage.getItem("refreshToken");
-    try {
-      const response = await axios.post(
-        `${Url}/api/account/refresh-token`,
-        {
-          AccessToken: localStorage.getItem("accessToken"),
-          RefreshToken: refreshToken,
-        }
-      );
-      const { accessToken, refreshToken: newRefreshToken } = response.data;
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", newRefreshToken);
-      return true;
-    } catch (error) {
-      console.error("Error refreshing token:", error);
-      onLogout(); // Logout if refresh token fails
-      return false;
-    }
-  };
-
   // Function to check if token is expired
   const tokenIsExpired = (token) => {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    const expirationTime = payload.exp * 1000; // Convert expiration to milliseconds
-    return Date.now() > expirationTime;
+    if (!token) return true;
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const expirationTime = payload.exp * 1000;
+      return Date.now() > expirationTime;
+    } catch (error) {
+      console.error("Error parsing token:", error);
+      return true;
+    }
   };
 
   const handleMenuClick = async (path, action) => {
     const token = localStorage.getItem("accessToken");
 
-    // If token is expired or not available, refresh the token
     if (!token || tokenIsExpired(token)) {
-      const tokenRefreshed = await refreshTokenAPI();
-      if (!tokenRefreshed) return; // If refresh fails, stop the navigation
+      const newToken = await refreshTokenAPI();
+      if (!newToken) return;
     }
 
-    // If refresh is successful or token is valid, navigate to the path
     if (action === "logout") {
       onLogout();
     } else if (path) {

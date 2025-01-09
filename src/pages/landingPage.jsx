@@ -8,7 +8,7 @@ const LandingPage = () => {
       <div className="content-wrapper">
         {/* Header */}
         <div className="header">
-          <h1 className="title">
+          <h1 className="title" style={{textAlign:"center"}}>
             اهلا بكم في نظام إدارة المكاتب
           </h1>
         </div>

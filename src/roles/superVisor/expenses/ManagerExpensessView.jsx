@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Table, Modal, ConfigProvider } from "antd";
-import "./styles/ManagerExpensessView.css";
+import './ManagerExpensessView.css';
+
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 export default function ManagerExpensessView() {
   const location = useLocation();
