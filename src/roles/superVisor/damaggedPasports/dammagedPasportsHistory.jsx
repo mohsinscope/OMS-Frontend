@@ -1,6 +1,6 @@
 import "./dammagedPasportsHistory.css";
 import useAuthStore from "./../../../store/store";
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   message,
@@ -11,12 +11,13 @@ import {
   ConfigProvider,
 } from "antd";
 import { Link } from "react-router-dom";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url";
 const { Option } = Select;
 
 export default function SuperVisorPassport() {
-  const { isSidebarCollapsed, accessToken, profile, roles,permissions } = useAuthStore();
+  const { isSidebarCollapsed, accessToken, profile, roles, permissions } =
+    useAuthStore();
   // Check permissions
   const hasCreatePermission = permissions.includes("DPc");
 
@@ -38,7 +39,7 @@ export default function SuperVisorPassport() {
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
 
-  const { searchVisible, toggleSearch } = useAuthStore();
+  const { searchVisible } = useAuthStore();
   const isSupervisor = roles.includes("Supervisor");
 
   const formatDateToISO = (date) => {
@@ -55,8 +56,10 @@ export default function SuperVisorPassport() {
       damagedTypeId: damagedTypeId || null,
       startDate: startDate ? formatDateToISO(startDate) : null,
       endDate: endDate ? formatDateToISO(endDate) : null,
-      officeId: isSupervisor ? profile.officeId : (selectedOffice || null),
-      governorateId: isSupervisor ? profile.governorateId : (selectedGovernorate || null),
+      officeId: isSupervisor ? profile.officeId : selectedOffice || null,
+      governorateId: isSupervisor
+        ? profile.governorateId
+        : selectedGovernorate || null,
       profileId: isSupervisor ? profile.profileId : null,
       PaginationParams: {
         PageNumber: page,
@@ -78,15 +81,14 @@ export default function SuperVisorPassport() {
       );
 
       setPassportList(response.data);
-      
-      const paginationHeader = response.headers['pagination'];
+
+      const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
         setTotalPassports(paginationInfo.totalItems);
       } else {
         setTotalPassports(response.data.length);
       }
-
     } catch (error) {
       console.error(
         "Error fetching search results:",
@@ -104,7 +106,7 @@ export default function SuperVisorPassport() {
     setStartDate(null);
     setEndDate(null);
     setCurrentPage(1);
-    
+
     if (!isSupervisor) {
       setSelectedGovernorate(null);
       setSelectedOffice(null);
@@ -137,8 +139,8 @@ export default function SuperVisorPassport() {
       );
 
       setPassportList(response.data);
-      
-      const paginationHeader = response.headers['pagination'];
+
+      const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
         setTotalPassports(paginationInfo.totalItems);
@@ -157,13 +159,13 @@ export default function SuperVisorPassport() {
       try {
         const [govResponse, officeResponse, damagedTypeResponse] =
           await Promise.all([
-            axios.get(`${Url}/api/Governorate/dropdown`, {
+            axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
-            axios.get(`${Url}/api/Office/dropdown`, {
+            axiosInstance.get(`${Url}/api/Office/dropdown`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
-            axios.get(`${Url}/api/damagedtype/all`, {
+            axiosInstance.get(`${Url}/api/damagedtype/all`, {
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
           ]);

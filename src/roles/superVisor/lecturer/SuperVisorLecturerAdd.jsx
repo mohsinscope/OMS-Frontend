@@ -1,7 +1,16 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Form, Input, Button, DatePicker, message, Upload, Modal, Select } from "antd";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import {
+  Form,
+  Input,
+  Button,
+  DatePicker,
+  message,
+  Upload,
+  Modal,
+  Select,
+} from "antd";
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
 import moment from "moment";
@@ -22,38 +31,39 @@ const SuperVisorLecturerAdd = () => {
   const [lectureTypes, setLectureTypes] = useState([]);
   const [governate, setGovernate] = useState([]);
   const [offices, setOffices] = useState([]);
-
   const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
   const isSupervisor = roles?.includes("Supervisor");
-
   // Set initial form values for supervisor and fetch data
   useEffect(() => {
     if (isSupervisor && profile) {
       form.setFieldsValue({
         governorateId: governorateId,
-        officeId: officeId
+        officeId: officeId,
       });
     }
-
     const fetchGovernorateData = async () => {
       try {
-        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/351c197b-1666-4528-acb8-dd6270b9497f`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-    
+        const response = await axiosInstance.get(
+          `${Url}/api/Governorate/dropdown/351c197b-1666-4528-acb8-dd6270b9497f`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
         if (Array.isArray(response.data) && response.data.length > 0) {
           const governorateData = response.data[0];
-          setGovernate([{
-            value: governorateData.id,
-            label: governorateData.name,
-          }]);
-          
+          setGovernate([
+            {
+              value: governorateData.id,
+              label: governorateData.name,
+            },
+          ]);
           if (governorateData.id === governorateId) {
             setOffices(
-              governorateData.offices.map(office => ({
+              governorateData.offices.map((office) => ({
                 value: office.id,
                 label: office.name,
               }))
@@ -86,16 +96,19 @@ const SuperVisorLecturerAdd = () => {
   const fetchOffices = async (selectedGovernorateId) => {
     if (!selectedGovernorateId) return;
     try {
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${selectedGovernorateId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown/${selectedGovernorateId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
       if (Array.isArray(response.data) && response.data.length > 0) {
         const governorateData = response.data[0];
         setOffices(
-          governorateData.offices.map(office => ({
+          governorateData.offices.map((office) => ({
             value: office.id,
             label: office.name,
           }))
@@ -109,9 +122,9 @@ const SuperVisorLecturerAdd = () => {
 
   const handleCompanyChange = (companyId) => {
     setSelectedCompany(companyId);
-    const company = companies.find(c => c.id === companyId);
+    const company = companies.find((c) => c.id === companyId);
     setLectureTypes(company?.lectureTypes || []);
-    form.setFieldValue('lectureTypeId', undefined);
+    form.setFieldValue("lectureTypeId", undefined);
   };
 
   const handleBack = () => {
@@ -152,12 +165,16 @@ const SuperVisorLecturerAdd = () => {
       formData.append("EntityType", "Lecture");
 
       try {
-        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        await axiosInstance.post(
+          `${Url}/api/Attachment/add-attachment`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
       } catch (error) {
         throw new Error("فشل في إرفاق الملفات.");
       }
@@ -271,7 +288,9 @@ const SuperVisorLecturerAdd = () => {
         type: "image/jpeg",
       });
 
-      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
+      if (
+        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
+      ) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -336,17 +355,30 @@ const SuperVisorLecturerAdd = () => {
               <Form.Item
                 name="governorateId"
                 label="اسم المحافظة"
-                initialValue={isSupervisor ? governorateId : governate[0]?.value}
+                initialValue={
+                  isSupervisor ? governorateId : governate[0]?.value
+                }
                 rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
-                <Select 
-                  placeholder="اختر المحافظة" 
-                  disabled={isSupervisor} 
-                  style={{ width: "267px", height: "45px" }} 
-                  options={isSupervisor ? [{ value: governorateId, label: governate.find(g => g.value === governorateId)?.label }] : governate}
+                <Select
+                  placeholder="اختر المحافظة"
+                  disabled={isSupervisor}
+                  style={{ width: "267px", height: "45px" }}
+                  options={
+                    isSupervisor
+                      ? [
+                          {
+                            value: governorateId,
+                            label: governate.find(
+                              (g) => g.value === governorateId
+                            )?.label,
+                          },
+                        ]
+                      : governate
+                  }
                   onChange={(value) => {
                     if (!isSupervisor) {
                       fetchOffices(value);
-                      form.setFieldValue('officeId', undefined);
+                      form.setFieldValue("officeId", undefined);
                     }
                   }}
                 />
@@ -357,11 +389,21 @@ const SuperVisorLecturerAdd = () => {
                 label="اسم المكتب"
                 initialValue={isSupervisor ? officeId : undefined}
                 rules={[{ required: true, message: "يرجى اختيار المكتب" }]}>
-                <Select 
-                  placeholder="اختر المكتب" 
-                  disabled={isSupervisor} 
-                  style={{ width: "267px", height: "45px" }} 
-                  options={isSupervisor ? [{ value: officeId, label: offices.find(o => o.value === officeId)?.label }] : offices}
+                <Select
+                  placeholder="اختر المكتب"
+                  disabled={isSupervisor}
+                  style={{ width: "267px", height: "45px" }}
+                  options={
+                    isSupervisor
+                      ? [
+                          {
+                            value: officeId,
+                            label: offices.find((o) => o.value === officeId)
+                              ?.label,
+                          },
+                        ]
+                      : offices
+                  }
                 />
               </Form.Item>
 
@@ -382,7 +424,7 @@ const SuperVisorLecturerAdd = () => {
                   placeholder="اختر الشركة"
                   style={{ width: "267px", height: "45px" }}
                   onChange={handleCompanyChange}>
-                  {companies.map(company => (
+                  {companies.map((company) => (
                     <Select.Option key={company.id} value={company.id}>
                       {company.name}
                     </Select.Option>
@@ -398,7 +440,7 @@ const SuperVisorLecturerAdd = () => {
                   placeholder="اختر نوع المحضر"
                   style={{ width: "267px", height: "45px" }}
                   disabled={!selectedCompany || lectureTypes.length === 0}>
-                  {lectureTypes.map(type => (
+                  {lectureTypes.map((type) => (
                     <Select.Option key={type.id} value={type.id}>
                       {type.name}
                     </Select.Option>
@@ -406,22 +448,19 @@ const SuperVisorLecturerAdd = () => {
                 </Select>
               </Form.Item>
 
-        
-                    <Form.Item
-                      name="date"
-                      label="التاريخ"
-                      rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
-                      <DatePicker style={{ width: "100%" }} />
-                    </Form.Item>
+              <Form.Item
+                name="date"
+                label="التاريخ"
+                rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
+                <DatePicker style={{ width: "100%" }} />
+              </Form.Item>
 
               <Form.Item
                 name="note"
                 label="ملاحظات"
                 initialValue="لا يوجد"
                 rules={[{ message: "يرجى إدخال الملاحظات" }]}>
-                <Input.TextArea
-                  style={{ height: "150px", width: "500px" }}
-                />
+                <Input.TextArea style={{ height: "150px", width: "500px" }} />
               </Form.Item>
             </div>
 
