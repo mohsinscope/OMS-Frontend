@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Spin,
   message,
@@ -35,14 +35,11 @@ const DamagedPassportsShow = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [form] = Form.useForm();
-
   const { isSidebarCollapsed, accessToken, profile, permissions } =
     useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
-
   const hasUpdatePermission = permissions.includes("DPu");
   const hasDeletePermission = permissions.includes("DPd");
-
   const fetchPassportDetails = async () => {
     try {
       const response = await axiosInstance.get(

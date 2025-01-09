@@ -1,9 +1,17 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Table, message, Button, ConfigProvider, DatePicker, Select, Input } from "antd";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Table,
+  message,
+  Button,
+  ConfigProvider,
+  DatePicker,
+  Select,
+  Input,
+} from "antd";
 import { Link } from "react-router-dom";
 import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
 
 const SuperVisorDevices = () => {
@@ -13,37 +21,30 @@ const SuperVisorDevices = () => {
     profile,
     searchVisible,
     permissions,
-    toggleSearch,
     roles,
   } = useAuthStore();
-
   // Check permissions
   const hasCreatePermission = permissions.includes("DDc");
   const isSupervisor = roles.includes("Supervisor");
-
   // State setup
   const [devices, setDevices] = useState([]);
   const [totalDevices, setTotalDevices] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
-
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
-
   const [formData, setFormData] = useState({
     serialNumber: "",
     startDate: null,
     endDate: null,
   });
-
   // Date formatting helper
   const formatToISO = (date) => {
     if (!date) return null;
     return date.toISOString();
   };
-
   // API calls and data fetching
   const fetchDevices = async (payload) => {
     try {
@@ -62,15 +63,15 @@ const SuperVisorDevices = () => {
         },
         {
           headers: {
-            'Content-Type': 'application/json',  // Ensure it's always set to JSON
-            'Authorization': `Bearer ${accessToken}`,
-          }
+            "Content-Type": "application/json", // Ensure it's always set to JSON
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
       );
-  
+
       if (response.data) {
         setDevices(response.data);
-  
+
         const paginationHeader = response.headers["pagination"];
         if (paginationHeader) {
           const paginationInfo = JSON.parse(paginationHeader);
@@ -88,7 +89,6 @@ const SuperVisorDevices = () => {
       );
     }
   };
-  
 
   // Event handlers
   const handleSearch = async (page = 1) => {
@@ -117,7 +117,7 @@ const SuperVisorDevices = () => {
   const handleInputChange = (value) => {
     setFormData((prev) => ({
       ...prev,
-      serialNumber: value
+      serialNumber: value,
     }));
   };
 
@@ -162,12 +162,15 @@ const SuperVisorDevices = () => {
   // Data fetching effects and callbacks
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
-      });
+      );
       setGovernorates(response.data);
 
       if (isSupervisor) {
@@ -191,9 +194,9 @@ const SuperVisorDevices = () => {
         `${Url}/api/Governorate/dropdown/${governorateId}`,
         {
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-          }
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
       );
 
@@ -298,8 +301,7 @@ const SuperVisorDevices = () => {
               onChange={handleGovernorateChange}
               disabled={isSupervisor}
               className="supervisor-devices-dameged-dropdown"
-              placeholder="اختر المحافظة"
-           >
+              placeholder="اختر المحافظة">
               {governorates.map((gov) => (
                 <Select.Option key={gov.id} value={gov.id}>
                   {gov.name}
@@ -317,8 +319,7 @@ const SuperVisorDevices = () => {
               onChange={(value) => setSelectedOffice(value)}
               disabled={isSupervisor || !selectedGovernorate}
               className="supervisor-devices-dameged-dropdown"
-              placeholder="اختر المكتب"
-           >
+              placeholder="اختر المكتب">
               {offices.map((office) => (
                 <Select.Option key={office.id} value={office.id}>
                   {office.name}
@@ -344,10 +345,10 @@ const SuperVisorDevices = () => {
             </label>
             <DatePicker
               placeholder="اختر التاريخ"
-              onChange={(date) => handleDateChange(date, 'startDate')}
+              onChange={(date) => handleDateChange(date, "startDate")}
               value={formData.startDate}
               className="supervisor-devices-dameged-input"
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
             />
           </div>
 
@@ -357,15 +358,18 @@ const SuperVisorDevices = () => {
             </label>
             <DatePicker
               placeholder="اختر التاريخ"
-              onChange={(date) => handleDateChange(date, 'endDate')}
+              onChange={(date) => handleDateChange(date, "endDate")}
               value={formData.endDate}
               className="supervisor-devices-dameged-input"
-              style={{ width: '100%' }}
+              style={{ width: "100%" }}
             />
           </div>
 
           <div className="supervisor-device-filter-buttons">
-            <Button type="primary" htmlType="submit" className="supervisor-devices-dameged-button">
+            <Button
+              type="primary"
+              htmlType="submit"
+              className="supervisor-devices-dameged-button">
               ابحث
             </Button>
             <Button

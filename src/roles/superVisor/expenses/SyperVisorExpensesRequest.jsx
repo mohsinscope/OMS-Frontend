@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Table, Button, Card, Typography, Space, message } from "antd";
 import "./SuperVisorExpinsesRequest.css"; // CSS file for styling
 import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx"; // Reusable form component
@@ -24,7 +24,6 @@ export default function SuperVisorExpensesRequest() {
 
   // API URL (Replace this with your actual API endpoint)
   const apiUrl = "https://example.com/api/expenses";
-
   const handleAddExpense = async () => {
     try {
       const newExpense = {

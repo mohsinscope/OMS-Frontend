@@ -1,9 +1,17 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Table, message, Button, ConfigProvider, DatePicker, Select, Input } from "antd";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Table,
+  message,
+  Button,
+  ConfigProvider,
+  DatePicker,
+  Select,
+  Input,
+} from "antd";
 import { Link } from "react-router-dom";
 import "./SuperVisorLecturerhistory.css";
 import useAuthStore from "./../../../store/store";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
 
 const SuperVisorLecturerhistory = () => {
@@ -15,24 +23,19 @@ const SuperVisorLecturerhistory = () => {
     roles,
     permissions,
   } = useAuthStore();
-
   // Check permissions
   const hasCreatePermission = permissions.includes("Lc");
   const isSupervisor = roles.includes("Supervisor");
-
   const [lectures, setLectures] = useState([]);
   const [totalLectures, setTotalLectures] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
-
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [lectureTypes, setLectureTypes] = useState([]);
-  
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
-
   const [formData, setFormData] = useState({
     title: "",
     startDate: null,
@@ -40,7 +43,6 @@ const SuperVisorLecturerhistory = () => {
     companyId: null,
     lectureTypeId: null,
   });
-
   const formatToISO = (date) => {
     if (!date) return null;
     return date.toISOString();
@@ -65,12 +67,12 @@ const SuperVisorLecturerhistory = () => {
         },
         {
           headers: {
-            'Content-Type': 'application/json',  // Explicitly set the content type to JSON
+            "Content-Type": "application/json", // Explicitly set the content type to JSON
             Authorization: `Bearer ${accessToken}`,
           },
         }
       );
-  
+
       if (response.data) {
         setLectures(response.data);
         const paginationHeader = response.headers["pagination"];
@@ -84,7 +86,9 @@ const SuperVisorLecturerhistory = () => {
     } catch (error) {
       console.error("API Error:", error);
       message.error(
-        `حدث خطأ أثناء جلب المحاضرات: ${error.response?.data?.message || error.message}`
+        `حدث خطأ أثناء جلب المحاضرات: ${
+          error.response?.data?.message || error.message
+        }`
       );
     }
   };
@@ -92,7 +96,9 @@ const SuperVisorLecturerhistory = () => {
     const payload = {
       title: formData.title || "",
       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-      governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
+      governorateId: isSupervisor
+        ? profile.governorateId
+        : selectedGovernorate || null,
       startDate: formData.startDate ? formatToISO(formData.startDate) : null,
       endDate: formData.endDate ? formatToISO(formData.endDate) : null,
       companyId: formData.companyId || null,
@@ -115,9 +121,12 @@ const SuperVisorLecturerhistory = () => {
 
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
       setGovernorates(response.data);
 
       if (isSupervisor) {
@@ -135,13 +144,13 @@ const SuperVisorLecturerhistory = () => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setCompanies(response.data);
-      
+
       // Reset lecture types when companies are fetched
       setLectureTypes([]);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         companyId: null,
-        lectureTypeId: null
+        lectureTypeId: null,
       }));
     } catch (error) {
       message.error("حدث خطأ أثناء جلب بيانات الشركات");
@@ -149,14 +158,16 @@ const SuperVisorLecturerhistory = () => {
   };
 
   const handleCompanyChange = (companyId) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       companyId,
-      lectureTypeId: null // Reset lecture type when company changes
+      lectureTypeId: null, // Reset lecture type when company changes
     }));
 
     // Find selected company and update lecture types
-    const selectedCompany = companies.find(company => company.id === companyId);
+    const selectedCompany = companies.find(
+      (company) => company.id === companyId
+    );
     if (selectedCompany) {
       setLectureTypes(selectedCompany.lectureTypes || []);
     } else {
@@ -230,9 +241,9 @@ const SuperVisorLecturerhistory = () => {
   };
 
   const handleInputChange = (value) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      title: value
+      title: value,
     }));
   };
 
@@ -242,7 +253,7 @@ const SuperVisorLecturerhistory = () => {
       startDate: null,
       endDate: null,
       companyId: null,
-      lectureTypeId: null
+      lectureTypeId: null,
     });
     setCurrentPage(1);
 
@@ -369,8 +380,7 @@ const SuperVisorLecturerhistory = () => {
               value={selectedOffice || undefined}
               onChange={(value) => setSelectedOffice(value)}
               disabled={isSupervisor || !selectedGovernorate}
-              className="supervisor-Lectur-select"
-              >
+              className="supervisor-Lectur-select">
               {offices.map((office) => (
                 <Select.Option key={office.id} value={office.id}>
                   {office.name}
@@ -387,8 +397,7 @@ const SuperVisorLecturerhistory = () => {
               id="company"
               value={formData.companyId || undefined}
               onChange={handleCompanyChange}
-              className="supervisor-Lectur-select"
-            >
+              className="supervisor-Lectur-select">
               {companies.map((company) => (
                 <Select.Option key={company.id} value={company.id}>
                   {company.name}
@@ -404,10 +413,11 @@ const SuperVisorLecturerhistory = () => {
             <Select
               id="lectureType"
               value={formData.lectureTypeId || undefined}
-              onChange={(value) => setFormData(prev => ({ ...prev, lectureTypeId: value }))}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, lectureTypeId: value }))
+              }
               className="supervisor-Lectur-select"
-              disabled={!formData.companyId}
-              >
+              disabled={!formData.companyId}>
               {lectureTypes.map((type) => (
                 <Select.Option key={type.id} value={type.id}>
                   {type.name}
@@ -435,26 +445,24 @@ const SuperVisorLecturerhistory = () => {
             <DatePicker
               id="startDate"
               placeholder="اختر التاريخ"
-              onChange={(date) => handleDateChange(date, 'endDate')}
+              onChange={(date) => handleDateChange(date, "endDate")}
               value={formData.endDate}
               className="supervisor-Lectur-input"
             />
           </div>
 
           <div className="supervisor-Lectur-buttons">
-            <Button 
-              type="primary" 
-              htmlType="submit" 
+            <Button
+              type="primary"
+              htmlType="submit"
               className="supervisor-Lectur-button">
               ابحث
             </Button>
-            <Button
-              onClick={handleReset}
-              className="supervisor-Lectur-button">
+            <Button onClick={handleReset} className="supervisor-Lectur-button">
               إعادة تعيين
             </Button>
           </div>
-          
+
           {hasCreatePermission && (
             <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
               <Button type="primary" className="supervisor-add-Lectur-button">

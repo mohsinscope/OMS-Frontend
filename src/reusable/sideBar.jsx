@@ -2,7 +2,6 @@ import React from "react";
 import { useLocation } from "react-router-dom";
 import NavBar from "./navBar.jsx";
 import DynamicSidebar from "./../reusable elements/SideBarRuseable";
-import sideBarData from "./../data/sideBar.json";
 import useAuthStore from "./../store/store";
 import "./../pages/dashboard.css";
 
@@ -17,7 +16,6 @@ export default function Sidebar() {
 
       {/* Dynamic Sidebar */}
       <DynamicSidebar
-        fetchUrl={sideBarData}
         currentPath={location.pathname} // Pass the current path to determine active menu item
         onLogout={() => {
           logout();

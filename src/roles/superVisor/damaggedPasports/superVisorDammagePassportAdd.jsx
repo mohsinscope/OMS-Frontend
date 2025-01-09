@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Form,
@@ -10,7 +10,7 @@ import {
   Upload,
   Modal,
 } from "antd";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
 import moment from "moment";
@@ -29,38 +29,38 @@ const SuperVisorDammagePassportAdd = () => {
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [governate, setGovernate] = useState([]);
   const [offices, setOffices] = useState([]);
-  
   const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
   const isSupervisor = roles?.includes("Supervisor");
-
   // Set initial form values for supervisor
   useEffect(() => {
     if (isSupervisor && profile) {
       form.setFieldsValue({
         governorateId: governorateId,
-        officeId: officeId
+        officeId: officeId,
       });
     }
-
     const fetchGovernorateData = async () => {
       try {
-        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/351c197b-1666-4528-acb8-dd6270b9497f`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-    
+        const response = await axiosInstance.get(
+          `${Url}/api/Governorate/dropdown/351c197b-1666-4528-acb8-dd6270b9497f`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
         if (Array.isArray(response.data) && response.data.length > 0) {
           const governorateData = response.data[0];
-          setGovernate([{
-            value: governorateData.id,
-            label: governorateData.name,
-          }]);
-          
+          setGovernate([
+            {
+              value: governorateData.id,
+              label: governorateData.name,
+            },
+          ]);
           if (governorateData.id === governorateId) {
             setOffices(
-              governorateData.offices.map(office => ({
+              governorateData.offices.map((office) => ({
                 value: office.id,
                 label: office.name,
               }))
@@ -72,7 +72,6 @@ const SuperVisorDammagePassportAdd = () => {
         message.error("فشل تحميل المحافظات");
       }
     };
-
     fetchGovernorateData();
   }, [isSupervisor, profile, form, governorateId, officeId, accessToken]);
 
@@ -101,16 +100,19 @@ const SuperVisorDammagePassportAdd = () => {
   const fetchOffices = async (selectedGovernorateId) => {
     if (!selectedGovernorateId) return;
     try {
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${selectedGovernorateId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown/${selectedGovernorateId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
       if (Array.isArray(response.data) && response.data.length > 0) {
         const governorateData = response.data[0];
         setOffices(
-          governorateData.offices.map(office => ({
+          governorateData.offices.map((office) => ({
             value: office.id,
             label: office.name,
           }))
@@ -145,12 +147,16 @@ const SuperVisorDammagePassportAdd = () => {
       formData.append("entityId", entityId);
       formData.append("EntityType", "DamagedPassport");
 
-      await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      await axiosInstance.post(
+        `${Url}/api/Attachment/add-attachment`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
     }
   };
 
@@ -171,12 +177,16 @@ const SuperVisorDammagePassportAdd = () => {
         note: values.note || "",
       };
 
-      const response = await axiosInstance.post(`${Url}/api/DamagedPassport`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await axiosInstance.post(
+        `${Url}/api/DamagedPassport`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       const entityId = response.data?.id || response.data;
       if (!entityId) throw new Error("Failed to retrieve entity ID.");
@@ -196,7 +206,9 @@ const SuperVisorDammagePassportAdd = () => {
         );
       }
     } catch (error) {
-      message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات");
+      message.error(
+        error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -257,7 +269,9 @@ const SuperVisorDammagePassportAdd = () => {
         type: "image/jpeg",
       });
 
-      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
+      if (
+        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
+      ) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -311,7 +325,7 @@ const SuperVisorDammagePassportAdd = () => {
       }`}
       dir="rtl">
       <h1 className="SuperVisor-title-container">إضافة جواز تالف</h1>
-      <div className="add-details-container" style={{width:"100%"}}>
+      <div className="add-details-container" style={{ width: "100%" }}>
         <Form
           form={form}
           onFinish={handleFormSubmit}
@@ -322,17 +336,30 @@ const SuperVisorDammagePassportAdd = () => {
               <Form.Item
                 name="governorateId"
                 label="اسم المحافظة"
-                initialValue={isSupervisor ? governorateId : governate[0]?.value}
+                initialValue={
+                  isSupervisor ? governorateId : governate[0]?.value
+                }
                 rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
-                <Select 
-                  placeholder="اختر المحافظة" 
-                  disabled={isSupervisor} 
-                  style={{ width: "267px", height: "45px" }} 
-                  options={isSupervisor ? [{ value: governorateId, label: governate.find(g => g.value === governorateId)?.label }] : governate}
+                <Select
+                  placeholder="اختر المحافظة"
+                  disabled={isSupervisor}
+                  style={{ width: "267px", height: "45px" }}
+                  options={
+                    isSupervisor
+                      ? [
+                          {
+                            value: governorateId,
+                            label: governate.find(
+                              (g) => g.value === governorateId
+                            )?.label,
+                          },
+                        ]
+                      : governate
+                  }
                   onChange={(value) => {
                     if (!isSupervisor) {
                       fetchOffices(value);
-                      form.setFieldValue('officeId', undefined);
+                      form.setFieldValue("officeId", undefined);
                     }
                   }}
                 />
@@ -343,11 +370,21 @@ const SuperVisorDammagePassportAdd = () => {
                 label="اسم المكتب"
                 initialValue={isSupervisor ? officeId : undefined}
                 rules={[{ required: true, message: "يرجى اختيار المكتب" }]}>
-                <Select 
-                  placeholder="اختر المكتب" 
-                  disabled={isSupervisor} 
-                  style={{ width: "267px", height: "45px" }} 
-                  options={isSupervisor ? [{ value: officeId, label: offices.find(o => o.value === officeId)?.label }] : offices}
+                <Select
+                  placeholder="اختر المكتب"
+                  disabled={isSupervisor}
+                  style={{ width: "267px", height: "45px" }}
+                  options={
+                    isSupervisor
+                      ? [
+                          {
+                            value: officeId,
+                            label: offices.find((o) => o.value === officeId)
+                              ?.label,
+                          },
+                        ]
+                      : offices
+                  }
                 />
               </Form.Item>
 
