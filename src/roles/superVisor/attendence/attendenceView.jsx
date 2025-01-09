@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import {
-  Spin,
   message,
   Modal,
   Form,
@@ -11,7 +10,7 @@ import {
   ConfigProvider,
   Select,
 } from "antd";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Lele from "./../../../reusable elements/icons.jsx";
 import "./attendenceView.css";
 import useAuthStore from "./../../../store/store";
@@ -26,9 +25,7 @@ export default function ViewAttendance() {
   const [attendanceData2, setAttendanceData2] = useState(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [form] = Form.useForm();
-
   const hasUpdatePermission = permissions.includes("Au");
-
   const handleBack = () => {
     navigate(-1);
   };
@@ -36,11 +33,14 @@ export default function ViewAttendance() {
   useEffect(() => {
     const fetchAttendanceDetails = async () => {
       try {
-        const response = await axiosInstance.get(`${Url}/api/Attendance/${id}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = await axiosInstance.get(
+          `${Url}/api/Attendance/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
         const response2 = await axiosInstance.get(
           `${Url}/api/office/${response.data.officeId}`,
           {

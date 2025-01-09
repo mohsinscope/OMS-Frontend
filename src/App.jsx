@@ -6,38 +6,33 @@ import useAuthStore from "./store/store.js";
 import SignInPage from "./pages/signIn.jsx";
 import Stats from "./pages/stats.jsx";
 import LandingPage from "./pages/landingPage.jsx";
-import NotFound from './pages/pageNotFound.jsx';
-import Forbidden from './pages/forbidden.jsx';
-import axiosInstance from './intercepters/axiosInstance.js';
+import NotFound from "./pages/pageNotFound.jsx";
+import Forbidden from "./pages/forbidden.jsx";
+import axiosInstance from "./intercepters/axiosInstance.js";
 //admin
 import AdminUserManagement from "./roles/admin/user-managment/AdminUserManagment.jsx";
 import ListOfValueAdmin from "./roles/admin/ListOfValueAdmin/ListOfValueAdmin.jsx";
-import BannedUsers from './roles/admin/banned-users/BannedUsers.jsx';
-
+import BannedUsers from "./roles/admin/banned-users/BannedUsers.jsx";
 // Import all components
 import Dashboard from "./pages/dashBoard.jsx";
 import AdminExpenses from "./roles/admin/admin-expensess/adminExpensess.jsx";
 import AdminAttendance from "./roles/admin/admin-attendence/adminAttendence.jsx";
 import Settings from "./reusable/settings.jsx";
 import ExpensessView from "./reusable/ExpensessView.jsx";
-
 import SuperVisorExpensesRequest from "./roles/superVisor/expenses/SyperVisorExpensesRequest.jsx";
 import SuperVisorExpensesHistory from "./roles/superVisor/expenses/SuperVisorExpensessHistory.jsx";
 import SuperVisorAttendenceHistory from "./roles/superVisor/attendence/superVisorAttendenceHistory.jsx";
 import SuperVisorAttendenceAdd from "./roles/superVisor/attendence/superVisorAttendenceAdd.jsx";
 import ViewAttendance from "./roles/superVisor/attendence/attendenceView.jsx";
-
 import SuperVisorDamagedpasportsHistory from "./roles/superVisor/damaggedPasports/dammagedPasportsHistory.jsx";
 import DammagedPasportsShow from "./roles/superVisor/damaggedPasports/DammagedPasportsShow.jsx";
 import SuperVisorDammagePassportAdd from "./roles/superVisor/damaggedPasports/superVisorDammagePassportAdd.jsx";
-
 import SuperVisorDevices from "./roles/superVisor/damegedDevices/SuperVisorDevice.jsx";
 import SuperVisorDeviceShow from "./roles/superVisor/damegedDevices/SuperVisorDeviceShow.jsx";
 import SuperVisorDevicesAdd from "./roles/superVisor/damegedDevices/superVisorDevicesAdd.jsx";
 
-
-import ManagerExpensesView from './roles/superVisor/expenses/ManagerExpensessView.jsx';
 import ManagerExpensesHistory from "./roles/Manager/Expensess/ManagerExpensessHistory.jsx";
+import ManagerExpensesView from "./roles/Manager/Expensess/ManagerExpensessView.jsx";
 import ManagerExpensesRequests from "./roles/Manager/Expensess/ManagerExpensessRequists.jsx";
 import ManagerExpensesRequestView from "./roles/Manager/Expensess/ManagerExpensessRequistView.jsx";
 import ManagerAttendenceHistory from "./roles/Manager/attendence/ManagerAttendenceHistory.jsx";
@@ -75,7 +70,6 @@ const App = () => {
       element: <SuperVisorAttendenceAdd />,
     },
     { path: "attendance/view", element: <ViewAttendance /> },
-   
 
     {
       path: "/supervisor/damagedpasportshistory",
@@ -111,42 +105,12 @@ const App = () => {
       element: <LecturerShow />,
     },
 
-    // Manager Routes
-    { path: "manager/expensess", element: <ManagerExpensesHistory /> },
-    { path: "manager/expensess/view", element: <ManagerExpensesView /> },
-    {
-      path: "manager/expensess/requists",
-      element: <ManagerExpensesRequests />,
-    },
-    {
-      path: "manager/expensess/requists/view",
-      element: <ManagerExpensesRequestView />,
-    },
-    { path: "manager/attendence", element: <ManagerAttendenceHistory /> },
-    { path: "manager/attendence/view", element: <ManagerAttendenceView /> },
-
-    // dammage employee
-    { path: "/employee_damage/damage/devices", element: <DammagedDevicess /> },
-    { path: "/employee_damage/damage/pasports", element: <DammagedPasports /> },
-
-    //FollowUpEmployee
-    {
-      path: "/employee_expenses/expenses",
-      element: <FollowUpEmployeeExpensess />,
-    },
-    {
-      path: "/employee_expenses/attendence",
-      element: <FollowUpEmployeeAttensence />,
-    },
-
     // Common Routes
     { path: "settings", element: <Settings /> },
     { path: "expenses-view", element: <ExpensessView /> },
     { path: "landing-page", element: <LandingPage /> },
     { path: "/forbidden", element: <Forbidden /> },
-
   ];
-
 
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
   const [isLoading, setIsLoading] = useState(true);
@@ -157,14 +121,14 @@ const App = () => {
       try {
         // Make axios instance available globally
         window.axios = axiosInstance;
-        
+
         // Initialize auth state
         await initializeAuth();
-        
+
         setIsLoading(false);
       } catch (error) {
-        console.error('Initialization error:', error);
-        setError(error.message || 'Failed to initialize application');
+        console.error("Initialization error:", error);
+        setError(error.message || "Failed to initialize application");
         setIsLoading(false);
       }
     };
@@ -179,9 +143,6 @@ const App = () => {
   if (error) {
     return <div>Error: {error}</div>;
   }
-
-
-
 
   return (
     <Router>
@@ -201,7 +162,7 @@ const App = () => {
           {routes.map(({ path, element }, index) => (
             <Route key={index} path={path} element={element} />
           ))}
-          
+
           {/* 404 route */}
           <Route path="*" element={<NotFound />} />
         </Route>

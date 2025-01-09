@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Form,
@@ -10,7 +10,7 @@ import {
   Upload,
   Modal,
 } from "antd";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
 import moment from "moment";
@@ -29,21 +29,18 @@ const SuperVisorDammageDeviceAdd = () => {
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [governate, setGovernate] = useState([]);
   const [offices, setOffices] = useState([]);
-  
   const { accessToken, profile } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
   const { isSidebarCollapsed, roles } = useAuthStore();
   const isSupervisor = roles.includes("Supervisor");
-
   useEffect(() => {
     // Set initial form values for supervisor
     if (isSupervisor && profile) {
       form.setFieldsValue({
         governorateId: governorateId,
-        officeId: officeId
+        officeId: officeId,
       });
     }
-
     const fetchDeviceTypes = async () => {
       try {
         const response = await axiosInstance.get(`${Url}/api/devicetype`, {
@@ -61,26 +58,28 @@ const SuperVisorDammageDeviceAdd = () => {
         message.error("خطأ في جلب أنواع الأجهزة");
       }
     };
-
     const fetchGovernorateData = async () => {
       try {
-        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/351c197b-1666-4528-acb8-dd6270b9497f`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-    
+        const response = await axiosInstance.get(
+          `${Url}/api/Governorate/dropdown/351c197b-1666-4528-acb8-dd6270b9497f`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
         if (Array.isArray(response.data) && response.data.length > 0) {
           const governorateData = response.data[0];
-          setGovernate([{
-            value: governorateData.id,
-            label: governorateData.name,
-          }]);
-          
+          setGovernate([
+            {
+              value: governorateData.id,
+              label: governorateData.name,
+            },
+          ]);
           // Pre-populate offices if governorateId matches
           if (governorateData.id === governorateId) {
             setOffices(
-              governorateData.offices.map(office => ({
+              governorateData.offices.map((office) => ({
                 value: office.id,
                 label: office.name,
               }))
@@ -92,14 +91,16 @@ const SuperVisorDammageDeviceAdd = () => {
         message.error("فشل تحميل المحافظات");
       }
     };
-
     const fetchDamagedTypes = async () => {
       try {
-        const response = await axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = await axiosInstance.get(
+          `${Url}/api/damageddevicetype/all`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
         setDamagedTypes(
           response.data.map((damagedType) => ({
             value: damagedType.id,
@@ -110,7 +111,6 @@ const SuperVisorDammageDeviceAdd = () => {
         message.error("خطأ في جلب أنواع التلف");
       }
     };
-
     fetchDeviceTypes();
     fetchDamagedTypes();
     fetchGovernorateData();
@@ -119,18 +119,21 @@ const SuperVisorDammageDeviceAdd = () => {
   const fetchOffices = async (governorateId) => {
     if (!governorateId) return;
     try {
-      console.log('Fetching offices for governorate:', governorateId);
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${governorateId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      console.log('Office response:', response.data);
-      
+      console.log("Fetching offices for governorate:", governorateId);
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown/${governorateId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      console.log("Office response:", response.data);
+
       if (Array.isArray(response.data) && response.data.length > 0) {
         const governorateData = response.data[0];
         setOffices(
-          governorateData.offices.map(office => ({
+          governorateData.offices.map((office) => ({
             value: office.id,
             label: office.name,
           }))
@@ -170,12 +173,16 @@ const SuperVisorDammageDeviceAdd = () => {
       formData.append("EntityType", "DamagedDevice");
 
       try {
-        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        await axiosInstance.post(
+          `${Url}/api/Attachment/add-attachment`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
       } catch (error) {
         throw new Error("فشل في إرفاق الملفات.");
       }
@@ -200,12 +207,16 @@ const SuperVisorDammageDeviceAdd = () => {
         profileId,
       };
 
-      const response = await axiosInstance.post(`${Url}/api/DamagedDevice`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await axiosInstance.post(
+        `${Url}/api/DamagedDevice`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       const entityId = response.data?.id || response.data;
       if (!entityId) throw new Error("فشل في استرداد معرف الكيان.");
@@ -361,16 +372,27 @@ const SuperVisorDammageDeviceAdd = () => {
               label="اسم المحافظة"
               initialValue={isSupervisor ? governorateId : governate[0]?.value}
               rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
-              <Select 
-                placeholder="اختر المحافظة" 
-                disabled={isSupervisor} 
-                style={{ width: "267px", height: "45px" }} 
-                options={isSupervisor ? [{ value: governorateId, label: governate.find(g => g.value === governorateId)?.label }] : governate}
+              <Select
+                placeholder="اختر المحافظة"
+                disabled={isSupervisor}
+                style={{ width: "267px", height: "45px" }}
+                options={
+                  isSupervisor
+                    ? [
+                        {
+                          value: governorateId,
+                          label: governate.find(
+                            (g) => g.value === governorateId
+                          )?.label,
+                        },
+                      ]
+                    : governate
+                }
                 onChange={(value) => {
                   if (!isSupervisor) {
-                    console.log('Selected governorate:', value);
+                    console.log("Selected governorate:", value);
                     fetchOffices(value);
-                    form.setFieldValue('officeId', undefined);
+                    form.setFieldValue("officeId", undefined);
                   }
                 }}
               />
@@ -381,18 +403,30 @@ const SuperVisorDammageDeviceAdd = () => {
               label="اسم المكتب"
               initialValue={isSupervisor ? officeId : undefined}
               rules={[{ required: true, message: "يرجى اختيار المكتب" }]}>
-              <Select 
-                placeholder="اختر المكتب" 
-                disabled={isSupervisor} 
-                style={{ width: "267px", height: "45px" }} 
-                options={isSupervisor ? [{ value: officeId, label: offices.find(o => o.value === officeId)?.label }] : offices}
+              <Select
+                placeholder="اختر المكتب"
+                disabled={isSupervisor}
+                style={{ width: "267px", height: "45px" }}
+                options={
+                  isSupervisor
+                    ? [
+                        {
+                          value: officeId,
+                          label: offices.find((o) => o.value === officeId)
+                            ?.label,
+                        },
+                      ]
+                    : offices
+                }
               />
             </Form.Item>
 
             <Form.Item
               name="serialNumber"
               label="الرقم التسلسلي"
-              rules={[{ required: true, message: "يرجى إدخال الرقم التسلسلي" }]}>
+              rules={[
+                { required: true, message: "يرجى إدخال الرقم التسلسلي" },
+              ]}>
               <Input placeholder="أدخل الرقم التسلسلي" />
             </Form.Item>
 
@@ -432,9 +466,7 @@ const SuperVisorDammageDeviceAdd = () => {
               label="ملاحظات"
               initialValue="لا يوجد"
               rules={[{ message: "يرجى إدخال الملاحظات" }]}>
-              <Input.TextArea
-                placeholder="أدخل الملاحظات"
-              />
+              <Input.TextArea placeholder="أدخل الملاحظات" />
             </Form.Item>
           </div>
 

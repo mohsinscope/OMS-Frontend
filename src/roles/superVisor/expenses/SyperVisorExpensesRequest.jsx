@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Card, Typography, Space, message, Modal, Form, Input, DatePicker } from "antd"; // Import Ant Design components
+import { Table, Button, Card, Typography, Space, message } from "antd";
 import "./SuperVisorExpinsesRequest.css"; // CSS file for styling
 import expensesData from "./../../../data/expensess.json"; // Sample data for expenses
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
@@ -18,16 +18,7 @@ export default function SuperVisorExpensesRequest() {
   // API URL (Replace this with your actual API endpoint)
   const apiUrl = "https://example.com/api/expenses";
 
-  const showModal = () => {
-    setIsModalVisible(true);
-  };
-
-  const handleCancel = () => {
-    setIsModalVisible(false);
-    setFormData({}); // Reset form data when modal is closed
-  };
-
-  const handleAddExpense = async (values) => {
+  const handleAddExpense = async () => {
     try {
       const newExpense = {
         ...values,

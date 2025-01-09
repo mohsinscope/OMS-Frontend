@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button, Modal, message, Input, DatePicker } from "antd";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import "./superVisorAteensenceAdd.css";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
@@ -10,7 +10,7 @@ const { TextArea } = Input;
 
 export default function SuperVisorAttendanceAdd() {
   const navigate = useNavigate();
-  const { isSidebarCollapsed, profile,accessToken } = useAuthStore();
+  const { isSidebarCollapsed, profile, accessToken } = useAuthStore();
   const [selectedDate, setSelectedDate] = useState(null);
   const [workingHours, setWorkingHours] = useState(1);
   const [passportAttendance, setPassportAttendance] = useState({
@@ -24,7 +24,6 @@ export default function SuperVisorAttendanceAdd() {
   const [notes, setNotes] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [modalAction, setModalAction] = useState("");
-
   const governorateId = profile?.governorateId;
   const officeId = profile?.officeId;
   const profileId = profile?.profileId;
@@ -32,11 +31,14 @@ export default function SuperVisorAttendanceAdd() {
   useEffect(() => {
     const fetchEmployeeNumbers = async () => {
       try {
-        const response = await axiosInstance.get(`${Url}/api/office/${officeId}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const response = await axiosInstance.get(
+          `${Url}/api/office/${officeId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
         const data = response.data;
         setEmployeeNumbers({
           الاستلام: data.receivingStaff,
@@ -91,16 +93,18 @@ export default function SuperVisorAttendanceAdd() {
         officeId,
         profileId,
       };
-
-
       // Make sure the token is passed in the headers correctly
-      const response = await axiosInstance.post(`${Url}/api/Attendance`, dataToSend, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-  
+      const response = await axiosInstance.post(
+        `${Url}/api/Attendance`,
+        dataToSend,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
       message.success("تم حفظ الحضور وإرساله بنجاح");
       navigate(-1);
     } catch (error) {

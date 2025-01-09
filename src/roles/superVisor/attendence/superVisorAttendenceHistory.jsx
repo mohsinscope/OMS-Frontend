@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -11,7 +11,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
 import usePermissionsStore from "./../../../store/permissionsStore";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import "./superVisorAttendeceHistory.css";
 import Url from "./../../../store/url.js";
 
@@ -26,43 +26,39 @@ export default function SupervisorAttendanceHistory() {
   const [offices, setOffices] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
-
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [totalRecords, setTotalRecords] = useState(0);
 
-  const {
-    isSidebarCollapsed,
-    profile,
-    roles,
-    searchVisible,
-    toggleSearch,
-    accessToken,
-  } = useAuthStore();
+  const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } =
+    useAuthStore();
 
   const { hasAnyPermission } = usePermissionsStore();
   const hasCreatePermission = hasAnyPermission("create");
-
   const navigate = useNavigate();
-
   const isSupervisor = roles.includes("Supervisor");
-
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
 
   useEffect(() => {
     const fetchDropdowns = async () => {
       try {
-        const govResponse = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        const officeResponse = await axiosInstance.get(`${Url}/api/Office/dropdown`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const govResponse = await axiosInstance.get(
+          `${Url}/api/Governorate/dropdown`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+        const officeResponse = await axiosInstance.get(
+          `${Url}/api/Office/dropdown`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
 
         setGovernorates(govResponse.data);
         setOffices(officeResponse.data);
@@ -91,12 +87,16 @@ export default function SupervisorAttendanceHistory() {
         },
       };
 
-      const response = await axiosInstance.post(`${Url}/api/Attendance/search`, searchBody, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await axiosInstance.post(
+        `${Url}/api/Attendance/search`,
+        searchBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
@@ -230,7 +230,7 @@ export default function SupervisorAttendanceHistory() {
       <div className="supervisor-attendance-history-title">
         <h1>الحضور</h1>
       </div>
- 
+
       <div
         className={`supervisor-attendance-history-fields ${
           searchVisible ? "animate-show" : "animate-hide"
@@ -241,8 +241,7 @@ export default function SupervisorAttendanceHistory() {
             className="html-dropdown"
             value={isSupervisor ? userGovernorateId : selectedGovernorate}
             onChange={(value) => setSelectedGovernorate(value)}
-            disabled={isSupervisor}
-    >
+            disabled={isSupervisor}>
             <Select.Option value=""></Select.Option>
             {governorates.map((gov) => (
               <Select.Option key={gov.id} value={gov.id}>
@@ -258,8 +257,7 @@ export default function SupervisorAttendanceHistory() {
             className="html-dropdown"
             value={isSupervisor ? userOfficeId : selectedOffice}
             onChange={(value) => setSelectedOffice(value)}
-            disabled={isSupervisor}
-      >
+            disabled={isSupervisor}>
             <Select.Option value=""></Select.Option>
             {offices.map((office) => (
               <Select.Option key={office.id} value={office.id}>
@@ -294,8 +292,7 @@ export default function SupervisorAttendanceHistory() {
           <Select
             className="html-dropdown"
             value={workingHours}
-            onChange={(value) => setWorkingHours(value)}
-            >
+            onChange={(value) => setWorkingHours(value)}>
             <Select.Option value={3}>الكل</Select.Option>
             <Select.Option value={1}>صباحي</Select.Option>
             <Select.Option value={2}>مسائي</Select.Option>
@@ -349,7 +346,7 @@ export default function SupervisorAttendanceHistory() {
 
       <Modal
         title="تنبيه"
-        visible={isModalVisible}
+        open={isModalVisible}
         onOk={() => setIsModalVisible(false)}
         onCancel={() => setIsModalVisible(false)}
         okText="حسناً"
