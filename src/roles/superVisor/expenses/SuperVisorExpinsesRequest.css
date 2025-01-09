@@ -7,7 +7,9 @@
   justify-content: center;
   align-items: start;
 }
-
+.supervisor-request-general-info-card{
+  width: 100%;
+}
 .supervisor-request-form-card {
   margin-top: 20px;
   width: 100%;

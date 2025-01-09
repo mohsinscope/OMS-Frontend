@@ -19,6 +19,7 @@ import AdminExpenses from "./roles/admin/admin-expensess/adminExpensess.jsx";
 import AdminAttendance from "./roles/admin/admin-attendence/adminAttendence.jsx";
 import Settings from "./reusable/settings.jsx";
 import ExpensessView from "./reusable/ExpensessView.jsx";
+import SuperVisorExpensesShow from './roles/superVisor/expenses/ManagerExpensessView.jsx';
 import SuperVisorExpensesRequest from "./roles/superVisor/expenses/SyperVisorExpensesRequest.jsx";
 import SuperVisorExpensesHistory from "./roles/superVisor/expenses/SuperVisorExpensessHistory.jsx";
 import SuperVisorAttendenceHistory from "./roles/superVisor/attendence/superVisorAttendenceHistory.jsx";
@@ -30,6 +31,8 @@ import SuperVisorDammagePassportAdd from "./roles/superVisor/damaggedPasports/su
 import SuperVisorDevices from "./roles/superVisor/damegedDevices/SuperVisorDevice.jsx";
 import SuperVisorDeviceShow from "./roles/superVisor/damegedDevices/SuperVisorDeviceShow.jsx";
 import SuperVisorDevicesAdd from "./roles/superVisor/damegedDevices/superVisorDevicesAdd.jsx";
+
+
 import SuperVisorLecturerhistory from "./roles/superVisor/lecturer/SuperVisorLecturerhistory.jsx";
 import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecturerAdd.jsx";
 import LecturerShow from "./roles/superVisor/lecturer/SuperVisorLecturerShow.jsx";
@@ -47,7 +50,7 @@ const App = () => {
     { path: "/admin/ban", element: <BannedUsers /> },
     // Supervisor Routes
     {
-      path: "supervisor/ExpensesRequests",
+      path: "/supervisor/ExpensesRequests",
       element: <SuperVisorExpensesRequest />,
     },
     { path: "supervisor/Expensess", element: <SuperVisorExpensesHistory /> },
@@ -86,6 +89,10 @@ const App = () => {
     {
       path: "/supervisor/lecturerAdd/supervisorlecturerAdd",
       element: <SuperVisorLecturerAdd />,
+    },
+    {
+      path: "/supervisor/lecturer/history/LecturerShow",
+      element: <LecturerShow />,
     },
     {
       path: "/supervisor/lecturer/history/LecturerShow",

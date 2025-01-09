@@ -22,6 +22,20 @@ export const MENU_ITEMS = [
     role: []
   },
   {
+    label: "المصاريف",
+    icon: "bill",
+    path: "/supervisor/Expensess",
+    requiredPermission: "EXr",
+    role: []
+  },
+  {
+    label: "طلبات المصاريف",
+    icon: "money-add",
+    path: "/supervisor/ExpensesRequests",
+    requiredPermission: "EXr",
+    role: []
+  },
+  {
     label: "الجوازات التالفة",
     icon: "passport",
     path: "/supervisor/damagedpasportshistory",

@@ -1,198 +1,306 @@
+// ExpensesView.jsx
 import React, { useState } from "react";
+import { Table, Empty, Modal, Button, Image } from "antd";
 import { useLocation } from "react-router-dom";
-import { Table, Button, Modal, Image, Empty, ConfigProvider } from "antd"; // Importing components from Ant Design
+import html2pdf from 'html2pdf.js';
 import "./styles/ExpensessView.css";
 import Dashboard from "./../pages/dashBoard.jsx";
-import useAuthStore from './../store/store.js';
-export default function ExpensessView() {
-  const { isSidebarCollapsed } = useAuthStore(); // Access sidebar collapse state
+import useAuthStore from "./../store/store.js";
 
-
-  // Fetch data passed from the previous page
+export default function ExpensesView() {
+  const { isSidebarCollapsed } = useAuthStore();
   const location = useLocation();
-  const expense = location.state?.expense; // Access the expense object from state
+  const expense = location.state?.expense;
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
-  const [selectedItem, setSelectedItem] = useState(null); // For showing item details
-  const [isModalVisible, setIsModalVisible] = useState(false); // For modal visibility
+  // Add show details handler
+  const handleShowDetails = (record) => {
+    setSelectedItem(record);
+    setIsModalVisible(true);
+  };
 
-  // Return Empty component if no data is passed
-  if (!expense) {
-    return <Empty description="لا توجد تفاصيل لعرضها. تأكد من تمرير البيانات بشكل صحيح." />;
-  }
+  // Add modal close handler
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    setSelectedItem(null);
+  };  
 
-  // Table columns for general details
-  const generalColumns = [
-    {
-      title: "الكلفة الكلية",
-      dataIndex: "الكلفة الكلية",
-      key: "الكلفة الكلية",
-      align: "center",
-    },
-    {
-      title: "اسم المكتب",
-      dataIndex: "اسم المكتب",
-      key: "اسم المكتب",
-      align: "center",
-    },
-    {
-      title: "المحافظة",
-      dataIndex: "المحافظة",
-      key: "المحافظة",
-      align: "center",
-    },
-    {
-      title: "اسم المشرف",
-      dataIndex: "اسم المشرف",
-      key: "اسم المشرف",
-      align: "center",
-    },
-    {
-      title: "الرقم التسلسلي",
-      dataIndex: "الرقم التسلسلي",
-      key: "الرقم التسلسلي",
-      align: "center",
-    },
-  ];
-
-  // General details table data
-  const generalData = [expense.generalInfo]; // Use generalInfo from the passed expense
-
-  // Table columns for expense items
-  const itemColumns = [
-    ,
-    {
-      title: "نوع المصروف",
-      dataIndex: "نوع المصروف",
-      key: "نوع المصروف",
-      align: "center",
-    },
-    {
-      title: "الكمية",
-      dataIndex: "الكمية",
-      key: "الكمية",
-      align: "center",
-    },
-    {
-      title: "السعر",
-      dataIndex: "السعر",
-      key: "السعر",
-      align: "center",
-    },
-    {
-      title: "التاريخ",
-      dataIndex: "التاريخ",
-      key: "التاريخ",
-      align: "center",
-    }, {
-      title: "عرض",
-      key: "عرض",
-      align: "center",
-      render: (_, record) => (
-        <Button
-        className="expensses-view-button"
-          type="primary"
-          onClick={() => {
-            setSelectedItem(record); // Set selected item
-            setIsModalVisible(true); // Show modal
-          }}
-        >
-          عرض
-        </Button>
-      ),
+  const handlePrint = async () => {
+    try {
+      const element = document.createElement('div');
+      element.dir = 'rtl';
+      element.style.fontFamily = 'Arial, sans-serif';
+      element.innerHTML = `
+        <div style="padding: 20px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="font-size: 20px; margin: 0; margin-bottom: 5px;">تقرير المصروفات</h1>
+            <div style="text-align: left; margin-top: 10px;">التاريخ: ${expense?.generalInfo?.["تاريخ"]}</div>
+          </div>
+  
+          <!-- First Table -->
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">الرقم التسلسلي</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">اسم المشرف</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">المحافظة</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">المكتب</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">مبلغ النثرية</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">مجموع الصرفيات</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">الباقي</th>
+            </tr>
+            <tr>
+              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["الرقم التسلسلي"] || ""}</td>
+              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["اسم المشرف"] || ""}</td>
+              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["المحافظة"] || ""}</td>
+              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["المكتب"] || ""}</td>
+              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["مبلغ النثرية"] ? `IQD${expense.generalInfo["مبلغ النثرية"]}` : ""}</td>
+              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["مجموع الصرفيات"] ? `IQD${expense.generalInfo["مجموع الصرفيات"]}` : ""}</td>
+              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["الباقي"] ? `IQD${expense.generalInfo["الباقي"]}` : ""}</td>
+            </tr>
+          </table>
+  
+          <!-- Second Table -->
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <tr>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">ت</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">تاريخ</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">البند</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">العدد</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">سعر المفرد</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">المجموع</th>
+              <th style="border: 1px solid #000; padding: 8px; text-align: center;">ملاحظات</th>
+            </tr>
+            ${expense?.items?.map(item => `
+              <tr>
+                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["تسلسل"] || ""}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["التاريخ"] || ""}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["نوع المصروف"] || ""}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["الكمية"] || ""}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["السعر"] ? `IQD${item["السعر"]}` : ""}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["المجموع"] ? `IQD${item["المجموع"]}` : item["السعر"] ? `IQD${item["السعر"]}` : ""}</td>
+                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["ملاحظات"] || ""}</td>
+              </tr>
+            `).join('')}
+          </table>
+  
+          <!-- Images Section -->
+          ${expense?.items?.map(item => 
+            item.image ? `
+              <div style="margin-top: 20px; text-align: center;">
+                <img src="${item.image}" alt="مصروف الصورة" style="max-width: 80%; height: auto; margin-top: 10px;" />
+              </div>
+            ` : ''
+          ).join('')}
+        </div>
+      `;
+  
+      const opt = {
+        margin: 1,
+        filename: 'تقرير_المصروفات.pdf',
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { 
+          scale: 2,
+          useCORS: true,
+          letterRendering: true
+        },
+        jsPDF: { 
+          unit: 'cm', 
+          format: 'a4', 
+          orientation: 'portrait'
+        }
+      };
+  
+      html2pdf().from(element).set(opt).save();
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("حدث خطأ أثناء إنشاء ملف PDF. يرجى المحاولة مرة أخرى.");
     }
-  ];
-
-  // Expense items table data
-  const itemData = expense.items || []; // Use items from the passed expense
+  };
 
   return (
     <>
       <Dashboard />
-      <div dir="rtl"
-        className={`supervisor-expenses-history-page ${isSidebarCollapsed
-          ? "sidebar-collapsed"
-          : "supervisor-expenses-history-page"
-          }`}>
-        <h1 className="expensess-date">{`التاريخ: ${expense.generalInfo["التاريخ"] || "غير متوفر"}`}</h1>
+      <div
+        dir="rtl"
+        className={`supervisor-expenses-history-page ${
+          isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-expenses-history-page"
+        }`}
+      >
+        <h1 className="expensess-date">
+          صرفيات {expense?.generalInfo?.["اسم المكتب"]} بتاريخ {expense?.generalInfo?.["التاريخ"]}
+        </h1>
 
         {/* General Details Table */}
         <Table
           className="expense-details-table"
-          columns={generalColumns}
-          dataSource={generalData}
+          columns={[
+            { 
+              title: "الرقم التسلسلي",
+              dataIndex: "الرقم التسلسلي",
+              align: "center"
+            },
+            { 
+              title: "اسم المشرف",
+              dataIndex: "اسم المشرف",
+              align: "center"
+            },
+            { 
+              title: "المحافظة",
+              dataIndex: "المحافظة",
+              align: "center"
+            },
+            { 
+              title: "المكتب",
+              dataIndex: "المكتب",
+              align: "center"
+            },
+            { 
+              title: "مبلغ النثرية",
+              dataIndex: "مبلغ النثرية",
+              align: "center",
+            },
+            { 
+              title: "مجموع الصرفيات",
+              dataIndex: "مجموع الصرفيات",
+              align: "center",
+              render: (text) => `IQD${text}`
+            },
+            { 
+              title: "الباقي",
+              dataIndex: "الباقي",
+              align: "center",
+              render: (text) => `IQD${text}`
+            },
+            {
+              title: "عرض",
+              key: "action",
+              align: "center",
+              render: (_, record) => (
+                <Button type="link" onClick={() => handleShowDetails(record)}>
+                  عرض
+                </Button>
+              ),
+            }
+          ]}
+          dataSource={[expense?.generalInfo]}
           bordered
           pagination={false}
           locale={{ emptyText: "لا توجد بيانات" }}
         />
 
-        <button className="expenssses-print-button">طباعة</button>
+        <button className="expenssses-print-button" onClick={handlePrint}>
+          طباعة
+        </button>
+
         <hr />
 
         {/* Expense Items Table */}
         <Table
           className="expense-items-table"
-          columns={itemColumns}
-          dataSource={itemData}
+          columns={[
+            { 
+              title: "ت",
+              dataIndex: "تسلسل",
+              align: "center"
+            },
+            { 
+              title: "تاريخ",
+              dataIndex: "التاريخ",
+              align: "center"
+            },
+            { 
+              title: "البند",
+              dataIndex: "نوع المصروف",
+              align: "center"
+            },
+            { 
+              title: "العدد",
+              dataIndex: "الكمية",
+              align: "center"
+            },
+            { 
+              title: "سعر المفرد",
+              dataIndex: "السعر",
+              align: "center",
+              render: (text) => `IQD${text}`
+            },
+            { 
+              title: "المجموع",
+              dataIndex: "المجموع",
+              align: "center",
+              render: (text, record) => `IQD${record.المجموع || record.السعر}`
+            },
+            { 
+              title: "ملاحظات",
+              dataIndex: "ملاحظات",
+              align: "center"
+            },
+            {
+              title: "عرض",
+              key: "action",
+              align: "center",
+              render: (_, record) => (
+                <Button type="link" onClick={() => handleShowDetails(record)}>
+                  عرض
+                </Button>
+              ),
+            }
+          ]}
+          dataSource={expense?.items}
           bordered
           pagination={{ pageSize: 5 }}
           locale={{ emptyText: "لا توجد عناصر للصرف." }}
         />
 
-        {/* Modal for Item Details */}
-        <div >
-                  <ConfigProvider direction="rtl">
-          <Modal
-            width={1500}
-            height={300}
-            title="تفاصيل المصروف"
-            visible={isModalVisible}
-            onCancel={() => setIsModalVisible(false)}
-            footer={[
-              <Button key="close" onClick={() => setIsModalVisible(false)}>
-                الخروج
-              </Button>,
-            ]}
-          >
-            {selectedItem ? (
-              <><div className="ExpensessView-modal-container">
-                <div >
-                  <div className="input-expenses-view-page-warp-container">
-                    <label>نوع المصروف</label>
-                    <input type="text" disabled placeholder={`${selectedItem["نوع المصروف"] || "غير متوفر"}`} />
-                    <label>السعر</label>
-                    <input type="text" disabled placeholder={`${selectedItem["السعر"] || "غير متوفر"}`} />
-                  </div>
-                  <div className="input-expenses-view-page-warp-container">
-                    <label>الكمية</label>
-                    <input type="text" disabled placeholder={`${selectedItem["الكمية"] || "غير متوفر"}`} />
-                    
-                    <label>التاريخ</label>
-                    <input type="text" disabled placeholder={`${selectedItem["التاريخ"] || "غير متوفر"}`} />
-                  
-
-                  </div>
-
+        {/* Details Modal */}
+        <Modal
+          title="تفاصيل المصروف"
+          open={isModalVisible}
+          onCancel={handleModalClose}
+          footer={[
+            <Button key="close" onClick={handleModalClose}>
+              إغلاق
+            </Button>
+          ]}
+          width={800}
+          style={{ direction: 'rtl' }}
+        >
+          {selectedItem && (
+            <div className="expense-details">
+              <Table
+                columns={[
+                  { title: "الحقل", dataIndex: "field", align: "right" },
+                  { title: "القيمة", dataIndex: "value", align: "right" }
+                ]}
+                dataSource={Object.entries(selectedItem).map(([key, value]) => ({
+                  key,
+                  field: key,
+                  value: typeof value === 'number' ? `IQD${value}` : value
+                }))}
+                pagination={false}
+                bordered
+              />
+              
+              {/* Image Display Section */}
+              {selectedItem.image ? (
+                <div className="image-container" style={{ marginTop: "20px" }}>
+                  <p>الصورة:</p>
+                  <hr style={{ marginBottom: "10px", marginTop: "10px" }} />
+                  <Image
+                    src={selectedItem.image}
+                    alt="تفاصيل الصورة"
+                    style={{ maxWidth: "100%", height: "auto" }}
+                  />
                 </div>
-                {selectedItem.image ? (
-                  <div className="image-container">
-                    <p>الصورة:</p>
-                    <hr style={{marginBottom:"10px",marginTop:"10px"}} />
-                    <Image
-                      src={selectedItem.image}
-                      alt="تفاصيل الصورة"
-                      style={{ maxWidth: "100%", height: "auto" }}
-                    />
-                  </div>
-                ) : (
+              ) : (
+                <div style={{ marginTop: "20px", textAlign: "center" }}>
                   <p>لا توجد صورة لعرضها</p>
-                )}
-             </div> </>
-            ) : (
-              <p>لا توجد بيانات لعرضها</p>
-            )}
-          </Modal></ConfigProvider>
-        </div>
-
+                </div>
+              )}
+            </div>
+          )}
+        </Modal>
       </div>
     </>
   );

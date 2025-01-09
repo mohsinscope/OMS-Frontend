@@ -1,13 +1,9 @@
-import { useState } from "react";
-import { Table, Button, Card, Typography, Space, message } from "antd";
+import React, { useState } from "react";
+import { Table, Button, Card, Typography, Space, message, Modal, Form, Input, DatePicker } from "antd"; // Import Ant Design components
 import "./SuperVisorExpinsesRequest.css"; // CSS file for styling
-import TextFieldForm from "./../../../reusable elements/ReuseAbleTextField.jsx"; // Reusable form component
 import expensesData from "./../../../data/expensess.json"; // Sample data for expenses
-import DeleteConfirmationModal from "./../../../reusable elements/DeletingModal.jsx"; // Reusable delete modal
-import EditExpenseModal from "./../../../reusable elements/EditModal.jsx";
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
 import axios from "axios"; // Import Axios for API requests
-import Icons from "./../../../reusable elements/icons.jsx";
 
 const { Title } = Typography; // Typography component from Ant Design
 
@@ -17,20 +13,31 @@ export default function SuperVisorExpensesRequest() {
   const [uploadedImages, setUploadedImages] = useState([]); // State to manage uploaded images
   const [dataSource, setDataSource] = useState(expensesData); // State for the table data source
   const [formData, setFormData] = useState({}); // State to manage form data
-  const [isEditing, setIsEditing] = useState(false); // Editing modal visibility
-  const [editingRecord, setEditingRecord] = useState(null); // Track the record being edited
-  const [isDeleting, setIsDeleting] = useState(false); // Deleting modal visibility
-  const [deletingRecord, setDeletingRecord] = useState(null); // Track the record being deleted
+  const [isModalVisible, setIsModalVisible] = useState(false); // Modal visibility state
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false); // Edit modal visibility state
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false); // Delete modal visibility state
+  const [editingRecord, setEditingRecord] = useState(null); // Record being edited
+  const [deletingRecord, setDeletingRecord] = useState(null); // Record being deleted
 
   // API URL (Replace this with your actual API endpoint)
   const apiUrl = "https://example.com/api/expenses";
-  const handleAddExpense = async () => {
+
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    setFormData({}); // Reset form data when modal is closed
+  };
+
+  const handleAddExpense = async (values) => {
     try {
       const newExpense = {
-        ...formData,
+        ...values,
         images: uploadedImages,
         status: "Pending", // Default status
-        totalAmount: formData.price * formData.quantity, // Calculate total amount
+        totalAmount: values.price * values.quantity, // Calculate total amount
       };
 
       // Send the new expense to the API
@@ -39,9 +46,9 @@ export default function SuperVisorExpensesRequest() {
       if (response.status === 201 || response.status === 200) {
         // Update the table with the new expense
         setDataSource((prev) => [...prev, response.data]);
-        setFormData({}); // Reset form data
         setUploadedImages([]); // Reset uploaded images
         message.success("تمت إضافة المصروف بنجاح");
+        setIsModalVisible(false);
       } else {
         throw new Error("Failed to add expense");
       }
@@ -52,29 +59,29 @@ export default function SuperVisorExpensesRequest() {
   };
 
   const handleEdit = (record) => {
-    setEditingRecord({ ...record });
-    setIsEditing(true);
+    setEditingRecord(record);
+    setIsEditModalVisible(true);
   };
 
-  const saveEdit = async () => {
+  const handleDelete = (record) => {
+    setDeletingRecord(record);
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleEditSave = async (values) => {
     try {
-      // Update the record in the API
-      const response = await axios.put(
-        `${apiUrl}/${editingRecord["الرقم التسلسلي"]}`,
-        editingRecord
-      );
+      const updatedExpense = { ...editingRecord, ...values };
+
+      // Send the updated expense to the API
+      const response = await axios.put(`${apiUrl}/${editingRecord.id}`, updatedExpense);
 
       if (response.status === 200 || response.status === 204) {
         setDataSource((prev) =>
-          prev.map((item) =>
-            item["الرقم التسلسلي"] === editingRecord["الرقم التسلسلي"]
-              ? editingRecord
-              : item
-          )
+          prev.map((item) => (item.id === editingRecord.id ? updatedExpense : item))
         );
-        setIsEditing(false);
-        setEditingRecord(null);
         message.success("تم تعديل المصروف بنجاح");
+        setIsEditModalVisible(false);
+        setEditingRecord(null);
       } else {
         throw new Error("Failed to edit expense");
       }
@@ -84,28 +91,16 @@ export default function SuperVisorExpensesRequest() {
     }
   };
 
-  const handleDelete = (record) => {
-    setDeletingRecord(record);
-    setIsDeleting(true);
-  };
-
-  const confirmDelete = async () => {
+  const handleDeleteConfirm = async () => {
     try {
-      // Delete the record from the API
-      const response = await axios.delete(
-        `${apiUrl}/${deletingRecord["الرقم التسلسلي"]}`
-      );
+      // Delete the expense from the API
+      const response = await axios.delete(`${apiUrl}/${deletingRecord.id}`);
 
       if (response.status === 200 || response.status === 204) {
-        setDataSource((prev) =>
-          prev.filter(
-            (item) =>
-              item["الرقم التسلسلي"] !== deletingRecord["الرقم التسلسلي"]
-          )
-        );
-        setIsDeleting(false);
-        setDeletingRecord(null);
+        setDataSource((prev) => prev.filter((item) => item.id !== deletingRecord.id));
         message.success("تم حذف المصروف بنجاح");
+        setIsDeleteModalVisible(false);
+        setDeletingRecord(null);
       } else {
         throw new Error("Failed to delete expense");
       }
@@ -115,60 +110,16 @@ export default function SuperVisorExpensesRequest() {
     }
   };
 
-  const fields = [
-    {
-      name: "governorate",
-      label: "المحافظة", // Governorate field
-      placeholder: "بغداد",
-      type: "text", // Text input
-      disabled: true,
-    },
-    {
-      name: "office",
-      label: "اسم المكتب", // Office name field
-      placeholder: "مكتب فرقد",
-      type: "text", // Text input
-      disabled: true,
-    },
-    {
-      name: "expenseType",
-      label: "نوع المصروف", // Expense type field
-      placeholder: "",
-      type: "dropdown", // Dropdown input
-      options: [
-        { value: "نثرية", label: "نثرية" },
-        { value: "Hotel Stay", label: "Hotel Stay" },
-      ],
-    },
-    {
-      name: "price",
-      label: "السعر", // Price field
-      placeholder: "",
-      type: "text", // Text input
-    },
-    {
-      name: "quantity",
-      label: "الكمية", // Quantity field
-      placeholder: "",
-      type: "number", // Number input
-    },
-    {
-      name: "date",
-      label: "التاريخ", // Date field
-      placeholder: "",
-      type: "date", // Date input
-    },
-    {
-      name: "remarks",
-      label: "الملاحظات", // Remarks field
-      placeholder: "",
-      type: "textarea", // Textarea input
-      rows: 4, // Number of rows
-      cols: 50, // Number of columns
-    },
+  // Table columns
+  const generalInfoColumns = [
+    { title: "المحافظة", dataIndex: "governorate", key: "governorate" },
+    { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
+    { title: "اسم المشرف", dataIndex: "supervisorName", key: "supervisorName" },
+    { title: "سعر الصرف الكلي", dataIndex: "totalExchangeRate", key: "totalExchangeRate" },
+    { title: "التاريخ", dataIndex: "date", key: "date" },
   ];
 
-  const columns = [
+  const expenseColumns = [
     { title: "رقم الطلب", dataIndex: "الرقم التسلسلي", key: "id" }, // Request ID
     { title: "التاريخ", dataIndex: "التاريخ", key: "date" }, // Date
     { title: "الحالة", dataIndex: "الحالة", key: "status" }, // Status
@@ -185,10 +136,7 @@ export default function SuperVisorExpensesRequest() {
           <Button danger size="small" onClick={() => handleDelete(record)}>
             حذف
           </Button>
-          <Button
-            type="primary"
-            size="small"
-            onClick={() => handleEdit(record)}>
+          <Button type="primary" size="small" onClick={() => handleEdit(record)}>
             تعديل
           </Button>
         </Space>
@@ -204,55 +152,138 @@ export default function SuperVisorExpensesRequest() {
           : "supervisor-expenses-history-page"
       }`}
       dir="rtl">
-      {/* Form Section */}
-      <h1 className="supervisor-request-title">إضافة المصاريف</h1>
-      <Card className="supervisor-request-form-card">
-        <TextFieldForm
-          fields={fields}
-          formClassName="supervisor-request-form"
-          inputClassName="supervisor-request-input"
-          dropdownClassName="supervisor-request-dropdown"
-          fieldWrapperClassName="supervisor-request-field-wrapper"
-          buttonClassName="supervisor-request-button"
-          uploadedImages={uploadedImages}
-          hideButtons={true}
-          showImagePreviewer={true}
-          onFormSubmit={(data) => setFormData(data)}
+
+      {/* General Info Table */}
+      <h1 className="supervisor-request-title">معلومات عامة</h1>
+      <Card className="supervisor-request-table-card">
+        <Table
+          dataSource={expensesData.map((expense) => expense.generalInfo)}
+          columns={generalInfoColumns}
+          rowKey="governorate"
+          bordered
+          pagination={{ pageSize: 1 }}
         />
-        <button className="add-expensses-button" onClick={handleAddExpense}>
-          إضافة مصروف
-          <Icons type="add" />
-        </button>
       </Card>
 
-      {/* Table Section */}
+      {/* Add Expense Button */}
+      <div style={{ marginBottom: "20px", textAlign: "left" }}>
+        <Button type="primary" onClick={showModal} style={{ padding: " 20px" }}>
+          اضافة مصروف يومي
+        </Button>
+      </div>
+
+      {/* Add Expense Modal */}
+      <Modal
+        title="اضافة مصروف يومي"
+        visible={isModalVisible}
+        onCancel={handleCancel}
+        footer={null}>
+        <Form
+          layout="vertical"
+          onFinish={handleAddExpense}
+          className="add-expense-form">
+          <Form.Item
+            label="نوع المصروف"
+            name="expenseType"
+            rules={[{ required: true, message: "الرجاء اختيار نوع المصروف" }]}
+          >
+            <Input placeholder="أدخل نوع المصروف" />
+          </Form.Item>
+          <Form.Item
+            label="السعر"
+            name="price"
+            rules={[{ required: true, message: "الرجاء إدخال السعر" }]}
+          >
+            <Input placeholder="أدخل السعر" type="number" />
+          </Form.Item>
+          <Form.Item
+            label="الكمية"
+            name="quantity"
+            rules={[{ required: true, message: "الرجاء إدخال الكمية" }]}
+          >
+            <Input placeholder="أدخل الكمية" type="number" />
+          </Form.Item>
+          <Form.Item
+            label="التاريخ"
+            name="date"
+            rules={[{ required: true, message: "الرجاء اختيار التاريخ" }]}
+          >
+            <DatePicker style={{ width: "100%" }} placeholder="اختر التاريخ" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              إضافة
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Edit Expense Modal */}
+      <Modal
+        title="تعديل المصروف"
+        visible={isEditModalVisible}
+        onCancel={() => setIsEditModalVisible(false)}
+        footer={null}>
+        <Form
+          layout="vertical"
+          initialValues={editingRecord}
+          onFinish={handleEditSave}>
+          <Form.Item
+            label="نوع المصروف"
+            name="expenseType"
+            rules={[{ required: true, message: "الرجاء اختيار نوع المصروف" }]}
+          >
+            <Input placeholder="أدخل نوع المصروف" />
+          </Form.Item>
+          <Form.Item
+            label="السعر"
+            name="price"
+            rules={[{ required: true, message: "الرجاء إدخال السعر" }]}
+          >
+            <Input placeholder="أدخل السعر" type="number" />
+          </Form.Item>
+          <Form.Item
+            label="الكمية"
+            name="quantity"
+            rules={[{ required: true, message: "الرجاء إدخال الكمية" }]}
+          >
+            <Input placeholder="أدخل الكمية" type="number" />
+          </Form.Item>
+          <Form.Item
+            label="التاريخ"
+            name="date"
+            rules={[{ required: true, message: "الرجاء اختيار التاريخ" }]}
+          >
+            <DatePicker style={{ width: "100%" }} placeholder="اختر التاريخ" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              حفظ التعديلات
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        title="تأكيد الحذف"
+        visible={isDeleteModalVisible}
+        onOk={handleDeleteConfirm}
+        onCancel={() => setIsDeleteModalVisible(false)}>
+        <p>هل أنت متأكد أنك تريد حذف هذا المصروف؟</p>
+      </Modal>
+
+      {/* Expense Table */}
       <h1 className="supervisor-request-title-2">جدول المصاريف</h1>
       <Card className="supervisor-request-table-card">
         <Table
           dataSource={dataSource}
-          columns={columns}
+          columns={expenseColumns}
           rowKey="الرقم التسلسلي"
           bordered
           pagination={{ pageSize: 5 }}
         />
       </Card>
-
-      {/* Reusable Modals */}
-      <EditExpenseModal
-        visible={isEditing}
-        onCancel={() => setIsEditing(false)}
-        onSave={saveEdit}
-        editingRecord={editingRecord}
-        setEditingRecord={setEditingRecord}
-      />
-
-      <DeleteConfirmationModal
-        visible={isDeleting}
-        onCancel={() => setIsDeleting(false)}
-        onConfirm={confirmDelete}
-      />
-
-      <button>ارسال للمدير</button>
     </div>
   );
 }

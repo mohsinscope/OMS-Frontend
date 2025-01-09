@@ -23,6 +23,7 @@
 }
 
 .not-found-icon::before {
+  margin-top: 30px;
   content: '📦';
   font-size: 64px;
   position: absolute;
