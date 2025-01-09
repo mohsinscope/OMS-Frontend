@@ -23,14 +23,14 @@ export const MENU_ITEMS = [
   },
   {
     label: "المصاريف",
-    icon: "devices",
+    icon: "bill",
     path: "/supervisor/Expensess",
     requiredPermission: "EXr",
     role: []
   },
   {
     label: "طلبات المصاريف",
-    icon: "devices",
+    icon: "money-add",
     path: "/supervisor/ExpensesRequests",
     requiredPermission: "EXr",
     role: []

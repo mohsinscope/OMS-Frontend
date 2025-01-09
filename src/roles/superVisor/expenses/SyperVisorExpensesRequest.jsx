@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Table, Button, Card, Typography, Space, message } from "antd";
+import { Table, Button, Card, Typography, Space, message, Modal, Form, Input, DatePicker } from "antd"; // Import Ant Design components
 import "./SuperVisorExpinsesRequest.css"; // CSS file for styling
 import expensesData from "./../../../data/expensess.json"; // Sample data for expenses
 import useAuthStore from "./../../../store/store"; // Import sidebar state for dynamic class handling
@@ -14,11 +14,24 @@ export default function SuperVisorExpensesRequest() {
   const [dataSource, setDataSource] = useState(expensesData); // State for the table data source
   const [formData, setFormData] = useState({}); // State to manage form data
   const [isModalVisible, setIsModalVisible] = useState(false); // Modal visibility state
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false); // Edit modal visibility state
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false); // Delete modal visibility state
+  const [editingRecord, setEditingRecord] = useState(null); // Record being edited
+  const [deletingRecord, setDeletingRecord] = useState(null); // Record being deleted
 
   // API URL (Replace this with your actual API endpoint)
   const apiUrl = "https://example.com/api/expenses";
 
-  const handleAddExpense = async () => {
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+    setFormData({}); // Reset form data when modal is closed
+  };
+
+  const handleAddExpense = async (values) => {
     try {
       const newExpense = {
         ...values,
@@ -45,6 +58,59 @@ export default function SuperVisorExpensesRequest() {
     }
   };
 
+  const handleEdit = (record) => {
+    setEditingRecord(record);
+    setIsEditModalVisible(true);
+  };
+
+  const handleDelete = (record) => {
+    setDeletingRecord(record);
+    setIsDeleteModalVisible(true);
+  };
+
+  const handleEditSave = async (values) => {
+    try {
+      const updatedExpense = { ...editingRecord, ...values };
+
+      // Send the updated expense to the API
+      const response = await axios.put(`${apiUrl}/${editingRecord.id}`, updatedExpense);
+
+      if (response.status === 200 || response.status === 204) {
+        setDataSource((prev) =>
+          prev.map((item) => (item.id === editingRecord.id ? updatedExpense : item))
+        );
+        message.success("تم تعديل المصروف بنجاح");
+        setIsEditModalVisible(false);
+        setEditingRecord(null);
+      } else {
+        throw new Error("Failed to edit expense");
+      }
+    } catch (error) {
+      console.error("Error editing expense:", error);
+      message.error("حدث خطأ أثناء تعديل المصروف");
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      // Delete the expense from the API
+      const response = await axios.delete(`${apiUrl}/${deletingRecord.id}`);
+
+      if (response.status === 200 || response.status === 204) {
+        setDataSource((prev) => prev.filter((item) => item.id !== deletingRecord.id));
+        message.success("تم حذف المصروف بنجاح");
+        setIsDeleteModalVisible(false);
+        setDeletingRecord(null);
+      } else {
+        throw new Error("Failed to delete expense");
+      }
+    } catch (error) {
+      console.error("Error deleting expense:", error);
+      message.error("حدث خطأ أثناء حذف المصروف");
+    }
+  };
+
+  // Table columns
   const generalInfoColumns = [
     { title: "المحافظة", dataIndex: "governorate", key: "governorate" },
     { title: "اسم المكتب", dataIndex: "officeName", key: "officeName" },
@@ -67,10 +133,10 @@ export default function SuperVisorExpensesRequest() {
       key: "actions",
       render: (_, record) => (
         <Space>
-          <Button danger size="small">
+          <Button danger size="small" onClick={() => handleDelete(record)}>
             حذف
           </Button>
-          <Button type="primary" size="small">
+          <Button type="primary" size="small" onClick={() => handleEdit(record)}>
             تعديل
           </Button>
         </Space>
@@ -101,12 +167,12 @@ export default function SuperVisorExpensesRequest() {
 
       {/* Add Expense Button */}
       <div style={{ marginBottom: "20px", textAlign: "left" }}>
-        <Button type="primary" onClick={showModal} style={{padding:"20px"}}>
+        <Button type="primary" onClick={showModal} style={{ padding: " 20px" }}>
           اضافة مصروف يومي
         </Button>
       </div>
 
-      {/* Modal for Adding Expense */}
+      {/* Add Expense Modal */}
       <Modal
         title="اضافة مصروف يومي"
         visible={isModalVisible}
@@ -152,7 +218,62 @@ export default function SuperVisorExpensesRequest() {
         </Form>
       </Modal>
 
-      {/* Table Section */}
+      {/* Edit Expense Modal */}
+      <Modal
+        title="تعديل المصروف"
+        visible={isEditModalVisible}
+        onCancel={() => setIsEditModalVisible(false)}
+        footer={null}>
+        <Form
+          layout="vertical"
+          initialValues={editingRecord}
+          onFinish={handleEditSave}>
+          <Form.Item
+            label="نوع المصروف"
+            name="expenseType"
+            rules={[{ required: true, message: "الرجاء اختيار نوع المصروف" }]}
+          >
+            <Input placeholder="أدخل نوع المصروف" />
+          </Form.Item>
+          <Form.Item
+            label="السعر"
+            name="price"
+            rules={[{ required: true, message: "الرجاء إدخال السعر" }]}
+          >
+            <Input placeholder="أدخل السعر" type="number" />
+          </Form.Item>
+          <Form.Item
+            label="الكمية"
+            name="quantity"
+            rules={[{ required: true, message: "الرجاء إدخال الكمية" }]}
+          >
+            <Input placeholder="أدخل الكمية" type="number" />
+          </Form.Item>
+          <Form.Item
+            label="التاريخ"
+            name="date"
+            rules={[{ required: true, message: "الرجاء اختيار التاريخ" }]}
+          >
+            <DatePicker style={{ width: "100%" }} placeholder="اختر التاريخ" />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit" block>
+              حفظ التعديلات
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        title="تأكيد الحذف"
+        visible={isDeleteModalVisible}
+        onOk={handleDeleteConfirm}
+        onCancel={() => setIsDeleteModalVisible(false)}>
+        <p>هل أنت متأكد أنك تريد حذف هذا المصروف؟</p>
+      </Modal>
+
+      {/* Expense Table */}
       <h1 className="supervisor-request-title-2">جدول المصاريف</h1>
       <Card className="supervisor-request-table-card">
         <Table
