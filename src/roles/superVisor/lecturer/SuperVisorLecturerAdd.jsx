@@ -28,7 +28,7 @@ const SuperVisorLecturerAdd = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState(null);
-  const [lectureTypes, setLectureTypes] = useState([]);
+  const [lectureTypeNames, setlectureTypeNames] = useState([]);
   const [governate, setGovernate] = useState([]);
   const [offices, setOffices] = useState([]);
   const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
@@ -45,7 +45,7 @@ const SuperVisorLecturerAdd = () => {
     const fetchGovernorateData = async () => {
       try {
         const response = await axiosInstance.get(
-          `${Url}/api/Governorate/dropdown/351c197b-1666-4528-acb8-dd6270b9497f`,
+          `${Url}/api/Governorate/dropdown/${governorateId}`,
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
@@ -123,8 +123,8 @@ const SuperVisorLecturerAdd = () => {
   const handleCompanyChange = (companyId) => {
     setSelectedCompany(companyId);
     const company = companies.find((c) => c.id === companyId);
-    setLectureTypes(company?.lectureTypes || []);
-    form.setFieldValue("lectureTypeId", undefined);
+    setlectureTypeNames(company?.lectureTypes || []);
+    form.setFieldValue("lectureTypeIds", undefined);
   };
 
   const handleBack = () => {
@@ -199,9 +199,10 @@ const SuperVisorLecturerAdd = () => {
         governorateId: isSupervisor ? governorateId : values.governorateId,
         profileId,
         companyId: selectedCompany,
-        lectureTypeId: values.lectureTypeId,
+        lectureTypeIds: values.lectureTypeIds,
         note: values.note || "لا يوجد",
       };
+      console.log(payload)
 
       const entityId = await sendLectureDetails(payload);
 
@@ -433,14 +434,15 @@ const SuperVisorLecturerAdd = () => {
               </Form.Item>
 
               <Form.Item
-                name="lectureTypeId"
+                name="lectureTypeIds"
                 label="نوع المحضر"
                 rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
                 <Select
+                mode="multiple"
                   placeholder="اختر نوع المحضر"
-                  style={{ width: "267px", height: "45px" }}
-                  disabled={!selectedCompany || lectureTypes.length === 0}>
-                  {lectureTypes.map((type) => (
+                  style={{ width: "267px", height: "fit-content" }}
+                  disabled={!selectedCompany || lectureTypeNames.length === 0}>
+                  {lectureTypeNames.map((type) => (
                     <Select.Option key={type.id} value={type.id}>
                       {type.name}
                     </Select.Option>
@@ -452,7 +454,7 @@ const SuperVisorLecturerAdd = () => {
                 name="date"
                 label="التاريخ"
                 rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
-                <DatePicker style={{ width: "100%" }} />
+                <DatePicker style={{ width: "267px", height: "45px" }} />
               </Form.Item>
 
               <Form.Item
