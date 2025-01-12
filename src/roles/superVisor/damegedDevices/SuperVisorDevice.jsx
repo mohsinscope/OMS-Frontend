@@ -156,8 +156,10 @@ const SuperVisorDevices = () => {
 
   const handleGovernorateChange = async (value) => {
     setSelectedGovernorate(value);
+    setSelectedOffice(null); // Clear the selected office when governorate changes
     await fetchOffices(value);
   };
+  
 
   // Data fetching effects and callbacks
   const fetchGovernorates = useCallback(async () => {
@@ -165,10 +167,7 @@ const SuperVisorDevices = () => {
       const response = await axiosInstance.get(
         `${Url}/api/Governorate/dropdown`,
         {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
       setGovernorates(response.data);
@@ -193,12 +192,10 @@ const SuperVisorDevices = () => {
       const response = await axiosInstance.get(
         `${Url}/api/Governorate/dropdown/${governorateId}`,
         {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
+      console.log(response)
 
       if (response.data && response.data[0] && response.data[0].offices) {
         setOffices(response.data[0].offices);
@@ -211,6 +208,7 @@ const SuperVisorDevices = () => {
       message.error("حدث خطأ أثناء جلب بيانات المكاتب");
     }
   };
+
 
   useEffect(() => {
     fetchGovernorates();

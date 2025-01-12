@@ -33,7 +33,7 @@ const SuperVisorLecturerhistory = () => {
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
   const [companies, setCompanies] = useState([]);
-  const [lectureTypes, setLectureTypes] = useState([]);
+  const [lectureTypeNames, setlectureTypeNames] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [formData, setFormData] = useState({
@@ -41,7 +41,7 @@ const SuperVisorLecturerhistory = () => {
     startDate: null,
     endDate: null,
     companyId: null,
-    lectureTypeId: null,
+    lectureTypeIds: [],
   });
   const formatToISO = (date) => {
     if (!date) return null;
@@ -59,7 +59,7 @@ const SuperVisorLecturerhistory = () => {
           startDate: payload.startDate || null,
           endDate: payload.endDate || null,
           companyId: payload.companyId || null,
-          lectureTypeId: payload.lectureTypeId || null,
+          lectureTypeIds: payload.lectureTypeIds || [],
           PaginationParams: {
             PageNumber: payload.PaginationParams.PageNumber,
             PageSize: payload.PaginationParams.PageSize,
@@ -86,7 +86,7 @@ const SuperVisorLecturerhistory = () => {
     } catch (error) {
       console.error("API Error:", error);
       message.error(
-        `حدث خطأ أثناء جلب المحاضرات: ${
+        `حدث خطأ أثناء جلب المحاضر: ${
           error.response?.data?.message || error.message
         }`
       );
@@ -102,7 +102,7 @@ const SuperVisorLecturerhistory = () => {
       startDate: formData.startDate ? formatToISO(formData.startDate) : null,
       endDate: formData.endDate ? formatToISO(formData.endDate) : null,
       companyId: formData.companyId || null,
-      lectureTypeId: formData.lectureTypeId || null,
+      lectureTypeIds: formData.lectureTypeIds || [],
       PaginationParams: {
         PageNumber: page,
         PageSize: pageSize,
@@ -146,11 +146,11 @@ const SuperVisorLecturerhistory = () => {
       setCompanies(response.data);
 
       // Reset lecture types when companies are fetched
-      setLectureTypes([]);
+      setlectureTypeNames([]);
       setFormData((prev) => ({
         ...prev,
         companyId: null,
-        lectureTypeId: null,
+        lectureTypeIds: [],
       }));
     } catch (error) {
       message.error("حدث خطأ أثناء جلب بيانات الشركات");
@@ -161,7 +161,7 @@ const SuperVisorLecturerhistory = () => {
     setFormData((prev) => ({
       ...prev,
       companyId,
-      lectureTypeId: null, // Reset lecture type when company changes
+      lectureTypeIds: [], // Reset lecture type when company changes
     }));
 
     // Find selected company and update lecture types
@@ -169,9 +169,9 @@ const SuperVisorLecturerhistory = () => {
       (company) => company.id === companyId
     );
     if (selectedCompany) {
-      setLectureTypes(selectedCompany.lectureTypes || []);
+      setlectureTypeNames(selectedCompany.lectureTypeNames || []);
     } else {
-      setLectureTypes([]);
+      setlectureTypeNames([]);
     }
   };
 
@@ -189,6 +189,7 @@ const SuperVisorLecturerhistory = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
+      console.log(response)
 
       if (response.data && response.data[0] && response.data[0].offices) {
         setOffices(response.data[0].offices);
@@ -210,7 +211,7 @@ const SuperVisorLecturerhistory = () => {
       startDate: null,
       endDate: null,
       companyId: null,
-      lectureTypeId: null,
+      lectureTypeIds: [],
       PaginationParams: {
         PageNumber: 1,
         PageSize: pageSize,
@@ -232,8 +233,10 @@ const SuperVisorLecturerhistory = () => {
 
   const handleGovernorateChange = async (value) => {
     setSelectedGovernorate(value);
+    setSelectedOffice(null); // Clear the selected office when governorate changes
     await fetchOffices(value);
   };
+  
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -253,7 +256,7 @@ const SuperVisorLecturerhistory = () => {
       startDate: null,
       endDate: null,
       companyId: null,
-      lectureTypeId: null,
+      lectureTypeIds: [],
     });
     setCurrentPage(1);
 
@@ -270,7 +273,7 @@ const SuperVisorLecturerhistory = () => {
       startDate: null,
       endDate: null,
       companyId: null,
-      lectureTypeId: null,
+      lectureTypeIds: [],
       PaginationParams: {
         PageNumber: 1,
         PageSize: pageSize,
@@ -316,12 +319,6 @@ const SuperVisorLecturerhistory = () => {
       title: "اسم الشركة",
       dataIndex: "companyName",
       key: "companyName",
-      className: "table-column-Lecturer-address",
-    },
-    {
-      title: "نوع المحضر",
-      dataIndex: "lectureTypeName",
-      key: "lectureTypeName",
       className: "table-column-Lecturer-address",
     },
     {
@@ -406,25 +403,7 @@ const SuperVisorLecturerhistory = () => {
             </Select>
           </div>
 
-          <div className="supervisor-Lectur-field-wrapper">
-            <label htmlFor="lectureType" className="supervisor-Lectur-label">
-              نوع المحضر
-            </label>
-            <Select
-              id="lectureType"
-              value={formData.lectureTypeId || undefined}
-              onChange={(value) =>
-                setFormData((prev) => ({ ...prev, lectureTypeId: value }))
-              }
-              className="supervisor-Lectur-select"
-              disabled={!formData.companyId}>
-              {lectureTypes.map((type) => (
-                <Select.Option key={type.id} value={type.id}>
-                  {type.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </div>
+    
 
           <div className="supervisor-Lectur-field-wrapper">
             <label htmlFor="title" className="supervisor-Lectur-label">
