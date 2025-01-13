@@ -92,7 +92,6 @@ const useAuthStore = create((set, get) => ({
       throw error;
     }
   },
-
   updateTokens: async (accessToken, refreshToken) => {
     try {
       const tokenPayload = parseToken(accessToken);

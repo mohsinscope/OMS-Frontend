@@ -224,7 +224,7 @@ export default function SupervisorAttendanceHistory() {
       className={`supervisor-attendance-history-main-container ${
         isSidebarCollapsed
           ? "sidebar-collapsed"
-          : "supervisor-expenses-history-page"
+          : "supervisor-attendance-history-main-container"
       }`}
       dir="rtl">
       <div className="supervisor-attendance-history-title">

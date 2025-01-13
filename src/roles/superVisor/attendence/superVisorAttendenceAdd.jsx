@@ -140,7 +140,7 @@ export default function SuperVisorAttendanceAdd() {
       className={`supervisor-attendence-register-container ${
         isSidebarCollapsed
           ? "sidebar-collapsed"
-          : "supervisor-expenses-history-page"
+          : "supervisor-attendence-register-container"
       }`}
       dir="rtl">
       <div className="supervisor-attendence-add-title-content">

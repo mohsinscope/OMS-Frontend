@@ -36,5 +36,17 @@
       "icon": "passport",
       "path": "/admin/lecture-types"
     }
+    ,
+    {
+      "label": "حد الصرفيات",
+      "icon": "threshold",
+      "path": "/admin/thrshhold"
+    }
+    ,
+    {
+      "label": "انواع الصرفيات",
+      "icon": "bill",
+      "path": "/admin/expensess-types"
+    }
   ]
 }
