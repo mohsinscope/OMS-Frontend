@@ -31,8 +31,8 @@ import SuperVisorDammagePassportAdd from "./roles/superVisor/damaggedPasports/su
 import SuperVisorDevices from "./roles/superVisor/damegedDevices/SuperVisorDevice.jsx";
 import SuperVisorDeviceShow from "./roles/superVisor/damegedDevices/SuperVisorDeviceShow.jsx";
 import SuperVisorDevicesAdd from "./roles/superVisor/damegedDevices/superVisorDevicesAdd.jsx";
-
-
+import ExpensessViewDaily from './roles/superVisor/expenses/expensessViewDaily.jsx';
+import ExpensessAddDaily from './roles/superVisor/expenses/ExpensessAddDaily.jsx';
 import SuperVisorLecturerhistory from "./roles/superVisor/lecturer/SuperVisorLecturerhistory.jsx";
 import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecturerAdd.jsx";
 import LecturerShow from "./roles/superVisor/lecturer/SuperVisorLecturerShow.jsx";
@@ -97,6 +97,15 @@ const App = () => {
     {
       path: "/supervisor/lecturer/history/LecturerShow",
       element: <LecturerShow />,
+    },
+    ,
+    {
+      path: "/Expensess-view-daily",
+      element: <ExpensessViewDaily />,
+    },
+    {
+      path: "/add-daily-expense",
+      element: <ExpensessAddDaily />
     },
 
     // Common Routes

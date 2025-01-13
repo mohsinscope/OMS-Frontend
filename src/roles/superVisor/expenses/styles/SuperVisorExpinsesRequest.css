@@ -7,9 +7,7 @@
   justify-content: center;
   align-items: start;
 }
-.supervisor-request-general-info-card{
-  width: 100%;
-}
+
 .supervisor-request-form-card {
   margin-top: 20px;
   width: 100%;
@@ -265,4 +263,22 @@ button {
   border: #1677ff 1px solid;
   box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
   outline: 0;
+}
+.supervisor-expenses__columns{
+  display: flex;
+}
+.supervisor-expenses-history-page div{
+  width: 100%;
+}
+
+.supervisor-expenses {
+  width: 30% ;
+  min-width: 30%;
+  max-width: 30%;
+}
+
+.supervisor-expenses__table-section {
+  width: 70% ;
+  min-width: 70%;
+  max-width: 70%;
 }

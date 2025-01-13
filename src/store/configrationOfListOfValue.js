@@ -137,6 +137,43 @@ const Config = {
         optionsEndpoint: "/api/company?PageNumber=1&PageSize=100"
       }
     ]
+  },"/admin/thrshhold": {
+    getEndpoint: "/api/Threshold",
+    postEndpoint: "/api/Threshold",
+    putEndpoint: (id) => `/api/Threshold/${id}`,
+    deleteEndpoint: (id) => `/api/Threshold/${id}`,
+    columns: [
+      { title: "المستوى", dataIndex: "name", key: "name" },
+      { title: "الحد الأدنى", dataIndex: "minValue", key: "minValue" },
+      { title: "الحد الأعلى", dataIndex: "maxValue", key: "maxValue" }
+    ],
+    formFields: [
+      { 
+        name: "name", 
+        label: "المستوى", 
+        type: "dropdown",
+        options: [
+          { label: "High", value: "High" },
+          { label: "Medium", value: "Medium" },
+          { label: "Low", value: "Low" }
+        ]
+      },
+      { name: "minValue", label: "الحد الأدنى", type: "number" },
+      { name: "maxValue", label: "الحد الأعلى", type: "number" }
+    ]
+  },
+
+  "/admin/expensess-types": {
+    getEndpoint: "/api/ExpenseType",
+    postEndpoint: "/api/ExpenseType",
+    putEndpoint: (id) => `/api/ExpenseType/${id}`,
+    deleteEndpoint: (id) => `/api/ExpenseType/${id}`,
+    columns: [
+      { title: "نوع الصرفية", dataIndex: "name", key: "name" }
+    ],
+    formFields: [
+      { name: "name", label: "نوع الصرفية", type: "text" }
+    ]
   },
  
 };

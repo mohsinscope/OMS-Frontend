@@ -384,9 +384,31 @@ export default function ListOfValueAdmin() {
     setIsModalOpen(true);
   };
 
-  const renderFormField = (field) => {
+const renderFormField = (field) => {
     switch (field.type) {
       case "dropdown":
+        // If field has static options defined in the config
+        if (field.options) {
+          return (
+            <Select
+              showSearch
+              optionFilterProp="children"
+              filterOption={(input, option) =>
+                (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+              }
+              placeholder={`اختر ${field.label}`}
+            >
+              {field.options.map((option) => (
+                <Select.Option key={option.value} value={option.value}>
+                  {option.label}
+                </Select.Option>
+              ))}
+            </Select>
+          );
+        }
+        
+        // For dynamic options from API
+        const options = dropdownOptions[field.name] || [];
         return (
           <Select
             showSearch
@@ -394,20 +416,44 @@ export default function ListOfValueAdmin() {
             filterOption={(input, option) =>
               (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
             }
+            placeholder={`اختر ${field.label}`}
+            notFoundContent={options.length === 0 ? "لا توجد خيارات" : null}
           >
-            {(dropdownOptions[field.name] || []).map((option) => (
+            {options.map((option) => (
               <Select.Option key={option.value} value={option.value}>
                 {option.label}
               </Select.Option>
             ))}
           </Select>
         );
+
       case "date":
-        return <Input type="date" />;
+        return (
+          <Input 
+            type="date" 
+            placeholder={field.placeholder || `اختر ${field.label}`}
+          />
+        );
+
       case "number":
-        return <Input type="number" />;
+        return (
+          <Input 
+            type="number"
+            min={field.min}
+            max={field.max}
+            step={field.step || 1}
+            placeholder={field.placeholder || `ادخل ${field.label}`}
+          />
+        );
+
       default:
-        return <Input type={field.type || "text"} />;
+        return (
+          <Input 
+            type={field.type || "text"} 
+            placeholder={field.placeholder || `ادخل ${field.label}`}
+            maxLength={field.maxLength}
+          />
+        );
     }
   };
 
