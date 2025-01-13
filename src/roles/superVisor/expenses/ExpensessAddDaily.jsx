@@ -26,7 +26,7 @@ export default function ExpensessAddDaily() {
   const navigate = useNavigate();
   const location = useLocation();
   const monthlyExpenseId = location.state?.monthlyExpenseId;
-  
+
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -87,6 +87,14 @@ export default function ExpensessAddDaily() {
     }
   };
 
+  const rollbackExpense = async (entityId) => {
+    try {
+      await axiosInstance.delete(`/api/Expense/${entityId}`);
+    } catch (error) {
+      console.error("Failed to rollback expense record:", error);
+    }
+  };
+
   const handleFormSubmit = async (values) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -115,13 +123,18 @@ export default function ExpensessAddDaily() {
         throw new Error("فشل في استرداد معرف الكيان من الاستجابة");
       }
 
-      if (fileList.length > 0) {
-        await attachFiles(entityId);
-        message.success("تم إرسال البيانات والمرفقات بنجاح");
-      } else {
-        message.success("تم إرسال البيانات بنجاح بدون مرفقات");
+      try {
+        if (fileList.length > 0) {
+          await attachFiles(entityId);
+          message.success("تم إرسال البيانات والمرفقات بنجاح");
+        } else {
+          message.success("تم إرسال البيانات بنجاح بدون مرفقات");
+        }
+        navigate(-1);
+      } catch (attachmentError) {
+        await rollbackExpense(entityId);
+        throw new Error("فشل في إرفاق الملفات.");
       }
-      navigate(-1);
     } catch (error) {
       message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات");
     } finally {
@@ -345,4 +358,4 @@ export default function ExpensessAddDaily() {
       </div>
     </div>
   );
-} 
+}
