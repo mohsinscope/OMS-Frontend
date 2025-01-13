@@ -39,8 +39,8 @@ const LecturerShow = () => {
   const [companies, setCompanies] = useState([]);
   const [lectureTypes, setLectureTypes] = useState([]);
   const [initialCompanyId, setInitialCompanyId] = useState(null);
-  const [initialLectureTypeId, setInitialLectureTypeId] = useState(null);
-  const [initialLectureTypeName, setInitialLectureTypeName] = useState(null);
+  const [initialLectureTypeIds, setInitialLectureTypeIds] = useState(null);
+  const [initialLectureTypeNames, setInitialLectureTypeNames] = useState(null);
   const [form] = Form.useForm();
 
   const { isSidebarCollapsed, permissions } = useAuthStore();
@@ -62,21 +62,22 @@ const LecturerShow = () => {
         `${Url}/api/Lecture/${lectureId}`
       );
       const lecture = response.data;
+      console.log(lecture)
       setLectureData(lecture);
 
       // Store initial values
       setInitialCompanyId(lecture.companyId);
-      setInitialLectureTypeId(lecture.lectureTypeId);
-      setInitialLectureTypeName(lecture.lectureTypeName);
+      setInitialLectureTypeIds(lecture.lectureTypeIds);
+      setInitialLectureTypeNames(lecture.lectureTypeNames);
 
       // Set form values
       form.setFieldsValue({
         ...lecture,
         date: moment(lecture.date),
         companyId: lecture.companyId,
-        lectureTypeId: {
-          key: lecture.lectureTypeId,
-          label: lecture.lectureTypeName,
+        lectureTypeIds: {
+          key: lecture.lectureTypeIds,
+          label: lecture.lectureTypeNames,
         },
       });
 
@@ -136,7 +137,7 @@ const LecturerShow = () => {
   const handleCompanyChange = (value) => {
     const selectedCompany = companies.find((c) => c.id === value);
     setLectureTypes(selectedCompany?.lectureTypes || []);
-    form.setFieldValue("lectureTypeId", undefined);
+    form.setFieldValue("lectureTypeIds", undefined);
   };
 
   const handleImageUpload = async (file) => {
@@ -179,9 +180,9 @@ const LecturerShow = () => {
         governorateId: lectureData.governorateId,
         profileId: lectureData.profileId,
         companyId: values.companyId,
-        lectureTypeId: values.lectureTypeId,
+        lectureTypeIds: values.lectureTypeIds, // Multiple lecture type IDs
       };
-
+      
       await axiosInstance.put(`${Url}/api/Lecture/${lectureId}`, updatedValues);
       message.success("تم تحديث المحضر بنجاح");
       setEditModalVisible(false);
@@ -240,7 +241,7 @@ const LecturerShow = () => {
                 // Reset company and lecture type to their initial values
                 form.setFieldsValue({
                   companyId: initialCompanyId,
-                  lectureTypeId: initialLectureTypeId,
+                  lectureTypeIds: initialLectureTypeIds,
                 });
 
                 // Preload lecture types based on the initial company
@@ -305,7 +306,7 @@ const LecturerShow = () => {
             <span className="details-label">نوع المحضر:</span>
             <input
               className="details-value"
-              value={lectureData.lectureTypeName}
+              value={lectureData.lectureTypeNames}
               disabled
             />
           </div>
@@ -375,16 +376,17 @@ const LecturerShow = () => {
               </Select>
             </Form.Item>
             <Form.Item
-              name="lectureTypeId"
+              name="lectureTypeIds"
               label="نوع المحضر"
               rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
               <Select
+                mode="multiple"
                 placeholder="اختر نوع المحضر"
                 disabled={!form.getFieldValue("companyId")}
                 labelInValue // Enable labelInValue
                 onChange={(value) => {
                   // Update the form field with the selected value
-                  form.setFieldValue("lectureTypeId", value.key);
+                  form.setFieldValue("lectureTypeIds", value.key);
                 }}>
                 {lectureTypes.map((type) => (
                   <Select.Option key={type.id} value={type.id}>
@@ -431,7 +433,6 @@ const LecturerShow = () => {
             )}
 
             <Button
-              onClick={() => window.location.reload()}
               type="primary"
               htmlType="submit"
               block

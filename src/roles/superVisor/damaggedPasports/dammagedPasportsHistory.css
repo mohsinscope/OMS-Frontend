@@ -127,8 +127,9 @@
 }
 .supervisor-passport-dameged-form {
   display: flex;
+  flex-wrap: wrap;
   flex-direction: row;
-  justify-content: center;
+  justify-content: start;
   align-items: end;
   gap: 10px;
 }

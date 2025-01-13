@@ -27,20 +27,23 @@ const SuperVisorDammageDeviceAdd = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [deviceTypes, setDeviceTypes] = useState([]);
   const [damagedTypes, setDamagedTypes] = useState([]);
-  const [governate, setGovernate] = useState([]);
+  const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
   const { accessToken, profile } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
   const { isSidebarCollapsed, roles } = useAuthStore();
   const isSupervisor = roles.includes("Supervisor");
+  const [selectedGovernorate, setSelectedGovernorate] = useState(null);
+  const [selectedOffice, setSelectedOffice] = useState(null);
+
   useEffect(() => {
-    // Set initial form values for supervisor
     if (isSupervisor && profile) {
       form.setFieldsValue({
         governorateId: governorateId,
         officeId: officeId,
       });
     }
+
     const fetchDeviceTypes = async () => {
       try {
         const response = await axiosInstance.get(`${Url}/api/devicetype`, {
@@ -58,49 +61,27 @@ const SuperVisorDammageDeviceAdd = () => {
         message.error("خطأ في جلب أنواع الأجهزة");
       }
     };
-    const fetchGovernorateData = async () => {
+
+    const fetchGovernorates = async () => {
       try {
-        const response = await axiosInstance.get(
-          `${Url}/api/Governorate/dropdown/351c197b-1666-4528-acb8-dd6270b9497f`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        if (Array.isArray(response.data) && response.data.length > 0) {
-          const governorateData = response.data[0];
-          setGovernate([
-            {
-              value: governorateData.id,
-              label: governorateData.name,
-            },
-          ]);
-          // Pre-populate offices if governorateId matches
-          if (governorateData.id === governorateId) {
-            setOffices(
-              governorateData.offices.map((office) => ({
-                value: office.id,
-                label: office.name,
-              }))
-            );
-          }
+        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        setGovernorates(response.data);
+        if (isSupervisor) {
+          setSelectedGovernorate(governorateId);
+          fetchOffices(governorateId);
         }
       } catch (error) {
-        console.error("Error fetching governorate data:", error);
-        message.error("فشل تحميل المحافظات");
+        message.error("حدث خطأ أثناء جلب بيانات المحافظات");
       }
     };
+
     const fetchDamagedTypes = async () => {
       try {
-        const response = await axiosInstance.get(
-          `${Url}/api/damageddevicetype/all`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        const response = await axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
         setDamagedTypes(
           response.data.map((damagedType) => ({
             value: damagedType.id,
@@ -111,55 +92,55 @@ const SuperVisorDammageDeviceAdd = () => {
         message.error("خطأ في جلب أنواع التلف");
       }
     };
+
     fetchDeviceTypes();
     fetchDamagedTypes();
-    fetchGovernorateData();
-  }, [accessToken, governorateId, profile, isSupervisor, form, officeId]);
+    fetchGovernorates();
+  }, [accessToken, governorateId, isSupervisor, profile]);
 
   const fetchOffices = async (governorateId) => {
-    if (!governorateId) return;
+    if (!governorateId) {
+      setOffices([]);
+      setSelectedOffice(null);
+      return;
+    }
+
     try {
-      console.log("Fetching offices for governorate:", governorateId);
       const response = await axiosInstance.get(
         `${Url}/api/Governorate/dropdown/${governorateId}`,
         {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-      console.log("Office response:", response.data);
-
-      if (Array.isArray(response.data) && response.data.length > 0) {
-        const governorateData = response.data[0];
+      const governorateData = response.data[0];
+      if (governorateData && governorateData.offices) {
         setOffices(
           governorateData.offices.map((office) => ({
             value: office.id,
             label: office.name,
           }))
         );
-      } else {
-        console.error("Unexpected response format:", response.data);
-        message.error("تنسيق الاستجابة غير متوقع");
+        if (isSupervisor) {
+          setSelectedOffice(officeId);
+        }
       }
     } catch (error) {
-      console.error("Error fetching offices:", error?.response?.data || error);
-      message.error("فشل تحميل المكاتب - يرجى المحاولة مرة أخرى");
+      message.error("فشل تحميل المكاتب");
     }
   };
 
   const handleBack = () => {
     navigate(-1);
   };
-
+  const handleGovernorateChange = async (value) => {
+    setSelectedGovernorate(value);
+    await fetchOffices(value);
+  };
   const rollbackDamagedDevice = async (entityId) => {
     try {
       await axiosInstance.delete(`${Url}/api/DamagedDevice/${entityId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
-      console.log("Damaged device rolled back successfully.");
     } catch (error) {
       console.error("Failed to rollback damaged device:", error);
     }
@@ -173,16 +154,12 @@ const SuperVisorDammageDeviceAdd = () => {
       formData.append("EntityType", "DamagedDevice");
 
       try {
-        await axiosInstance.post(
-          `${Url}/api/Attachment/add-attachment`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
       } catch (error) {
         throw new Error("فشل في إرفاق الملفات.");
       }
@@ -201,22 +178,18 @@ const SuperVisorDammageDeviceAdd = () => {
           : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
         damagedDeviceTypeId: values.damagedDeviceTypeId,
         deviceTypeId: values.deviceTypeId,
-        note: values.note ? values.note : "لا يوجد",
-        officeId: isSupervisor ? officeId : values.officeId,
-        governorateId: isSupervisor ? governorateId : values.governorateId,
+        note: values.note || "لا يوجد",
+        officeId: isSupervisor ? officeId : selectedOffice,
+        governorateId: isSupervisor ? governorateId : selectedGovernorate,
         profileId,
       };
 
-      const response = await axiosInstance.post(
-        `${Url}/api/DamagedDevice`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await axiosInstance.post(`${Url}/api/DamagedDevice`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       const entityId = response.data?.id || response.data;
       if (!entityId) throw new Error("فشل في استرداد معرف الكيان.");
@@ -231,23 +204,17 @@ const SuperVisorDammageDeviceAdd = () => {
         navigate(-1);
       } catch (attachmentError) {
         await rollbackDamagedDevice(entityId);
-        throw new Error(
-          "فشل في إرفاق الملفات. تم إلغاء إنشاء الجهاز التالف لضمان سلامة البيانات."
-        );
+        throw new Error("فشل في إرفاق الملفات.");
       }
     } catch (error) {
-      message.error(
-        error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"
-      );
+      message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleFileChange = (info) => {
-    const updatedFiles = info.fileList.filter((file) => {
-      return true;
-    });
+    const updatedFiles = info.fileList;
 
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
@@ -303,9 +270,7 @@ const SuperVisorDammageDeviceAdd = () => {
         type: "image/jpeg",
       });
 
-      if (
-        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
-      ) {
+      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -336,12 +301,14 @@ const SuperVisorDammageDeviceAdd = () => {
               fontWeight: "bold",
               textAlign: "center",
               width: "fit-content",
-            }}>
+            }}
+          >
             <p>يرجى ربط الماسح الضوئي أو تنزيل الخدمة من الرابط التالي:</p>
             <a
               href="https://cdn-oms.scopesky.org/services/ScannerPolaris_WinSetup.msi"
               target="_blank"
-              rel="noopener noreferrer">
+              rel="noopener noreferrer"
+            >
               تنزيل الخدمة
             </a>
           </div>
@@ -358,82 +325,67 @@ const SuperVisorDammageDeviceAdd = () => {
       className={`supervisor-devices-add-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       <h1 className="SuperVisor-title-container">إضافة جهاز تالف</h1>
       <div className="superVisor-Add-field-section-container">
         <Form
           form={form}
           onFinish={handleFormSubmit}
           layout="vertical"
-          className="superVisor-Add-form-container">
+          className="superVisor-Add-form-container"
+        >
           <div className="form-item-damaged-device-container">
             <Form.Item
               name="governorateId"
               label="اسم المحافظة"
-              initialValue={isSupervisor ? governorateId : governate[0]?.value}
-              rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
+              rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
+            >
               <Select
-                placeholder="اختر المحافظة"
+              style={{ width: "267px", height: "45px" }}
+              dir="rtl"
+                value={selectedGovernorate || undefined}
+                onChange={handleGovernorateChange}
                 disabled={isSupervisor}
-                style={{ width: "267px", height: "45px" }}
-                options={
-                  isSupervisor
-                    ? [
-                        {
-                          value: governorateId,
-                          label: governate.find(
-                            (g) => g.value === governorateId
-                          )?.label,
-                        },
-                      ]
-                    : governate
-                }
-                onChange={(value) => {
-                  if (!isSupervisor) {
-                    console.log("Selected governorate:", value);
-                    fetchOffices(value);
-                    form.setFieldValue("officeId", undefined);
-                  }
-                }}
-              />
+                className="supervisor-devices-dameged-dropdown"
+                placeholder="اختر المحافظة"
+              >
+                {governorates.map((gov) => (
+                  <Select.Option key={gov.id} value={gov.id}>
+                    {gov.name}
+                  </Select.Option>
+                ))}
+              </Select>
             </Form.Item>
 
             <Form.Item
               name="officeId"
               label="اسم المكتب"
-              initialValue={isSupervisor ? officeId : undefined}
-              rules={[{ required: true, message: "يرجى اختيار المكتب" }]}>
+              rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
+            >
               <Select
                 placeholder="اختر المكتب"
-                disabled={isSupervisor}
                 style={{ width: "267px", height: "45px" }}
-                options={
-                  isSupervisor
-                    ? [
-                        {
-                          value: officeId,
-                          label: offices.find((o) => o.value === officeId)
-                            ?.label,
-                        },
-                      ]
-                    : offices
-                }
+                disabled={isSupervisor || !selectedGovernorate}
+                value={selectedOffice || undefined}
+                onChange={(value) => setSelectedOffice(value)}
+                options={offices}
               />
             </Form.Item>
 
             <Form.Item
               name="serialNumber"
               label="الرقم التسلسلي"
-              rules={[
-                { required: true, message: "يرجى إدخال الرقم التسلسلي" },
-              ]}>
+              rules={[{ required: true, message: "يرجى إدخال الرقم التسلسلي" }]}
+            >
               <Input placeholder="أدخل الرقم التسلسلي" />
             </Form.Item>
 
             <Form.Item
               name="damagedDeviceTypeId"
               label="سبب التلف"
-              rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}>
+              rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}
+            >
               <Select
                 style={{ width: "267px", height: "45px" }}
                 options={damagedTypes}
@@ -445,7 +397,8 @@ const SuperVisorDammageDeviceAdd = () => {
             <Form.Item
               name="deviceTypeId"
               label="نوع الجهاز"
-              rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}>
+              rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}
+            >
               <Select
                 style={{ width: "267px", height: "45px" }}
                 options={deviceTypes}
@@ -457,7 +410,8 @@ const SuperVisorDammageDeviceAdd = () => {
             <Form.Item
               name="date"
               label="التاريخ"
-              rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
+              rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
+            >
               <DatePicker style={{ width: "100%" }} />
             </Form.Item>
 
@@ -465,14 +419,13 @@ const SuperVisorDammageDeviceAdd = () => {
               name="note"
               label="ملاحظات"
               initialValue="لا يوجد"
-              rules={[{ message: "يرجى إدخال الملاحظات" }]}>
+              rules={[{ message: "يرجى إدخال الملاحظات" }]}
+            >
               <Input.TextArea placeholder="أدخل الملاحظات" />
             </Form.Item>
           </div>
 
-          <h1 className="SuperVisor-title-container">
-            إضافة صورة الجهاز التالف
-          </h1>
+          <h1 className="SuperVisor-title-container">إضافة صورة الجهاز التالف</h1>
           <div className="uplaod-item-damaged-device-container">
             <div className="add-image-section-container">
               <Form.Item
@@ -488,7 +441,8 @@ const SuperVisorDammageDeviceAdd = () => {
                             )
                           ),
                   },
-                ]}>
+                ]}
+              >
                 <Dragger
                   className="upload-dragger"
                   fileList={fileList}
@@ -496,7 +450,8 @@ const SuperVisorDammageDeviceAdd = () => {
                   beforeUpload={() => false}
                   multiple
                   style={{ width: "500px", height: "200px" }}
-                  showUploadList={false}>
+                  showUploadList={false}
+                >
                   <p className="ant-upload-drag-icon">📂</p>
                   <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
                 </Dragger>
@@ -509,7 +464,8 @@ const SuperVisorDammageDeviceAdd = () => {
                     height: "45px",
                     marginTop: "10px",
                     marginBottom: "10px",
-                  }}>
+                  }}
+                >
                   {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
                 </Button>
               </Form.Item>
@@ -527,14 +483,16 @@ const SuperVisorDammageDeviceAdd = () => {
               htmlType="submit"
               loading={isSubmitting}
               disabled={isSubmitting}
-              className="submit-button">
+              className="submit-button"
+            >
               حفظ
             </Button>
             <Button
               danger
               onClick={handleBack}
               disabled={isSubmitting}
-              className="add-back-button">
+              className="add-back-button"
+            >
               رجوع
             </Button>
           </div>
