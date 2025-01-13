@@ -345,4 +345,4 @@ export default function ExpensessAddDaily() {
       </div>
     </div>
   );
-}
+} 

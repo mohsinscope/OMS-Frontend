@@ -61,7 +61,7 @@ export default function SuperVisorExpensesRequest() {
       const payload = {
         officeId: profile?.officeId,
         governorateId: profile?.governorateId,
-        profileId: profile?.id,
+        profileId: profile?.profileId,
         status: 0,
         startDate: null,
         endDate: null,
@@ -128,7 +128,7 @@ export default function SuperVisorExpensesRequest() {
         status: 0,
         officeId: profile?.officeId,
         governorateId: profile?.governorateId,
-        profileId: profile?.id
+        profileId: profile?.profileId
       };
 
       const response = await axiosInstance.post('/api/Expense/MonthlyExpenses', payload);
