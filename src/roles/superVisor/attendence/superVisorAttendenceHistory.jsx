@@ -29,7 +29,7 @@ export default function SupervisorAttendanceHistory() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [totalRecords, setTotalRecords] = useState(0);
-
+  console.log(attendanceData);
   const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } =
     useAuthStore();
 
@@ -97,7 +97,7 @@ export default function SupervisorAttendanceHistory() {
           },
         }
       );
-
+      console.log(response);
       const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
@@ -109,6 +109,12 @@ export default function SupervisorAttendanceHistory() {
       const formattedData = response.data.map((item) => ({
         id: item.id,
         date: new Date(item.date).toLocaleDateString("en-CA"),
+        time: new Date(item.dateCreated).toLocaleString("ar", {
+          hour12: true,
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+
         totalStaff:
           item.receivingStaff +
           item.accountStaff +
@@ -187,6 +193,11 @@ export default function SupervisorAttendanceHistory() {
       title: "التاريخ",
       dataIndex: "date",
       key: "date",
+    },
+    {
+      title: "الوقت",
+      dataIndex: "time",
+      key: "time",
     },
     {
       title: "المحافظة",

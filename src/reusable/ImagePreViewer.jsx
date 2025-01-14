@@ -188,7 +188,7 @@ export default function ImagePreviewer({
       <ConfigProvider direction="rtl">
         <Modal
           title="تأكيد الحذف"
-          visible={isDeleteConfirmVisible}
+          open={isDeleteConfirmVisible}
           onOk={handleDeleteConfirm}
           onCancel={handleDeleteCancel}
           okText="نعم"

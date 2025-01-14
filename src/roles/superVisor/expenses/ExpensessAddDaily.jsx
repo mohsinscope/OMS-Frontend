@@ -11,13 +11,13 @@ import {
   InputNumber,
   Select,
   Card,
-  Typography
+  Typography,
 } from "antd";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import useAuthStore from "../../../store/store";
 import moment from "moment";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
-import './styles/ExpensessAddDaily.css';
+import "./../lecturer/SuperVisorLecturerAdd.css";
 
 const { Dragger } = Upload;
 const { Title } = Typography;
@@ -34,15 +34,22 @@ export default function ExpensessAddDaily() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expenseTypes, setExpenseTypes] = useState([]);
   const { profile, isSidebarCollapsed } = useAuthStore();
-  const { profileId, governorateId, officeId, governorateName, officeName, name: supervisorName } = profile || {};
+  const {
+    profileId,
+    governorateId,
+    officeId,
+    governorateName,
+    officeName,
+    name: supervisorName,
+  } = profile || {};
 
   const [officeInfo] = useState({
     totalCount: 0,
     totalExpenses: 0,
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split("T")[0],
     governorate: governorateName || "",
     officeName: officeName || "",
-    supervisorName: supervisorName || ""
+    supervisorName: supervisorName || "",
   });
 
   useEffect(() => {
@@ -56,11 +63,13 @@ export default function ExpensessAddDaily() {
 
   const fetchExpenseTypes = async () => {
     try {
-      const response = await axiosInstance.get('/api/ExpenseType?PageNumber=1&PageSize=100');
+      const response = await axiosInstance.get(
+        "/api/ExpenseType?PageNumber=1&PageSize=100"
+      );
       setExpenseTypes(response.data || []);
     } catch (error) {
-      console.error('Error fetching expense types:', error);
-      message.error('فشل في جلب أنواع المصروفات');
+      console.error("Error fetching expense types:", error);
+      message.error("فشل في جلب أنواع المصروفات");
     }
   };
 
@@ -113,10 +122,13 @@ export default function ExpensessAddDaily() {
         quantity: values.quantity,
         notes: values.notes || "لا يوجد",
         expenseDate: values.date.format("YYYY-MM-DDTHH:mm:ss"),
-        expenseTypeId: values.expenseTypeId
+        expenseTypeId: values.expenseTypeId,
       };
 
-      const response = await axiosInstance.post(`/api/Expense/${monthlyExpenseId}/daily-expenses`, payload);
+      const response = await axiosInstance.post(
+        `/api/Expense/${monthlyExpenseId}/daily-expenses`,
+        payload
+      );
       const entityId = response.data?.id;
 
       if (!entityId) {
@@ -136,7 +148,9 @@ export default function ExpensessAddDaily() {
         throw new Error("فشل في إرفاق الملفات.");
       }
     } catch (error) {
-      message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات");
+      message.error(
+        error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -193,11 +207,17 @@ export default function ExpensessAddDaily() {
         (res) => res.blob()
       );
 
-      const scannedFile = new File([blob], `scanned-expense-${Date.now()}.jpeg`, {
-        type: "image/jpeg",
-      });
+      const scannedFile = new File(
+        [blob],
+        `scanned-expense-${Date.now()}.jpeg`,
+        {
+          type: "image/jpeg",
+        }
+      );
 
-      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
+      if (
+        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
+      ) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -237,124 +257,155 @@ export default function ExpensessAddDaily() {
   };
 
   return (
-    <div className={`supervisor-expenses-add-page ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`} dir="rtl">
-      <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
-        <div style={{ width: "100%" }}>
-          <Card className="expense-form-card">
-            <Title level={2}>إضافة مصروف يومي جديد</Title>
-            <Form
-              form={form}
-              onFinish={handleFormSubmit}
-              layout="vertical">
-              <div className="expense-form-fields">
-                <Form.Item
-                  name="expenseTypeId"
-                  label="نوع المصروف"
-                  rules={[{ required: true, message: "يرجى اختيار نوع المصروف" }]}>
-                  <Select placeholder="اختر نوع المصروف">
-                    {expenseTypes.map((type) => (
-                      <Select.Option key={type.id} value={type.id}>
-                        {type.name}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
+    <div
+      className={`expense-add-daily-container ${
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
+      }`}
+      dir="rtl">
+      <div className="supervisor-Lecturer-add-container">
+        <h1 className="SuperVisor-Lecturer-title-conatiner">
+          إضافة مصروف يومي جديد
+        </h1>
+        <Form
+          form={form}
+          onFinish={handleFormSubmit}
+          layout="vertical"
+          onValuesChange={(changedValues, allValues) => {
+            const { price, quantity } = allValues;
+            if (price !== undefined && quantity !== undefined) {
+              const total = price * quantity;
+              form.setFieldsValue({ totalamount: total });
+            }
+          }}>
+          <div className="add-Lecturer-section-container">
+            <div className="add-Lecturer-fields-container">
+              <Form.Item
+                name="expenseTypeId"
+                label="نوع المصروف"
+                rules={[
+                  { required: true, message: "يرجى اختيار نوع المصروف" },
+                ]}>
+                <Select
+                  placeholder="اختر نوع المصروف"
+                  style={{ width: "267px", height: "45px" }}>
+                  {expenseTypes.map((type) => (
+                    <Select.Option key={type.id} value={type.id}>
+                      {type.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
 
-                <Form.Item
-                  name="price"
-                  label="السعر"
-                  rules={[{ required: true, message: "يرجى إدخال السعر" }]}>
-                  <InputNumber 
-                    placeholder="أدخل السعر"
-                    min={0}
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="quantity"
-                  label="الكمية"
-                  rules={[{ required: true, message: "يرجى إدخال الكمية" }]}>
-                  <InputNumber 
-                    placeholder="أدخل الكمية"
-                    min={1}
-                    style={{ width: '100%' }}
-                  />
-                </Form.Item>
-
-                <Form.Item
-                  name="date"
-                  label="التاريخ"
-                  rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
-                  <DatePicker style={{ width: '100%' }} />
-                </Form.Item>
-
-                <Form.Item
-                  name="notes"
-                  label="ملاحظات"
-                  initialValue="لا يوجد">
-                  <Input.TextArea rows={4} />
-                </Form.Item>
-              </div>
-
-              <Title level={3}>إضافة صور المصروف</Title>
-              <div className="expense-images-section">
-                <Form.Item
-                  name="uploadedImages"
-                  rules={[
-                    {
-                      validator: (_, value) =>
-                        fileList.length > 0 || previewUrls.length > 0
-                          ? Promise.resolve()
-                          : Promise.reject(new Error("يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي")),
-                    },
-                  ]}>
-                  <Dragger
-                    className="expense-upload-dragger"
-                    fileList={fileList}
-                    onChange={handleFileChange}
-                    beforeUpload={() => false}
-                    multiple>
-                    <p className="ant-upload-drag-icon">📂</p>
-                    <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
-                  </Dragger>
-                  
-                  <Button
-                    type="primary"
-                    onClick={onScanHandler}
-                    disabled={isScanning}
-                    block
-                    style={{ marginTop: '16px' }}>
-                    {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
-                  </Button>
-                </Form.Item>
-
-                <ImagePreviewer
-                  uploadedImages={previewUrls}
-                  defaultWidth={600}
-                  defaultHeight={300}
-                  onDeleteImage={handleDeleteImage}
+              <Form.Item
+                name="price"
+                label="السعر"
+                rules={[{ required: true, message: "يرجى إدخال السعر" }]}>
+                <InputNumber
+                  placeholder="أدخل السعر"
+                  min={0}
+                  style={{ width: "267px", height: "45px" }}
                 />
-              </div>
+              </Form.Item>
 
-              <div className="expense-form-actions">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={isSubmitting}
-                  disabled={isSubmitting}>
-                  حفظ
-                </Button>
-                <Button
-                  danger
-                  onClick={handleBack}
-                  disabled={isSubmitting}>
-                  رجوع
-                </Button>
-              </div>
-            </Form>
-          </Card>
-        </div>
+              <Form.Item
+                name="quantity"
+                label="الكمية"
+                rules={[{ required: true, message: "يرجى إدخال الكمية" }]}>
+                <InputNumber
+                  placeholder="أدخل الكمية"
+                  min={1}
+                  style={{ width: "100%", height: "45px" }}
+                />
+              </Form.Item>
+              <Form.Item name="totalamount" label="المجموع الكلي">
+                <InputNumber
+                  readOnly
+                  style={{ width: "267px", height: "45px" }}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="date"
+                label="التاريخ"
+                rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
+                <DatePicker style={{ width: "267px", height: "45px" }} />
+              </Form.Item>
+
+              <Form.Item name="notes" label="ملاحظات" initialValue="لا يوجد">
+                <Input.TextArea
+                  rows={4}
+                  style={{ width: "267px", height: "45px" }}
+                />
+              </Form.Item>
+            </div>
+          </div>
+
+          <h2 className="SuperVisor-Lecturer-title-conatiner">
+            إضافة صورة المصروف
+          </h2>
+          <div className="Lecturer-add-image-section">
+            <Form.Item
+              name="uploadedImages"
+              rules={[
+                {
+                  validator: (_, value) =>
+                    fileList.length > 0 || previewUrls.length > 0
+                      ? Promise.resolve()
+                      : Promise.reject(
+                          new Error(
+                            "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
+                          )
+                        ),
+                },
+              ]}>
+              <Dragger
+                className="upload-dragger"
+                fileList={fileList}
+                onChange={handleFileChange}
+                beforeUpload={() => false}
+                multiple
+                style={{ width: "500px", height: "200px" }}>
+                <p className="ant-upload-drag-icon">📂</p>
+                <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
+              </Dragger>
+
+              <Button
+                type="primary"
+                onClick={onScanHandler}
+                disabled={isScanning}
+                block
+                style={{ marginTop: "16px" }}>
+                {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
+              </Button>
+            </Form.Item>
+
+            <ImagePreviewer
+              uploadedImages={previewUrls}
+              defaultWidth={600}
+              defaultHeight={300}
+              onDeleteImage={handleDeleteImage}
+            />
+          </div>
+          <div
+            className="Lecturer-image-previewer-section"
+            style={{ width: "100%" }}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              className="submit-button"
+              loading={isSubmitting}
+              disabled={isSubmitting}>
+              حفظ
+            </Button>
+            <Button
+              danger
+              onClick={handleBack}
+              disabled={isSubmitting}
+              className="add-back-button">
+              رجوع
+            </Button>
+          </div>
+        </Form>
       </div>
     </div>
   );

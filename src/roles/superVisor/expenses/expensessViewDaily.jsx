@@ -9,21 +9,31 @@ import {
   ConfigProvider,
   DatePicker,
   Select,
-  InputNumber
+  InputNumber,
+  Upload
 } from "antd";
+import { UploadOutlined } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import useAuthStore from "./../../../store/store";
 import Lele from "./../../../reusable elements/icons.jsx";
+import Url from "./../../../store/url.js";
+import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import moment from "moment";
-import './styles/expensessView.css';
+import './../lecturer/LecturerShow.css';
 const ExpensessView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dailyExpenseId = location.state?.dailyExpenseId;
+  const [imageData, setImageData] = useState({
+    imageId: "",
+    entityId: "",
+    entityType: "Expense",
+  });
   // If dailyExpenseId is not available in state, try to get it from the URL params
   const expenseId = dailyExpenseId || new URLSearchParams(location.search).get('id');
-
+  console.log("dailyExpenseId = ",dailyExpenseId)
+  const [images, setImages] = useState([]);
   const [expenseData, setExpenseData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -32,8 +42,8 @@ const ExpensessView = () => {
   const [form] = Form.useForm();
 
   const { isSidebarCollapsed, permissions } = useAuthStore();
-  const hasUpdatePermission = permissions.includes("Eu"); // Replace with actual permission code
-  const hasDeletePermission = permissions.includes("Ed"); // Replace with actual permission code
+  const hasUpdatePermission = permissions.includes("EXu"); // Replace with actual permission code
+  const hasDeletePermission = permissions.includes("EXd"); // Replace with actual permission code
 
   const fetchExpenseTypes = async () => {
     try {
@@ -46,10 +56,11 @@ const ExpensessView = () => {
 
   const fetchExpenseDetails = async () => {
     try {
-      const response = await axiosInstance.get(`/api/Expense/${expenseId}`);
+      const response = await axiosInstance.get(`/api/Expense/dailyexpenses/${expenseId}`);
       const expense = response.data;
+      console.log("expense",expense)
       setExpenseData(expense);
-
+      console.log(expenseId)
       form.setFieldsValue({
         ...expense,
         date: moment(expense.expenseDate),
@@ -63,6 +74,27 @@ const ExpensessView = () => {
       message.error('حدث خطأ أثناء جلب تفاصيل المصروف');
     }
   };
+  const fetchExpensesImages = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Attachment/Expense/${expenseId}`
+      );
+      console.log("Image API Response:", response.data);
+  
+      const imageUrls = response.data.map((image) => ({
+        url: image.filePath, // Ensure this matches the backend response
+        id: image.id,
+      }));
+  
+      setImages(imageUrls); // Update state with new images
+      console.log("Updated Images State:", imageUrls);
+    } catch (error) {
+      console.error("Error fetching images:", error);
+      message.error("حدث خطأ أثناء جلب صور المصروف");
+    }
+  };
+  
+  
 
   useEffect(() => {
     if (!expenseId) {
@@ -76,6 +108,7 @@ const ExpensessView = () => {
     const initializeData = async () => {
       setLoading(true);
       try {
+        await fetchExpensesImages();
         await fetchExpenseTypes();
         await fetchExpenseDetails();
       } catch (error) {
@@ -87,7 +120,39 @@ const ExpensessView = () => {
 
     initializeData();
   }, [expenseId, navigate]);
-
+  const handleImageUpload = async (file) => {
+    if (!imageData.imageId) {
+      message.error("لم يتم تحديد الصورة");
+      return;
+    }
+  
+    try {
+      const formData = new FormData();
+      formData.append("entityId", expenseId);
+      formData.append("entityType", "Expense");
+      formData.append("file", file);
+  
+      const response = await axiosInstance.put(
+        `${Url}/api/attachment/${imageData.imageId}`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+  
+      console.log("Upload Response:", response.data); // Log backend response
+      message.success("تم تحديث الصورة بنجاح");
+  
+      // Refetch images to update the state with the latest data
+      await fetchExpensesImages();
+    } catch (error) {
+      console.error("Error during image upload:", error);
+      message.error("حدث خطأ أثناء تعديل الصورة");
+    }
+  };
+  
   const handleSaveEdit = async (values) => {
     try {
       const updatedValues = {
@@ -137,7 +202,7 @@ const ExpensessView = () => {
 
   return (
     <div
-      className={`supervisor-expense-show-container ${
+      className={`supervisor-lecture-show-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
@@ -151,22 +216,22 @@ const ExpensessView = () => {
           {hasDeletePermission && (
             <Button
               onClick={() => setDeleteModalVisible(true)}
-              className="delete-button-expense">
+              className="delete-button-lecture">
               حذف <Lele type="delete" />
             </Button>
           )}
           {hasUpdatePermission && (
             <Button
               onClick={() => setEditModalVisible(true)}
-              className="edit-button-expense">
+              className="edit-button-lecture">
               تعديل <Lele type="edit" />
             </Button>
           )}
         </div>
       </div>
 
-      <div className="details-container-expense">
-        <div className="details-expense-container">
+      <div className="details-container-Lecture">
+        <div className="details-lecture-container">
           <div className="details-row">
             <span className="details-label">نوع المصروف:</span>
             <input
@@ -231,7 +296,20 @@ const ExpensessView = () => {
               disabled
             />
           </div>
+          
         </div>
+        <div className="image-lecture-container">
+                    {images.length > 0 && (
+                      <div className="image-lecture-preview-container">
+                        <span className="note-details-label">صورة المصروف:</span>
+                        <ImagePreviewer
+                          uploadedImages={images.map((img) => img.url)}
+                          defaultWidth={600}
+                          defaultHeight={"fit-content"}
+                        />
+                      </div>
+                    )}
+                  </div>
       </div>
 
       <ConfigProvider direction="rtl">
@@ -245,7 +323,7 @@ const ExpensessView = () => {
             form={form}
             onFinish={handleSaveEdit}
             layout="vertical"
-            className="expense-edit-modal">
+            className="dammaged-passport-container-edit-modal">
             <Form.Item
               name="expenseTypeId"
               label="نوع المصروف"
@@ -288,7 +366,38 @@ const ExpensessView = () => {
             <Form.Item name="notes" label="الملاحظات">
               <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />
             </Form.Item>
-
+            <Upload
+              beforeUpload={(file) => {
+                handleImageUpload(file);
+                return false;
+              }}>
+              <Button
+                style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+                type="primary"
+                icon={<UploadOutlined />}>
+                استبدال الصورة
+              </Button>
+            </Upload>
+            {images.length > 0 && (
+              <>
+                <span className="note-details-label">صور المحضر:</span>
+                <ImagePreviewer
+                  uploadedImages={images.map((img) => img.url)}
+                  onImageSelect={(index) => {
+                    const selectedImage = images[index];
+                    if (selectedImage) {
+                      setImageData({
+                        imageId: selectedImage.id,
+                        entityId: expenseId,
+                        entityType: "Expense",
+                      });
+                    }
+                  }}
+                  defaultWidth="100%"
+                  defaultHeight={300}
+                />
+              </>
+            )}
             <Button
               type="primary"
               htmlType="submit"

@@ -168,7 +168,7 @@ export default function Settings() {
           title={
             step === 1 ? "أدخل كلمة السر الحالية" : "أدخل كلمة السر الجديدة"
           }
-          visible={showModal}
+          open={showModal}
           onCancel={() => {
             setShowModal(false);
             setStep(1);
