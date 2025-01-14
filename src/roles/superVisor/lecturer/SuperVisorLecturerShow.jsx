@@ -62,9 +62,8 @@ const LecturerShow = () => {
         `${Url}/api/Lecture/${lectureId}`
       );
       const lecture = response.data;
-      console.log(lecture)
       setLectureData(lecture);
-
+      console.log(response)
       // Store initial values
       setInitialCompanyId(lecture.companyId);
       setInitialLectureTypeIds(lecture.lectureTypeIds);
@@ -380,6 +379,7 @@ const LecturerShow = () => {
               label="نوع المحضر"
               rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
               <Select
+                style={{height:"fit-content"}}
                 mode="multiple"
                 placeholder="اختر نوع المحضر"
                 disabled={!form.getFieldValue("companyId")}

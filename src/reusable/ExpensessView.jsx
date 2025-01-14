@@ -118,19 +118,20 @@ export default function ExpensesView() {
     try {
       setIsLoadingDetails(true);
       const response = await axiosInstance.get(`${Url}/api/Expense/dailyexpenses/${id}`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
-      
+  
+      // Map the response data to match the expected structure
       return {
-        تسلسل: "-",
-        التاريخ: new Date(response.data.expenseDate).toLocaleDateString(),
-        "نوع المصروف": response.data.expenseTypeName,
-        الكمية: response.data.quantity,
-        السعر: response.data.price,
-        المجموع: response.data.amount,
-        ملاحظات: response.data.notes,
-        id: response.data.id,
-        type: 'daily'
+        تسلسل: "-", // Sequence is not provided in the response, defaulted to "-"
+        التاريخ: new Date(response.data.expenseDate).toLocaleDateString(), // Convert expenseDate to localized format
+        "نوع المصروف": response.data.expenseTypeName, // Use expenseTypeName
+        الكمية: response.data.quantity, // Use quantity
+        السعر: response.data.price, // Use price
+        المجموع: response.data.amount, // Use amount
+        ملاحظات: response.data.notes, // Use notes
+        id: response.data.id, // Use id
+        type: "daily", // Mark as daily type
       };
     } catch (error) {
       console.error("Error fetching daily expense details:", error);
@@ -140,6 +141,7 @@ export default function ExpensesView() {
       setIsLoadingDetails(false);
     }
   };
+  
 
   const handleShowDetails = async (record) => {
     if (record.type === 'daily') {
@@ -166,33 +168,27 @@ export default function ExpensesView() {
         navigate('/expenses-history');
         return;
       }
-
+    
       try {
         setIsLoading(true);
-        
+    
         const [expenseResponse, dailyExpensesResponse] = await Promise.all([
           axiosInstance.get(`${Url}/api/Expense/${expenseId}`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
+            headers: { Authorization: `Bearer ${accessToken}` },
           }),
           axiosInstance.get(`${Url}/api/Expense/${expenseId}/daily-expenses`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          })
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }),
         ]);
-
-        const formattedExpense = {
-          generalInfo: {
-            "الرقم التسلسلي": expenseResponse.data.id,
-            "اسم المشرف": expenseResponse.data.profileFullName,
-            "المحافظة": expenseResponse.data.governorateName,
-            "المكتب": expenseResponse.data.officeName,
-            "مبلغ النثرية": expenseResponse.data.totalAmount,
-            "مجموع الصرفيات": expenseResponse.data.totalAmount,
-            "الباقي": 0,
-            "التاريخ": new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
-            "الحالة": expenseResponse.data.status
-          }
-        };
-
+    
+        console.log("Expense Response:", expenseResponse.data);
+        console.log("Daily Expenses Response:", dailyExpensesResponse.data);
+    
+        const dailyExpenses = Array.isArray(dailyExpensesResponse.data) 
+        ? dailyExpensesResponse.data 
+        : dailyExpensesResponse.data.dailyExpenses || [];
+              console.log("Processed Daily Expenses:", dailyExpenses);
+    
         const regularItems = expenseResponse.data.expenseItems?.map((item, index) => ({
           تسلسل: index + 1,
           التاريخ: new Date(item.date).toLocaleDateString(),
@@ -202,27 +198,46 @@ export default function ExpensesView() {
           المجموع: item.totalAmount,
           ملاحظات: item.notes,
           image: item.receiptImage,
-          type: 'regular'
+          type: 'regular',
         })) || [];
-
-        const dailyItems = dailyExpensesResponse.data.dailyExpenses.map((item, index) => ({
-          تسلسل: regularItems.length + index + 1,
-          التاريخ: new Date(item.expenseDate).toLocaleDateString(),
-          "نوع المصروف": "مصروف يومي",
-          الكمية: item.quantity,
-          السعر: item.price,
-          المجموع: item.amount,
-          ملاحظات: item.notes,
-          id: item.id,
-          type: 'daily'
+    
+        console.log("Processed Regular Items:", regularItems);
+    
+        const dailyItems = dailyExpensesResponse.data.map((item, index) => ({
+          تسلسل: index + 1, // Sequential number
+          التاريخ: new Date(item.expenseDate).toLocaleDateString(), // Convert expenseDate to a readable date
+          "نوع المصروف": item.expenseTypeName, // Map expenseTypeName
+          الكمية: item.quantity, // Map quantity
+          السعر: item.price, // Map price
+          المجموع: item.amount, // Map amount
+          ملاحظات: item.notes, // Map notes
+          id: item.id, // Map ID
+          type: 'daily', // Assign type as 'daily'
         }));
-
-        const allItems = [...regularItems, ...dailyItems].sort((a, b) => 
-          new Date(b.التاريخ) - new Date(a.التاريخ)
+        console.log("Mapped Daily Items:", dailyItems);
+        
+    
+        const allItems = [...regularItems, ...dailyItems].sort(
+          (a, b) => new Date(b.التاريخ) - new Date(a.التاريخ),
         );
-
-        formattedExpense.items = allItems;
-        setExpense(formattedExpense);
+    
+        console.log("Final Items:", allItems);
+    
+        setExpense({
+          generalInfo: {
+            "الرقم التسلسلي": expenseResponse.data.id,
+            "اسم المشرف": expenseResponse.data.profileFullName,
+            "المحافظة": expenseResponse.data.governorateName,
+            "المكتب": expenseResponse.data.officeName,
+            "مبلغ النثرية": expenseResponse.data.totalAmount,
+            "مجموع الصرفيات": expenseResponse.data.totalAmount,
+            "الباقي": 0,
+            "التاريخ": new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
+            "الحالة": expenseResponse.data.status,
+          },
+          items: allItems,
+        });
+        console.log("Updated Expense State:", allItems);
       } catch (error) {
         console.error("Error fetching expense data:", error);
         message.error("حدث خطأ أثناء جلب البيانات");
@@ -231,6 +246,8 @@ export default function ExpensesView() {
         setIsLoading(false);
       }
     };
+    
+    
 
     fetchAllExpenseData();
   }, [expenseId, accessToken, navigate]);
@@ -499,6 +516,7 @@ export default function ExpensesView() {
         >
           {selectedItem && (
             <div className="expense-details">
+              
               <Table
                 columns={[
                   { title: "الحقل", dataIndex: "field", align: "right" },

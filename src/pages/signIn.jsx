@@ -102,7 +102,7 @@ const SignInPage = () => {
       {/* Left side with logo and title */}
       <div className="left-side">
         <img src={Logo} alt="ScopeSky Logo" className="logo" />
-        <h1 style={{ marginLeft: "6%" }}>نظام إدارة المكاتب</h1>
+        <h1 style={{ marginLeft: "6%",marginRight: "6%" }}>نظام إدارة المكاتب</h1>
       </div>
 
       {/* Right side with login form */}
