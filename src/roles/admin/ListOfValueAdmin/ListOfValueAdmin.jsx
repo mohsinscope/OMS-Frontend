@@ -13,9 +13,7 @@ import {
   Select,
   Space,
 } from "antd";
-import axios from "axios";
 import axiosInstance from './../../../intercepters/axiosInstance.js';
-import Url from "./../../../store/url.js";
 import Config from "./../../../store/configrationOfListOfValue.js";
 import useAuthStore from "./../../../store/store.js";
 
@@ -41,23 +39,6 @@ export default function ListOfValueAdmin() {
     total: 0,
   });
 
-  const api = axios.create({
-    baseURL: Url,
-  });
-
-  api.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
-    }
-  );
-
   const transformData = (data) => {
     if (currentPath === "/admin/lecture-types") {
       return data.reduce((acc, company) => {
@@ -81,7 +62,7 @@ export default function ListOfValueAdmin() {
   const fetchData = async (endpoint, page = 1, pageSize = 10) => {
     setLoading(true);
     try {
-      const response = await api.get(
+      const response = await axiosInstance.get(
         `${endpoint}?PageNumber=${page}&PageSize=${pageSize}`
       );
 
@@ -111,7 +92,7 @@ export default function ListOfValueAdmin() {
       selectedConfig.formFields.map(async (field) => {
         if (field.type === "dropdown" && field.optionsEndpoint) {
           try {
-            const response = await api.get(field.optionsEndpoint);
+            const response = await axiosInstance.get(field.optionsEndpoint);
             let options;
 
             if (currentPath === "/admin/lecture-types" && field.name === "companyId") {
@@ -179,68 +160,15 @@ export default function ListOfValueAdmin() {
     }
   }, [currentPath]);
 
-  const handleItemClick = async (item) => {
+  const handleItemClick = (item) => {
     const selected = Config[item.path];
     if (!selected) {
       message.error("لم يتم العثور على التكوين المطلوب");
       return;
     }
-  
-    // Step 1: Check if the token is valid before navigating
-    const isTokenValid = await checkTokenValidity();
-  
-    if (!isTokenValid) {
-      // Step 2: Refresh the token if it's invalid or expired
-      const newAccessToken = await refreshAccessToken();
-      if (!newAccessToken) {
-        message.error("حدث خطأ في تجديد التوكن. الرجاء تسجيل الدخول مرة أخرى.");
-        return;
-      }
-    }
-  
-    // Step 3: Update current path and navigate
     setCurrentPath(item.path);
     setSelectedConfig(selected);
     setCurrentLabel(item.label);
-    navigate(item.path);  // Navigate to the selected path
-  };
-  
-  // Function to check token validity (custom logic can be added here)
-  const checkTokenValidity = async () => {
-    const token = localStorage.getItem('accessToken');
-    // Example check, could be a server-side validation or checking token expiration
-    return token ? true : false;
-  };
-  
-  // Function to refresh the token by making a request to the refresh-token endpoint
-  const refreshAccessToken = async () => {
-    const currentAccessToken = localStorage.getItem('accessToken');
-    const currentRefreshToken = localStorage.getItem('refreshToken');
-  
-    if (!currentAccessToken || !currentRefreshToken) {
-      console.log('[Axios] No tokens available for refresh');
-      return null;
-    }
-  
-    try {
-      const response = await axios.post(`${Url}/api/account/refresh-token`, {
-        AccessToken: currentAccessToken,
-        RefreshToken: currentRefreshToken,
-      });
-  
-      const { accessToken: newAccessToken } = response.data;
-  
-      if (newAccessToken) {
-        // Store the new access token
-        localStorage.setItem('accessToken', newAccessToken);
-        return newAccessToken;
-      } else {
-        return null;
-      }
-    } catch (error) {
-      console.error('[Axios] Failed to refresh token:', error);
-      return null;
-    }
   };
 
   const createPayload = (values) => {
@@ -278,7 +206,7 @@ export default function ListOfValueAdmin() {
     setLoading(true);
     try {
       const payload = createPayload(values);
-      await api.post(selectedConfig.postEndpoint, payload);
+      await axiosInstance.post(selectedConfig.postEndpoint, payload);
       message.success("تمت إضافة البيانات بنجاح");
       setIsModalOpen(false);
       form.resetFields();
@@ -309,7 +237,7 @@ export default function ListOfValueAdmin() {
         ...createPayload(values),
       };
 
-      await api.put(endpoint, payload);
+      await axiosInstance.put(endpoint, payload);
       message.success("تم تحديث البيانات بنجاح");
       setIsModalOpen(false);
       form.resetFields();
@@ -347,7 +275,7 @@ export default function ListOfValueAdmin() {
             data: currentPath === "/admin/add-office" ? { officeId: id } : undefined,
           };
 
-          await api.delete(endpoint, config);
+          await axiosInstance.delete(endpoint, config);
           message.success("تم حذف السجل بنجاح");
           await fetchData(selectedConfig.getEndpoint, pagination.current, pagination.pageSize);
         } catch (error) {
@@ -384,10 +312,9 @@ export default function ListOfValueAdmin() {
     setIsModalOpen(true);
   };
 
-const renderFormField = (field) => {
+  const renderFormField = (field) => {
     switch (field.type) {
       case "dropdown":
-        // If field has static options defined in the config
         if (field.options) {
           return (
             <Select
@@ -407,7 +334,6 @@ const renderFormField = (field) => {
           );
         }
         
-        // For dynamic options from API
         const options = dropdownOptions[field.name] || [];
         return (
           <Select
@@ -457,107 +383,113 @@ const renderFormField = (field) => {
     }
   };
 
-    return (
-      <div className="list-of-value-container" dir="rtl">
-        <div className="list-of-value-bar">
-          <ul className="list-of-value-items">
-            {ListOfValues.map((item, index) => (
-              <li
-                key={index}
-                className={`list-of-value-item ${
-                  currentPath === item.path ? "active" : ""
-                }`}
-                onClick={() => handleItemClick(item)}
-              >
-                <a className="list-of-value-link">
-                  <Icons type={item.icon} />
-                  <span>{item.label}</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="list-of-value-details-section-left">
-          <div className="top-list-of-value-details-section-left">
-            <h2>{currentLabel}</h2>
-            <Button
-              type="primary"
-              onClick={handleAddNew}
-              disabled={!selectedConfig || loading}
+  return (
+    <div className="list-of-value-container" dir="rtl">
+      <div className="list-of-value-bar">
+        <ul className="list-of-value-items">
+          {ListOfValues.map((item, index) => (
+            <li
+              key={index}
+              className={`list-of-value-item ${
+                currentPath === item.path ? "active" : ""
+              }`}
+              onClick={() => handleItemClick(item)}
             >
-              إضافة <Icons type="add" />
-            </Button>
-          </div>
+              <a className="list-of-value-link">
+                <Icons type={item.icon} />
+                <span>{item.label}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-          <ConfigProvider direction="rtl">
-            <Table
-              columns={columns}
-              dataSource={selectedData}
-              loading={loading}
-              pagination={{
-                current: pagination.current,
-                pageSize: pagination.pageSize,
-                total: pagination.total,
-                position: ["bottomCenter"],
-                showTotal: (total) => `إجمالي السجلات: ${total}`,
-                onChange: (page, pageSize) => {
-                  fetchData(selectedConfig.getEndpoint, page, pageSize);
-                },
-                onShowSizeChange: (current, size) => {
-                  fetchData(selectedConfig.getEndpoint, 1, size);
-                },
-              }}
-              bordered
-              locale={{ emptyText: "لا توجد بيانات" }}
-            />
-          </ConfigProvider>
+      <div className="list-of-value-details-section-left">
+        <div className="top-list-of-value-details-section-left">
+          <h2>{currentLabel}</h2>
+          <Button
+            type="primary"
+            onClick={handleAddNew}
+            disabled={!selectedConfig || loading}
+          >
+            إضافة <Icons type="add" />
+          </Button>
         </div>
 
         <ConfigProvider direction="rtl">
-          <Modal
-            title={isEditMode ? "تعديل القيمة" : "إضافة قيمة جديدة"}
-            open={isModalOpen}
-            onCancel={() => {
-              setIsModalOpen(false);
-              setEditingId(null);
-              setIsEditMode(false);
-              form.resetFields();
+          <Table
+            columns={columns}
+            dataSource={selectedData}
+            loading={loading}
+            pagination={{
+              current: pagination.current,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              position: ["bottomCenter"],
+              showTotal: (total) => `إجمالي السجلات: ${total}`,
+              onChange: (page, pageSize) => {
+                fetchData(selectedConfig.getEndpoint, page, pageSize);
+              },
+              onShowSizeChange: (current, size) => {
+                fetchData(selectedConfig.getEndpoint, 1, size);
+              },
             }}
-            footer={null}
-            maskClosable={false}
-          >
-            <Form
-              form={form}
-              className="dammaged-passport-container-edit-modal"
-              onFinish={isEditMode ? handleUpdate : handleAdd}
-              
-              layout="vertical"
-            >
-              {formFields.map((field) => (
-                <Form.Item
-                  key={field.name}
-                  name={field.name}
-                  label={field.label}
-                  style={{marginTop:"20px"}}
-                  rules={[
-                    { required: true, message: `الرجاء إدخال ${field.label}` },
-                  ]}
-                >
-                  {renderFormField(field)}
-                </Form.Item>
-              ))}
-              <Form.Item  style={{marginTop:"20px"}}>
-                <Space style={{ justifyContent: "flex-end", width: "100%" }}>
-                  <Button onClick={() => setIsModalOpen(false)}>إلغاء</Button>
-                  <Button type="primary" htmlType="submit" loading={loading}>
-                    {isEditMode ? "تحديث" : "إضافة"}
-                  </Button>
-                </Space>
-              </Form.Item>
-            </Form>
-          </Modal>
+            bordered
+            locale={{ emptyText: "لا توجد بيانات" }}
+          />
         </ConfigProvider>
       </div>
-    );
-  }
+
+      <ConfigProvider direction="rtl">
+        <Modal
+          title={isEditMode ? "تعديل القيمة" : "إضافة قيمة جديدة"}
+          open={isModalOpen}
+          onCancel={() => {
+            setIsModalOpen(false);
+            setEditingId(null);
+            setIsEditMode(false);
+            form.resetFields();
+          }}
+          footer={null}
+          maskClosable={false}
+        >
+          <Form
+            form={form}
+            className="dammaged-passport-container-edit-modal"
+            onFinish={isEditMode ? handleUpdate : handleAdd}
+            layout="vertical"
+          >
+            {formFields.map((field) => (
+              <Form.Item
+                key={field.name}
+                name={field.name}
+                label={field.label}
+                style={{marginTop:"20px"}}
+                rules={[
+                  { required: true, message: `الرجاء إدخال ${field.label}` },
+                ]}
+              >
+                {renderFormField(field)}
+              </Form.Item>
+            ))}
+            <Form.Item style={{marginTop:"20px"}}>
+              <Space style={{ justifyContent: "flex-end", width: "100%" }}>
+                <Button onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingId(null);
+                  setIsEditMode(false);
+                  form.resetFields();
+                }}>
+                  إلغاء
+                </Button>
+                <Button type="primary" htmlType="submit" loading={loading}>
+                  {isEditMode ? "تحديث" : "إضافة"}
+                </Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
+      </ConfigProvider>
+    </div>
+  );
+}
