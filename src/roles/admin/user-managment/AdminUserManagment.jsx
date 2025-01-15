@@ -135,8 +135,8 @@ const AdminUserManagment = () => {
         roles: values.roles,
         fullName: values.fullName,
         position: parseInt(values.position, 10),
-        officeId: parseInt(values.officeName, 10),
-        governorateId: parseInt(values.governorate, 10),
+        officeId: values.officeName,
+        governorateId: values.governorate,
       };
 
       const response = await axiosInstance.post(`${Url}/api/account/register`, payload, {

@@ -8,7 +8,7 @@ import useAuthStore from "./../store/store.js";
 import axiosInstance from "./../intercepters/axiosInstance";
 import Url from "./../store/url";
 
-// Status Enum
+// Status Enum matching backend exactly
 const Status = {
   New: 0,
   SentToProjectCoordinator: 1,
@@ -20,6 +20,19 @@ const Status = {
   ReturnedToSupervisor: 7,
   RecievedBySupervisor: 8,
   Completed: 9
+};
+
+const statusMap = {
+  [Status.New]: "جديد",
+  [Status.SentToProjectCoordinator]: "تم الإرسال إلى منسق المشروع",
+  [Status.ReturnedToProjectCoordinator]: "تم الإرجاع إلى منسق المشروع",
+  [Status.SentToManager]: "تم الإرسال إلى المدير",
+  [Status.ReturnedToManager]: "تم الإرجاع إلى المدير",
+  [Status.SentToDirector]: "تم الإرسال إلى المدير التنفيذي",
+  [Status.SentToAccountant]: "تم الإرسال إلى المحاسب",
+  [Status.ReturnedToSupervisor]: "تم الإرجاع إلى المشرف",
+  [Status.RecievedBySupervisor]: "تم الاستلام من قبل المشرف",
+  [Status.Completed]: "مكتمل"
 };
 
 export default function ExpensesView() {
@@ -39,8 +52,8 @@ export default function ExpensesView() {
   const [actionNote, setActionNote] = useState("");
   const [form] = Form.useForm();
 
-  const getNextStatus = () => {
-    const position = profile?.position?.toLowerCase();
+  const getNextStatus = (currentStatus, position) => {
+    position = position?.toLowerCase();
     
     if (position?.includes('coordinator')) {
       return Status.SentToManager;
@@ -49,9 +62,24 @@ export default function ExpensesView() {
     } else if (position?.includes('director')) {
       return Status.SentToAccountant;
     } else if (position?.includes('accountant')) {
+      return Status.RecievedBySupervisor;
+    } else if (currentStatus === Status.RecievedBySupervisor) {
       return Status.Completed;
     }
-    return Status.New;
+    return currentStatus;
+  };
+
+  const getRejectionStatus = (currentStatus, position) => {
+    position = position?.toLowerCase();
+
+    if (position?.includes('coordinator')) {
+      return Status.ReturnedToSupervisor;
+    } else if (position?.includes('manager')) {
+      return Status.ReturnedToProjectCoordinator;
+    } else if (position?.includes('director')) {
+      return Status.ReturnedToManager;
+    }
+    return currentStatus;
   };
 
   const handleActionClick = (type) => {
@@ -89,17 +117,18 @@ export default function ExpensesView() {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        // Update status if approval
-        if (actionType === "Approval") {
-          const nextStatus = getNextStatus();
+        // Update status based on action type
+        const currentStatus = expense?.generalInfo?.["الحالة"];
+        const newStatus = actionType === "Approval" 
+          ? getNextStatus(currentStatus, profile?.position)
+          : getRejectionStatus(currentStatus, profile?.position);
           await axiosInstance.post(`${Url}/api/Expense/${expenseId}/status`, {
             monthlyExpensesId: expenseId,
-            newStatus: nextStatus
+            newStatus: newStatus,
+            notes: actionNote
           }, {
             headers: { Authorization: `Bearer ${accessToken}` }
           });
-        }
-        
         message.success(`تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`);
         handleModalCancel();
         navigate('/expenses-history');
@@ -121,17 +150,16 @@ export default function ExpensesView() {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
   
-      // Map the response data to match the expected structure
       return {
-        تسلسل: "-", // Sequence is not provided in the response, defaulted to "-"
-        التاريخ: new Date(response.data.expenseDate).toLocaleDateString(), // Convert expenseDate to localized format
-        "نوع المصروف": response.data.expenseTypeName, // Use expenseTypeName
-        الكمية: response.data.quantity, // Use quantity
-        السعر: response.data.price, // Use price
-        المجموع: response.data.amount, // Use amount
-        ملاحظات: response.data.notes, // Use notes
-        id: response.data.id, // Use id
-        type: "daily", // Mark as daily type
+        تسلسل: "-",
+        التاريخ: new Date(response.data.expenseDate).toLocaleDateString(),
+        "نوع المصروف": response.data.expenseTypeName,
+        الكمية: response.data.quantity,
+        السعر: response.data.price,
+        المجموع: response.data.amount,
+        ملاحظات: response.data.notes,
+        id: response.data.id,
+        type: "daily",
       };
     } catch (error) {
       console.error("Error fetching daily expense details:", error);
@@ -141,7 +169,6 @@ export default function ExpensesView() {
       setIsLoadingDetails(false);
     }
   };
-  
 
   const handleShowDetails = async (record) => {
     if (record.type === 'daily') {
@@ -181,14 +208,6 @@ export default function ExpensesView() {
           }),
         ]);
     
-        console.log("Expense Response:", expenseResponse.data);
-        console.log("Daily Expenses Response:", dailyExpensesResponse.data);
-    
-        const dailyExpenses = Array.isArray(dailyExpensesResponse.data) 
-        ? dailyExpensesResponse.data 
-        : dailyExpensesResponse.data.dailyExpenses || [];
-              console.log("Processed Daily Expenses:", dailyExpenses);
-    
         const regularItems = expenseResponse.data.expenseItems?.map((item, index) => ({
           تسلسل: index + 1,
           التاريخ: new Date(item.date).toLocaleDateString(),
@@ -201,27 +220,21 @@ export default function ExpensesView() {
           type: 'regular',
         })) || [];
     
-        console.log("Processed Regular Items:", regularItems);
-    
         const dailyItems = dailyExpensesResponse.data.map((item, index) => ({
-          تسلسل: index + 1, // Sequential number
-          التاريخ: new Date(item.expenseDate).toLocaleDateString(), // Convert expenseDate to a readable date
-          "نوع المصروف": item.expenseTypeName, // Map expenseTypeName
-          الكمية: item.quantity, // Map quantity
-          السعر: item.price, // Map price
-          المجموع: item.amount, // Map amount
-          ملاحظات: item.notes, // Map notes
-          id: item.id, // Map ID
-          type: 'daily', // Assign type as 'daily'
+          تسلسل: regularItems.length + index + 1,
+          التاريخ: new Date(item.expenseDate).toLocaleDateString(),
+          "نوع المصروف": item.expenseTypeName,
+          الكمية: item.quantity,
+          السعر: item.price,
+          المجموع: item.amount,
+          ملاحظات: item.notes,
+          id: item.id,
+          type: 'daily',
         }));
-        console.log("Mapped Daily Items:", dailyItems);
         
-    
         const allItems = [...regularItems, ...dailyItems].sort(
           (a, b) => new Date(b.التاريخ) - new Date(a.التاريخ),
         );
-    
-        console.log("Final Items:", allItems);
     
         setExpense({
           generalInfo: {
@@ -237,7 +250,6 @@ export default function ExpensesView() {
           },
           items: allItems,
         });
-        console.log("Updated Expense State:", allItems);
       } catch (error) {
         console.error("Error fetching expense data:", error);
         message.error("حدث خطأ أثناء جلب البيانات");
@@ -246,8 +258,6 @@ export default function ExpensesView() {
         setIsLoading(false);
       }
     };
-    
-    
 
     fetchAllExpenseData();
   }, [expenseId, accessToken, navigate]);
@@ -312,7 +322,9 @@ export default function ExpensesView() {
             </div>
           `).join('')}
         </div>
-      `;const opt = {
+      `;
+
+      const opt = {
         margin: 1,
         filename: 'تقرير_المصروفات.pdf',
         image: { type: 'jpeg', quality: 0.98 },
@@ -353,14 +365,14 @@ export default function ExpensesView() {
           <Button 
             type="primary"
             onClick={() => handleActionClick("Approval")}
-            disabled={!profile.profileId}
+            disabled={!profile.profileId || expense?.generalInfo?.["الحالة"] === Status.Completed}
           >
             موافقة
           </Button>
           <Button 
             danger
             onClick={() => handleActionClick("Return")}
-            disabled={!profile.profileId}
+            disabled={!profile.profileId || expense?.generalInfo?.["الحالة"] === Status.Completed}
           >
             ارجاع
           </Button>
@@ -407,7 +419,8 @@ export default function ExpensesView() {
             {
               title: "الحالة",
               dataIndex: "الحالة",
-              align: "center"
+              align: "center",
+              render: (status) => statusMap[status] || status
             }
           ]}
           dataSource={[expense?.generalInfo]}
@@ -516,7 +529,6 @@ export default function ExpensesView() {
         >
           {selectedItem && (
             <div className="expense-details">
-              
               <Table
                 columns={[
                   { title: "الحقل", dataIndex: "field", align: "right" },

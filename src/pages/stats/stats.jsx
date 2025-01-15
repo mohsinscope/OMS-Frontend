@@ -1,12 +1,13 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
 import { DatePicker } from "antd";
-
-import axiosInstance from './../intercepters/axiosInstance.js';
-import "./stats.css";
-import Url from "./../store/url.js";
-import useAuthStore from "./../store/store.js";
+import './stats.css';
+import axiosInstance from '../../intercepters/axiosInstance.js';
+import Url from "../../store/url.js";
+import useAuthStore from "../../store/store.js";
 import AttendanceStats from './attendenceStats.jsx';
+import ExpensesStats  from './expensessStats.jsx';
+
 import './stats.css';
 const COLORS = [
   "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0",
@@ -306,222 +307,228 @@ export default function Stats() {
             >
               الحضور
             </li>
+            <li
+              className={`stats-navbar-item ${selectedTab === "expenses" ? "active" : ""}`}
+              onClick={() => handleTabChange("expenses")}
+            >
+              احصائيات المصاريف
+            </li>
           </ul>
         </div>
       </div>
-
-      {selectedTab !== "attendance" && (
-        <form onSubmit={handleSubmit} className="stats-form" dir="rtl">
-          <div className="form-group">
-            <label>المحافظة</label>
-            <select
-              value={selectedGovernorate || ""}
-              onChange={(e) => handleGovernorateChange(e.target.value)}
-              className="form-control"
-            >
-              <option value="">كل المحافظات</option>
-              {governorates.map((gov) => (
-                <option key={gov.id} value={gov.id}>
-                  {gov.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label>اسم المكتب</label>
-            <select
-              value={selectedOffice || ""}
-              onChange={(e) => setSelectedOffice(e.target.value || null)}
-              className="form-control"
-              disabled={!selectedGovernorate}
-            >
-              <option value="">كل المكاتب</option>
-              {availableOffices.map((office) => (
-                <option key={office.id} value={office.id}>
-                  {office.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {(selectedTab === "damagedDevices" || selectedTab === "damagedPassports") ? (
-            <>
-              <div className="form-group">
-                <label>التاريخ من</label>
-                <DatePicker
-                  value={startDate}
-                  onChange={(date) => setStartDate(date)}
-                  className="form-control"
-                  placeholder="اختر التاريخ"
-                />
-              </div>
-              <div className="form-group">
-                <label>التاريخ الى</label>
-                <DatePicker
-                  value={endDate}
-                  onChange={(date) => setEndDate(date)}
-                  className="form-control"
-                  placeholder="اختر التاريخ"
-                />
-              </div>
-            </>
-          ) : selectedTab === "officeAttendene" && (
-            <>
-              <div className="form-group">
-                <label>وقت الدوام</label>
-                <select
-                  value={workingHours}
-                  onChange={(e) => setWorkingHours(Number(e.target.value))}
-                  className="form-control"
-                >
-                  <option value={1}>صباحي</option>
-                  <option value={2}>مسائي</option>
-                  <option value={3}>الكل</option>
-                </select>
-              </div>
-              <div className="form-group">
-                <label>التاريخ</label>
-                <DatePicker
-                  value={selectedDate}
-                  onChange={(date) => setSelectedDate(date)}
-                  className="form-control"
-                  placeholder="اختر التاريخ"
-                />
-              </div>
-            </>
-          )}
-
-<button type="submit" className="search-button" disabled={loading}>
-            {loading ? 'جاري البحث...' : 'ابحث'}
-          </button>
-        </form>
-      )}
-
-      {error && (
-        <div className="error-message" dir="rtl">
-          {error}
-        </div>
-      )}
-
-      <h2 className="stats-chart-title" dir="rtl" style={{marginRight:"20px"}}>
-        احصائيات {
-          selectedTab === "damagedDevices" ? "الأجهزة التالفة" :
-          selectedTab === "damagedPassports" ? "الجوازات التالفة" :
-          selectedTab === "officeAttendene" ? "حضور المكتب" : "الحضور"
-        }
-      </h2>
-      
-      <div className="stats-main-section" dir="rtl">
-        <div className="stats-chart-section">
-          <div className="chart-container">
-            {selectedTab === "attendance" ? (
-              <AttendanceStats data={attendanceData} />
-            ) : !loading && chartData.length > 0 ? (
+  
+      {selectedTab === "expenses" ? (
+        <ExpensesStats />
+      ) : selectedTab === "attendance" ? (
+        <AttendanceStats data={attendanceData} />
+      ) : (
+        <>
+          <form onSubmit={handleSubmit} className="stats-form" dir="rtl">
+            <div className="form-group">
+              <label>المحافظة</label>
+              <select
+                value={selectedGovernorate || ""}
+                onChange={(e) => handleGovernorateChange(e.target.value)}
+                className="form-control"
+              >
+                <option value="">كل المحافظات</option>
+                {governorates.map((gov) => (
+                  <option key={gov.id} value={gov.id}>
+                    {gov.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+  
+            <div className="form-group">
+              <label>اسم المكتب</label>
+              <select
+                value={selectedOffice || ""}
+                onChange={(e) => setSelectedOffice(e.target.value || null)}
+                className="form-control"
+                disabled={!selectedGovernorate}
+              >
+                <option value="">كل المكاتب</option>
+                {availableOffices.map((office) => (
+                  <option key={office.id} value={office.id}>
+                    {office.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+  
+            {(selectedTab === "damagedDevices" || selectedTab === "damagedPassports") ? (
               <>
-                <PieChart width={400} height={400}>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={100}
-                    outerRadius={150}
-                    paddingAngle={0}
-                    dataKey="value"
-                  >
-        {chartData.map((entry, index) => (
-          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-        ))}
-                  </Pie>
-                  <Tooltip content={<CustomTooltip />} />
-                </PieChart>
-                <h3 className="text-center mt-4">
-                  {selectedTab === "officeAttendene" ? (
-                    `إجمالي عدد المحطات: ${totalItems} عدد الحضور الكلي : ${officeAttendanceData?.availableStaffInOffice}  `
-                  ) : (
-                    `إجمالي ${selectedTab === "damagedDevices" ? "الأجهزة التالفة" : "الجوازات التالفة"}: ${totalItems}`
-                  )}
-                </h3>
+                <div className="form-group">
+                  <label>التاريخ من</label>
+                  <DatePicker
+                    value={startDate}
+                    onChange={(date) => setStartDate(date)}
+                    className="form-control"
+                    placeholder="اختر التاريخ"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>التاريخ الى</label>
+                  <DatePicker
+                    value={endDate}
+                    onChange={(date) => setEndDate(date)}
+                    className="form-control"
+                    placeholder="اختر التاريخ"
+                  />
+                </div>
               </>
-            ) : !loading && (
-              <div className="no-data-message">لا توجد بيانات للعرض</div>
+            ) : selectedTab === "officeAttendene" && (
+              <>
+                <div className="form-group">
+                  <label>وقت الدوام</label>
+                  <select
+                    value={workingHours}
+                    onChange={(e) => setWorkingHours(Number(e.target.value))}
+                    className="form-control"
+                  >
+                    <option value={1}>صباحي</option>
+                    <option value={2}>مسائي</option>
+                    <option value={3}>الكل</option>
+                  </select>
+                </div>
+                <div className="form-group">
+                  <label>التاريخ</label>
+                  <DatePicker
+                    value={selectedDate}
+                    onChange={(date) => setSelectedDate(date)}
+                    className="form-control"
+                    placeholder="اختر التاريخ"
+                  />
+                </div>
+              </>
+            )}
+  
+            <button type="submit" className="search-button" disabled={loading}>
+              {loading ? 'جاري البحث...' : 'ابحث'}
+            </button>
+          </form>
+  
+          {error && (
+            <div className="error-message" dir="rtl">
+              {error}
+            </div>
+          )}
+  
+          <h2 className="stats-chart-title" dir="rtl" style={{marginRight:"20px"}}>
+            احصائيات {
+              selectedTab === "damagedDevices" ? "الأجهزة التالفة" :
+              selectedTab === "damagedPassports" ? "الجوازات التالفة" :
+              selectedTab === "officeAttendene" ? "حضور المكتب" :
+              selectedTab === "expenses" ? "المصاريف" : "الحضور"
+            }
+          </h2>
+  
+          <div className="stats-main-section" dir="rtl">
+            <div className="stats-chart-section">
+              <div className="chart-container">
+                {!loading && chartData.length > 0 ? (
+                  <>
+                    <PieChart width={400} height={400}>
+                      <Pie
+                        data={chartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={100}
+                        outerRadius={150}
+                        paddingAngle={0}
+                        dataKey="value"
+                      >
+                        {chartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={<CustomTooltip />} />
+                    </PieChart>
+                    <h3 className="text-center mt-4">
+                      {selectedTab === "officeAttendene" ? (
+                        `إجمالي عدد المحطات: ${totalItems} عدد الحضور الكلي : ${officeAttendanceData?.availableStaffInOffice}`
+                      ) : (
+                        `إجمالي ${selectedTab === "damagedDevices" ? "الأجهزة التالفة" : "الجوازات التالفة"}: ${totalItems}`
+                      )}
+                    </h3>
+                  </>
+                ) : !loading && (
+                  <div className="no-data-message">لا توجد بيانات للعرض</div>
+                )}
+              </div>
+            </div>
+  
+            {selectedTab === "officeAttendene" && officeAttendanceData ? (
+              <div className="stats-summary">
+                <div className="summary-card-attendence">
+                  <AttendanceDonutChart 
+                    title="محطات الاستلام"
+                    total={officeAttendanceData.receivingStaffTotal}
+                    present={officeAttendanceData.receivingStaffAvailable}
+                  />
+                </div>
+                <div className="summary-card-attendence">
+                  <AttendanceDonutChart 
+                    title="محطات الحسابات"
+                    total={officeAttendanceData.accountStaffTotal}
+                    present={officeAttendanceData.accountStaffAvailable}
+                  />
+                </div>
+                <div className="summary-card-attendence">
+                  <AttendanceDonutChart 
+                    title="محطات الطباعة"
+                    total={officeAttendanceData.printingStaffTotal}
+                    present={officeAttendanceData.printingStaffAvailable}
+                  />
+                </div>
+                <div className="summary-card-attendence">
+                  <AttendanceDonutChart 
+                    title="محطات الجودة"
+                    total={officeAttendanceData.qualityStaffTotal}
+                    present={officeAttendanceData.qualityStaffAvailable}
+                  />
+                </div>
+                <div className="summary-card-attendence">
+                  <AttendanceDonutChart 
+                    title="محطات التسليم"
+                    total={officeAttendanceData.deliveryStaffTotal}
+                    present={officeAttendanceData.deliveryStaffAvailable}
+                  />
+                </div>
+              </div>
+            ) : selectedTab !== "attendance" && selectedTab !== "officeAttendene" && chartData.length > 0 && (
+              <div className="stats-summary">
+                {chartData.map((item, index) => (
+                  <div key={index} className="summary-card">
+                    <div>
+                      <PieChart width={120} height={120}>
+                        <Pie
+                          data={[{ name: item.name, value: item.value }]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={30}
+                          outerRadius={50}
+                          paddingAngle={0}
+                          dataKey="value"
+                        >
+                          <Cell fill={COLORS[index % COLORS.length]} />
+                        </Pie>
+                        <Tooltip content={<CustomTooltip />} />
+                      </PieChart>
+                    </div>
+                    <div>
+                      <h3>{item.name}</h3>
+                      <span>
+                        {selectedTab === "damagedDevices" ? "عدد الأجهزة" : "عدد الجوازات"}: {item.value}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        </div>
-
-        {selectedTab === "officeAttendene" && officeAttendanceData ? (
-          <div className="stats-summary">
-            <div className="summary-card-attendence">
-
-            <AttendanceDonutChart 
-              title="محطات الاستلام"
-              total={officeAttendanceData.receivingStaffTotal}
-              present={officeAttendanceData.receivingStaffAvailable}
-            />
-            </div>
-            <div className="summary-card-attendence">
-            <AttendanceDonutChart 
-              title="محطات الحسابات"
-              total={officeAttendanceData.accountStaffTotal}
-              present={officeAttendanceData.accountStaffAvailable}
-            />
-            </div>
-            <div className="summary-card-attendence">
-            <AttendanceDonutChart 
-              title="محطات الطباعة"
-              total={officeAttendanceData.printingStaffTotal}
-              present={officeAttendanceData.printingStaffAvailable}
-            />
-             </div>
-             <div className="summary-card-attendence">
-
-            <AttendanceDonutChart 
-              title="محطات الجودة"
-              total={officeAttendanceData.qualityStaffTotal}
-              present={officeAttendanceData.qualityStaffAvailable}
-            />
-                         </div>
-                         <div className="summary-card-attendence">
-
-            <AttendanceDonutChart 
-              title="محطات التسليم"
-              total={officeAttendanceData.deliveryStaffTotal}
-              present={officeAttendanceData.deliveryStaffAvailable}
-            />
-                                     </div>
-
-          </div>
-        ) : selectedTab !== "attendance" && selectedTab !== "officeAttendene" && chartData.length > 0 && (
-          <div className="stats-summary">
-            {chartData.map((item, index) => (
-              <div key={index} className="summary-card">
-                <div>
-                  <PieChart width={120} height={120}>
-                    <Pie
-                      data={[{ name: item.name, value: item.value }]}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={30}
-                      outerRadius={50}
-                      paddingAngle={0}
-                      dataKey="value"
-                    >
-                      <Cell fill={COLORS[index % COLORS.length]} />
-                    </Pie>
-                    <Tooltip content={<CustomTooltip />} />
-                  </PieChart>
-                </div>
-                <div>
-                  <h3>{item.name}</h3>
-                  <span>
-                    {selectedTab === "damagedDevices" ? "عدد الأجهزة" : "عدد الجوازات"}: {item.value}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
-  );
-}
+  );}

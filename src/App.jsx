@@ -4,7 +4,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Layout from "./pages/LayOut.jsx";
 import useAuthStore from "./store/store.js";
 import SignInPage from "./pages/signIn.jsx";
-import Stats from "./pages/stats.jsx";
+import Stats from './pages/stats/stats.jsx';
+
 import LandingPage from "./pages/landingPage.jsx";
 import NotFound from "./pages/pageNotFound.jsx";
 import Forbidden from "./pages/forbidden.jsx";
