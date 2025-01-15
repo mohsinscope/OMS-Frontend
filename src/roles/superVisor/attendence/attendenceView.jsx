@@ -1,15 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { PieChart, Pie, Cell, Tooltip } from "recharts";
-import {
-  message,
-  Modal,
-  Form,
-  Input,
-  Button,
-  ConfigProvider,
-  Select,
-} from "antd";
+import { message, Modal, Form, Input, Button, ConfigProvider, Select } from "antd";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Lele from "./../../../reusable elements/icons.jsx";
 import "./attendenceView.css";
@@ -26,6 +18,7 @@ export default function ViewAttendance() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [form] = Form.useForm();
   const hasUpdatePermission = permissions.includes("Au");
+
   const handleBack = () => {
     navigate(-1);
   };
@@ -33,14 +26,11 @@ export default function ViewAttendance() {
   useEffect(() => {
     const fetchAttendanceDetails = async () => {
       try {
-        const response = await axiosInstance.get(
-          `${Url}/api/Attendance/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        const response = await axiosInstance.get(`${Url}/api/Attendance/${id}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
         const response2 = await axiosInstance.get(
           `${Url}/api/office/${response.data.officeId}`,
           {
@@ -53,8 +43,8 @@ export default function ViewAttendance() {
         const data = response.data;
         const attendsdata = response2;
         setAttendanceData(data);
-        console.log(attendanceData);
         setAttendanceData2(attendsdata);
+
         form.setFieldsValue({
           ...data,
           date: data.date ? data.date.replace(/:00.00.00Z$/, "") : "",
@@ -77,25 +67,20 @@ export default function ViewAttendance() {
         printingStaff: values.printingStaff,
         qualityStaff: values.qualityStaff,
         deliveryStaff: values.deliveryStaff,
-        date: values.date
-          ? new Date(values.date).toISOString()
-          : attendanceData.date,
+        date: values.date ? new Date(values.date).toISOString() : attendanceData.date,
         note: values.note || "",
         workingHours: values.workingHours,
         officeId: attendanceData.officeId,
         governorateId: attendanceData.governorateId,
         profileId: attendanceData.profileId,
       };
-      const response = await axiosInstance.put(
-        `${Url}/api/Attendance/${id}`,
-        updatedValues,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+
+      const response = await axiosInstance.put(`${Url}/api/Attendance/${id}`, updatedValues, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       message.success("تم تحديث بيانات الحضور بنجاح");
       setEditModalVisible(false);
@@ -112,7 +97,7 @@ export default function ViewAttendance() {
 
   const renderChart = (title, count, total, numberOfAttendece) => {
     const data = [
-      { name: "حاضر", value: count },
+      { name: "حاضر", value: total },
       { name: "غائب", value: count - total },
     ];
 
@@ -136,10 +121,7 @@ export default function ViewAttendance() {
             paddingAngle={5}
             dataKey="value">
             {data.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={COLORS[index % COLORS.length]}
-              />
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
           <Tooltip />
@@ -187,10 +169,7 @@ export default function ViewAttendance() {
             paddingAngle={0}
             dataKey="value">
             {data.map((entry, index) => (
-              <Cell
-                key={`cell-${index}`}
-                fill={COLORS[index % COLORS.length]}
-              />
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
           <Tooltip />
@@ -309,9 +288,7 @@ export default function ViewAttendance() {
                   </span>
                 </span>
               }
-              rules={[
-                { required: true, message: "يرجى إدخال عدد موظفي الاستلام" },
-              ]}>
+              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الاستلام" }]}>
               <Input placeholder="عدد موظفي الاستلام" type="number" />
             </Form.Item>
             <Form.Item
@@ -326,9 +303,7 @@ export default function ViewAttendance() {
                   </span>
                 </span>
               }
-              rules={[
-                { required: true, message: "يرجى إدخال عدد موظفي الحسابات" },
-              ]}>
+              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الحسابات" }]}>
               <Input placeholder="عدد موظفي الحسابات" type="number" />
             </Form.Item>
             <Form.Item
@@ -343,9 +318,7 @@ export default function ViewAttendance() {
                   </span>
                 </span>
               }
-              rules={[
-                { required: true, message: "يرجى إدخال عدد موظفي الطباعة" },
-              ]}>
+              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الطباعة" }]}>
               <Input placeholder="عدد موظفي الطباعة" type="number" />
             </Form.Item>
             <Form.Item
@@ -360,9 +333,7 @@ export default function ViewAttendance() {
                   </span>
                 </span>
               }
-              rules={[
-                { required: true, message: "يرجى إدخال عدد موظفي الجودة" },
-              ]}>
+              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الجودة" }]}>
               <Input placeholder="عدد موظفي الجودة" type="number" />
             </Form.Item>
             <Form.Item
@@ -377,9 +348,7 @@ export default function ViewAttendance() {
                   </span>
                 </span>
               }
-              rules={[
-                { required: true, message: "يرجى إدخال عدد موظفي التسليم" },
-              ]}>
+              rules={[{ required: true, message: "يرجى إدخال عدد موظفي التسليم" }]}>
               <Input placeholder="عدد موظفي التسليم" type="number" />
             </Form.Item>
             <Form.Item
@@ -392,18 +361,13 @@ export default function ViewAttendance() {
               name="note"
               label="الملاحظات"
               rules={[{ required: false }]}>
-              <Input.TextArea
-                placeholder="أدخل الملاحظات"
-                defaultValue={"لا يوجد"}
-              />
+              <Input.TextArea placeholder="أدخل الملاحظات" defaultValue={"لا يوجد"} />
             </Form.Item>
             <Form.Item
               name="workingHours"
               label="وقت العمل"
               rules={[{ required: true, message: "يرجى إدخال وقت العمل" }]}>
-              <Select
-                placeholder="اختر وقت العمل"
-                style={{ width: "100%", height: "45px" }}>
+              <Select placeholder="اختر وقت العمل" style={{ width: "100%", height: "45px" }}>
                 <Select.Option value={3}>الكل</Select.Option>
                 <Select.Option value={1}>صباحي</Select.Option>
                 <Select.Option value={2}>مسائي</Select.Option>

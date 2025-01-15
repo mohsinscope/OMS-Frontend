@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import { Search } from 'lucide-react';
 import './attendenceState.css';
-import useAuthStore from './../store/store.js';
-import Url from './../store/url.js';
-import axiosInstance from './../intercepters/axiosInstance.js';
+import useAuthStore from '../../store/store.js';
+import Url from '../../store/url.js';
+import axiosInstance from '../../intercepters/axiosInstance.js';
 
 const AttendanceCard = ({ children, className = '' }) => (
   <div className={`attendance-card bg-white rounded-lg shadow-sm p-4 ${className}`}>
