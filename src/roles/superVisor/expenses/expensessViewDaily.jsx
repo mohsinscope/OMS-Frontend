@@ -32,7 +32,6 @@ const ExpensessView = () => {
   });
   // If dailyExpenseId is not available in state, try to get it from the URL params
   const expenseId = dailyExpenseId || new URLSearchParams(location.search).get('id');
-  console.log("dailyExpenseId = ",dailyExpenseId)
   const [images, setImages] = useState([]);
   const [expenseData, setExpenseData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -41,7 +40,7 @@ const ExpensessView = () => {
   const [expenseTypes, setExpenseTypes] = useState([]);
   const [form] = Form.useForm();
 
-  const { isSidebarCollapsed, permissions } = useAuthStore();
+  const { isSidebarCollapsed, permissions,profile } = useAuthStore();
   const hasUpdatePermission = permissions.includes("EXu"); // Replace with actual permission code
   const hasDeletePermission = permissions.includes("EXd"); // Replace with actual permission code
 
@@ -60,7 +59,6 @@ const ExpensessView = () => {
       const expense = response.data;
       console.log("expense",expense)
       setExpenseData(expense);
-      console.log(expenseId)
       form.setFieldsValue({
         ...expense,
         date: moment(expense.expenseDate),
@@ -240,14 +238,7 @@ const ExpensessView = () => {
               disabled
             />
           </div>
-          <div className="details-row">
-            <span className="details-label">التاريخ:</span>
-            <input
-              className="details-value"
-              value={moment(expenseData.expenseDate).format("YYYY-MM-DD")}
-              disabled
-            />
-          </div>
+          
           <div className="details-row">
             <span className="details-label">السعر:</span>
             <input
@@ -276,7 +267,7 @@ const ExpensessView = () => {
             <span className="details-label">المكتب:</span>
             <input
               className="details-value"
-              value={expenseData.officeName}
+              value={profile.officeName}
               disabled
             />
           </div>
@@ -284,7 +275,15 @@ const ExpensessView = () => {
             <span className="details-label">المحافظة:</span>
             <input
               className="details-value"
-              value={expenseData.governorateName}
+              value={profile.governorateName}
+              disabled
+            />
+          </div>
+          <div className="details-row">
+            <span className="details-label">التاريخ:</span>
+            <input
+              className="details-value"
+              value={moment(expenseData.expenseDate).format("YYYY-MM-DD")}
               disabled
             />
           </div>

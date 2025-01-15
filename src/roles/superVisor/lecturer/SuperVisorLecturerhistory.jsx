@@ -23,7 +23,6 @@ const SuperVisorLecturerhistory = () => {
     roles,
     permissions,
   } = useAuthStore();
-  // Check permissions
   const hasCreatePermission = permissions.includes("Lc");
   const isSupervisor = roles.includes("Supervisor");
   const [lectures, setLectures] = useState([]);
@@ -43,6 +42,7 @@ const SuperVisorLecturerhistory = () => {
     companyId: null,
     lectureTypeIds: [],
   });
+
   const formatToISO = (date) => {
     if (!date) return null;
     return date.toISOString();
@@ -67,7 +67,7 @@ const SuperVisorLecturerhistory = () => {
         },
         {
           headers: {
-            "Content-Type": "application/json", // Explicitly set the content type to JSON
+            "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
         }
@@ -84,7 +84,6 @@ const SuperVisorLecturerhistory = () => {
         }
       }
     } catch (error) {
-      console.error("API Error:", error);
       message.error(
         `حدث خطأ أثناء جلب المحاضر: ${
           error.response?.data?.message || error.message
@@ -92,6 +91,7 @@ const SuperVisorLecturerhistory = () => {
       );
     }
   };
+
   const handleSearch = async (page = 1) => {
     const payload = {
       title: formData.title || "",
@@ -144,8 +144,6 @@ const SuperVisorLecturerhistory = () => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setCompanies(response.data);
-
-      // Reset lecture types when companies are fetched
       setlectureTypeNames([]);
       setFormData((prev) => ({
         ...prev,
@@ -161,15 +159,14 @@ const SuperVisorLecturerhistory = () => {
     setFormData((prev) => ({
       ...prev,
       companyId,
-      lectureTypeIds: [], // Reset lecture type when company changes
+      lectureTypeIds: [],
     }));
 
-    // Find selected company and update lecture types
     const selectedCompany = companies.find(
       (company) => company.id === companyId
     );
     if (selectedCompany) {
-      setlectureTypeNames(selectedCompany.lectureTypeNames || []);
+      setlectureTypeNames(selectedCompany.lectureTypes || []);
     } else {
       setlectureTypeNames([]);
     }
@@ -189,7 +186,6 @@ const SuperVisorLecturerhistory = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-      console.log(response)
 
       if (response.data && response.data[0] && response.data[0].offices) {
         setOffices(response.data[0].offices);
@@ -233,10 +229,9 @@ const SuperVisorLecturerhistory = () => {
 
   const handleGovernorateChange = async (value) => {
     setSelectedGovernorate(value);
-    setSelectedOffice(null); // Clear the selected office when governorate changes
+    setSelectedOffice(null);
     await fetchOffices(value);
   };
-  
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -403,8 +398,6 @@ const SuperVisorLecturerhistory = () => {
             </Select>
           </div>
 
-    
-
           <div className="supervisor-Lectur-field-wrapper">
             <label htmlFor="title" className="supervisor-Lectur-label">
               عنوان المحضر
@@ -418,14 +411,35 @@ const SuperVisorLecturerhistory = () => {
           </div>
 
           <div className="supervisor-Lectur-field-wrapper">
+            <label htmlFor="lectureType" className="supervisor-Lectur-label">
+              نوع المحضر
+            </label>
+            <Select
+              id="lectureTypeIds"
+              mode="multiple"
+              value={formData.lectureTypeIds}
+              onChange={(value) =>
+                setFormData((prev) => ({ ...prev, lectureTypeIds: value }))
+              }
+              className="supervisor-Lectur-select"
+              style={{ width: "fit-content", maxHeight: "200px", overflowY: "auto" }}>
+              {lectureTypeNames.map((type) => (
+                <Select.Option key={type.id} value={type.id}>
+                  {type.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="supervisor-Lectur-field-wrapper">
             <label htmlFor="startDate" className="supervisor-Lectur-label">
               التاريخ من
             </label>
             <DatePicker
               id="startDate"
               placeholder="اختر التاريخ"
-              onChange={(date) => handleDateChange(date, "endDate")}
-              value={formData.endDate}
+              onChange={(date) => handleDateChange(date, "startDate")}
+              value={formData.startDate}
               className="supervisor-Lectur-input"
             />
           </div>

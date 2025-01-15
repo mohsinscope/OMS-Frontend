@@ -40,7 +40,6 @@ const LecturerShow = () => {
   const [lectureTypes, setLectureTypes] = useState([]);
   const [initialCompanyId, setInitialCompanyId] = useState(null);
   const [initialLectureTypeIds, setInitialLectureTypeIds] = useState(null);
-  const [initialLectureTypeNames, setInitialLectureTypeNames] = useState(null);
   const [form] = Form.useForm();
 
   const { isSidebarCollapsed, permissions } = useAuthStore();
@@ -63,28 +62,24 @@ const LecturerShow = () => {
       );
       const lecture = response.data;
       setLectureData(lecture);
-      console.log(response)
+
       // Store initial values
       setInitialCompanyId(lecture.companyId);
       setInitialLectureTypeIds(lecture.lectureTypeIds);
-      setInitialLectureTypeNames(lecture.lectureTypeNames);
-
-      // Set form values
-      form.setFieldsValue({
-        ...lecture,
-        date: moment(lecture.date),
-        companyId: lecture.companyId,
-        lectureTypeIds: {
-          key: lecture.lectureTypeIds,
-          label: lecture.lectureTypeNames,
-        },
-      });
 
       // Preload lecture types
       const selectedCompany = companies.find((c) => c.id === lecture.companyId);
       if (selectedCompany) {
         setLectureTypes(selectedCompany.lectureTypes || []);
       }
+
+      // Set form values
+      form.setFieldsValue({
+        ...lecture,
+        date: moment(lecture.date),
+        companyId: lecture.companyId,
+        lectureTypeIds: lecture.lectureTypeIds,
+      });
     } catch (error) {
       message.error("حدث خطأ أثناء جلب تفاصيل المحضر");
     }
@@ -133,6 +128,7 @@ const LecturerShow = () => {
 
     initializeData();
   }, [lectureId, navigate]);
+
   const handleCompanyChange = (value) => {
     const selectedCompany = companies.find((c) => c.id === value);
     setLectureTypes(selectedCompany?.lectureTypes || []);
@@ -181,7 +177,7 @@ const LecturerShow = () => {
         companyId: values.companyId,
         lectureTypeIds: values.lectureTypeIds, // Multiple lecture type IDs
       };
-      
+
       await axiosInstance.put(`${Url}/api/Lecture/${lectureId}`, updatedValues);
       message.success("تم تحديث المحضر بنجاح");
       setEditModalVisible(false);
@@ -305,7 +301,7 @@ const LecturerShow = () => {
             <span className="details-label">نوع المحضر:</span>
             <input
               className="details-value"
-              value={lectureData.lectureTypeNames}
+              value={lectureData.lectureTypeNames?.join(", ")}
               disabled
             />
           </div>
@@ -352,7 +348,7 @@ const LecturerShow = () => {
               name="title"
               label="عنوان المحضر"
               rules={[{ required: true, message: "يرجى إدخال عنوان المحضر" }]}>
-              <Input.TextArea placeholder="عنوان المحضر" />
+              <Input placeholder="عنوان المحضر" />
             </Form.Item>
 
             <Form.Item
@@ -379,15 +375,11 @@ const LecturerShow = () => {
               label="نوع المحضر"
               rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
               <Select
-                style={{height:"fit-content"}}
                 mode="multiple"
                 placeholder="اختر نوع المحضر"
                 disabled={!form.getFieldValue("companyId")}
-                labelInValue // Enable labelInValue
-                onChange={(value) => {
-                  // Update the form field with the selected value
-                  form.setFieldValue("lectureTypeIds", value.key);
-                }}>
+                value={form.getFieldValue("lectureTypeIds") || []}
+                onChange={(value) => form.setFieldValue("lectureTypeIds", value)}>
                 {lectureTypes.map((type) => (
                   <Select.Option key={type.id} value={type.id}>
                     {type.name}
