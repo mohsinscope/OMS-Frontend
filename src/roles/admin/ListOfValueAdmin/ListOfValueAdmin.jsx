@@ -41,16 +41,13 @@ export default function ListOfValueAdmin() {
 
   const transformData = (data) => {
     if (currentPath === "/admin/lecture-types") {
-      return data.reduce((acc, company) => {
-        const lectureTypes = company.lectureTypes.map((type) => ({
-          id: type.id,
-          key: type.id,
-          name: type.name,
-          companyName: company.name,
-          companyId: company.id,
-        }));
-        return [...acc, ...lectureTypes];
-      }, []);
+      return data.map((item) => ({
+        ...item,
+        key: item.id,
+        id: item.id,
+        name: item.name,
+        companyName: item.companyName
+      }));
     }
     
     return data.map((item) => ({

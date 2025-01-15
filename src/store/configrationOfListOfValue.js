@@ -118,12 +118,11 @@ const Config = {
     ]
   },
 
-  "/admin/lecture-types": {
-    getEndpoint: "/api/Company",
+"/admin/lecture-types": {
+    getEndpoint: "/api/Company/lecture-types",
     postEndpoint: "/api/company/add-lecture-type",
     putEndpoint: (id) => `/api/company/lectureType/${id}`,
     deleteEndpoint: (id) => `/api/company/lectureType/${id}`,
-
     columns: [
       { title: "نوع المحضر", dataIndex: "name", key: "name" },
       { title: "الشركة", dataIndex: "companyName", key: "companyName" }
@@ -137,7 +136,7 @@ const Config = {
         optionsEndpoint: "/api/company?PageNumber=1&PageSize=100"
       }
     ]
-  },"/admin/thrshhold": {
+},"/admin/thrshhold": {
     getEndpoint: "/api/Threshold",
     postEndpoint: "/api/Threshold",
     putEndpoint: (id) => `/api/Threshold/${id}`,
