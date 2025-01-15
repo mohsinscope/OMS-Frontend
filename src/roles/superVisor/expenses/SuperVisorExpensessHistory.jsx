@@ -34,10 +34,9 @@ const statusDisplayNames = {
   [Status.Completed]: "مكتمل"
 };
 
-// Define allowed statuses for each role
-const roleStatusMap = {
-  Admin: Object.values(Status), // Admin can see all statuses
-  ProjectCoordinator: [Status.SentToProjectCoordinator, Status.ReturnedToProjectCoordinator],
+// Define allowed statuses for each position
+const positionStatusMap = {
+  ProjectCoordinator: [ Status.SentToProjectCoordinator, Status.ReturnedToProjectCoordinator],
   Manager: [Status.SentToManager, Status.ReturnedToManager],
   Director: [Status.SentToDirector],
   Accountant: [Status.SentToAccountant],
@@ -65,25 +64,34 @@ export default function SuperVisorExpensesHistory() {
     searchVisible, 
     accessToken 
   } = useAuthStore();
-
-  const isSupervisor = roles.includes("Supervisor");
+  
+  const userPosition = profile?.position;
+  const isSupervisor = userPosition === "Supervisor";
   const isAdmin = roles.includes("Admin");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
 
-  // Determine available statuses based on user roles
+  // Determine available statuses based on user position and admin role
   const getAvailableStatuses = () => {
     if (isAdmin) {
       return Object.values(Status);
     }
 
-    let availableStatuses = [];
-    roles.forEach(role => {
-      if (roleStatusMap[role]) {
-        availableStatuses = [...availableStatuses, ...roleStatusMap[role]];
-      }
+    const positionStatuses = positionStatusMap[userPosition] || [];
+    return [...new Set(positionStatuses)];
+  };
+
+  // Filter expenses based on user's allowed statuses
+  const filterExpensesByAllowedStatuses = (expenses) => {
+    if (isAdmin) return expenses;
+
+    const allowedStatuses = getAvailableStatuses();
+    return expenses.filter(expense => {
+      const expenseStatus = typeof expense.status === 'string' 
+        ? Status[expense.status] 
+        : expense.status;
+      return allowedStatuses.includes(expenseStatus);
     });
-    return [...new Set(availableStatuses)]; // Remove duplicates
   };
 
   useEffect(() => {
@@ -126,6 +134,12 @@ export default function SuperVisorExpensesHistory() {
         }
       };
 
+      // Add status filtering based on user's position if no specific status is selected
+      if (!status && !isAdmin) {
+        const allowedStatuses = getAvailableStatuses();
+        searchBody.allowedStatuses = allowedStatuses;
+      }
+
       const response = await axiosInstance.post(
         `${Url}/api/Expense/search`,
         searchBody,
@@ -137,13 +151,16 @@ export default function SuperVisorExpensesHistory() {
         }
       );
 
-      setExpensesList(response.data);
+      // Filter the expenses based on allowed statuses
+      const filteredExpenses = filterExpensesByAllowedStatuses(response.data);
+      setExpensesList(filteredExpenses);
+
       const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
-        setTotalRecords(paginationInfo.totalItems);
+        setTotalRecords(filteredExpenses.length); // Update total based on filtered results
       } else {
-        setTotalRecords(response.data.length);
+        setTotalRecords(filteredExpenses.length);
       }
     } catch (error) {
       console.error("Error fetching expenses:", error);
@@ -154,8 +171,15 @@ export default function SuperVisorExpensesHistory() {
   };
 
   useEffect(() => {
-    fetchExpensesData(currentPage);
-  }, [isSupervisor, userGovernorateId, userOfficeId]);
+    // Set initial status filter based on user's position
+    if (!isAdmin && userPosition) {
+      const allowedStatuses = getAvailableStatuses();
+      if (allowedStatuses.length > 0) {
+        setStatus(allowedStatuses[0]); // Set to first allowed status
+      }
+    }
+    fetchExpensesData(1);
+  }, [isSupervisor, userGovernorateId, userOfficeId, userPosition]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -165,7 +189,13 @@ export default function SuperVisorExpensesHistory() {
   const handleReset = () => {
     setStartDate(null);
     setEndDate(null);
-    setStatus(null);
+    // Only reset status to null if admin, otherwise set to first allowed status
+    if (isAdmin) {
+      setStatus(null);
+    } else {
+      const allowedStatuses = getAvailableStatuses();
+      setStatus(allowedStatuses[0] || null);
+    }
     if (!isSupervisor) {
       setSelectedGovernorate(null);
       setSelectedOffice(null);
@@ -201,7 +231,7 @@ export default function SuperVisorExpensesHistory() {
       title: "الحالة",
       dataIndex: "status",
       key: "status",
-      render: (value) => statusDisplayNames[Status[value]] || value
+      render: (value) => statusDisplayNames[value] || value
     },
     {
       title: "التاريخ",
@@ -223,7 +253,7 @@ export default function SuperVisorExpensesHistory() {
     },
   ];
 
-  // Get available statuses for the current user
+  // Get available statuses for the current user based on position or admin role
   const availableStatuses = getAvailableStatuses();
 
   return (
@@ -280,7 +310,7 @@ export default function SuperVisorExpensesHistory() {
             className="html-dropdown"
             value={status}
             onChange={(value) => setStatus(value)}>
-            <Select.Option value={null}>الكل</Select.Option>
+            {isAdmin && <Select.Option value={null}>الكل</Select.Option>}
             {availableStatuses.map((statusValue) => (
               <Select.Option key={statusValue} value={statusValue}>
                 {statusDisplayNames[statusValue]}

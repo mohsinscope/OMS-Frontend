@@ -18,12 +18,10 @@ export default function ExpensessStats() {
   const [availableOffices, setAvailableOffices] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
+  const [selectedThreshold, setSelectedThreshold] = useState(null);
   const [expensesData, setExpensesData] = useState([]);
-  const [lastMonthData, setLastMonthData] = useState({
-    currentMonth: 0,
-    previousMonth: 0
-  });
-  const [selectedYear, setSelectedYear] = useState('2023');
+  const [lastTwoMonthsData, setLastTwoMonthsData] = useState([]);
+  const [thresholds, setThresholds] = useState([]);
 
   const fetchGovernorates = useCallback(async () => {
     try {
@@ -33,6 +31,41 @@ export default function ExpensessStats() {
       setGovernorates(response.data);
     } catch (error) {
       setError("فشل في جلب المحافظات. الرجاء المحاولة مرة أخرى.");
+    }
+  }, [accessToken]);
+
+  const fetchThresholds = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Threshold`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      setThresholds(response.data);
+    } catch (error) {
+      console.error("فشل في جلب مستويات المصاريف:", error);
+      setError("فشل في جلب مستويات المصاريف. الرجاء المحاولة مرة أخرى.");
+    }
+  }, [accessToken]);
+
+  const fetchLastTwoMonths = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Expense/statistics/last-two-months`, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      
+      setLastTwoMonthsData([
+        {
+          name: 'الشهر الحالي',
+          value: response.data.expenses[0]?.totalAmount || 0,
+          percentage: response.data.totalPercentage
+        },
+        {
+          name: 'الشهر السابق',
+          value: response.data.expenses[1]?.totalAmount || 0,
+          percentage: response.data.totalPercentage
+        }
+      ]);
+    } catch (error) {
+      console.error("فشل في جلب بيانات الشهرين الأخيرين:", error);
     }
   }, [accessToken]);
 
@@ -64,27 +97,17 @@ export default function ExpensessStats() {
     setLoading(true);
     setError(null);
     try {
-      const [expensesResponse, lastMonthResponse] = await Promise.all([
-        axiosInstance.post(`${Url}/api/Expense/search-statistics`, {
-          officeId: selectedOffice,
-          governorateId: selectedGovernorate,
-          startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
-          endDate: endDate ? endDate.format('YYYY-MM-DD') : null
-        }, {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        }),
-        axiosInstance.post(`${Url}/api/Expense/search-last-month`, {
-          officeId: selectedOffice
-        }, {
-          headers: { Authorization: `Bearer ${accessToken}` }
-        })
-      ]);
-
-      setExpensesData(expensesResponse.data);
-      setLastMonthData({
-        currentMonth: lastMonthResponse.data.currentMonthTotal,
-        previousMonth: lastMonthResponse.data.previousMonthTotal
+      const response = await axiosInstance.post(`${Url}/api/Expense/search-statistics`, {
+        officeId: selectedOffice,
+        governorateId: selectedGovernorate,
+        thresholdId: selectedThreshold,
+        startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
+        endDate: endDate ? endDate.format('YYYY-MM-DD') : null
+      }, {
+        headers: { Authorization: `Bearer ${accessToken}` }
       });
+
+      setExpensesData(response.data || []);
     } catch (error) {
       setError("فشل في جلب البيانات. الرجاء المحاولة مرة أخرى.");
     } finally {
@@ -93,8 +116,16 @@ export default function ExpensessStats() {
   };
 
   useEffect(() => {
-    fetchGovernorates();
-  }, [fetchGovernorates]);
+    const initializeData = async () => {
+      await Promise.all([
+        fetchGovernorates(),
+        fetchThresholds(),
+        fetchLastTwoMonths()
+      ]);
+    };
+    
+    initializeData();
+  }, [fetchGovernorates, fetchThresholds, fetchLastTwoMonths]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -102,7 +133,8 @@ export default function ExpensessStats() {
   };
 
   const formatCurrency = (value) => {
-    return `د.ع ${value.toLocaleString()}`;
+    const safeValue = typeof value === 'number' ? value : 0;
+    return `د.ع ${safeValue.toLocaleString()}`;
   };
 
   const CustomTooltip = ({ active, payload }) => {
@@ -119,8 +151,6 @@ export default function ExpensessStats() {
 
   return (
     <div className="exp-container" dir="rtl">
-    
-
       <form onSubmit={handleSubmit} className="exp-filter-form">
         <div className="exp-form-group">
           <label>المحافظة</label>
@@ -147,6 +177,22 @@ export default function ExpensessStats() {
             <option value="">كل المكاتب</option>
             {availableOffices.map((office) => (
               <option key={office.id} value={office.id}>{office.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="exp-form-group">
+          <label>مستوى المصاريف</label>
+          <select
+            value={selectedThreshold || ""}
+            onChange={(e) => setSelectedThreshold(e.target.value || null)}
+            className="exp-form-control"
+          >
+            <option value="">كل المستويات</option>
+            {thresholds.map((threshold) => (
+              <option key={threshold.id} value={threshold.id}>
+                {threshold.name} ({threshold.minValue.toLocaleString()} - {threshold.maxValue.toLocaleString()})
+              </option>
             ))}
           </select>
         </div>
@@ -207,10 +253,7 @@ export default function ExpensessStats() {
           <div className="exp-chart-container">
             <PieChart width={400} height={300}>
               <Pie
-                data={[
-                  { name: 'الشهر الحالي', value: lastMonthData.currentMonth },
-                  { name: 'الشهر السابق', value: lastMonthData.previousMonth }
-                ]}
+                data={lastTwoMonthsData}
                 cx="50%"
                 cy="50%"
                 innerRadius={60}
@@ -218,7 +261,7 @@ export default function ExpensessStats() {
                 paddingAngle={5}
                 dataKey="value"
               >
-                {[0, 1].map((entry, index) => (
+                {lastTwoMonthsData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
@@ -227,11 +270,14 @@ export default function ExpensessStats() {
             <div className="exp-pie-legend">
               <div className="exp-legend-item">
                 <span className="exp-legend-color" style={{ backgroundColor: COLORS[0] }}></span>
-                <span>الشهر الحالي: {formatCurrency(lastMonthData.currentMonth)}</span>
+                <span>الشهر الحالي: {formatCurrency(lastTwoMonthsData[0]?.value || 0)}</span>
               </div>
               <div className="exp-legend-item">
                 <span className="exp-legend-color" style={{ backgroundColor: COLORS[1] }}></span>
-                <span>الشهر السابق: {formatCurrency(lastMonthData.previousMonth)}</span>
+                <span>الشهر السابق: {formatCurrency(lastTwoMonthsData[1]?.value || 0)}</span>
+              </div>
+              <div className="exp-legend-total">
+                <span>النسبة المئوية الإجمالية: {lastTwoMonthsData[0]?.percentage?.toFixed(2) || 0}%</span>
               </div>
             </div>
           </div>
