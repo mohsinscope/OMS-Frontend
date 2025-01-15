@@ -22,13 +22,15 @@ export default function SuperVisorExpensesRequest() {
   const [currentMonthlyExpenseId, setCurrentMonthlyExpenseId] = useState(null);
   const [canCreateMonthly, setCanCreateMonthly] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [currentMonthDailyExpenses, setCurrentMonthDailyExpenses] = useState(
-    []
-  );
-  console.log("currentMonthDailyExpenses = ",currentMonthDailyExpenses)
+  const [currentMonthDailyExpenses, setCurrentMonthDailyExpenses] = useState([]);
   const [expenseTypes, setExpenseTypes] = useState([]);
   const [isMonthlyModalVisible, setIsMonthlyModalVisible] = useState(false);
   const [monthlyForm] = Form.useForm();
+  
+  // New state for send functionality
+  const [isSendModalVisible, setIsSendModalVisible] = useState(false);
+  const [sendForm] = Form.useForm();
+  const [sendLoading, setSendLoading] = useState(false);
 
   const [officeInfo, setOfficeInfo] = useState({
     totalCount: 0,
@@ -39,42 +41,37 @@ export default function SuperVisorExpensesRequest() {
     supervisorName: profile?.fullName || "",
   });
 
-  // Format the date for display
   const arabicMonths = [
-    "الواحد", // January
-    "الثاني", // February
-    "الثالث", // March
-    "الرابع", // April
-    "الخامس", // May
-    "السادس", // June
-    "السابع", // July
-    "الثامن", // August
-    "التاسع", // September
-    "العاشر", // October
-    "الحادي عشر", // November
-    "الثناي عشر", // December
+    "الواحد",
+    "الثاني",
+    "الثالث",
+    "الرابع",
+    "الخامس",
+    "السادس",
+    "السابع",
+    "الثامن",
+    "التاسع",
+    "العاشر",
+    "الحادي عشر",
+    "الثناي عشر",
   ];
 
-  // Format the date to extract the month number and Arabic name
   const formattedDate = new Date(officeInfo.date);
   const displayMonthNumber = formattedDate.getMonth() + 1;
   const displayMonthName = arabicMonths[formattedDate.getMonth()];
 
-  // Fetch Expense Types
   const fetchExpenseTypes = async () => {
     try {
       const response = await axiosInstance.get(
         "/api/ExpenseType?PageNumber=1&PageSize=10"
       );
       setExpenseTypes(response.data || []);
-      console.log("response.data = ", response.data);
     } catch (error) {
       console.error("Error fetching expense types:", error);
       message.error("حدث خطأ في جلب أنواع المصروفات");
     }
   };
 
-  // Fetch Monthly Expense
   const fetchMonthlyExpense = async () => {
     try {
       const payload = {
@@ -107,41 +104,38 @@ export default function SuperVisorExpensesRequest() {
     }
   };
 
- // Fetch Daily Expenses
-const fetchDailyExpenses = async (monthlyExpenseId) => {
-  if (!monthlyExpenseId) return;
+  const fetchDailyExpenses = async (monthlyExpenseId) => {
+    if (!monthlyExpenseId) return;
 
-  try {
-    setLoading(true);
-    const response = await axiosInstance.get(
-      `/api/Expense/${monthlyExpenseId}/daily-expenses`
-    );
+    try {
+      setLoading(true);
+      const response = await axiosInstance.get(
+        `/api/Expense/${monthlyExpenseId}/daily-expenses`
+      );
 
-    if (response.data && response.data.length > 0) {
-      const formattedDailyExpenses = response.data.map((expense) => ({
-        key: expense.id,
-        id: expense.id,
-        date: new Date(expense.expenseDate).toISOString().split("T")[0],
-        price: expense.price,
-        quantity: expense.quantity,
-        totalAmount: expense.amount,
-        notes: expense.notes,
-        expenseTypeName: expense.expenseTypeName, // Include the expense type name
-      }));
+      if (response.data && response.data.length > 0) {
+        const formattedDailyExpenses = response.data.map((expense) => ({
+          key: expense.id,
+          id: expense.id,
+          date: new Date(expense.expenseDate).toISOString().split("T")[0],
+          price: expense.price,
+          quantity: expense.quantity,
+          totalAmount: expense.amount,
+          notes: expense.notes,
+          expenseTypeName: expense.expenseTypeName,
+        }));
 
-      setCurrentMonthDailyExpenses(formattedDailyExpenses);
-      updateOfficeInfo(formattedDailyExpenses);
+        setCurrentMonthDailyExpenses(formattedDailyExpenses);
+        updateOfficeInfo(formattedDailyExpenses);
+      }
+    } catch (error) {
+      console.error("Error fetching daily expenses:", error);
+      message.error("حدث خطأ في جلب المصروفات اليومية");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching daily expenses:", error);
-    message.error("حدث خطأ في جلب المصروفات اليومية");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
-
-  // Create Monthly Expense
   const handleCreateMonthlyExpense = async (values) => {
     try {
       setLoading(true);
@@ -175,7 +169,33 @@ const fetchDailyExpenses = async (monthlyExpenseId) => {
     }
   };
 
-  // Update Office Information
+  // New handler for sending monthly expense
+  const handleSendMonthlyExpense = async (values) => {
+    try {
+      setSendLoading(true);
+      const payload = {
+        monthlyExpensesId: currentMonthlyExpenseId,
+        newStatus: 1,
+        notes: values.notes || "Monthly expenses marked as completed by the Manager."
+      };
+
+      await axiosInstance.post(
+        `/api/Expense/${currentMonthlyExpenseId}/status`,
+        payload
+      );
+
+      message.success("تم إرسال المصروف الشهري بنجاح");
+      setIsSendModalVisible(false);
+      sendForm.resetFields();
+      fetchMonthlyExpense();
+    } catch (error) {
+      console.error("Error sending monthly expense:", error);
+      message.error("حدث خطأ في إرسال المصروف الشهري");
+    } finally {
+      setSendLoading(false);
+    }
+  };
+
   const updateOfficeInfo = (expenses) => {
     const totalExpenses = expenses.reduce(
       (sum, item) => sum + item.totalAmount,
@@ -188,7 +208,6 @@ const fetchDailyExpenses = async (monthlyExpenseId) => {
     }));
   };
 
-  // Initial Data Loading
   useEffect(() => {
     fetchExpenseTypes();
     fetchMonthlyExpense();
@@ -215,18 +234,6 @@ const fetchDailyExpenses = async (monthlyExpenseId) => {
       dataIndex: "quantity",
       key: "quantity",
     },
-    // {
-    //   title: "نوع المصروف",
-    //   dataIndex: "expenseTypeId",
-    //   key: "expenseTypeId",
-    //   render: (expenseTypeId) => {
-    //     console.log(expenseTypeId);
-    //     const expenseType = expenseTypes.find(
-    //       (type) => type.id === expenseTypeId
-    //     );
-    //     return expenseType ? expenseType.name : "غير محدد";
-    //   },
-    // },
     {
       title: "المبلغ الإجمالي",
       dataIndex: "totalAmount",
@@ -320,7 +327,6 @@ const fetchDailyExpenses = async (monthlyExpenseId) => {
           gap: "24px",
           marginBottom: "24px",
         }}>
-        {/* Office Info Card */}
         <Card
           className="office-info-card"
           style={{ width: "25%", flexShrink: 0 }}>
@@ -336,10 +342,10 @@ const fetchDailyExpenses = async (monthlyExpenseId) => {
           <hr
             style={{
               width: "100%",
-              height: "1px", // Ensures consistent thickness
-              border: "none", // Removes the default border
-              background: "linear-gradient(to right, #e0e0e0, #000, #e0e0e0)", // Adds a gradient effect
-              marginBottom: "12px", // Keeps the spacing below
+              height: "1px",
+              border: "none",
+              background: "linear-gradient(to right, #e0e0e0, #000, #e0e0e0)",
+              marginBottom: "12px",
             }}
           />
 
@@ -428,16 +434,18 @@ const fetchDailyExpenses = async (monthlyExpenseId) => {
                   إضافة مصروف يومي
                 </Button>
               </Link>
-              <Link to="" state={{ monthlyExpenseId: currentMonthlyExpenseId }}>
-                <Button color="default" variant="outlined" block size="large">
-                  ارسال
-                </Button>
-              </Link>
+              <Button
+                color="default"
+                variant="outlined"
+                block
+                size="large"
+                onClick={() => setIsSendModalVisible(true)}>
+                ارسال طلبات الشهر الكلية
+              </Button>
             </Space>
           )}
         </Card>
 
-        {/* Main Content Area */}
         <div style={{ flex: 1 }}>
           {canCreateMonthly ? (
             <EmptyStateCard />
@@ -500,6 +508,44 @@ const fetchDailyExpenses = async (monthlyExpenseId) => {
               block
               size="large">
               إنشاء
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Send Modal */}
+      <Modal
+        title="إرسال المصروف الشهري"
+        open={isSendModalVisible}
+        onCancel={() => {
+          setIsSendModalVisible(false);
+          sendForm.resetFields();
+        }}
+        footer={null}
+        style={{ direction: "rtl" }}>
+        <Form
+          form={sendForm}
+          onFinish={handleSendMonthlyExpense}
+          layout="vertical"
+          style={{ marginTop: "10px" }}>
+          <Form.Item
+            name="notes"
+            label="ملاحظات"
+            style={{ width: "100%" }}>
+            <Input.TextArea
+              rows={4}
+              placeholder="أدخل الملاحظات"
+              style={{ resize: "none" }}
+            />
+          </Form.Item>
+          <Form.Item>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={sendLoading}
+              block
+              size="large">
+              إرسال
             </Button>
           </Form.Item>
         </Form>
