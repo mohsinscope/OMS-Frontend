@@ -378,7 +378,16 @@ export default function SuperVisorExpensesRequest() {
         dataIndex: "notes",
         key: "notes",
         width: "12.5%"
-      }
+      },...(lastMonthExpense.status === 'ReturnedToSupervisor' ? [{
+        title: "الإجراءات",
+        key: "actions",
+        render: (_, record) => (
+          <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>
+            <Button type="primary">عرض</Button>
+          </Link>
+        ),
+        width: "10%"
+      }] : [])
     ] : [];
 
     const getLastMonthData = () => {

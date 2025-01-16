@@ -10,6 +10,8 @@ import Url from "./../store/url";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import Icons from './../reusable elements/icons.jsx';
+import { Link } from 'react-router-dom';
+
 // Status Enum matching backend exactly
 const Status = {
   New: 0,
@@ -54,20 +56,25 @@ export default function ExpensesView() {
   const [actionNote, setActionNote] = useState("");
   const [form] = Form.useForm();
 
+  // Check if user is accountant
+  const isAccountant = profile?.position?.toLowerCase()?.includes('accontnt');
+
   const getNextStatus = (currentStatus, position) => {
     position = position?.toLowerCase();
     
-    if (position?.includes('coordinator')) {
+    if (position?.includes('accontnt')) {
+      return Status.RecievedBySupervisor;
+    } else if (position?.includes('coordinator')) {
       return Status.SentToManager;
     } else if (position?.includes('manager')) {
       return Status.SentToDirector;
     } else if (position?.includes('director')) {
       return Status.SentToAccountant;
-    } else if (position?.includes('accountant')) {
-      return Status.RecievedBySupervisor;
     } else if (currentStatus === Status.RecievedBySupervisor) {
       return Status.Completed;
     }
+    
+    console.warn(`Unexpected position: ${position} or status: ${currentStatus}`);
     return currentStatus;
   };
 
@@ -109,7 +116,6 @@ export default function ExpensesView() {
       try {
         setIsSubmitting(true);
         
-        // Submit the action
         await axiosInstance.post(`${Url}/api/Actions`, {
           actionType: actionType,
           notes: actionNote,
@@ -119,21 +125,27 @@ export default function ExpensesView() {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
 
-        // Update status based on action type
         const currentStatus = expense?.generalInfo?.["الحالة"];
         const newStatus = actionType === "Approval" 
           ? getNextStatus(currentStatus, profile?.position)
           : getRejectionStatus(currentStatus, profile?.position);
-          await axiosInstance.post(`${Url}/api/Expense/${expenseId}/status`, {
-            monthlyExpensesId: expenseId,
-            newStatus: newStatus,
-            notes: actionNote
-          }, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          });
+
+        if (newStatus === currentStatus) {
+          message.error("لا يمكن تغيير الحالة في هذه المرحلة");
+          return;
+        }
+
+        await axiosInstance.post(`${Url}/api/Expense/${expenseId}/status`, {
+          monthlyExpensesId: expenseId,
+          newStatus: newStatus,
+          notes: actionNote
+        }, {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+
         message.success(`تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`);
         handleModalCancel();
-        navigate('/expenses-history');
+        navigate(-1);
       } catch (error) {
         console.error(`Error processing ${actionType}:`, error);
         message.error(`حدث خطأ أثناء ${actionType === "Approval" ? "الموافقة" : "الإرجاع"}`);
@@ -180,12 +192,36 @@ export default function ExpensesView() {
         setIsModalVisible(true);
       }
     } else {
-      setSelectedItem(record);
+      // If there's an image ID, fetch the image
+      if (record.image) {
+        try {
+          const response = await axiosInstance.get(`${Url}/api/attachment/${record.image}`, {
+            headers: { 
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            responseType: 'blob'
+          });
+          
+          // Create URL for the image blob
+          const imageUrl = URL.createObjectURL(response.data);
+          setSelectedItem({...record, imageUrl});
+        } catch (error) {
+          console.error('Error fetching image:', error);
+          message.error('حدث خطأ أثناء جلب الصورة');
+          setSelectedItem(record);
+        }
+      } else {
+        setSelectedItem(record);
+      }
       setIsModalVisible(true);
     }
   };
 
   const handleModalClose = () => {
+    if (selectedItem?.imageUrl) {
+      URL.revokeObjectURL(selectedItem.imageUrl);
+    }
     setIsModalVisible(false);
     setSelectedItem(null);
   };
@@ -263,6 +299,7 @@ export default function ExpensesView() {
 
     fetchAllExpenseData();
   }, [expenseId, accessToken, navigate]);
+
   const handleExportToExcel = async () => {
     try {
       if (!expense) {
@@ -270,13 +307,11 @@ export default function ExpensesView() {
         return;
       }
   
-      // إنشاء ملف Excel جديد
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("تقرير المصاريف", {
-        properties: { rtl: true }, // تفعيل RTL
+        properties: { rtl: true },
       });
   
-      // إضافة معلومات المشرف والمحافظة وما إلى ذلك كصف منفصل أعلى الجدول
       const supervisorRow = worksheet.addRow([
         "الحالة",
         "المتبقي",
@@ -288,12 +323,12 @@ export default function ExpensesView() {
       ]);
   
       supervisorRow.eachCell((cell) => {
-        cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // النص غامق ولونه أبيض
-        cell.alignment = { horizontal: "center", vertical: "middle" }; // محاذاة النص للوسط
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
         cell.fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: "FF4CAF50" }, // خلفية خضراء
+          fgColor: { argb: "FF4CAF50" },
         };
         cell.border = {
           top: { style: "thin" },
@@ -303,7 +338,6 @@ export default function ExpensesView() {
         };
       });
   
-      // إضافة بيانات المشرف
       const supervisorDataRow = worksheet.addRow([
         statusMap[expense?.generalInfo?.["الحالة"]] || "N/A",
         `IQD${expense?.generalInfo?.["المتبقي"] || 0}`,
@@ -315,7 +349,7 @@ export default function ExpensesView() {
       ]);
   
       supervisorDataRow.eachCell((cell) => {
-        cell.alignment = { horizontal: "center", vertical: "middle" }; // المحاذاة للوسط
+        cell.alignment = { horizontal: "center", vertical: "middle" };
         cell.border = {
           top: { style: "thin" },
           bottom: { style: "thin" },
@@ -324,19 +358,18 @@ export default function ExpensesView() {
         };
       });
   
-      worksheet.addRow([]); // صف فارغ للفصل بين المعلومات والجدول
+      worksheet.addRow([]);
   
-      // إضافة رأس الجدول
       const headers = ["ملاحظات", "المجموع", "سعر المفرد", "العدد", "البند", "التاريخ", "ت"];
       const headerRow = worksheet.addRow(headers);
   
       headerRow.eachCell((cell) => {
-        cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // النص غامق ولونه أبيض
-        cell.alignment = { horizontal: "center", vertical: "middle" }; // محاذاة النص للوسط
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
         cell.fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: "FF9C27B0" }, // خلفية بنفسجية
+          fgColor: { argb: "FF9C27B0" },
         };
         cell.border = {
           top: { style: "thin" },
@@ -346,7 +379,6 @@ export default function ExpensesView() {
         };
       });
   
-      // إضافة البيانات التفصيلية
       expense?.items?.forEach((item, index) => {
         const row = worksheet.addRow([
           item["ملاحظات"] || "",
@@ -359,23 +391,21 @@ export default function ExpensesView() {
         ]);
   
         row.eachCell((cell) => {
-          cell.alignment = { horizontal: "center", vertical: "middle" }; // المحاذاة للوسط
+          cell.alignment = { horizontal: "center", vertical: "middle" };
           cell.border = {
             top: { style: "thin" },
             bottom: { style: "thin" },
             left: { style: "thin" },
             right: { style: "thin" },
           };
-          // تطبيق ألوان متبادلة على الصفوف
           cell.fill = {
             type: "pattern",
             pattern: "solid",
-            fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" }, // رمادي فاتح للألوان المتبادلة
+            fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" },
           };
         });
       });
   
-      // ضبط عرض الأعمدة
       worksheet.columns = [
         { width: 30 }, // ملاحظات
         { width: 15 }, // المجموع
@@ -386,7 +416,6 @@ export default function ExpensesView() {
         { width: 10 }, // تسلسل
       ];
   
-      // إنشاء وحفظ ملف Excel
       const buffer = await workbook.xlsx.writeBuffer();
       saveAs(new Blob([buffer]), "تقرير_المصروفات.xlsx");
       message.success("تم تصدير التقرير بنجاح");
@@ -395,7 +424,7 @@ export default function ExpensesView() {
       message.error("حدث خطأ أثناء تصدير التقرير");
     }
   };
-  
+
   const handlePrint = async () => {
     try {
       const element = document.createElement("div");
@@ -494,11 +523,6 @@ export default function ExpensesView() {
       message.error("حدث خطأ أثناء إنشاء ملف PDF");
     }
   };
-  
-  
-  
-  
-  
 
   return (
     <>
@@ -523,15 +547,17 @@ export default function ExpensesView() {
           >
             موافقة
           </Button>
-          <Button 
-            danger
-            type="primary"
-            style={{padding:"20px 40px"}}
-            onClick={() => handleActionClick("Return")}
-            disabled={!profile.profileId || expense?.generalInfo?.["الحالة"] === Status.Completed}
-          >
-            ارجاع
-          </Button>
+          {!isAccountant && (
+            <Button 
+              danger
+              type="primary"
+              style={{padding:"20px 40px"}}
+              onClick={() => handleActionClick("Return")}
+              disabled={!profile.profileId}
+            >
+              ارجاع
+            </Button>
+          )}
         </div>
 
         {/* General Details Table */}
@@ -585,31 +611,27 @@ export default function ExpensesView() {
           locale={{ emptyText: "لا توجد بيانات" }}
         />
 
-<div style={{ display: "flex", justifyContent: "centers", marginBottom: "20px", gap: "10px" }}>
-  {/* Export to PDF Button */}
-  <button
-    className="modern-button pdf-button"
-    onClick={handlePrint}
-    style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", borderRadius: "8px" }}
-  >
-    تصدير الى PDF
-    <Icons type="pdf" />
-  </button>
+        <div style={{ display: "flex", justifyContent: "centers", marginBottom: "20px", gap: "10px" }}>
+          {/* Export to PDF Button */}
+          <button
+            className="modern-button pdf-button"
+            onClick={handlePrint}
+            style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", borderRadius: "8px" }}
+          >
+            تصدير الى PDF
+            <Icons type="pdf" />
+          </button>
 
-  {/* Export to Excel Button */}
-  <button
-    className="modern-button excel-button"
-    onClick={handleExportToExcel}
-    style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", borderRadius: "8px" }}
-  >
-    تصدير إلى Excel
-    <Icons type="excel" />
-  </button>
-</div>
-
-
-
-
+          {/* Export to Excel Button */}
+          <button
+            className="modern-button excel-button"
+            onClick={handleExportToExcel}
+            style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", borderRadius: "8px" }}
+          >
+            تصدير إلى Excel
+            <Icons type="excel" />
+          </button>
+        </div>
 
         <hr />
 
@@ -656,17 +678,12 @@ export default function ExpensesView() {
               align: "center"
             },
             {
-              title: "عرض",
-              key: "action",
-              align: "center",
+              title: "الإجراءات",
+              key: "actions",
               render: (_, record) => (
-                <Button 
-                  type="link" 
-                  onClick={() => handleShowDetails(record)}
-                  loading={isLoadingDetails}
-                >
-                  عرض
-                </Button>
+                <Link to="/Expensess-view-daily" state={{ dailyExpenseId: record.id }}>
+                  <Button type="primary" loading={isLoadingDetails}>عرض</Button>
+                </Link>
               ),
             }
           ]}
@@ -715,7 +732,7 @@ export default function ExpensesView() {
                     dataIndex: "value", 
                     align: "right",
                     render: (text, record) => {
-                      if (record.field === "image") return null;
+                      if (record.field === "image" || record.field === "imageUrl") return null;
                       if (record.field === "السعر" || record.field === "المجموع") {
                         return typeof text === 'number' ? `IQD${text.toFixed(2)}` : text;
                       }
@@ -727,7 +744,7 @@ export default function ExpensesView() {
                   }
                 ]}
                 dataSource={Object.entries(selectedItem)
-                  .filter(([key]) => !['image', 'id'].includes(key))
+                  .filter(([key]) => !['image', 'imageUrl'].includes(key))
                   .map(([key, value]) => ({
                     key,
                     field: key,
@@ -737,12 +754,12 @@ export default function ExpensesView() {
                 bordered
               />
               
-              {selectedItem.type === 'regular' && selectedItem.image && (
+              {selectedItem.type === 'regular' && selectedItem.imageUrl && (
                 <div className="image-container" style={{ marginTop: "20px" }}>
                   <p>الصورة:</p>
                   <hr style={{ marginBottom: "10px", marginTop: "10px" }} />
                   <Image
-                    src={selectedItem.image}
+                    src={selectedItem.imageUrl}
                     alt="تفاصيل الصورة"
                     style={{ maxWidth: "100%", height: "auto" }}
                   />
