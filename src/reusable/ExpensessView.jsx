@@ -312,6 +312,7 @@ export default function ExpensesView() {
         properties: { rtl: true },
       });
   
+      // Add Supervisor Info Row
       const supervisorRow = worksheet.addRow([
         "الحالة",
         "المتبقي",
@@ -340,9 +341,9 @@ export default function ExpensesView() {
   
       const supervisorDataRow = worksheet.addRow([
         statusMap[expense?.generalInfo?.["الحالة"]] || "N/A",
-        `IQD${expense?.generalInfo?.["المتبقي"] || 0}`,
-        `IQD${expense?.generalInfo?.["مجموع الصرفيات"] || 0}`,
-        `IQD${expense?.generalInfo?.["مبلغ النثرية"] || 0}`,
+        `IQD ${Number(expense?.generalInfo?.["المتبقي"] || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
+        `IQD ${Number(expense?.generalInfo?.["مجموع الصرفيات"] || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
+        `IQD ${Number(expense?.generalInfo?.["مبلغ النثرية"] || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
         expense?.generalInfo?.["المكتب"] || "N/A",
         expense?.generalInfo?.["المحافظة"] || "N/A",
         expense?.generalInfo?.["اسم المشرف"] || "N/A",
@@ -360,6 +361,7 @@ export default function ExpensesView() {
   
       worksheet.addRow([]);
   
+      // Add Header Row
       const headers = ["ملاحظات", "المجموع", "سعر المفرد", "العدد", "البند", "التاريخ", "ت"];
       const headerRow = worksheet.addRow(headers);
   
@@ -379,11 +381,12 @@ export default function ExpensesView() {
         };
       });
   
+      // Add Data Rows
       expense?.items?.forEach((item, index) => {
         const row = worksheet.addRow([
           item["ملاحظات"] || "",
-          `IQD${item["المجموع"] || 0}`,
-          `IQD${item["السعر"] || 0}`,
+          `IQD ${Number(item["المجموع"] || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
+          `IQD ${Number(item["السعر"] || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
           item["الكمية"] || "",
           item["نوع المصروف"] || "",
           item["التاريخ"] || "",
@@ -406,6 +409,7 @@ export default function ExpensesView() {
         });
       });
   
+      // Set Column Widths
       worksheet.columns = [
         { width: 30 }, // ملاحظات
         { width: 15 }, // المجموع
@@ -424,6 +428,7 @@ export default function ExpensesView() {
       message.error("حدث خطأ أثناء تصدير التقرير");
     }
   };
+  
 
   const handlePrint = async () => {
     try {
@@ -453,9 +458,24 @@ export default function ExpensesView() {
                 <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["اسم المشرف"] || ""}</td>
                 <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["المحافظة"] || ""}</td>
                 <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["المكتب"] || ""}</td>
-                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["مبلغ النثرية"] ? `IQD${expense.generalInfo["مبلغ النثرية"]}` : ""}</td>
-                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["مجموع الصرفيات"] ? `IQD${expense.generalInfo["مجموع الصرفيات"]}` : ""}</td>
-                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["المتبقي"] ? `IQD${expense.generalInfo["المتبقي"]}` : ""}</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">
+  ${expense?.generalInfo?.["مبلغ النثرية"] 
+    ? `IQD ${expense.generalInfo["مبلغ النثرية"].toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` 
+    : ""}
+</td>
+
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">
+  ${expense?.generalInfo?.["مجموع الصرفيات"] 
+    ? `IQD ${expense.generalInfo["مجموع الصرفيات"].toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` 
+    : ""}
+</td>
+
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">
+  ${expense?.generalInfo?.["المتبقي"] 
+    ? `IQD ${expense.generalInfo["المتبقي"].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` 
+    : ""}
+</td>
+
               </tr>
             </tbody>
           </table>
@@ -484,11 +504,15 @@ export default function ExpensesView() {
                   <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${item["نوع المصروف"] || ""}</td>
                   <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${item["الكمية"] || ""}</td>
                   <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
-                    item["السعر"] ? `IQD${item["السعر"].toFixed(2)}` : ""
-                  }</td>
-                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
-                    item["المجموع"] ? `IQD${item["المجموع"].toFixed(2)}` : ""
-                  }</td>
+  item["السعر"] 
+    ? `IQD ${item["السعر"].toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` 
+    : ""
+}</td>
+
+                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">
+  ${item["المجموع"] ? `IQD ${item["المجموع"].toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` : ""}
+</td>
+
                   <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
                     item["ملاحظات"] || ""
                   }</td>
@@ -580,23 +604,23 @@ export default function ExpensesView() {
               dataIndex: "المكتب",
               align: "center"
             },
-            { 
+            {
               title: "مبلغ النثرية",
               dataIndex: "مبلغ النثرية",
               align: "center",
-              render: (text) => `IQD${text}`
+              render: (text) => `IQD ${Number(text).toLocaleString()}`
             },
             { 
               title: "مجموع الصرفيات",
               dataIndex: "مجموع الصرفيات",
               align: "center",
-              render: (text) => `IQD${text}`
+              render: (text) => `IQD ${Number(text).toLocaleString()}`
             },
             { 
               title: "المتبقي",
               dataIndex: "المتبقي",
               align: "center",
-              render: (text) => `IQD${text}`
+              render: (text) => `IQD ${Number(text).toLocaleString()}`
             },
             {
               title: "الحالة",
@@ -660,18 +684,18 @@ export default function ExpensesView() {
               dataIndex: "الكمية",
               align: "center"
             },
-            { 
+            {
               title: "سعر المفرد",
               dataIndex: "السعر",
               align: "center",
-              render: (text) => `IQD${typeof text === 'number' ? text.toFixed(2) : text}`
+              render: (text) => `IQD ${Number(text).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`
             },
             { 
               title: "المجموع",
               dataIndex: "المجموع",
               align: "center",
-              render: (text) => `IQD${typeof text === 'number' ? text.toFixed(2) : text}`
-            },
+              render: (text) => `IQD ${Number(text).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            },            
             { 
               title: "ملاحظات",
               dataIndex: "ملاحظات",
@@ -700,8 +724,9 @@ export default function ExpensesView() {
                     المجموع الكلي
                   </Table.Summary.Cell>
                   <Table.Summary.Cell index={1} align="center">
-                    IQD{total.toFixed(2)}
-                  </Table.Summary.Cell>
+  IQD {Number(total).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+</Table.Summary.Cell>
+
                   <Table.Summary.Cell index={2} colSpan={2} />
                 </Table.Summary.Row>
               </Table.Summary>

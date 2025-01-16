@@ -42,23 +42,29 @@ export default function SuperVisorExpensesRequest() {
   });
 
   const arabicMonths = [
-    "الواحد",
-    "الثاني",
-    "الثالث",
-    "الرابع",
-    "الخامس",
-    "السادس",
-    "السابع",
-    "الثامن",
-    "التاسع",
-    "العاشر",
-    "الحادي عشر",
-    "الثناي عشر",
+    "يناير",  // January
+    "فبراير", // February
+    "مارس",   // March
+    "أبريل",  // April
+    "مايو",   // May
+    "يونيو",  // June
+    "يوليو",  // July
+    "أغسطس",  // August
+    "سبتمبر", // September
+    "أكتوبر", // October
+    "نوفمبر", // November
+    "ديسمبر", // December
   ];
+  
 
-  const formattedDate = new Date(officeInfo.date);
-  const displayMonthNumber = formattedDate.getMonth() + 1;
-  const displayMonthName = arabicMonths[formattedDate.getMonth()];
+  // Get the current month and year in Arabic
+const formattedDate = new Date(officeInfo.date); // Use the date from your `officeInfo`
+const displayMonthName = arabicMonths[formattedDate.getMonth()]; // Get the Arabic name of the month
+const displayYear = formattedDate.getFullYear(); // Get the year
+
+// Combine month and year
+const displayMonthYear = `${displayMonthName} - ${displayYear}`;
+
 
   const fetchLastMonthExpense = async () => {
     try {
@@ -500,11 +506,12 @@ export default function SuperVisorExpensesRequest() {
               معلومات المكتب
             </h1>
             <h3 style={{ marginBottom: "24px", textAlign: "center" }}>
-              صرفيات شهر :{" "}
-              <span style={{ color: "#DAA520", fontWeight: "bold" }}>
-                {displayMonthName}
-              </span>
-            </h3>
+  صرفيات شهر :{" "}
+  <span style={{ color: "#DAA520", fontWeight: "bold" }}>
+    {displayMonthYear}
+  </span>
+</h3>
+
             <hr
               style={{
                 width: "100%",

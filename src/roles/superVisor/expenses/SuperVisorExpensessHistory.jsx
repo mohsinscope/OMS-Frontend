@@ -4,9 +4,9 @@ import { Link } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
 import axiosInstance from "./../../../intercepters/axiosInstance";
 import Url from "./../../../store/url";
+import html2pdf from "html2pdf.js";
 import './styles/SuperVisorExpensesHistory.css';
 
-// Status enum matching backend
 const Status = {
   New: 0,
   SentToProjectCoordinator: 1,
@@ -20,7 +20,6 @@ const Status = {
   Completed: 9
 };
 
-// Status display names in Arabic
 const statusDisplayNames = {
   [Status.New]: "جديد",
   [Status.SentToProjectCoordinator]: "مرسل إلى منسق المشروع",
@@ -34,12 +33,11 @@ const statusDisplayNames = {
   [Status.Completed]: "مكتمل"
 };
 
-// Define allowed statuses for each position (except supervisor who can now see all)
 const positionStatusMap = {
   ProjectCoordinator: [Status.SentToProjectCoordinator, Status.ReturnedToProjectCoordinator],
   Manager: [Status.SentToManager, Status.ReturnedToManager],
   Director: [Status.SentToDirector],
-  Accontnt  : [Status.SentToAccountant]
+  Accontnt: [Status.SentToAccountant]
 };
 
 export default function SuperVisorExpensesHistory() {
@@ -56,31 +54,21 @@ export default function SuperVisorExpensesHistory() {
   const [totalRecords, setTotalRecords] = useState(0);
   const pageSize = 10;
 
-  const { 
-    isSidebarCollapsed, 
-    profile, 
-    roles, 
-    searchVisible, 
-    accessToken 
-  } = useAuthStore();
-  
+  const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } = useAuthStore();
   const userPosition = profile?.position;
   const isSupervisor = userPosition === "Supervisor";
   const isAdmin = roles.includes("Admin");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
 
-  // Determine available statuses based on user position and admin role
   const getAvailableStatuses = () => {
     if (isAdmin || isSupervisor) {
       return Object.values(Status);
     }
-
     const positionStatuses = positionStatusMap[userPosition] || [];
     return [...new Set(positionStatuses)];
   };
 
-  // Filter expenses based on user's allowed statuses
   const filterExpensesByAllowedStatuses = (expenses) => {
     if (isAdmin || isSupervisor) return expenses;
 
@@ -119,7 +107,7 @@ export default function SuperVisorExpensesHistory() {
   const fetchExpensesData = async (pageNumber = 1) => {
     try {
       setIsLoading(true);
-      
+
       const searchBody = {
         officeId: isSupervisor ? userOfficeId : selectedOffice,
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
@@ -133,7 +121,6 @@ export default function SuperVisorExpensesHistory() {
         }
       };
 
-      // Add status filtering based on user's position if no specific status is selected
       if (!status && !isAdmin && !isSupervisor) {
         const allowedStatuses = getAvailableStatuses();
         searchBody.allowedStatuses = allowedStatuses;
@@ -150,7 +137,6 @@ export default function SuperVisorExpensesHistory() {
         }
       );
 
-      // Filter the expenses based on allowed statuses
       const filteredExpenses = filterExpensesByAllowedStatuses(response.data);
       setExpensesList(filteredExpenses);
 
@@ -170,7 +156,6 @@ export default function SuperVisorExpensesHistory() {
   };
 
   useEffect(() => {
-    // Set initial status filter based on user's position
     if (!isAdmin && !isSupervisor && userPosition) {
       const allowedStatuses = getAvailableStatuses();
       if (allowedStatuses.length > 0) {
@@ -188,7 +173,6 @@ export default function SuperVisorExpensesHistory() {
   const handleReset = () => {
     setStartDate(null);
     setEndDate(null);
-    // Only reset status to null if admin or supervisor
     if (isAdmin || isSupervisor) {
       setStatus(null);
     } else {
@@ -209,6 +193,47 @@ export default function SuperVisorExpensesHistory() {
     fetchExpensesData(page);
   };
 
+  const handlePrintPDF = async () => {
+    const element = document.createElement("div");
+    element.dir = "rtl";
+    element.style.fontFamily = "Arial, sans-serif";
+    element.innerHTML = `
+      <div style="padding: 20px; font-family: Arial, sans-serif;">
+        <h1 style="text-align: center;">تقرير سجل الصرفيات</h1>
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background-color: #f2f2f2;">
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المحافظة</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المكتب</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">مجموع الصرفيات</th>
+              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">التاريخ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${expensesList.map(expense => `
+              <tr>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.governorateName || ""}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.officeName || ""}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.totalAmount?.toLocaleString() || ""}</td>
+                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(expense.dateCreated).toLocaleDateString()}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const options = {
+      margin: 1,
+      filename: "تقرير_سجل_الصرفيات.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "cm", format: "a4", orientation: "landscape" },
+    };
+
+    html2pdf().from(element).set(options).save();
+  };
+
   const columns = [
     {
       title: "المحافظة",
@@ -224,7 +249,10 @@ export default function SuperVisorExpensesHistory() {
       title: "مجموع الصرفيات",
       dataIndex: "totalAmount",
       key: "totalAmount",
-      render: (value) => value.toFixed(2)
+      render: (value) => 
+        typeof value === "number"
+          ? value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+          : value
     },
     {
       title: "الحالة",
@@ -252,7 +280,6 @@ export default function SuperVisorExpensesHistory() {
     },
   ];
 
-  // Get available statuses for the current user based on position or admin role
   const availableStatuses = getAvailableStatuses();
 
   return (
@@ -350,6 +377,14 @@ export default function SuperVisorExpensesHistory() {
           onClick={handleReset}
           disabled={isLoading}>
           إعادة التعيين
+        </Button>
+
+        <Button
+          className="expenses-print-button"
+          onClick={handlePrintPDF}
+          disabled={isLoading}
+          style={{ marginLeft: "10px" }}>
+          طباعة PDF
         </Button>
       </div>
 

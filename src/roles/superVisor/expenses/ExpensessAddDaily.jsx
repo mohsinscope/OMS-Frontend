@@ -297,15 +297,20 @@ export default function ExpensessAddDaily() {
               </Form.Item>
 
               <Form.Item
-                name="price"
-                label="السعر"
-                rules={[{ required: true, message: "يرجى إدخال السعر" }]}>
-                <InputNumber
-                  placeholder="أدخل السعر"
-                  min={0}
-                  style={{ width: "267px", height: "45px" }}
-                />
-              </Form.Item>
+  name="price"
+  label="السعر"
+  rules={[{ required: true, message: "يرجى إدخال السعر" }]}>
+  <InputNumber
+    placeholder="أدخل السعر"
+    min={0}
+    style={{ width: "267px", height: "45px" }}
+    formatter={(value) =>
+      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    }
+    parser={(value) => value.replace(/,\s?/g, "")}
+  />
+</Form.Item>
+
 
               <Form.Item
                 name="quantity"
@@ -318,18 +323,33 @@ export default function ExpensessAddDaily() {
                 />
               </Form.Item>
               <Form.Item name="totalamount" label="المجموع الكلي">
-                <InputNumber
-                  readOnly
-                  style={{ width: "267px", height: "45px" }}
-                />
-              </Form.Item>
+  <InputNumber
+    readOnly
+    style={{ width: "267px", height: "45px" }}
+    formatter={(value) =>
+      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+    }
+    parser={(value) => value.replace(/,\s?/g, "")}
+  />
+</Form.Item>
+
 
               <Form.Item
-                name="date"
-                label="التاريخ"
-                rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
-                <DatePicker style={{ width: "267px", height: "45px" }} />
-              </Form.Item>
+  name="date"
+  label="التاريخ"
+  rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
+  <DatePicker
+    style={{ width: "267px", height: "45px" }}
+    disabledDate={(current) => {
+      // Disable dates outside the current month
+      const now = new Date();
+      return (
+        current &&
+        (current.month() !== now.getMonth() || current.year() !== now.getFullYear())
+      );
+    }}
+  />
+</Form.Item>
 
               <Form.Item name="notes" label="ملاحظات" initialValue="لا يوجد">
                 <Input.TextArea
