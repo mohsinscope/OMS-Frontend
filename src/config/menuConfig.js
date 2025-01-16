@@ -32,7 +32,7 @@ export const MENU_ITEMS = [
     label: "طلبات المصاريف",
     icon: "money-add",
     path: "/supervisor/ExpensesRequests",
-    requiredPermission: "EXr",
+    requiredPermission: "EXc",
     role: []
   },
   {

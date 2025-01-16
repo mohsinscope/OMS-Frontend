@@ -39,11 +39,12 @@ const ExpensessView = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [expenseTypes, setExpenseTypes] = useState([]);
   const [form] = Form.useForm();
-
+  
   const { isSidebarCollapsed, permissions,profile } = useAuthStore();
-  const hasUpdatePermission = permissions.includes("EXu"); // Replace with actual permission code
-  const hasDeletePermission = permissions.includes("EXd"); // Replace with actual permission code
-
+/*   const hasUpdatePermission = permissions.includes("EXu"); 
+  const hasDeletePermission = permissions.includes("EXd");  */
+  /* i dont use it for now  */
+  const isSupervisor = profile?.role?.toLowerCase()?.includes('supervisor');
   const fetchExpenseTypes = async () => {
     try {
       const response = await axiosInstance.get('/api/ExpenseType');
@@ -206,26 +207,34 @@ const ExpensessView = () => {
       dir="rtl">
       <div className="title-container">
         <h1>تفاصيل المصروف</h1>
-        <div className="edit-button-and-delete">
-          <Button onClick={() => navigate(-1)} className="back-button">
-            <Lele type="back" />
-            الرجوع
-          </Button>
-          {hasDeletePermission && (
-            <Button
-              onClick={() => setDeleteModalVisible(true)}
-              className="delete-button-lecture">
-              حذف <Lele type="delete" />
+        <div style={{display:"flex", justifyContent:"space-between", marginBottom: "20px"}}>
+        <Button 
+              type="primary" 
+              style={{padding:"20px 30px",backgroundColor:"#efb034"}} 
+              onClick={() => navigate(-1)}
+            >
+              الرجوع
             </Button>
-          )}
-          {hasUpdatePermission && (
-            <Button
-              onClick={() => setEditModalVisible(true)}
-              className="edit-button-lecture">
-              تعديل <Lele type="edit" />
-            </Button>
-          )}
         </div>
+        {isSupervisor && (
+          <div style={{display:"flex", justifyContent:"space-between", marginBottom: "20px"}}>
+            <Button 
+              type="primary" 
+              style={{padding:"20px 30px"}} 
+              onClick={() => navigate('/edit-expense')}
+            >
+              تعديل
+            </Button>
+            <Button 
+              danger 
+              type="primary" 
+              style={{padding:"20px 40px"}}
+              onClick={() => navigate('/delete-expense')}
+            >
+              حذف
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="details-container-Lecture">

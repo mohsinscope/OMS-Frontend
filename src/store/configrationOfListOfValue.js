@@ -43,7 +43,7 @@ const Config = {
       { name: "deliveryStaff", label: "موظفو التسليم", type: "number" },
       {
         name: "governorateId",
-        label: "رقم المحافظة",
+        label: "اسم المحافظة",
         type: "dropdown",
         optionsEndpoint: "/api/governorate?PageNumber=1&PageSize=100",
       },
