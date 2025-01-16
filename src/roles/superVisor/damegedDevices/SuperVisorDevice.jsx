@@ -9,11 +9,12 @@ import {
   Input,
 } from "antd";
 import { Link } from "react-router-dom";
+import html2pdf from "html2pdf.js";
 import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
-
+import Icons from './../../../reusable elements/icons.jsx';
 const SuperVisorDevices = () => {
   const {
     isSidebarCollapsed,
@@ -23,10 +24,10 @@ const SuperVisorDevices = () => {
     permissions,
     roles,
   } = useAuthStore();
-  // Check permissions
+  
   const hasCreatePermission = permissions.includes("DDc");
   const isSupervisor = roles.includes("Supervisor");
-  // State setup
+
   const [devices, setDevices] = useState([]);
   const [totalDevices, setTotalDevices] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -40,12 +41,12 @@ const SuperVisorDevices = () => {
     startDate: null,
     endDate: null,
   });
-  // Date formatting helper
+
   const formatToISO = (date) => {
     if (!date) return null;
     return date.toISOString();
   };
-  // API calls and data fetching
+
   const fetchDevices = async (payload) => {
     try {
       const response = await axiosInstance.post(
@@ -63,7 +64,7 @@ const SuperVisorDevices = () => {
         },
         {
           headers: {
-            "Content-Type": "application/json", // Ensure it's always set to JSON
+            "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
         }
@@ -90,7 +91,6 @@ const SuperVisorDevices = () => {
     }
   };
 
-  // Event handlers
   const handleSearch = async (page = 1) => {
     const payload = {
       serialNumber: formData.serialNumber || "",
@@ -156,12 +156,10 @@ const SuperVisorDevices = () => {
 
   const handleGovernorateChange = async (value) => {
     setSelectedGovernorate(value);
-    setSelectedOffice(null); // Clear the selected office when governorate changes
+    setSelectedOffice(null);
     await fetchOffices(value);
   };
-  
 
-  // Data fetching effects and callbacks
   const fetchGovernorates = useCallback(async () => {
     try {
       const response = await axiosInstance.get(
@@ -195,7 +193,6 @@ const SuperVisorDevices = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-      console.log(response)
 
       if (response.data && response.data[0] && response.data[0].offices) {
         setOffices(response.data[0].offices);
@@ -208,7 +205,6 @@ const SuperVisorDevices = () => {
       message.error("حدث خطأ أثناء جلب بيانات المكاتب");
     }
   };
-
 
   useEffect(() => {
     fetchGovernorates();
@@ -230,7 +226,86 @@ const SuperVisorDevices = () => {
     fetchDevices(initialPayload);
   }, [isSupervisor, profile.officeId, profile.governorateId]);
 
-  // Table columns configuration
+  // const handlePrintPDF = async () => {
+  //   try {
+  //     // Fetch all devices for the current filters
+  //     const payload = {
+  //       serialNumber: formData.serialNumber || "",
+  //       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
+  //       governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
+  //       startDate: formData.startDate ? formatToISO(formData.startDate) : null,
+  //       endDate: formData.endDate ? formatToISO(formData.endDate) : null,
+  //       PaginationParams: {
+  //         PageNumber: 1,
+  //         PageSize: totalDevices, // Fetch all devices
+  //       },
+  //     };
+  
+  //     const response = await axiosInstance.post(
+  //       `${Url}/api/DamagedDevice/search`,
+  //       payload,
+  //       {
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${accessToken}`,
+  //         },
+  //       }
+  //     );
+  
+  //     const fullDeviceList = response.data || [];
+  
+  //     // Generate the PDF content
+  //     const element = document.createElement("div");
+  //     element.dir = "rtl";
+  //     element.style.fontFamily = "Arial, sans-serif";
+  //     element.innerHTML = `
+  //       <div style="padding: 20px; font-family: Arial, sans-serif;">
+  //         <h1 style="text-align: center;">تقرير الأجهزة التالفة</h1>
+  //         <table style="width: 100%; border-collapse: collapse;">
+  //           <thead>
+  //             <tr style="background-color: #f2f2f2;">
+  //               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ت</th>
+  //               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">التاريخ</th>
+  //               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المحافظة</th>
+  //               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المكتب</th>
+  //               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">الرقم التسلسلي</th>
+  //             </tr>
+  //           </thead>
+  //           <tbody>
+  //             ${fullDeviceList
+  //               .map(
+  //                 (device, index) => `
+  //                   <tr>
+  //                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${fullDeviceList.length - index}</td>
+  //                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(device.date).toLocaleDateString("en-CA")}</td>
+  //                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${device.governorateName}</td>
+  //                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${device.officeName}</td>
+  //                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${device.serialNumber}</td>
+  //                   </tr>
+  //                 `
+  //               )
+  //               .join("")}
+  //           </tbody>
+  //         </table>
+  //       </div>
+  //     `;
+  
+  //     const options = {
+  //       margin: 1,
+  //       filename: "تقرير_الأجهزة_التالفة.pdf",
+  //       image: { type: "jpeg", quality: 0.98 },
+  //       html2canvas: { scale: 2 },
+  //       jsPDF: { unit: "cm", format: "a4", orientation: "landscape" },
+  //     };
+  
+  //     html2pdf().from(element).set(options).save();
+  //   } catch (error) {
+  //     console.error("Error generating PDF:", error);
+  //     message.error("حدث خطأ أثناء إنشاء ملف PDF");
+  //   }
+  // };
+  
+
   const columns = [
     {
       title: "التاريخ",
@@ -375,6 +450,15 @@ const SuperVisorDevices = () => {
               className="supervisor-devices-dameged-button">
               إعادة تعيين
             </Button>
+            {/* <button
+    className="modern-button pdf-button"
+    onClick={handlePrintPDF}
+    style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", borderRadius: "8px" }}
+  >
+    تصدير الى PDF
+    <Icons type="pdf" />
+  </button> */}
+  
           </div>
           {hasCreatePermission && (
             <Link to="/damegedDevices/add">

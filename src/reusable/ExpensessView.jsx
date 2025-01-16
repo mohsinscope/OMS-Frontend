@@ -7,7 +7,9 @@ import Dashboard from "./../pages/dashBoard.jsx";
 import useAuthStore from "./../store/store.js";
 import axiosInstance from "./../intercepters/axiosInstance";
 import Url from "./../store/url";
-
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+import Icons from './../reusable elements/icons.jsx';
 // Status Enum matching backend exactly
 const Status = {
   New: 0,
@@ -244,7 +246,7 @@ export default function ExpensesView() {
             "المكتب": expenseResponse.data.officeName,
             "مبلغ النثرية": expenseResponse.data.totalAmount,
             "مجموع الصرفيات": expenseResponse.data.totalAmount,
-            "الباقي": 0,
+            "المتبقي": 0,
             "التاريخ": new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
             "الحالة": expenseResponse.data.status,
           },
@@ -261,91 +263,242 @@ export default function ExpensesView() {
 
     fetchAllExpenseData();
   }, [expenseId, accessToken, navigate]);
-
+  const handleExportToExcel = async () => {
+    try {
+      if (!expense) {
+        message.error("لا توجد بيانات لتصديرها");
+        return;
+      }
+  
+      // إنشاء ملف Excel جديد
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("تقرير المصاريف", {
+        properties: { rtl: true }, // تفعيل RTL
+      });
+  
+      // إضافة معلومات المشرف والمحافظة وما إلى ذلك كصف منفصل أعلى الجدول
+      const supervisorRow = worksheet.addRow([
+        "الحالة",
+        "المتبقي",
+        "مجموع الصرفيات",
+        "مبلغ النثرية",
+        "المكتب",
+        "المحافظة",
+        "اسم المشرف",
+      ]);
+  
+      supervisorRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // النص غامق ولونه أبيض
+        cell.alignment = { horizontal: "center", vertical: "middle" }; // محاذاة النص للوسط
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF4CAF50" }, // خلفية خضراء
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+  
+      // إضافة بيانات المشرف
+      const supervisorDataRow = worksheet.addRow([
+        statusMap[expense?.generalInfo?.["الحالة"]] || "N/A",
+        `IQD${expense?.generalInfo?.["المتبقي"] || 0}`,
+        `IQD${expense?.generalInfo?.["مجموع الصرفيات"] || 0}`,
+        `IQD${expense?.generalInfo?.["مبلغ النثرية"] || 0}`,
+        expense?.generalInfo?.["المكتب"] || "N/A",
+        expense?.generalInfo?.["المحافظة"] || "N/A",
+        expense?.generalInfo?.["اسم المشرف"] || "N/A",
+      ]);
+  
+      supervisorDataRow.eachCell((cell) => {
+        cell.alignment = { horizontal: "center", vertical: "middle" }; // المحاذاة للوسط
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+  
+      worksheet.addRow([]); // صف فارغ للفصل بين المعلومات والجدول
+  
+      // إضافة رأس الجدول
+      const headers = ["ملاحظات", "المجموع", "سعر المفرد", "العدد", "البند", "التاريخ", "ت"];
+      const headerRow = worksheet.addRow(headers);
+  
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } }; // النص غامق ولونه أبيض
+        cell.alignment = { horizontal: "center", vertical: "middle" }; // محاذاة النص للوسط
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF9C27B0" }, // خلفية بنفسجية
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+  
+      // إضافة البيانات التفصيلية
+      expense?.items?.forEach((item, index) => {
+        const row = worksheet.addRow([
+          item["ملاحظات"] || "",
+          `IQD${item["المجموع"] || 0}`,
+          `IQD${item["السعر"] || 0}`,
+          item["الكمية"] || "",
+          item["نوع المصروف"] || "",
+          item["التاريخ"] || "",
+          index + 1,
+        ]);
+  
+        row.eachCell((cell) => {
+          cell.alignment = { horizontal: "center", vertical: "middle" }; // المحاذاة للوسط
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+          // تطبيق ألوان متبادلة على الصفوف
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" }, // رمادي فاتح للألوان المتبادلة
+          };
+        });
+      });
+  
+      // ضبط عرض الأعمدة
+      worksheet.columns = [
+        { width: 30 }, // ملاحظات
+        { width: 15 }, // المجموع
+        { width: 15 }, // سعر المفرد
+        { width: 10 }, // العدد
+        { width: 30 }, // البند
+        { width: 15 }, // التاريخ
+        { width: 10 }, // تسلسل
+      ];
+  
+      // إنشاء وحفظ ملف Excel
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), "تقرير_المصروفات.xlsx");
+      message.success("تم تصدير التقرير بنجاح");
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      message.error("حدث خطأ أثناء تصدير التقرير");
+    }
+  };
+  
   const handlePrint = async () => {
     try {
-      const element = document.createElement('div');
-      element.dir = 'rtl';
-      element.style.fontFamily = 'Arial, sans-serif';
+      const element = document.createElement("div");
+      element.dir = "rtl";
+      element.style.fontFamily = "Arial, sans-serif";
       element.innerHTML = `
-        <div style="padding: 20px;">
-          <div style="text-align: center; margin-bottom: 20px;">
-            <h1 style="font-size: 20px; margin: 0; margin-bottom: 5px;">تقرير المصروفات</h1>
-            <div style="text-align: left; margin-top: 10px;">التاريخ: ${expense?.generalInfo?.["التاريخ"]}</div>
+        <div style="padding: 20px; font-family: Arial, sans-serif; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background: #f0f0f0;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="font-size: 24px; color: #000; margin: 0;">تقرير المصاريف</h1>
+            <div style="margin-top: 10px; font-size: 16px; color: #555;">التاريخ: ${expense?.generalInfo?.["التاريخ"] || ""}</div>
           </div>
-
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <tr>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">اسم المشرف</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">المحافظة</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">المكتب</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">مبلغ النثرية</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">مجموع الصرفيات</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">الباقي</th>
-            </tr>
-            <tr>
-              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["اسم المشرف"] || ""}</td>
-              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["المحافظة"] || ""}</td>
-              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["المكتب"] || ""}</td>
-              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["مبلغ النثرية"] ? `IQD${expense.generalInfo["مبلغ النثرية"]}` : ""}</td>
-              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["مجموع الصرفيات"] ? `IQD${expense.generalInfo["مجموع الصرفيات"]}` : ""}</td>
-              <td style="border: 1px solid #000; padding: 8px; text-align: center;">${expense?.generalInfo?.["الباقي"] ? `IQD${expense.generalInfo["الباقي"]}` : ""}</td>
-            </tr>
-          </table>
-
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <tr>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">ت</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">تاريخ</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">البند</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">العدد</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">سعر المفرد</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">المجموع</th>
-              <th style="border: 1px solid #000; padding: 8px; text-align: center;">ملاحظات</th>
-            </tr>
-            ${expense?.items?.map(item => `
-              <tr>
-                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["تسلسل"] || ""}</td>
-                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["التاريخ"] || ""}</td>
-                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["نوع المصروف"] || ""}</td>
-                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["الكمية"] || ""}</td>
-                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["السعر"] ? `IQD${typeof item["السعر"] === 'number' ? item["السعر"].toFixed(2) : item["السعر"]}` : ""}</td>
-                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["المجموع"] ? `IQD${typeof item["المجموع"] === 'number' ? item["المجموع"].toFixed(2) : item["المجموع"]}` : ""}</td>
-                <td style="border: 1px solid #000; padding: 8px; text-align: center;">${item["ملاحظات"] || ""}</td>
+  
+          <table style="background: #fff; width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+            <thead>
+              <tr style="background: linear-gradient(90deg, #FFD700, #FFA500); color:rgb(0, 0, 0);">
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">اسم المشرف</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">المحافظة</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">المكتب</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">مبلغ النثرية</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">مجموع الصرفيات</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">المتبقي</th>
               </tr>
-            `).join('')}
+            </thead>
+            <tbody>
+              <tr style="background: #f9f9f9; color: #000;">
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["اسم المشرف"] || ""}</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["المحافظة"] || ""}</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["المكتب"] || ""}</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["مبلغ النثرية"] ? `IQD${expense.generalInfo["مبلغ النثرية"]}` : ""}</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["مجموع الصرفيات"] ? `IQD${expense.generalInfo["مجموع الصرفيات"]}` : ""}</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${expense?.generalInfo?.["المتبقي"] ? `IQD${expense.generalInfo["المتبقي"]}` : ""}</td>
+              </tr>
+            </tbody>
           </table>
-
-          ${expense?.items?.filter(item => item.type === 'regular' && item.image)?.map(item => `
-            <div style="margin-top: 20px; text-align: center;">
-              <img src="${item.image}" alt="مصروف الصورة" style="max-width: 80%; height: auto; margin-top: 10px;" />
-            </div>
-          `).join('')}
+  
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+              <tr style="background: linear-gradient(90deg, #f44336, #e57373); color:rgb(0, 0, 0);">
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">ت</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">تاريخ</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">البند</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">العدد</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">سعر المفرد</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">المجموع</th>
+                <th style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${expense?.items
+                ?.map(
+                  (item, index) => `
+                <tr style="background: ${
+                  index % 2 === 0 ? "#f9f9f9" : "#ffffff"
+                }; color: #000;">
+                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${index + 1}</td>
+                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${item["التاريخ"] || ""}</td>
+                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${item["نوع المصروف"] || ""}</td>
+                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${item["الكمية"] || ""}</td>
+                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
+                    item["السعر"] ? `IQD${item["السعر"].toFixed(2)}` : ""
+                  }</td>
+                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
+                    item["المجموع"] ? `IQD${item["المجموع"].toFixed(2)}` : ""
+                  }</td>
+                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
+                    item["ملاحظات"] || ""
+                  }</td>
+                </tr>
+              `
+                )
+                .join("")}
+            </tbody>
+          </table>
         </div>
       `;
-
+  
       const opt = {
         margin: 1,
-        filename: 'تقرير_المصروفات.pdf',
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { 
+        filename: "تقرير_المصاريف.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: {
           scale: 2,
           useCORS: true,
-          letterRendering: true
+          letterRendering: true,
         },
-        jsPDF: { 
-          unit: 'cm', 
-          format: 'a4', 
-          orientation: 'portrait'
-        }
+        jsPDF: {
+          unit: "cm",
+          format: "a4",
+          orientation: "landscape",
+        },
       };
-
+  
       html2pdf().from(element).set(opt).save();
     } catch (error) {
       console.error("Error generating PDF:", error);
       message.error("حدث خطأ أثناء إنشاء ملف PDF");
     }
   };
+  
+  
+  
+  
+  
 
   return (
     <>
@@ -364,6 +517,7 @@ export default function ExpensesView() {
         <div style={{display:"flex", justifyContent:"space-between", marginBottom: "20px"}}>
           <Button 
             type="primary"
+            style={{padding:"20px 30px"}}
             onClick={() => handleActionClick("Approval")}
             disabled={!profile.profileId || expense?.generalInfo?.["الحالة"] === Status.Completed}
           >
@@ -371,6 +525,8 @@ export default function ExpensesView() {
           </Button>
           <Button 
             danger
+            type="primary"
+            style={{padding:"20px 40px"}}
             onClick={() => handleActionClick("Return")}
             disabled={!profile.profileId || expense?.generalInfo?.["الحالة"] === Status.Completed}
           >
@@ -411,8 +567,8 @@ export default function ExpensesView() {
               render: (text) => `IQD${text}`
             },
             { 
-              title: "الباقي",
-              dataIndex: "الباقي",
+              title: "المتبقي",
+              dataIndex: "المتبقي",
               align: "center",
               render: (text) => `IQD${text}`
             },
@@ -429,9 +585,31 @@ export default function ExpensesView() {
           locale={{ emptyText: "لا توجد بيانات" }}
         />
 
-        <Button className="expenssses-print-button" onClick={handlePrint}>
-          طباعة
-        </Button>
+<div style={{ display: "flex", justifyContent: "centers", marginBottom: "20px", gap: "10px" }}>
+  {/* Export to PDF Button */}
+  <button
+    className="modern-button pdf-button"
+    onClick={handlePrint}
+    style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", borderRadius: "8px" }}
+  >
+    تصدير الى PDF
+    <Icons type="pdf" />
+  </button>
+
+  {/* Export to Excel Button */}
+  <button
+    className="modern-button excel-button"
+    onClick={handleExportToExcel}
+    style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", borderRadius: "8px" }}
+  >
+    تصدير إلى Excel
+    <Icons type="excel" />
+  </button>
+</div>
+
+
+
+
 
         <hr />
 

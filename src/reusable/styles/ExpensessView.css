@@ -25,6 +25,68 @@
     cursor: pointer;
 }
 
+/* Common Button Styles */
+.modern-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    text-transform: capitalize;
+  }
+  
+  /* Hover Effects */
+  .modern-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* PDF Button Styles */
+  .pdf-button {
+    background: linear-gradient(45deg, #d90429, #ef233c);
+
+  }
+  
+  .pdf-button:hover {
+    background: linear-gradient(45deg, #d90429, #ef233c);
+
+  }
+  
+  /* Excel Button Styles */
+  .excel-button {
+    background: linear-gradient(45deg, #21a366, #107c41);
+  }
+  
+  .excel-button:hover {
+    background: linear-gradient(45deg, #21a366, #107c41);
+  }
+  
+  /* Icon Styles */
+  .icon {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    background-size: cover;
+    background-position: center;
+  }
+  
+  /* PDF Icon */
+  .pdf-button .icon {
+    background-image: url('path-to-your-pdf-icon.svg'); /* Replace with actual PDF icon path */
+  }
+  
+  /* Excel Icon */
+  .excel-button .icon {
+    background-image: url('path-to-your-excel-icon.svg'); /* Replace with actual Excel icon path */
+  }
+  
 .expensess-view-container hr {
     height: 2px;
     width: 100%;
