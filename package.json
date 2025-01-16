@@ -13,6 +13,8 @@
     "@ant-design/icons": "^5.5.2",
     "antd": "^5.22.3",
     "axios": "^1.7.8",
+    "exceljs": "^4.4.0",
+    "file-saver": "^2.0.5",
     "html2pdf.js": "^0.10.2",
     "lucide-react": "^0.469.0",
     "moment": "^2.30.1",
@@ -21,6 +23,7 @@
     "react-router-dom": "^7.0.1",
     "recharts": "^2.15.0",
     "xlsx": "^0.18.5",
+    "xlsx-style": "^0.8.13",
     "zustand": "^5.0.1"
   },
   "devDependencies": {
