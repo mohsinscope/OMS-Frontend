@@ -31,6 +31,10 @@ const Config = {
         title: "موظفو التسليم",
         dataIndex: "deliveryStaff",
         key: "deliveryStaff",
+      }, {
+        title: "ميزانية المكتب",
+        dataIndex: "budget",
+        key: "budget",
       },
     ],
     formFields: [
@@ -47,6 +51,8 @@ const Config = {
         type: "dropdown",
         optionsEndpoint: "/api/governorate?PageNumber=1&PageSize=100",
       },
+      { name: "budget", label: "ميزانية المكتب", type: "number" },
+
     ],
   },
   "/admin/add-governorate": {
@@ -129,12 +135,7 @@ const Config = {
     ],
     formFields: [
       { name: "name", label: "نوع المحضر", type: "text" },
-      { 
-        name: "companyId", 
-        label: "الشركة", 
-        type: "dropdown",
-        optionsEndpoint: "/api/company?PageNumber=1&PageSize=100"
-      }
+  
     ]
 },"/admin/thrshhold": {
     getEndpoint: "/api/Threshold",
