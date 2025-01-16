@@ -10,10 +10,11 @@ import {
   Form,
   Input,
   ConfigProvider,
+  Collapse,
 } from "antd";
 import { PlusCircleOutlined, CalendarOutlined } from "@ant-design/icons";
 import useAuthStore from "../../../store/store";
-import axiosInstance from "./../../../intercepters/axiosInstance.js";
+import axiosInstance from "../../../intercepters/axiosInstance.js";
 import { Link } from "react-router-dom";
 import "./styles/SuperVisorExpinsesRequest.css";
 
@@ -26,11 +27,10 @@ export default function SuperVisorExpensesRequest() {
   const [expenseTypes, setExpenseTypes] = useState([]);
   const [isMonthlyModalVisible, setIsMonthlyModalVisible] = useState(false);
   const [monthlyForm] = Form.useForm();
-  
-  // New state for send functionality
   const [isSendModalVisible, setIsSendModalVisible] = useState(false);
   const [sendForm] = Form.useForm();
   const [sendLoading, setSendLoading] = useState(false);
+  const [lastMonthExpense, setLastMonthExpense] = useState(null);
 
   const [officeInfo, setOfficeInfo] = useState({
     totalCount: 0,
@@ -59,6 +59,28 @@ export default function SuperVisorExpensesRequest() {
   const formattedDate = new Date(officeInfo.date);
   const displayMonthNumber = formattedDate.getMonth() + 1;
   const displayMonthName = arabicMonths[formattedDate.getMonth()];
+
+  const fetchLastMonthExpense = async () => {
+    try {
+      const response = await axiosInstance.post("/api/Expense/search-last-month", {
+        officeId: profile?.officeId
+      });
+      setLastMonthExpense(response.data);
+    } catch (error) {
+      console.error("Error fetching last month expense:", error);
+      message.error("حدث خطأ في جلب بيانات الشهر السابق");
+    }
+  };
+
+  const getStatusColor = (status) => {
+    const statusColors = {
+      'Pending': '#ffa940',
+      'SentToProjectCoordinator': '#1890ff',
+      'Approved': '#52c41a',
+      'Rejected': '#ff4d4f'
+    };
+    return statusColors[status] || '#000000';
+  };
 
   const fetchExpenseTypes = async () => {
     try {
@@ -141,7 +163,7 @@ export default function SuperVisorExpensesRequest() {
       setLoading(true);
       const payload = {
         totalAmount: 0,
-        notes: values.notes,
+        notes: "",
         status: 0,
         officeId: profile?.officeId,
         governorateId: profile?.governorateId,
@@ -169,7 +191,6 @@ export default function SuperVisorExpensesRequest() {
     }
   };
 
-  // New handler for sending monthly expense
   const handleSendMonthlyExpense = async (values) => {
     try {
       setSendLoading(true);
@@ -208,10 +229,45 @@ export default function SuperVisorExpensesRequest() {
     }));
   };
 
+  const expandedRowRender = () => {
+    if (!lastMonthExpense) return null;
+
+    const formatDate = (dateString) => {
+      return new Date(dateString).toLocaleDateString('ar-IQ', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    return (
+      <div style={{ padding: '20px', backgroundColor: '#fafafa', borderRadius: '8px' }}>
+        <h3 style={{ marginBottom: '16px', color: '#1890ff' }}>حالة مصروفات الشهر السابق</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div>
+            <p><strong>المبلغ الإجمالي:</strong> <span style={{ color: '#52c41a' }}>{lastMonthExpense.totalAmount?.toLocaleString()} د.ع</span></p>
+            <p><strong>حالة الطلب:</strong> <span style={{ color: getStatusColor(lastMonthExpense.status) }}>{lastMonthExpense.status}</span></p>
+            <p><strong>اسم المكتب:</strong> {lastMonthExpense.officeName}</p>
+            <p><strong>المحافظة:</strong> {lastMonthExpense.governorateName}</p>
+          </div>
+          <div>
+            <p><strong>اسم المشرف:</strong> {lastMonthExpense.profileFullName}</p>
+            <p><strong>مستوى الإنفاق:</strong> {lastMonthExpense.thresholdName}</p>
+            <p><strong>تاريخ الإنشاء:</strong> {formatDate(lastMonthExpense.dateCreated)}</p>
+            <p><strong>ملاحظات:</strong> {lastMonthExpense.notes}</p>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     fetchExpenseTypes();
     fetchMonthlyExpense();
-  }, []);
+    if (profile?.officeId) {
+      fetchLastMonthExpense();
+    }
+  }, [profile?.officeId]);
 
   const columns = [
     {
@@ -261,57 +317,159 @@ export default function SuperVisorExpensesRequest() {
     },
   ];
 
-  const EmptyStateCard = () => (
-    <div
-      className="empty-state-container"
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "40px",
-        backgroundColor: "#fff",
-        borderRadius: "8px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        minHeight: "400px",
-        width: "100%",
-      }}>
-      <CalendarOutlined
-        style={{
-          fontSize: "64px",
-          color: "#1890ff",
-          marginBottom: "24px",
-        }}
-      />
-      <h1 style={{ marginBottom: "16px", textAlign: "center" }}>
-        لا يوجد مصروف شهري للشهر الحالي
-      </h1>
-      <p
-        style={{
-          color: "#666",
-          marginBottom: "32px",
-          textAlign: "center",
-          fontSize: "16px",
-        }}>
-        يمكنك إنشاء مصروف شهري جديد للبدء في تسجيل المصروفات اليومية
-      </p>
-      <Button
-        type="primary"
-        size="large"
-        icon={<PlusCircleOutlined />}
-        onClick={() => setIsMonthlyModalVisible(true)}
-        style={{
-          height: "48px",
-          padding: "0 32px",
-          fontSize: "16px",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        }}>
-        إنشاء مصروف شهري جديد
-      </Button>
-    </div>
-  );
+  const EmptyStateCard = () => {
+    const { Panel } = Collapse;
+    const formatDate = (dateString) => {
+      return new Date(dateString).toLocaleDateString('ar-IQ', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    const lastMonthColumns = lastMonthExpense ? [
+      {
+        title: "المبلغ الإجمالي",
+        dataIndex: "totalAmount",
+        key: "totalAmount",
+        render: (text) => <span style={{ color: '#52c41a' }}>{text?.toLocaleString()} د.ع</span>,
+        width: "12.5%"
+      },
+      {
+        title: "حالة الطلب",
+        dataIndex: "status",
+        key: "status",
+        render: (text) => <span style={{ color: getStatusColor(text) }}>{text}</span>,
+        width: "12.5%"
+      },
+      {
+        title: "اسم المكتب",
+        dataIndex: "officeName",
+        key: "officeName",
+        width: "12.5%"
+      },
+      {
+        title: "المحافظة",
+        dataIndex: "governorateName",
+        key: "governorateName",
+        width: "12.5%"
+      },
+      {
+        title: "اسم المشرف",
+        dataIndex: "profileFullName",
+        key: "profileFullName",
+        width: "12.5%"
+      },
+      {
+        title: "مستوى الإنفاق",
+        dataIndex: "thresholdName",
+        key: "thresholdName",
+        width: "12.5%"
+      },
+      {
+        title: "تاريخ الإنشاء",
+        dataIndex: "dateCreated",
+        key: "dateCreated",
+        render: (text) => formatDate(text),
+        width: "12.5%"
+      },
+      {
+        title: "ملاحظات",
+        dataIndex: "notes",
+        key: "notes",
+        width: "12.5%"
+      }
+    ] : [];
+
+    const getLastMonthData = () => {
+      if (!lastMonthExpense) return [];
+      return [lastMonthExpense];
+    };
+
+    return (
+      <div style={{ width: "100%" }}>
+        <div
+          className="empty-state-container"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "40px",
+            backgroundColor: "#fff",
+            borderRadius: "8px",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            minHeight: "200px",
+            marginBottom: "24px",
+          }}>
+          <CalendarOutlined
+            style={{
+              fontSize: "64px",
+              color: "#1890ff",
+              marginBottom: "24px",
+            }}
+          />
+          <h1 style={{ marginBottom: "16px", textAlign: "center" }}>
+            لا يوجد مصروف شهري للشهر الحالي
+          </h1>
+          <p
+            style={{
+              color: "#666",
+              marginBottom: "32px",
+              textAlign: "center",
+              fontSize: "16px",
+            }}>
+            يمكنك إنشاء مصروف شهري جديد للبدء في تسجيل المصروفات اليومية
+          </p>
+          <Button
+            type="primary"
+            size="large"
+            icon={<PlusCircleOutlined />}
+            onClick={() => setIsMonthlyModalVisible(true)}
+            style={{
+              height: "48px",
+              padding: "0 32px",
+              fontSize: "16px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}>
+            إنشاء مصروف شهري جديد
+          </Button>
+        </div>
+
+        {lastMonthExpense && (
+          <Collapse 
+            defaultActiveKey={[]} 
+            style={{ marginBottom: "24px" }}
+          >
+            <Panel 
+              header={ <>
+              
+                <span style={{ fontWeight: "bold", fontSize: "16px" }}>
+                  عرض مصروفات الشهر السابق
+                </span>
+                <span style={{color:"blue"}}>  {lastMonthExpense.status}</span>
+                </>
+
+              } 
+              key="1"
+            >
+              <Table
+                dataSource={getLastMonthData()}
+                columns={lastMonthColumns}
+                pagination={false}
+                bordered
+                size="middle"
+                scroll={{ x: true }}
+                style={{ overflowX: 'auto' }}
+              />
+            </Panel>
+          </Collapse>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div
@@ -327,103 +485,97 @@ export default function SuperVisorExpensesRequest() {
           gap: "24px",
           marginBottom: "24px",
         }}>
-        <Card
-          className="office-info-card"
-          style={{ width: "25%", flexShrink: 0 }}>
-          <h1 style={{ marginBottom: "24px", textAlign: "center" }}>
-            معلومات المكتب
-          </h1>
-          <h3 style={{ marginBottom: "24px", textAlign: "center" }}>
-            صرفيات شهر :{" "}
-            <span style={{ color: "#DAA520", fontWeight: "bold" }}>
-              {displayMonthName}
-            </span>
-          </h3>
-          <hr
-            style={{
-              width: "100%",
-              height: "1px",
-              border: "none",
-              background: "linear-gradient(to right, #e0e0e0, #000, #e0e0e0)",
-              marginBottom: "12px",
-            }}
-          />
-
-          <div className="office-info" style={{ fontSize: "18px" }}>
-            <div
+        {!canCreateMonthly ? (
+          <Card className="office-info-card" style={{ width: "25%", flexShrink: 0 }}>
+            <h1 style={{ marginBottom: "24px", textAlign: "center" }}>
+              معلومات المكتب
+            </h1>
+            <h3 style={{ marginBottom: "24px", textAlign: "center" }}>
+              صرفيات شهر :{" "}
+              <span style={{ color: "#DAA520", fontWeight: "bold" }}>
+                {displayMonthName}
+              </span>
+            </h3>
+            <hr
               style={{
-                marginBottom: "12px",
-                display: "flex",
-                justifyContent: "space-between",
-              }}>
-              <span>المحافظة:</span>
-              <strong style={{ color: "#4096ff" }}>
-                {officeInfo.governorate}
-              </strong>
-            </div>
-            <div
-              style={{
-                marginBottom: "12px",
-                display: "flex",
-                justifyContent: "space-between",
-              }}>
-              <span>اسم المكتب:</span>
-              <strong style={{ color: "#4096ff" }}>
-                {officeInfo.officeName}
-              </strong>
-            </div>
-            <div
-              style={{
-                marginBottom: "12px",
-                display: "flex",
-                justifyContent: "space-between",
-              }}>
-              <span>اسم المشرف:</span>
-              <strong style={{ color: "#4096ff" }}>
-                {officeInfo.supervisorName}
-              </strong>
-            </div>
-            <div
-              style={{
+                width: "100%",
                 height: "1px",
-                backgroundColor: "#E0E0E0",
-                margin: "16px 0",
+                border: "none",
+                background: "linear-gradient(to right, #e0e0e0, #000, #e0e0e0)",
+                marginBottom: "12px",
               }}
             />
-
-            <div
-              style={{
-                backgroundColor: "",
-                marginBottom: "12px",
-                display: "flex",
-                justifyContent: "space-between",
-              }}>
-              <span>العدد الكلي:</span>
-              <strong>{officeInfo.totalCount}</strong>
+            <div className="office-info" style={{ fontSize: "18px" }}>
+              <div
+                style={{
+                  marginBottom: "12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}>
+                <span>المحافظة:</span>
+                <strong style={{ color: "#4096ff" }}>
+                  {officeInfo.governorate}
+                </strong>
+              </div>
+              <div
+                style={{
+                  marginBottom: "12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}>
+                <span>اسم المكتب:</span>
+                <strong style={{ color: "#4096ff" }}>
+                  {officeInfo.officeName}
+                </strong>
+              </div>
+              <div
+                style={{
+                  marginBottom: "12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}>
+                <span>اسم المشرف:</span>
+                <strong style={{ color: "#4096ff" }}>
+                  {officeInfo.supervisorName}
+                </strong>
+              </div>
+              <div
+                style={{
+                  height: "1px",
+                  backgroundColor: "#E0E0E0",
+                  margin: "16px 0",
+                }}
+              />
+              <div
+                style={{
+                  marginBottom: "12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}>
+                <span>العدد الكلي:</span>
+                <strong>{officeInfo.totalCount}</strong>
+              </div>
+              <div
+                style={{
+                  marginBottom: "12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}>
+                <span>إجمالي الصرفيات:</span>
+                <strong style={{ color: "#02aa0a" }}>
+                  {officeInfo.totalExpenses.toLocaleString()} د.ع
+                </strong>
+              </div>
+              <div
+                style={{
+                  marginBottom: "12px",
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}>
+                <span>التاريخ:</span>
+                <strong>{officeInfo.date}</strong>
+              </div>
             </div>
-            <div
-              style={{
-                marginBottom: "12px",
-                display: "flex",
-                justifyContent: "space-between",
-              }}>
-              <span>إجمالي الصرفيات:</span>
-              <strong style={{ color: "#02aa0a" }}>
-                {officeInfo.totalExpenses.toLocaleString()} د.ع
-              </strong>
-            </div>
-            <div
-              style={{
-                marginBottom: "12px",
-                display: "flex",
-                justifyContent: "space-between",
-              }}>
-              <span>التاريخ:</span>
-              <strong>{officeInfo.date}</strong>
-            </div>
-          </div>
-
-          {!canCreateMonthly && (
             <Space
               direction="vertical"
               style={{ width: "100%", marginTop: "24px" }}>
@@ -443,8 +595,8 @@ export default function SuperVisorExpensesRequest() {
                 ارسال طلبات الشهر الكلية
               </Button>
             </Space>
-          )}
-        </Card>
+          </Card>
+        ) : null}
 
         <div style={{ flex: 1 }}>
           {canCreateMonthly ? (
@@ -460,6 +612,10 @@ export default function SuperVisorExpensesRequest() {
                   columns={columns}
                   loading={loading}
                   rowKey="id"
+                  expandable={{
+                    expandedRowRender,
+                    expandRowByClick: true,
+                  }}
                   pagination={{
                     pageSize: 5,
                     position: ["bottomCenter"],
@@ -491,14 +647,8 @@ export default function SuperVisorExpensesRequest() {
           style={{ marginTop: "10px" }}>
           <Form.Item
             name="notes"
-            label="ملاحظات"
-            style={{ width: "100%" }}
-            rules={[{ required: true, message: "الرجاء إدخال الملاحظات" }]}>
-            <Input.TextArea
-              rows={4}
-              placeholder="أدخل الملاحظات"
-              style={{ resize: "none" }}
-            />
+            label="هل انت متأكد من انشاء مصروف لهذا الشهر"
+            style={{ width: "100%" }}>
           </Form.Item>
           <Form.Item>
             <Button

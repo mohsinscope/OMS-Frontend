@@ -7,7 +7,7 @@ import Url from "../../store/url.js";
 import useAuthStore from "../../store/store.js";
 import AttendanceStats from './attendenceStats.jsx';
 import ExpensesStats  from './expensessStats.jsx';
-
+import AttendanceUnavailable from './attendenceUnavailable.jsx';
 import './stats.css';
 const COLORS = [
   "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0",
@@ -215,7 +215,6 @@ export default function Stats() {
     setSelectedDate(null);
     setOfficeAttendanceData(null);
   }, [selectedTab]);
-
   useEffect(() => {
     const initializeData = async () => {
       try {
@@ -313,6 +312,12 @@ export default function Stats() {
             >
               احصائيات المصاريف
             </li>
+            <li
+              className={`stats-navbar-item ${selectedTab === "attendanceUnavailable" ? "active" : ""}`}
+              onClick={() => handleTabChange("attendanceUnavailable")}
+            >
+              مكاتب الغياب
+            </li>
           </ul>
         </div>
       </div>
@@ -321,6 +326,8 @@ export default function Stats() {
         <ExpensesStats />
       ) : selectedTab === "attendance" ? (
         <AttendanceStats data={attendanceData} />
+      ) : selectedTab === "attendanceUnavailable" ? (
+        <AttendanceUnavailable />
       ) : (
         <>
           <form onSubmit={handleSubmit} className="stats-form" dir="rtl">
@@ -420,6 +427,7 @@ export default function Stats() {
               selectedTab === "damagedDevices" ? "الأجهزة التالفة" :
               selectedTab === "damagedPassports" ? "الجوازات التالفة" :
               selectedTab === "officeAttendene" ? "حضور المكتب" :
+              selectedTab === "attendanceUnavailable" ? "مكاتب الغياب" :
               selectedTab === "expenses" ? "المصاريف" : "الحضور"
             }
           </h2>
