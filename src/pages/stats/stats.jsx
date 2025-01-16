@@ -20,7 +20,7 @@ const chartData = [
   // Add more data as needed
 ];
 export default function Stats() {
-  const { profile, accessToken, isSidebarCollapsed } = useAuthStore();
+  const { profile, accessToken, isSidebarCollapsed,permissions } = useAuthStore();
   const [chartData, setChartData] = useState([]);
   const [totalItems, setTotalItems] = useState(0);
   const [selectedTab, setSelectedTab] = useState("damagedDevices");
@@ -38,6 +38,10 @@ export default function Stats() {
   const [error, setError] = useState(null);
   const [workingHours, setWorkingHours] = useState(3);
   const [officeAttendanceData, setOfficeAttendanceData] = useState(null);
+  const hasAttendencePermission = permissions.includes("Sa"); 
+  const hasPassportPermission = permissions.includes("Sp");  
+  const hasDecivePermission = permissions.includes("Sd");  
+  const hasExpensePermission = permissions.includes("Se");  
 
   const fetchGovernorates = useCallback(async () => {
     try {
@@ -282,42 +286,63 @@ export default function Stats() {
       <div className="stats-navbar" dir="rtl">
         <div className="small-stats-navbar-warber">
           <ul>
+            {hasDecivePermission &&
+
             <li
               className={`stats-navbar-item ${selectedTab === "damagedDevices" ? "active" : ""}`}
               onClick={() => handleTabChange("damagedDevices")}
             >
               الأجهزة التالفة
             </li>
+
+            
+            }
+            {hasPassportPermission&& 
+            
             <li
               className={`stats-navbar-item ${selectedTab === "damagedPassports" ? "active" : ""}`}
               onClick={() => handleTabChange("damagedPassports")}
             >
               الجوازات التالفة
             </li>
-            <li
-              className={`stats-navbar-item ${selectedTab === "officeAttendene" ? "active" : ""}`}
-              onClick={() => handleTabChange("officeAttendene")}
-            >
-              حضور المكتب
-            </li>
-            <li
-              className={`stats-navbar-item ${selectedTab === "attendance" ? "active" : ""}`}
-              onClick={() => handleTabChange("attendance")}
-            >
-              الحضور
-            </li>
-            <li
-              className={`stats-navbar-item ${selectedTab === "expenses" ? "active" : ""}`}
-              onClick={() => handleTabChange("expenses")}
-            >
-              احصائيات المصاريف
-            </li>
-            <li
+            
+            }
+            {hasAttendencePermission &&
+            <>
+            
+                  <li
+                  className={`stats-navbar-item ${selectedTab === "officeAttendene" ? "active" : ""}`}
+                  onClick={() => handleTabChange("officeAttendene")}
+                >
+                  حضور المكتب
+                </li>
+                <li
+                  className={`stats-navbar-item ${selectedTab === "attendance" ? "active" : ""}`}
+                  onClick={() => handleTabChange("attendance")}
+                >
+                  الحضور
+                </li>
+                <li
               className={`stats-navbar-item ${selectedTab === "attendanceUnavailable" ? "active" : ""}`}
               onClick={() => handleTabChange("attendanceUnavailable")}
             >
               مكاتب الغياب
             </li>
+            </>
+            
+            }
+
+
+          {hasExpensePermission&&
+              <li
+              className={`stats-navbar-item ${selectedTab === "expenses" ? "active" : ""}`}
+              onClick={() => handleTabChange("expenses")}
+            >
+              احصائيات المصاريف
+            </li>
+          }
+        
+          
           </ul>
         </div>
       </div>

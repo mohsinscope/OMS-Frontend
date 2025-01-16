@@ -5,7 +5,7 @@ import Layout from "./pages/LayOut.jsx";
 import useAuthStore from "./store/store.js";
 import SignInPage from "./pages/signIn.jsx";
 import Stats from './pages/stats/stats.jsx';
-
+import ExpensessViewMonthly from './roles/superVisor/expenses/ExpensessViewMonthly.jsx';
 import LandingPage from "./pages/landingPage.jsx";
 import NotFound from "./pages/pageNotFound.jsx";
 import Forbidden from "./pages/forbidden.jsx";
@@ -108,7 +108,10 @@ const App = () => {
       path: "/add-daily-expense",
       element: <ExpensessAddDaily />
     },
-
+    {
+      path: "/ExpensessViewMonthly",
+      element: <ExpensessViewMonthly />
+    },
     // Common Routes
     { path: "settings", element: <Settings /> },
     { path: "expenses-view", element: <ExpensessView /> },
