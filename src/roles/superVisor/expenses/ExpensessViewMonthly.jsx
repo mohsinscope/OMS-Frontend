@@ -150,10 +150,14 @@ export default function ExpensessViewMonthly() {
             key: 'totalAmount',
             render: (amount) => (
                 <span className="monthly-info-value amount">
-                    {amount.toLocaleString()} د.ع
+                    {amount.toLocaleString('en-US', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                    })} د.ع
                 </span>
             ),
         },
+        
         {
             title: 'ملاحظات',
             dataIndex: 'notes',
