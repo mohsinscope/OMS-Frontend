@@ -183,6 +183,7 @@ export default function ListOfValueAdmin() {
           name: values.name,
           companyId: values.companyId,
         };
+        
       case "/admin/add-office":
         return {
           officeId: editingId || undefined,
@@ -196,12 +197,55 @@ export default function ListOfValueAdmin() {
           governorateId: values.governorateId,
           budget: values.budget ? Number(values.budget) : null
         };
+        
       case "/admin/device-types":
         return {
           id: editingId,
           name: values.name,
           description: values.description
         };
+        
+      case "/admin/add-governorate":
+        return {
+          id: editingId,
+          name: values.name,
+          code: values.code
+        };
+        
+      case "/admin/damage-types":
+        return {
+          id: editingId,
+          name: values.name,
+          description: values.description
+        };
+        
+      case "/admin/passport-dammage-types":
+        return {
+          id: editingId,
+          name: values.name,
+          description: values.description
+        };
+        
+      case "/admin/companies":
+        return {
+          id: editingId,
+          name: values.name
+        };
+        
+      case "/admin/thrshhold":
+        return {
+          id: editingId,
+          name: values.name,
+          minValue: Number(values.minValue),
+          maxValue: Number(values.maxValue)
+        };
+        
+      case "/admin/expensess-types":
+        return {
+          id: editingId,
+          name: values.name
+        };
+        
       default:
         return {
           ...values,
@@ -209,6 +253,7 @@ export default function ListOfValueAdmin() {
         };
     }
   };
+  
 
   const handleAdd = async (values) => {
     if (!selectedConfig) {
@@ -307,25 +352,39 @@ export default function ListOfValueAdmin() {
   
     let formData;
   
-    if (currentPath === "/admin/add-office") {
-      formData = {
-        name: record.name,
-        code: record.code,
-        receivingStaff: record.receivingStaff,
-        accountStaff: record.accountStaff,
-        printingStaff: record.printingStaff,
-        qualityStaff: record.qualityStaff,
-        deliveryStaff: record.deliveryStaff,
-        governorateId: record.governorateId,
-        budget: record.budget
-      };
-    } else {
-      // For all other types, include all fields from the record
-      formData = {
-        name: record.name,
-        description: record.description,
-        // Add any other fields that might be needed
-      };
+    switch (currentPath) {
+      case "/admin/add-office":
+        formData = {
+          name: record.name,
+          code: record.code,
+          receivingStaff: record.receivingStaff,
+          accountStaff: record.accountStaff,
+          printingStaff: record.printingStaff,
+          qualityStaff: record.qualityStaff,
+          deliveryStaff: record.deliveryStaff,
+          governorateId: record.governorateId,
+          budget: record.budget
+        };
+        break;
+  
+      case "/admin/add-governorate":
+        formData = {
+          name: record.name,
+          code: record.code
+        };
+        break;
+        case "/admin/lecture-types":
+          formData = {
+            name: record.name,
+            companyId: record.companyId // Make sure to include companyId
+          };
+          break;
+      default:
+        formData = {
+          name: record.name,
+          description: record.description,
+        };
+        break;
     }
   
     setIsEditMode(true);
