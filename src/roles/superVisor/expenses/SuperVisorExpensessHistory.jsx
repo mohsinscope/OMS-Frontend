@@ -125,7 +125,7 @@ export default function SuperVisorExpensesHistory() {
         const allowedStatuses = getAvailableStatuses();
         searchBody.allowedStatuses = allowedStatuses;
       }
-
+      
       const response = await axiosInstance.post(
         `${Url}/api/Expense/search`,
         searchBody,
@@ -143,9 +143,9 @@ export default function SuperVisorExpensesHistory() {
       const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
-        setTotalRecords(filteredExpenses.length);
+        setTotalRecords(paginationInfo.totalItems);
       } else {
-        setTotalRecords(filteredExpenses.length);
+        setTotalRecords(response.data.length);
       }
     } catch (error) {
       console.error("Error fetching expenses:", error);
