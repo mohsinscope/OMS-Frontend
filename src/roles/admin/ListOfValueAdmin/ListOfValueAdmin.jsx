@@ -50,6 +50,14 @@ export default function ListOfValueAdmin() {
       }));
     }
     
+    if (currentPath === "/admin/add-office") {
+      return data.map((item) => ({
+        ...item,
+        key: item.officeId || item.id,
+        id: item.officeId || item.id
+      }));
+    }
+    
     return data.map((item) => ({
       ...item,
       key: item.id?.toString() || Math.random().toString(),
@@ -175,17 +183,69 @@ export default function ListOfValueAdmin() {
           name: values.name,
           companyId: values.companyId,
         };
+        
       case "/admin/add-office":
         return {
+          officeId: editingId || undefined,
           name: values.name,
-          code: values.code,
-          receivingStaff: values.receivingStaff,
-          accountStaff: values.accountStaff,
-          printingStaff: values.printingStaff,
-          qualityStaff: values.qualityStaff,
-          deliveryStaff: values.deliveryStaff,
+          code: Number(values.code),
+          receivingStaff: Number(values.receivingStaff),
+          accountStaff: Number(values.accountStaff),
+          printingStaff: Number(values.printingStaff),
+          qualityStaff: Number(values.qualityStaff),
+          deliveryStaff: Number(values.deliveryStaff),
           governorateId: values.governorateId,
+          budget: values.budget ? Number(values.budget) : null
         };
+        
+      case "/admin/device-types":
+        return {
+          id: editingId,
+          name: values.name,
+          description: values.description
+        };
+        
+      case "/admin/add-governorate":
+        return {
+          id: editingId,
+          name: values.name,
+          code: values.code
+        };
+        
+      case "/admin/damage-types":
+        return {
+          id: editingId,
+          name: values.name,
+          description: values.description
+        };
+        
+      case "/admin/passport-dammage-types":
+        return {
+          id: editingId,
+          name: values.name,
+          description: values.description
+        };
+        
+      case "/admin/companies":
+        return {
+          id: editingId,
+          name: values.name
+        };
+        
+      case "/admin/thrshhold":
+        return {
+          id: editingId,
+          name: values.name,
+          minValue: Number(values.minValue),
+          maxValue: Number(values.maxValue)
+        };
+        
+      case "/admin/expensess-types":
+        return {
+          id: editingId,
+          name: values.name
+        };
+        
       default:
         return {
           ...values,
@@ -193,6 +253,7 @@ export default function ListOfValueAdmin() {
         };
     }
   };
+  
 
   const handleAdd = async (values) => {
     if (!selectedConfig) {
@@ -229,10 +290,8 @@ export default function ListOfValueAdmin() {
         throw new Error("Update endpoint not configured");
       }
 
-      const payload = {
-        id: editingId,
-        ...createPayload(values),
-      };
+      const payload = createPayload(values);
+      console.log('Update payload:', payload);
 
       await axiosInstance.put(endpoint, payload);
       message.success("تم تحديث البيانات بنجاح");
@@ -290,13 +349,49 @@ export default function ListOfValueAdmin() {
       message.error("معرف السجل غير متوفر");
       return;
     }
-
+  
+    let formData;
+  
+    switch (currentPath) {
+      case "/admin/add-office":
+        formData = {
+          name: record.name,
+          code: record.code,
+          receivingStaff: record.receivingStaff,
+          accountStaff: record.accountStaff,
+          printingStaff: record.printingStaff,
+          qualityStaff: record.qualityStaff,
+          deliveryStaff: record.deliveryStaff,
+          governorateId: record.governorateId,
+          budget: record.budget
+        };
+        break;
+  
+      case "/admin/add-governorate":
+        formData = {
+          name: record.name,
+          code: record.code
+        };
+        break;
+        case "/admin/lecture-types":
+          formData = {
+            name: record.name,
+            companyId: record.companyId // Make sure to include companyId
+          };
+          break;
+      default:
+        formData = {
+          name: record.name,
+          description: record.description,
+        };
+        break;
+    }
+  
     setIsEditMode(true);
     setEditingId(record.id);
     setIsModalOpen(true);
-    form.setFieldsValue(record);
+    form.setFieldsValue(formData);
   };
-
   const handleAddNew = () => {
     if (!selectedConfig) {
       message.error("الرجاء اختيار نوع البيانات أولاً");
@@ -364,7 +459,7 @@ export default function ListOfValueAdmin() {
             type="number"
             min={field.min}
             max={field.max}
-            step={field.step || 1}
+            step={field.name === "budget" ? "0.01" : "1"}
             placeholder={field.placeholder || `ادخل ${field.label}`}
           />
         );
