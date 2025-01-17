@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { Table, message, Button, Select, DatePicker, ConfigProvider } from "antd";
+import {
+  Table,
+  message,
+  Button,
+  Select,
+  DatePicker,
+  ConfigProvider,
+} from "antd";
 import { Link } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
 import axiosInstance from "./../../../intercepters/axiosInstance";
 import Url from "./../../../store/url";
 import html2pdf from "html2pdf.js";
-import './styles/SuperVisorExpensesHistory.css';
+import "./styles/SuperVisorExpensesHistory.css";
 
 const Status = {
   New: 0,
@@ -17,7 +24,7 @@ const Status = {
   SentToAccountant: 6,
   ReturnedToSupervisor: 7,
   RecievedBySupervisor: 8,
-  Completed: 9
+  Completed: 9,
 };
 
 const statusDisplayNames = {
@@ -30,14 +37,17 @@ const statusDisplayNames = {
   [Status.SentToAccountant]: "مرسل إلى المحاسب",
   [Status.ReturnedToSupervisor]: "معاد إلى المشرف",
   [Status.RecievedBySupervisor]: "مستلم من قبل المشرف",
-  [Status.Completed]: "مكتمل"
+  [Status.Completed]: "مكتمل",
 };
 
 const positionStatusMap = {
-  ProjectCoordinator: [Status.SentToProjectCoordinator, Status.ReturnedToProjectCoordinator],
+  ProjectCoordinator: [
+    Status.SentToProjectCoordinator,
+    Status.ReturnedToProjectCoordinator,
+  ],
   Manager: [Status.SentToManager, Status.ReturnedToManager],
   Director: [Status.SentToDirector],
-  Accontnt: [Status.SentToAccountant]
+  Accontnt: [Status.SentToAccountant],
 };
 
 export default function SuperVisorExpensesHistory() {
@@ -54,7 +64,8 @@ export default function SuperVisorExpensesHistory() {
   const [totalRecords, setTotalRecords] = useState(0);
   const pageSize = 10;
 
-  const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } = useAuthStore();
+  const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } =
+    useAuthStore();
   const userPosition = profile?.position;
   const isSupervisor = userPosition === "Supervisor";
   const isAdmin = roles.includes("Admin");
@@ -73,10 +84,11 @@ export default function SuperVisorExpensesHistory() {
     if (isAdmin || isSupervisor) return expenses;
 
     const allowedStatuses = getAvailableStatuses();
-    return expenses.filter(expense => {
-      const expenseStatus = typeof expense.status === 'string' 
-        ? Status[expense.status] 
-        : expense.status;
+    return expenses.filter((expense) => {
+      const expenseStatus =
+        typeof expense.status === "string"
+          ? Status[expense.status]
+          : expense.status;
       return allowedStatuses.includes(expenseStatus);
     });
   };
@@ -86,11 +98,11 @@ export default function SuperVisorExpensesHistory() {
       try {
         const [govResponse, officeResponse] = await Promise.all([
           axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
+            headers: { Authorization: `Bearer ${accessToken}` },
           }),
           axiosInstance.get(`${Url}/api/Office/dropdown`, {
-            headers: { Authorization: `Bearer ${accessToken}` }
-          })
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }),
         ]);
 
         setGovernorates(govResponse.data);
@@ -117,23 +129,23 @@ export default function SuperVisorExpensesHistory() {
         endDate: endDate ? endDate.toISOString() : null,
         PaginationParams: {
           PageNumber: pageNumber,
-          PageSize: pageSize
-        }
+          PageSize: pageSize,
+        },
       };
 
       if (!status && !isAdmin && !isSupervisor) {
         const allowedStatuses = getAvailableStatuses();
         searchBody.allowedStatuses = allowedStatuses;
       }
-      
+
       const response = await axiosInstance.post(
         `${Url}/api/Expense/search`,
         searchBody,
         {
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`
-          }
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
       );
 
@@ -195,38 +207,38 @@ export default function SuperVisorExpensesHistory() {
 
   const handlePrintPDF = async () => {
     try {
-        // Fetch all expenses without pagination
-        const searchBody = {
-            officeId: isSupervisor ? userOfficeId : selectedOffice,
-            governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
-            profileId: profile?.id,
-            status: status,
-            startDate: startDate ? startDate.toISOString() : null,
-            endDate: endDate ? endDate.toISOString() : null,
-            PaginationParams: {
-                PageNumber: 1,
-                PageSize: totalRecords // Fetch all records
-            }
-        };
+      // Fetch all expenses without pagination
+      const searchBody = {
+        officeId: isSupervisor ? userOfficeId : selectedOffice,
+        governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
+        profileId: profile?.id,
+        status: status,
+        startDate: startDate ? startDate.toISOString() : null,
+        endDate: endDate ? endDate.toISOString() : null,
+        PaginationParams: {
+          PageNumber: 1,
+          PageSize: totalRecords, // Fetch all records
+        },
+      };
 
-        const response = await axiosInstance.post(
-            `${Url}/api/Expense/search`,
-            searchBody,
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`
-                }
-            }
-        );
+      const response = await axiosInstance.post(
+        `${Url}/api/Expense/search`,
+        searchBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
-        const allExpenses = response.data;
+      const allExpenses = response.data;
 
-        // Generate the PDF content
-        const element = document.createElement("div");
-        element.dir = "rtl";
-        element.style.fontFamily = "Arial, sans-serif";
-        element.innerHTML = `
+      // Generate the PDF content
+      const element = document.createElement("div");
+      element.dir = "rtl";
+      element.style.fontFamily = "Arial, sans-serif";
+      element.innerHTML = `
           <div style="padding: 20px; font-family: Arial, sans-serif;">
             <h1 style="text-align: center;">تقرير سجل الصرفيات</h1>
             <table style="width: 100%; border-collapse: collapse;">
@@ -240,37 +252,50 @@ export default function SuperVisorExpensesHistory() {
                 </tr>
               </thead>
               <tbody>
-                ${allExpenses.map((expense, index) => `
+                ${allExpenses
+                  .map(
+                    (expense, index) => `
                   <tr>
-                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${index + 1}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.governorateName || ""}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.officeName || ""}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.totalAmount?.toLocaleString() || ""}</td>
-                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(expense.dateCreated).toLocaleDateString()}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
+                      index + 1
+                    }</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
+                      expense.governorateName || ""
+                    }</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
+                      expense.officeName || ""
+                    }</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
+                      expense.totalAmount?.toLocaleString() || ""
+                    }</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(
+                      expense.dateCreated
+                    ).toLocaleDateString()}</td>
                   </tr>
-                `).join("")}
+                `
+                  )
+                  .join("")}
               </tbody>
             </table>
           </div>
         `;
 
-        // PDF options
-        const options = {
-            margin: 1,
-            filename: "تقرير_سجل_الصرفيات.pdf",
-            image: { type: "jpeg", quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: "cm", format: "a4", orientation: "portrait" },
-        };
+      // PDF options
+      const options = {
+        margin: 1,
+        filename: "تقرير_سجل_الصرفيات.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "cm", format: "a4", orientation: "portrait" },
+      };
 
-        // Generate and save the PDF
-        html2pdf().from(element).set(options).save();
+      // Generate and save the PDF
+      html2pdf().from(element).set(options).save();
     } catch (error) {
-        message.error("حدث خطأ أثناء إنشاء التقرير");
-        console.error(error);
+      message.error("حدث خطأ أثناء إنشاء التقرير");
+      console.error(error);
     }
-};
-
+  };
 
   const columns = [
     {
@@ -287,22 +312,25 @@ export default function SuperVisorExpensesHistory() {
       title: "مجموع الصرفيات",
       dataIndex: "totalAmount",
       key: "totalAmount",
-      render: (value) => 
+      render: (value) =>
         typeof value === "number"
-          ? value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
-          : value
+          ? value.toLocaleString("en-US", {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
+          : value,
     },
     {
       title: "الحالة",
       dataIndex: "status",
       key: "status",
-      render: (value) => statusDisplayNames[value] || value
+      render: (value) => statusDisplayNames[value] || value,
     },
     {
       title: "التاريخ",
       dataIndex: "dateCreated",
       key: "dateCreated",
-      render: (date) => new Date(date).toLocaleDateString()
+      render: (date) => new Date(date).toLocaleDateString(),
     },
     {
       title: "التفاصيل",
@@ -374,7 +402,9 @@ export default function SuperVisorExpensesHistory() {
             className="html-dropdown"
             value={status}
             onChange={(value) => setStatus(value)}>
-            {(isAdmin || isSupervisor) && <Select.Option value={null}>الكل</Select.Option>}
+            {(isAdmin || isSupervisor) && (
+              <Select.Option value={null}>الكل</Select.Option>
+            )}
             {availableStatuses.map((statusValue) => (
               <Select.Option key={statusValue} value={statusValue}>
                 {statusDisplayNames[statusValue]}
