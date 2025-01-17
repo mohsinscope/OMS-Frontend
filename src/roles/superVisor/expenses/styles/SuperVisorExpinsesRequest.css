@@ -293,7 +293,7 @@ button {
   display: flex;
 }
 .supervisor-expenses-history-page div {
-  /* width: 100%; */
+  width: 100%;
 }
 
 .supervisor-expenses {

@@ -21,6 +21,8 @@
   overflow: hidden;
 }
 .supervisor-expenses-history-filters.animate-show {
+  display: flex;
+  flex-wrap: wrap;
   max-height: 300px;
   opacity: 1;
   justify-content: flex-start;

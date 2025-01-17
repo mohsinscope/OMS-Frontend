@@ -194,45 +194,83 @@ export default function SuperVisorExpensesHistory() {
   };
 
   const handlePrintPDF = async () => {
-    const element = document.createElement("div");
-    element.dir = "rtl";
-    element.style.fontFamily = "Arial, sans-serif";
-    element.innerHTML = `
-      <div style="padding: 20px; font-family: Arial, sans-serif;">
-        <h1 style="text-align: center;">تقرير سجل الصرفيات</h1>
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="background-color: #f2f2f2;">
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المحافظة</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المكتب</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">مجموع الصرفيات</th>
-              <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">التاريخ</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${expensesList.map(expense => `
-              <tr>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.governorateName || ""}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.officeName || ""}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.totalAmount?.toLocaleString() || ""}</td>
-                <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(expense.dateCreated).toLocaleDateString()}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
-    `;
+    try {
+        // Fetch all expenses without pagination
+        const searchBody = {
+            officeId: isSupervisor ? userOfficeId : selectedOffice,
+            governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
+            profileId: profile?.id,
+            status: status,
+            startDate: startDate ? startDate.toISOString() : null,
+            endDate: endDate ? endDate.toISOString() : null,
+            PaginationParams: {
+                PageNumber: 1,
+                PageSize: totalRecords // Fetch all records
+            }
+        };
 
-    const options = {
-      margin: 1,
-      filename: "تقرير_سجل_الصرفيات.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "cm", format: "a4", orientation: "landscape" },
-    };
+        const response = await axiosInstance.post(
+            `${Url}/api/Expense/search`,
+            searchBody,
+            {
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`
+                }
+            }
+        );
 
-    html2pdf().from(element).set(options).save();
-  };
+        const allExpenses = response.data;
+
+        // Generate the PDF content
+        const element = document.createElement("div");
+        element.dir = "rtl";
+        element.style.fontFamily = "Arial, sans-serif";
+        element.innerHTML = `
+          <div style="padding: 20px; font-family: Arial, sans-serif;">
+            <h1 style="text-align: center;">تقرير سجل الصرفيات</h1>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background-color: #f2f2f2;">
+                  <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">#</th>
+                  <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المحافظة</th>
+                  <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المكتب</th>
+                  <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">مجموع الصرفيات</th>
+                  <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">التاريخ</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${allExpenses.map((expense, index) => `
+                  <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${index + 1}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.governorateName || ""}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.officeName || ""}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${expense.totalAmount?.toLocaleString() || ""}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(expense.dateCreated).toLocaleDateString()}</td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        // PDF options
+        const options = {
+            margin: 1,
+            filename: "تقرير_سجل_الصرفيات.pdf",
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: "cm", format: "a4", orientation: "portrait" },
+        };
+
+        // Generate and save the PDF
+        html2pdf().from(element).set(options).save();
+    } catch (error) {
+        message.error("حدث خطأ أثناء إنشاء التقرير");
+        console.error(error);
+    }
+};
+
 
   const columns = [
     {
@@ -296,7 +334,7 @@ export default function SuperVisorExpensesHistory() {
         }`}>
         {(isAdmin || !isSupervisor) && (
           <>
-            <div className="filter-row">
+            <div className="supervisor-Lectur-field-wrapper">
               <label>المحافظة</label>
               <Select
                 className="html-dropdown"
@@ -312,7 +350,7 @@ export default function SuperVisorExpensesHistory() {
               </Select>
             </div>
 
-            <div className="filter-row">
+            <div className="supervisor-Lectur-field-wrapper">
               <label>المكتب</label>
               <Select
                 className="html-dropdown"
@@ -330,7 +368,7 @@ export default function SuperVisorExpensesHistory() {
           </>
         )}
 
-        <div className="filter-row">
+        <div className="supervisor-Lectur-field-wrapper">
           <label>الحالة</label>
           <Select
             className="html-dropdown"
@@ -345,7 +383,7 @@ export default function SuperVisorExpensesHistory() {
           </Select>
         </div>
 
-        <div className="filter-row">
+        <div className="supervisor-Lectur-field-wrapper">
           <label>التاريخ من</label>
           <DatePicker
             placeholder="التاريخ من"
@@ -355,7 +393,7 @@ export default function SuperVisorExpensesHistory() {
           />
         </div>
 
-        <div className="filter-row">
+        <div className="supervisor-Lectur-field-wrapper">
           <label>التاريخ إلى</label>
           <DatePicker
             placeholder="التاريخ إلى"

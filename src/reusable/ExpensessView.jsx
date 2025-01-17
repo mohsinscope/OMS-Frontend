@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Empty, Modal, Button, Image, message, Input, Form } from "antd";
+import { Table, ConfigProvider, Modal, Button, Image, message, Input, Form } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import html2pdf from 'html2pdf.js';
 import "./styles/ExpensessView.css";
@@ -562,7 +562,7 @@ export default function ExpensesView() {
         </h1>
 
         {/* Action Buttons */}
-        <div style={{display:"flex", justifyContent:"space-between", marginBottom: "20px"}}>
+        <div style={{display:"flex", justifyContent:"space-between", marginBottom: "20px",width:"100%"}}>
           <Button 
             type="primary"
             style={{padding:"20px 30px"}}
@@ -660,6 +660,7 @@ export default function ExpensesView() {
         <hr />
 
         {/* Combined Expense Items Table */}
+        <ConfigProvider direction="rtl">
         <Table
           className="expense-items-table"
           loading={isLoading}
@@ -713,7 +714,7 @@ export default function ExpensesView() {
           ]}
           dataSource={expense?.items}
           bordered
-          pagination={{ pageSize: 5 }}
+          pagination={{ pageSize: 5 ,position: ["bottomCenter"]}}
           locale={{ emptyText: "لا توجد عناصر للصرف." }}
           summary={(pageData) => {
             const total = pageData.reduce((sum, item) => sum + item.المجموع, 0);
@@ -733,6 +734,7 @@ export default function ExpensesView() {
             );
           }}
         />
+        </ConfigProvider>
 
         {/* Details Modal */}
         <Modal
@@ -796,6 +798,7 @@ export default function ExpensesView() {
 
         {/* Action Modal */}
         <Modal
+          style={{direction:"rtl"}}
           title={actionType === "Approval" ? "تأكيد الموافقة" : "تأكيد الإرجاع"}
           open={actionModalVisible}
           onCancel={handleModalCancel}
@@ -821,6 +824,7 @@ export default function ExpensesView() {
             >
               <Input.TextArea
                 rows={4}
+                style={{minWidth:"460px"}}
                 value={actionNote}
                 onChange={(e) => setActionNote(e.target.value)}
                 placeholder="أدخل الملاحظات هنا..."
