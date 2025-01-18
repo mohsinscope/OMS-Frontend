@@ -2,6 +2,26 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+/* Default styles */
+body {
+  transform: none;
+  transform-origin: unset;
+}
+
+/* Detect zoom at approximately 125% */
+@media (min-resolution: 120dpi) and (max-resolution: 144dpi) {
+  html {
+  font-size: 85%; /* Adjust font size to match your design */
+}
+}
+
+/* Optional: Reset for other zoom levels if necessary */
+@media (min-resolution: 145dpi) {
+  body {
+    transform: none;
+    transform-origin: unset;
+  }
+}
 
 * {
   box-sizing: border-box;

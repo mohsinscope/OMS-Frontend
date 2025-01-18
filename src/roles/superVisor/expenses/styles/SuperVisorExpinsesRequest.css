@@ -1,4 +1,4 @@
-.supervisor-expenses-history-page {
+.supervisor-expenses-request-page {
   margin-top: 6%;
   padding: 20px;
   border-radius: 8px;
@@ -294,6 +294,9 @@ button {
 }
 .supervisor-expenses-history-page div {
   /* width: 100%; */
+}
+.supervisor-expenses-request-page div {
+  width: 100%;
 }
 
 .supervisor-expenses {
