@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./ListOfValueAdmin.css";
 import Icons from "./../../../reusable elements/icons.jsx";
-import listOfValuesData from "./../../../data/ListOfValueAdmin.json";
 import {
   Table,
   Modal,
@@ -14,13 +13,12 @@ import {
   Space,
 } from "antd";
 import axiosInstance from './../../../intercepters/axiosInstance.js';
-import Config from "./../../../store/configrationOfListOfValue.js";
+import { LOV_MENU_ITEMS, getAuthorizedLOVRoutes, LOVConfig } from './LovConfig.js';
 import useAuthStore from "./../../../store/store.js";
 
 export default function ListOfValueAdmin() {
-  const { ListOfValues } = listOfValuesData;
-  const { user } = useAuthStore();
-
+  const { permissions } = useAuthStore();
+  const [authorizedMenuItems, setAuthorizedMenuItems] = useState([]);
   const [selectedData, setSelectedData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [columns, setColumns] = useState([]);
@@ -39,6 +37,16 @@ export default function ListOfValueAdmin() {
     total: 0,
   });
 
+  useEffect(() => {
+    console.log('Current permissions:', permissions);
+    if (Array.isArray(permissions)) {
+      const authorizedRoutes = getAuthorizedLOVRoutes(permissions);
+      console.log('Authorized routes:', authorizedRoutes);
+      setAuthorizedMenuItems(authorizedRoutes);
+    }
+  }, [permissions]);
+
+ 
   const transformData = (data) => {
     if (currentPath === "/admin/lecture-types") {
       return data.map((item) => ({
@@ -93,6 +101,8 @@ export default function ListOfValueAdmin() {
   };
 
   const setupColumnsAndFormFields = async () => {
+    if (!selectedConfig) return;
+
     const updatedFormFields = await Promise.all(
       selectedConfig.formFields.map(async (field) => {
         if (field.type === "dropdown" && field.optionsEndpoint) {
@@ -142,7 +152,6 @@ export default function ListOfValueAdmin() {
               تعديل
             </Button>
             <Button
-              variant="outlined"
               danger
               onClick={() => handleDelete(record.id)}
               disabled={loading}
@@ -166,7 +175,13 @@ export default function ListOfValueAdmin() {
   }, [currentPath]);
 
   const handleItemClick = (item) => {
-    const selected = Config[item.path];
+    // Now check if the permission exists in the array
+    if (!Array.isArray(permissions) || !permissions.includes(item.permission)) {
+      message.error("ليس لديك صلاحية للوصول إلى هذا القسم");
+      return;
+    }
+
+    const selected = LOVConfig[item.path];
     if (!selected) {
       message.error("لم يتم العثور على التكوين المطلوب");
       return;
@@ -213,12 +228,6 @@ export default function ListOfValueAdmin() {
         };
         
       case "/admin/damage-types":
-        return {
-          id: editingId,
-          name: values.name,
-          description: values.description
-        };
-        
       case "/admin/passport-dammage-types":
         return {
           id: editingId,
@@ -227,6 +236,7 @@ export default function ListOfValueAdmin() {
         };
         
       case "/admin/companies":
+      case "/admin/expensess-types":
         return {
           id: editingId,
           name: values.name
@@ -240,20 +250,10 @@ export default function ListOfValueAdmin() {
           maxValue: Number(values.maxValue)
         };
         
-      case "/admin/expensess-types":
-        return {
-          id: editingId,
-          name: values.name
-        };
-        
       default:
-        return {
-          ...values,
-          profileId: user.id,
-        };
+        return values;
     }
   };
-  
 
   const handleAdd = async (values) => {
     if (!selectedConfig) {
@@ -291,8 +291,6 @@ export default function ListOfValueAdmin() {
       }
 
       const payload = createPayload(values);
-      console.log('Update payload:', payload);
-
       await axiosInstance.put(endpoint, payload);
       message.success("تم تحديث البيانات بنجاح");
       setIsModalOpen(false);
@@ -373,12 +371,22 @@ export default function ListOfValueAdmin() {
           code: record.code
         };
         break;
-        case "/admin/lecture-types":
-          formData = {
-            name: record.name,
-            companyId: record.companyId // Make sure to include companyId
-          };
-          break;
+
+      case "/admin/lecture-types":
+        formData = {
+          name: record.name,
+          companyId: record.companyId
+        };
+        break;
+
+      case "/admin/thrshhold":
+        formData = {
+          name: record.name,
+          minValue: record.minValue,
+          maxValue: record.maxValue
+        };
+        break;
+
       default:
         formData = {
           name: record.name,
@@ -392,6 +400,7 @@ export default function ListOfValueAdmin() {
     setIsModalOpen(true);
     form.setFieldsValue(formData);
   };
+
   const handleAddNew = () => {
     if (!selectedConfig) {
       message.error("الرجاء اختيار نوع البيانات أولاً");
@@ -479,7 +488,7 @@ export default function ListOfValueAdmin() {
     <div className="list-of-value-container" dir="rtl">
       <div className="list-of-value-bar">
         <ul className="list-of-value-items">
-          {ListOfValues.map((item, index) => (
+          {authorizedMenuItems.map((item, index) => (
             <li
               key={index}
               className={`list-of-value-item ${
