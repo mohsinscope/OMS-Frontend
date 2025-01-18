@@ -1,292 +1,189 @@
+/* Variables */
+:root {
+  --primary-color: #007bff;
+  --primary-hover: #0056b3;
+  --success-color: #04AA6D;
+  --text-color: #333;
+  --border-radius: 8px;
+  --transition-speed: 0.3s;
+  --spacing-unit: 20px;
+  --container-padding: 6%;
+  --shadow-default: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Base Container - Specific to user management */
 .admin-user-management-container {
-  /* Limit the width */
-  margin-top: 6%;
-  margin-right: 20px;
-  margin-left: 20px;
-  padding: 20px;
+  margin: var(--container-padding) var(--spacing-unit) 0;
+  padding: var(--spacing-unit);
+  border-radius: var(--border-radius);
+  background-color: #fff;
+  box-shadow: var(--shadow-default);
+  transition: margin var(--transition-speed) ease;
+  width: calc(100% - 2 * var(--spacing-unit));
+  margin-inline: auto;
+}
 
-  border-radius: 8px;
-  /* Smooth rounded corners */
+.admin-user-management-container.sidebar-collapsed {
+  margin-right: calc(var(--spacing-unit) + 60px);
+}
+
+/* User Management Header */
+.admin-user-management-container .admin-header {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 700;
+  color: var(--text-color);
+  text-align: center;
+  margin-bottom: var(--spacing-unit);
+  padding-bottom: 0.5em;
+  border-bottom: 2px solid #eee;
+}
+
+/* User Management Filter Section */
+.admin-user-management-container .filter-section {
+  background-color: #f8f9fa;
+  padding: var(--spacing-unit);
+  border-radius: var(--border-radius);
+  transition: all var(--transition-speed) ease-in-out;
+  margin-bottom: var(--spacing-unit);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: start;
-}
-.toggle-search-button {
-  display: flex;
-  gap: 30px;
-  width: 70px;
 }
 
-.admin-header {
-  font-size: 2em;
-  font-weight: bold;
-  /* margin-bottom: 20px; */
-  color: #333;
-  text-align: center; /* Center align the header */
-}
-
-.filter-section {
-  align-items: start;
-  display: flex;
-  justify-content: start;
-  gap: 10px;
-  transition: all 0.6s ease-in-out;
-  overflow: hidden;
-  /* background-color: white; */
-  padding: 20px 10px 20px 0px;
-  border-radius: 10px;
-  width: 100%;
-  height: 100px;
-}
-.filter-section button{
-  height: 45px;
-  width: 100px;
-  margin-left: 10px;
-}
-.filter-section div{
-  margin-left: 5px;
-}
-
-
-.filter-row {
+/* User Management Form Layout */
+.admin-user-management-container .filter-form {
   display: flex;
   flex-wrap: wrap;
-  flex-direction: column;
-  justify-content: start;
-  align-items: start;
-  gap: 10px;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 16px;
+  padding: 16px;
 }
-.attendance-dropdown-wrapper {
+
+.admin-user-management-container .filter-form .ant-form-item {
+  flex: 0 0 auto;
+  min-width: 200px;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: start;
-  gap: 10px;
+  text-align: right;
 }
-.filter-row > div {
+
+/* User Management Form Labels */
+.admin-user-management-container .filter-form label {
+  display: block;
+  text-align: right;
+  margin-bottom: 8px;
+  color: #666;
+}
+
+/* User Management Form Controls */
+.admin-user-management-container .filter-form .ant-select,
+.admin-user-management-container .filter-form .ant-input {
+  height: 40px;
+  width: 100%;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background-color: #fff !important;
+  margin-top: 8px;
+}
+
+/* User Management Select Specific */
+.admin-user-management-container .filter-form .ant-select-selector {
+  height: 40px !important;
+  padding: 0 11px !important;
+  border-radius: 4px !important;
+  border: 1px solid #ddd !important;
   display: flex;
-  justify-content: start;
   align-items: center;
-  gap: 20px;
-}
-.filter-row .filter-input,
-.filter-row .filter-dropdown {
-  padding: 10px;
-  height: 45px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  width: 220px; /* Consistent width for inputs and dropdowns */
 }
 
-.filter-row .filter-input:focus,
-.filter-row .filter-dropdown:focus {
-  border-color: #007bff; /* Highlight border on focus */
-  outline: none;
+.admin-user-management-container .filter-form .ant-select-selection-item {
+  line-height: 38px !important;
 }
-.filter-row .filter-input:hover,
-.filter-row .filter-dropdown:hover {
-  border-color: #007bff; /* Highlight border on focus */
-  outline: none;
-}
-.filter-row .filter-button {
-  padding: 10px 20px;
-  font-size: 14px;
-  background-color: #007bff;
-  color: #fff;
+
+/* User Management Buttons */
+.admin-user-management-container .filter-form .filter-button,
+.admin-user-management-container .filter-form .usermanagemenr-adduser {
+  height: 40px;
+  padding: 0 1.5em;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--border-radius);
+  font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s, box-shadow 0.3s;
-}
-
-.filter-row .filter-button:hover {
-  background-color: #0056b3;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
-}
-
-.data-table-container {
-  margin-top: 5px;
-  border-radius: 8px;
-  width: 100%;
-}
-
-.data-table-container table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.data-table-container th,
-.data-table-container td {
-  padding: 12px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-}
-
-.data-table-container th {
-  background-color: #f1f1f1;
-  font-weight: bold;
-  color: #333;
-}
-
-.data-table-container tr:hover {
-  background-color: #f9f9f9;
-}
-
-.data-table-container .action-buttons {
-  font-family: "Cairo", sans-serif;
-  display: flex;
-  gap: 8px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  margin-top: 32px;
 }
-.data-table-container .action-buttons button:nth-child(1) {
-  cursor: pointer;
-  border-radius: 5px;
-  padding: 10px;
-  color: #636ae8;
+
+.admin-user-management-container .filter-form .filter-button {
+  background-color: var(--primary-color);
+  color: white;
+  min-width: 120px;
+}
+
+.admin-user-management-container .filter-form .usermanagemenr-adduser {
+  background-color: var(--success-color);
+  color: white;
+  min-width: 170px;
+}
+
+/* User Management Table Styles */
+.admin-user-management-container .data-table-container {
   background-color: white;
-  border: solid 1px #636ae8;
-}
-.data-table-container .action-buttons button:nth-child(1):hover {
-  transition: 0.3s ease;
-  border-radius: 5px;
-  padding: 10px;
-  color: white;
-  background-color: #636ae8;
-  border: solid 1px #636ae8;
-}
-.data-table-container .action-buttons button:nth-child(2) {
-  cursor: pointer;
-  border-radius: 5px;
-  padding: 10px;
-  color: white;
-  background-color: red;
-  border: solid 1px red;
+  border-radius: var(--border-radius);
+  overflow: hidden;
+  box-shadow: var(--shadow-default);
+  margin-top: var(--spacing-unit);
 }
 
-.action-icon {
-  cursor: pointer;
-  transition: transform 0.2s ease-in-out;
+.admin-user-management-container .ant-table-thead > tr > th {
+  background-color: #f8f9fa;
+  font-weight: 600;
 }
 
-.action-icon:hover {
-  transform: scale(1.1); /* Slight zoom effect on hover */
+/* RTL Support */
+[dir="rtl"] .admin-user-management-container {
+  text-align: right;
 }
 
-.no-records-text {
-  text-align: center;
-  color: #999;
-  font-style: italic;
-  padding: 20px 0;
+[dir="rtl"] .admin-user-management-container .filter-button {
+  margin-inline-start: var(--spacing-unit);
 }
 
-.add-button {
-  background-color: #007bff; /* Blue background */
-  color: white; /* White text */
-  border: none; /* Remove border */
-  padding: 8px 16px; /* Padding for button */
-  font-size: 14px; /* Font size */
-  border-radius: 4px; /* Rounded corners */
-  cursor: pointer; /* Pointer cursor on hover */
-  margin-bottom: 16px; /* Space below the button */
-  display: inline-block; /* Align inline */
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .admin-user-management-container {
+    margin-top: 80px;
+    padding: 15px;
+  }
+
+  .admin-user-management-container .filter-form {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .admin-user-management-container .filter-form .ant-form-item {
+    width: 100%;
+  }
+
+  .admin-user-management-container .filter-button,
+  .admin-user-management-container .usermanagemenr-adduser {
+    width: 100%;
+  }
 }
 
-.add-button:hover {
-  background-color: #0056b3; /* Darker blue on hover */
+/* Animation Classes */
+.admin-user-management-container .animate-show {
+  max-height: 1000px;
+  opacity: 1;
 }
 
-.add-button:focus {
-  outline: none; /* Remove focus outline */
-  box-shadow: 0 0 3px #0056b3; /* Add blue shadow on focus */
+.admin-user-management-container .animate-hide {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
 }
-.add-button {
-  background-color: #007bff; /* Blue background */
-  color: white; /* White text */
-  border: none; /* Remove border */
-  padding: 8px 16px; /* Padding for button */
-  font-size: 14px; /* Font size */
-  border-radius: 4px; /* Rounded corners */
-  cursor: pointer; /* Pointer cursor on hover */
-  margin-bottom: 16px; /* Space below the button */
-  display: inline-block; /* Align inline */
-}
-
-.add-button:hover {
-  background-color: #0056b3; /* Darker blue on hover */
-}
-
-.add-button:focus {
-  outline: none; /* Remove focus outline */
-  box-shadow: 0 0 3px #0056b3; /* Add blue shadow on focus */
-}
-
-.filter-buttons {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  margin-top: 2%;
-  width: 100%;
-}
-
-.filter-buttons button {
-  width: 140px !important;
-  height: 45px;
-  background-color: #4880ff;
-  border-radius: 8px;
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-}
-.actions-button-usermanagement {
-  padding: 20px !important;
-}
-
-.data-table-container div {
-  overflow: hidden !important;
-}
-.data-table-container svg {
-  display: none;
-}
-
-.data-table-container div {
-  overflow: hidden !important;
-}
-.data-table-container svg {
-  display: none;
-}
-.Admin-user-add-model-conatiner-form input {
-  height: 45px;
-}
-
-.model-container label {
-  font-size: large !important;
-}
-.model-container h1 {
-  padding-bottom: 10px;
-  font-size: large !important;
-}
-.ant-row {
-  display: flex ;
-  flex-direction: column ;
-  align-items: start;
-}
-.ant-row input{
-  width: 200px;
-}
-.ant-row .ant-select{
-  width: 200px;
-}
-
-.ant-form{
-  display: flex;
-  align-items: end;
-  flex-wrap: wrap;
-}
-

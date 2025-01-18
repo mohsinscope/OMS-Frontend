@@ -17,15 +17,16 @@ const AddUserModal = ({
   return (
     <ConfigProvider direction="rtl">
       <Modal
-        className="model-container"
-        open={visible}
-        onCancel={onCancel}
-        style={{ top: 10 }}
-        footer={null}
+     className="model-container"
+     open={visible}
+     onCancel={onCancel}
+     footer={null}
       >
         <Form
           form={form}
           onFinish={onFinish}
+          layout="vertical"
+
           className="dammaged-passport-container-edit-modal"
     
         >
