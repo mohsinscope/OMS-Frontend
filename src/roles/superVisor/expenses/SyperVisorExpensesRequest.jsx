@@ -23,7 +23,9 @@ export default function SuperVisorExpensesRequest() {
   const [currentMonthlyExpenseId, setCurrentMonthlyExpenseId] = useState(null);
   const [canCreateMonthly, setCanCreateMonthly] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [currentMonthDailyExpenses, setCurrentMonthDailyExpenses] = useState([]);
+  const [currentMonthDailyExpenses, setCurrentMonthDailyExpenses] = useState(
+    []
+  );
   const [expenseTypes, setExpenseTypes] = useState([]);
   const [isMonthlyModalVisible, setIsMonthlyModalVisible] = useState(false);
   const [monthlyForm] = Form.useForm();
@@ -42,29 +44,36 @@ export default function SuperVisorExpensesRequest() {
   });
 
   const arabicMonths = [
-    "الواحد",
-    "الثاني",
-    "الثالث",
-    "الرابع",
-    "الخامس",
-    "السادس",
-    "السابع",
-    "الثامن",
-    "التاسع",
-    "العاشر",
-    "الحادي عشر",
-    "الثناي عشر",
+    "يناير", // January
+    "فبراير", // February
+    "مارس", // March
+    "أبريل", // April
+    "مايو", // May
+    "يونيو", // June
+    "يوليو", // July
+    "أغسطس", // August
+    "سبتمبر", // September
+    "أكتوبر", // October
+    "نوفمبر", // November
+    "ديسمبر", // December
   ];
 
-  const formattedDate = new Date(officeInfo.date);
-  const displayMonthNumber = formattedDate.getMonth() + 1;
-  const displayMonthName = arabicMonths[formattedDate.getMonth()];
+  // Get the current month and year in Arabic
+  const formattedDate = new Date(officeInfo.date); // Use the date from your `officeInfo`
+  const displayMonthName = arabicMonths[formattedDate.getMonth()]; // Get the Arabic name of the month
+  const displayYear = formattedDate.getFullYear(); // Get the year
+
+  // Combine month and year
+  const displayMonthYear = `${displayMonthName} - ${displayYear}`;
 
   const fetchLastMonthExpense = async () => {
     try {
-      const response = await axiosInstance.post("/api/Expense/search-last-month", {
-        officeId: profile?.officeId
-      });
+      const response = await axiosInstance.post(
+        "/api/Expense/search-last-month",
+        {
+          officeId: profile?.officeId,
+        }
+      );
       setLastMonthExpense(response.data);
     } catch (error) {
       console.error("Error fetching last month expense:", error);
@@ -74,12 +83,12 @@ export default function SuperVisorExpensesRequest() {
 
   const getStatusColor = (status) => {
     const statusColors = {
-      'Pending': '#ffa940',
-      'SentToProjectCoordinator': '#1890ff',
-      'Approved': '#52c41a',
-      'Rejected': '#ff4d4f'
+      Pending: "#ffa940",
+      SentToProjectCoordinator: "#1890ff",
+      Approved: "#52c41a",
+      Rejected: "#ff4d4f",
     };
-    return statusColors[status] || '#000000';
+    return statusColors[status] || "#000000";
   };
 
   const fetchExpenseTypes = async () => {
@@ -197,7 +206,9 @@ export default function SuperVisorExpensesRequest() {
       const payload = {
         monthlyExpensesId: currentMonthlyExpenseId,
         newStatus: 1,
-        notes: values.notes || "Monthly expenses marked as completed by the Manager."
+        notes:
+          values.notes ||
+          "Monthly expenses marked as completed by the Manager.",
       };
 
       await axiosInstance.post(
@@ -233,28 +244,63 @@ export default function SuperVisorExpensesRequest() {
     if (!lastMonthExpense) return null;
 
     const formatDate = (dateString) => {
-      return new Date(dateString).toLocaleDateString('ar-IQ', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("ar-IQ", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     };
 
     return (
-      <div style={{ padding: '20px', backgroundColor: '#fafafa', borderRadius: '8px' }}>
-        <h3 style={{ marginBottom: '16px', color: '#1890ff' }}>حالة مصروفات الشهر السابق</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+      <div
+        style={{
+          padding: "20px",
+          backgroundColor: "#fafafa",
+          borderRadius: "8px",
+        }}>
+        <h3 style={{ marginBottom: "16px", color: "#1890ff" }}>
+          حالة مصروفات الشهر السابق
+        </h3>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "16px",
+          }}>
           <div>
-            <p><strong>المبلغ الإجمالي:</strong> <span style={{ color: '#52c41a' }}>{lastMonthExpense.totalAmount?.toLocaleString()} د.ع</span></p>
-            <p><strong>حالة الطلب:</strong> <span style={{ color: getStatusColor(lastMonthExpense.status) }}>{lastMonthExpense.status}</span></p>
-            <p><strong>اسم المكتب:</strong> {lastMonthExpense.officeName}</p>
-            <p><strong>المحافظة:</strong> {lastMonthExpense.governorateName}</p>
+            <p>
+              <strong>المبلغ الإجمالي:</strong>{" "}
+              <span style={{ color: "#52c41a" }}>
+                {lastMonthExpense.totalAmount?.toLocaleString()} د.ع
+              </span>
+            </p>
+            <p>
+              <strong>حالة الطلب:</strong>{" "}
+              <span style={{ color: getStatusColor(lastMonthExpense.status) }}>
+                {lastMonthExpense.status}
+              </span>
+            </p>
+            <p>
+              <strong>اسم المكتب:</strong> {lastMonthExpense.officeName}
+            </p>
+            <p>
+              <strong>المحافظة:</strong> {lastMonthExpense.governorateName}
+            </p>
           </div>
           <div>
-            <p><strong>اسم المشرف:</strong> {lastMonthExpense.profileFullName}</p>
-            <p><strong>مستوى الإنفاق:</strong> {lastMonthExpense.thresholdName}</p>
-            <p><strong>تاريخ الإنشاء:</strong> {formatDate(lastMonthExpense.dateCreated)}</p>
-            <p><strong>ملاحظات:</strong> {lastMonthExpense.notes}</p>
+            <p>
+              <strong>اسم المشرف:</strong> {lastMonthExpense.profileFullName}
+            </p>
+            <p>
+              <strong>مستوى الإنفاق:</strong> {lastMonthExpense.thresholdName}
+            </p>
+            <p>
+              <strong>تاريخ الإنشاء:</strong>{" "}
+              {formatDate(lastMonthExpense.dateCreated)}
+            </p>
+            <p>
+              <strong>ملاحظات:</strong> {lastMonthExpense.notes}
+            </p>
           </div>
         </div>
       </div>
@@ -320,75 +366,90 @@ export default function SuperVisorExpensesRequest() {
   const EmptyStateCard = () => {
     const { Panel } = Collapse;
     const formatDate = (dateString) => {
-      return new Date(dateString).toLocaleDateString('ar-IQ', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      return new Date(dateString).toLocaleDateString("ar-IQ", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
     };
 
-    const lastMonthColumns = lastMonthExpense ? [
-      {
-        title: "المبلغ الإجمالي",
-        dataIndex: "totalAmount",
-        key: "totalAmount",
-        render: (text) => <span style={{ color: '#52c41a' }}>{text?.toLocaleString()} د.ع</span>,
-        width: "12.5%"
-      },
-      {
-        title: "حالة الطلب",
-        dataIndex: "status",
-        key: "status",
-        render: (text) => <span style={{ color: getStatusColor(text) }}>{text}</span>,
-        width: "12.5%"
-      },
-      {
-        title: "اسم المكتب",
-        dataIndex: "officeName",
-        key: "officeName",
-        width: "12.5%"
-      },
-      {
-        title: "المحافظة",
-        dataIndex: "governorateName",
-        key: "governorateName",
-        width: "12.5%"
-      },
-      {
-        title: "اسم المشرف",
-        dataIndex: "profileFullName",
-        key: "profileFullName",
-        width: "12.5%"
-      },
-      {
-        title: "مستوى الإنفاق",
-        dataIndex: "thresholdName",
-        key: "thresholdName",
-        width: "12.5%"
-      },
-      {
-        title: "تاريخ الإنشاء",
-        dataIndex: "dateCreated",
-        key: "dateCreated",
-        render: (text) => formatDate(text),
-        width: "12.5%"
-      },
-      {
-        title: "ملاحظات",
-        dataIndex: "notes",
-        key: "notes",
-        width: "12.5%"
-      },...(lastMonthExpense.status === 'ReturnedToSupervisor' ? [{
-        title: "الإجراءات",
-        key: "actions",
-        render: (_, record) => (
-          <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>
-            <Button type="primary">عرض</Button>
-          </Link>
-        ),
-        width: "10%"
-      }] : [])
-    ] : [];
+    const lastMonthColumns = lastMonthExpense
+      ? [
+          {
+            title: "المبلغ الإجمالي",
+            dataIndex: "totalAmount",
+            key: "totalAmount",
+            render: (text) => (
+              <span style={{ color: "#52c41a" }}>
+                {text?.toLocaleString()} د.ع
+              </span>
+            ),
+            width: "12.5%",
+          },
+          {
+            title: "حالة الطلب",
+            dataIndex: "status",
+            key: "status",
+            render: (text) => (
+              <span style={{ color: getStatusColor(text) }}>{text}</span>
+            ),
+            width: "12.5%",
+          },
+          {
+            title: "اسم المكتب",
+            dataIndex: "officeName",
+            key: "officeName",
+            width: "12.5%",
+          },
+          {
+            title: "المحافظة",
+            dataIndex: "governorateName",
+            key: "governorateName",
+            width: "12.5%",
+          },
+          {
+            title: "اسم المشرف",
+            dataIndex: "profileFullName",
+            key: "profileFullName",
+            width: "12.5%",
+          },
+          {
+            title: "مستوى الإنفاق",
+            dataIndex: "thresholdName",
+            key: "thresholdName",
+            width: "12.5%",
+          },
+          {
+            title: "تاريخ الإنشاء",
+            dataIndex: "dateCreated",
+            key: "dateCreated",
+            render: (text) => formatDate(text),
+            width: "12.5%",
+          },
+          {
+            title: "ملاحظات",
+            dataIndex: "notes",
+            key: "notes",
+            width: "12.5%",
+          },
+          ...(lastMonthExpense.status === "ReturnedToSupervisor"
+            ? [
+                {
+                  title: "الإجراءات",
+                  key: "actions",
+                  render: (_, record) => (
+                    <Link
+                      to="/ExpensessViewMonthly"
+                      state={{ monthlyExpenseId: record.id }}>
+                      <Button type="primary">عرض</Button>
+                    </Link>
+                  ),
+                  width: "10%",
+                },
+              ]
+            : []),
+        ]
+      : [];
 
     const getLastMonthData = () => {
       if (!lastMonthExpense) return [];
@@ -448,22 +509,20 @@ export default function SuperVisorExpensesRequest() {
         </div>
 
         {lastMonthExpense && (
-          <Collapse 
-            defaultActiveKey={[]} 
-            style={{ marginBottom: "24px" }}
-          >
-            <Panel 
-              header={ <>
-              
-                <span style={{ fontWeight: "bold", fontSize: "16px" }}>
-                  عرض مصروفات الشهر السابق
-                </span>
-                <span style={{color:"blue"}}>  {lastMonthExpense.status}</span>
+          <Collapse defaultActiveKey={[]} style={{ marginBottom: "24px" }}>
+            <Panel
+              header={
+                <>
+                  <span style={{ fontWeight: "bold", fontSize: "16px" }}>
+                    عرض مصروفات الشهر السابق
+                  </span>
+                  <span style={{ color: "blue" }}>
+                    {" "}
+                    {lastMonthExpense.status}
+                  </span>
                 </>
-
-              } 
-              key="1"
-            >
+              }
+              key="1">
               <Table
                 dataSource={getLastMonthData()}
                 columns={lastMonthColumns}
@@ -471,7 +530,7 @@ export default function SuperVisorExpensesRequest() {
                 bordered
                 size="middle"
                 scroll={{ x: true }}
-                style={{ overflowX: 'auto' }}
+                style={{ overflowX: "auto" }}
               />
             </Panel>
           </Collapse>
@@ -482,7 +541,7 @@ export default function SuperVisorExpensesRequest() {
 
   return (
     <div
-      className={`supervisor-expenses-history-page ${
+      className={`supervisor-expenses-request-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl"
@@ -495,16 +554,19 @@ export default function SuperVisorExpensesRequest() {
           marginBottom: "24px",
         }}>
         {!canCreateMonthly ? (
-          <Card className="office-info-card" style={{ width: "25%", flexShrink: 0 }}>
+          <Card
+            className="office-info-card"
+            style={{ width: "25%", flexShrink: 0 }}>
             <h1 style={{ marginBottom: "24px", textAlign: "center" }}>
               معلومات المكتب
             </h1>
             <h3 style={{ marginBottom: "24px", textAlign: "center" }}>
               صرفيات شهر :{" "}
               <span style={{ color: "#DAA520", fontWeight: "bold" }}>
-                {displayMonthName}
+                {displayMonthYear}
               </span>
             </h3>
+
             <hr
               style={{
                 width: "100%",
@@ -657,8 +719,7 @@ export default function SuperVisorExpensesRequest() {
           <Form.Item
             name="notes"
             label="هل انت متأكد من انشاء مصروف لهذا الشهر"
-            style={{ width: "100%" }}>
-          </Form.Item>
+            style={{ width: "100%" }}></Form.Item>
           <Form.Item>
             <Button
               type="primary"
@@ -687,10 +748,7 @@ export default function SuperVisorExpensesRequest() {
           onFinish={handleSendMonthlyExpense}
           layout="vertical"
           style={{ marginTop: "10px" }}>
-          <Form.Item
-            name="notes"
-            label="ملاحظات"
-            style={{ width: "100%" }}>
+          <Form.Item name="notes" label="ملاحظات" style={{ width: "100%" }}>
             <Input.TextArea
               rows={4}
               placeholder="أدخل الملاحظات"

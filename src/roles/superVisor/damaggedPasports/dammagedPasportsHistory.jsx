@@ -14,7 +14,7 @@ import { Link } from "react-router-dom";
 import html2pdf from "html2pdf.js";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
-import Icons from './../../../reusable elements/icons.jsx';
+import Icons from "./../../../reusable elements/icons.jsx";
 
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
@@ -107,7 +107,9 @@ export default function SuperVisorPassport() {
       const payload = {
         passportNumber: formData.passportNumber || "",
         officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-        governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
+        governorateId: isSupervisor
+          ? profile.governorateId
+          : selectedGovernorate || null,
         damagedTypeId: formData.damagedTypeId || null,
         startDate: formData.startDate ? formatToISO(formData.startDate) : null,
         endDate: formData.endDate ? formatToISO(formData.endDate) : null,
@@ -116,7 +118,7 @@ export default function SuperVisorPassport() {
           PageSize: totalPassports, // Fetch all items
         },
       };
-  
+
       const response = await axiosInstance.post(
         `${Url}/api/DamagedPassport/search`,
         payload,
@@ -127,9 +129,9 @@ export default function SuperVisorPassport() {
           },
         }
       );
-  
+
       const fullPassportList = response.data || [];
-  
+
       // Generate the PDF content
       const element = document.createElement("div");
       element.dir = "rtl";
@@ -175,7 +177,7 @@ export default function SuperVisorPassport() {
           </table>
         </div>
       `;
-  
+
       const options = {
         margin: 1,
         filename: "تقرير_الجوازات_التالفة.pdf",
@@ -183,7 +185,7 @@ export default function SuperVisorPassport() {
         html2canvas: { scale: 2 },
         jsPDF: { unit: "cm", format: "a4", orientation: "landscape" },
       };
-  
+
       html2pdf().from(element).set(options).save();
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -196,7 +198,9 @@ export default function SuperVisorPassport() {
       const payload = {
         passportNumber: formData.passportNumber || "",
         officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-        governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
+        governorateId: isSupervisor
+          ? profile.governorateId
+          : selectedGovernorate || null,
         damagedTypeId: formData.damagedTypeId || null,
         startDate: formData.startDate ? formatToISO(formData.startDate) : null,
         endDate: formData.endDate ? formatToISO(formData.endDate) : null,
@@ -205,7 +209,7 @@ export default function SuperVisorPassport() {
           PageSize: totalPassports, // Fetch all passports
         },
       };
-  
+
       const response = await axiosInstance.post(
         `${Url}/api/DamagedPassport/search`, // Correct endpoint
         payload,
@@ -216,24 +220,24 @@ export default function SuperVisorPassport() {
           },
         }
       );
-  
+
       const fullPassportList = response.data || [];
-  
+
       if (fullPassportList.length === 0) {
         message.error("لا توجد بيانات لتصديرها");
         return;
       }
-  
+
       // Create a new Excel workbook and worksheet
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("تقرير الجوازات التالفة", {
         properties: { rtl: true }, // Enable RTL
       });
-  
+
       // Add header row (in RTL order)
       const headers = ["رقم الجواز", "المكتب", "المحافظة", "التاريخ", "ت"];
       const headerRow = worksheet.addRow(headers);
-  
+
       headerRow.eachCell((cell) => {
         cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
         cell.alignment = { horizontal: "center", vertical: "middle" };
@@ -249,7 +253,7 @@ export default function SuperVisorPassport() {
           right: { style: "thin" },
         };
       });
-  
+
       // Add passport data rows (in RTL order)
       fullPassportList.forEach((passport, index) => {
         const row = worksheet.addRow([
@@ -259,7 +263,7 @@ export default function SuperVisorPassport() {
           new Date(passport.date).toLocaleDateString("en-CA"),
           fullPassportList.length - index, // Reverse index
         ]);
-  
+
         row.eachCell((cell) => {
           cell.alignment = { horizontal: "center", vertical: "middle" };
           cell.border = {
@@ -275,7 +279,7 @@ export default function SuperVisorPassport() {
           };
         });
       });
-  
+
       // Set column widths (adjust for RTL order)
       worksheet.columns = [
         { width: 25 }, // Passport Number
@@ -284,7 +288,7 @@ export default function SuperVisorPassport() {
         { width: 15 }, // Date
         { width: 10 }, // Index
       ];
-  
+
       // Generate and save the Excel file
       const buffer = await workbook.xlsx.writeBuffer();
       saveAs(new Blob([buffer]), "تقرير_الجوازات_التالفة.xlsx");
@@ -294,8 +298,7 @@ export default function SuperVisorPassport() {
       message.error("حدث خطأ أثناء تصدير التقرير");
     }
   };
-  
-  
+
   // Event handlers
   const handleSearch = async (page = 1) => {
     const payload = {
@@ -317,7 +320,12 @@ export default function SuperVisorPassport() {
   };
 
   const handleReset = async () => {
-    setFormData({ passportNumber: "", damagedTypeId: null, startDate: null, endDate: null });
+    setFormData({
+      passportNumber: "",
+      damagedTypeId: null,
+      startDate: null,
+      endDate: null,
+    });
     setCurrentPage(1);
     if (!isSupervisor) {
       setSelectedGovernorate(null);
@@ -350,9 +358,12 @@ export default function SuperVisorPassport() {
 
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
       setGovernorates(response.data);
       if (isSupervisor) {
         setSelectedGovernorate(profile.governorateId);
@@ -504,7 +515,10 @@ export default function SuperVisorPassport() {
             <Input
               value={formData.passportNumber}
               onChange={(e) =>
-                setFormData((prev) => ({ ...prev, passportNumber: e.target.value }))
+                setFormData((prev) => ({
+                  ...prev,
+                  passportNumber: e.target.value,
+                }))
               }
             />
           </div>
@@ -549,21 +563,36 @@ export default function SuperVisorPassport() {
             </Button>
 
             <button
+              type="button" // Prevent form submission
               onClick={handlePrintPDF}
               className="modern-button pdf-button"
-              style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", borderRadius: "8px" ,width:"fit-content"}}>
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 24px",
+                borderRadius: "8px",
+                width: "fit-content",
+              }}>
               طباعة كـ PDF
               <Icons type="pdf" />
             </button>
-            <button
-  onClick={handleExportToExcel}
-  className="modern-button excel-button"
-  style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", borderRadius: "8px",width:"fit-content" }}
->
-  تصدير إلى Excel
-  <Icons type="excel" />
-</button>
 
+            <button
+              type="button" // Prevent form submission
+              onClick={handleExportToExcel}
+              className="modern-button excel-button"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 24px",
+                borderRadius: "8px",
+                width: "fit-content",
+              }}>
+              تصدير إلى Excel
+              <Icons type="excel" />
+            </button>
 
             {hasCreatePermission && (
               <Link to="/supervisor/damagedpasportshistory/supervisordammagepasportadd">
