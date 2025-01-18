@@ -1,184 +1,208 @@
+/* Main container styles */
 .supervisor-attendance-history-main-container {
-  margin-top: 6%;
-  margin-right: 20px;
-  margin-left: 20px;
+  margin: 6% 20px 0;
   padding: 20px;
   border-radius: 8px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: start;
+  align-items: flex-start;
 }
+
+/* Title styles */
+.supervisor-attendance-history-title h1 {
+  font-size: 24px;
+  margin-bottom: 24px;
+  color: #333;
+}
+
+/* Fields container styles */
 .supervisor-attendance-history-fields {
-  display: flex;
-  justify-content: space-between;
-  align-items: end;
-  gap: 10px;
-  padding: 20px 0px 20px 20px;
+  width: 100%;
+  padding: 20px 0;
   transition: all 0.6s ease-in-out;
   display: none;
 }
+
 .supervisor-attendance-history-fields.animate-show {
   max-height: 300px;
   opacity: 1;
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-start;
-  transition: max-height 0.6s ease, opacity 0.6s ease;
+  gap: 20px;
+  align-items: end;
 }
 
 .supervisor-attendance-history-fields.animate-hide {
   max-height: 0;
   opacity: 0;
-  justify-content: flex-start;
-  transition: max-height 0.6s ease, opacity 0.6s ease;
 }
-.supervisor-attendance-history-table {
+
+/* Filter row styles */
+.filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.filter-row label {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 4px;
+}
+
+.filter-row .ant-select,
+.filter-row .ant-picker {
   width: 100%;
+}
+
+/* Dropdown wrapper styles */
+.attendance-dropdown-wrapper {
   display: flex;
-  justify-content: center;
-  text-align: center;
-}
-.supervisor-attendance-history-table div {
-  text-align: center;
-  width: 100%;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
 }
 
-.ant-table-cell {
-  text-align: center !important;
-}
-.supervisor-attendance-history-table button {
-  padding: 20px;
+.attendance-dropdown-wrapper label {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 4px;
 }
 
-.supervisor-attendance-history-fields button {
-  width: 150px;
+.attendance-dropdown-wrapper .html-dropdown {
+  width: 200px !important;
   height: 45px;
-  background-color: #4880ff;
-  border-radius: 8px;
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-}
-.supervisor-attendance-history-fields a {
-  text-decoration: none;
-}
-
-.attendance-button {
-  margin-left: 10px;
-  font-size: large;
-}
-
-.attendance-form {
-  display: flex;
-  align-items: end;
-}
-.attendance-form div {
-  display: flex;
-  gap: 10px;
-  align-items: start;
-  justify-content: end;
-}
-
-.attendance-form button {
-  width: 100px;
-  height: 45px;
-  background-color: #4880ff;
-  border-radius: 8px;
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-}
-
-.attendance-form input {
-  width: 267px;
-  height: 45px;
-  padding: 10px 10px;
-  text-align: start;
-  border: #bcc1ca 1px solid;
+  border: 1px solid #d9d9d9;
   border-radius: 6px;
 }
+
+/* Button styles */
+.attendance-search-button,
+.attendance-reset-button {
+  height: 40px;
+  min-width: 120px;
+  background-color: #4880ff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  align-self: flex-end;
+  margin-top: 24px;
+}
+
+.attendance-search-button:hover,
+.attendance-reset-button:hover {
+  background-color: #3a6cd9;
+  transform: translateY(-2px);
+}
+
+.attendance-add-button {
+  height: 40px;
+  min-width: 150px;
+  background-color: #04aa6d !important;
+  border: 2px solid #04aa6d !important;
+  color: white !important;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  align-self: flex-end;
+  margin-top: 24px;
+}
+
+.attendance-add-button:hover {
+  background-color: white !important;
+  color: #04aa6d !important;
+  transform: translateY(-2px);
+}
+
+/* Table styles */
+.supervisor-attendance-history-table {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.supervisor-attendance-history-table .ant-table-wrapper {
+  width: 100%;
+}
+
+.supervisor-attendance-history-table .ant-table-cell {
+  text-align: center !important;
+  padding: 12px 8px;
+}
+
+.supervisor-attendance-history-table .ant-btn {
+  padding: 4px 12px;
+  height: 32px;
+}
+
+/* Form styles */
+.attendance-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 800px;
+}
+
 .attendance-field-wrapper {
   display: flex;
   flex-direction: column;
+  gap: 8px;
 }
 
+.attendance-field-wrapper label {
+  font-size: 14px;
+  color: #555;
+}
+
+.attendance-field-wrapper input,
+.attendance-field-wrapper select {
+  width: 100%;
+  height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+  transition: border-color 0.3s ease;
+}
+
+.attendance-field-wrapper input:focus,
+.attendance-field-wrapper select:focus {
+  border-color: #4880ff;
+  outline: none;
+}
+
+/* Charts section */
 .supervisor-attendance-history-charts {
   display: flex;
-  justify-content: start;
-  align-items: center;
-  gap: 20px;
-  margin-top: 50px;
   flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 32px;
 }
+
 .supervisor-attendance-chart-box {
-  width: 500px;
+  flex: 1;
+  min-width: 300px;
+  max-width: 500px;
   height: 200px;
   background-color: white;
-  border-radius: 10px;
-  margin-left: 20px;
-  padding: 20px;
-}
-
-.attendance-field-wrapper #date {
-  height: 45px;
-  width: 200px;
-}
-
-#searchDate {
-  height: 35px;
-  width: 200px;
-  padding: 10px 20px;
-}
-
-.date-attendence-histore {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-  justify-content: end;
-  width: 100%;
-  gap: 15px;
-}
-.attendance-dropdown-wrapper select {
-  width: 200px;
-}
-.attendance-add-button {
-  height: 45px;
-  width: 150px !important;
-  background-color: #04aa6d !important;
-  border: 2px solid #04aa6d;
-  color: white;
-  cursor: pointer;
   border-radius: 8px;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-.attendance-add-button:hover {
-  transform: translateY(-2px); /* Lift effect */
-  background-color: white !important;
-  color: #04aa6d !important;
-  border: 2px solid #04aa6d !important;
-}
-.attendance-search-button,
-.attendance-reset-button {
-  background-color: #4880ff;
-  color: white;
-  padding: 5px 20px;
-  border-radius: 6px;
-  text-decoration: none;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-}
-.attendance-search-button:hover,
-.attendance-reset-button:hover {
-  transform: translateY(-2px); /* Lift effect */
-}
-.html-dropdown {
-  width: 200px !important;
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .filter-row,
+  .attendance-dropdown-wrapper {
+    width: 100%;
+  }
+  
+  .attendance-search-button,
+  .attendance-reset-button,
+  .attendance-add-button {
+    width: 100%;
+  }
 }
