@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect , useCallback } from "react";
 import {
   Table,
   Button,
@@ -40,36 +40,51 @@ export default function SupervisorAttendanceHistory() {
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
 
-  useEffect(() => {
-    const fetchDropdowns = async () => {
-      try {
-        const govResponse = await axiosInstance.get(
-          `${Url}/api/Governorate/dropdown`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
-        const officeResponse = await axiosInstance.get(
-          `${Url}/api/Office/dropdown`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+  const fetchGovernorates = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      setGovernorates(response.data);
 
-        setGovernorates(govResponse.data);
-        setOffices(officeResponse.data);
-      } catch (error) {
-        console.error("Error fetching dropdowns:", error);
-        message.error("حدث خطأ أثناء جلب البيانات");
+      if (isSupervisor) {
+        setSelectedGovernorate(profile.governorateId);
+        await fetchOffices(profile.governorateId);
       }
-    };
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المحافظات");
+    }
+  }, [accessToken, isSupervisor, profile]);
+  
+  const fetchOffices = async (governorateId) => {
+    if (!governorateId) {
+      setOffices([]);
+      setSelectedOffice(null);
+      return;
+    }
 
-    fetchDropdowns();
-  }, [accessToken]);
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown/${governorateId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (response.data && response.data[0] && response.data[0].offices) {
+        setOffices(response.data[0].offices);
+
+        if (isSupervisor) {
+          setSelectedOffice(profile.officeId);
+        }
+      }
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المكاتب");
+    }
+  };
 
   const fetchAttendanceData = async (pageNumber = 1) => {
     try {
@@ -153,6 +168,9 @@ export default function SupervisorAttendanceHistory() {
   useEffect(() => {
     fetchAttendanceData(currentPage);
   }, [isSupervisor, userGovernorateId, userOfficeId, governorates, offices]);
+  useEffect(() => {
+      fetchGovernorates();
+    }, [fetchGovernorates]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -171,7 +189,10 @@ export default function SupervisorAttendanceHistory() {
     fetchAttendanceData(1);
     message.success("تمت إعادة التعيين بنجاح");
   };
-
+  const handleGovernorateChange = (value) => {
+    setSelectedGovernorate(value);
+    fetchOffices(value);
+  };
   const handlePageChange = (page) => {
     setCurrentPage(page);
     fetchAttendanceData(page);
@@ -251,7 +272,7 @@ export default function SupervisorAttendanceHistory() {
           <Select
             className="html-dropdown"
             value={isSupervisor ? userGovernorateId : selectedGovernorate}
-            onChange={(value) => setSelectedGovernorate(value)}
+            onChange={handleGovernorateChange}
             disabled={isSupervisor}>
             <Select.Option value=""></Select.Option>
             {governorates.map((gov) => (
@@ -268,7 +289,7 @@ export default function SupervisorAttendanceHistory() {
             className="html-dropdown"
             value={isSupervisor ? userOfficeId : selectedOffice}
             onChange={(value) => setSelectedOffice(value)}
-            disabled={isSupervisor}>
+            disabled={isSupervisor || !selectedGovernorate}>
             <Select.Option value=""></Select.Option>
             {offices.map((office) => (
               <Select.Option key={office.id} value={office.id}>
