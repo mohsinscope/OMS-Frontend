@@ -541,7 +541,7 @@ export default function SuperVisorExpensesRequest() {
 
   return (
     <div
-      className={`supervisor-expenses-history-page ${
+      className={`supervisor-expenses-request-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl"

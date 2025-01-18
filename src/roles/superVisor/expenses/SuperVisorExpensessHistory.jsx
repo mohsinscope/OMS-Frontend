@@ -13,7 +13,8 @@ import axiosInstance from "./../../../intercepters/axiosInstance";
 import Url from "./../../../store/url";
 import html2pdf from "html2pdf.js";
 import "./styles/SuperVisorExpensesHistory.css";
-
+import Icons from "./../../../reusable elements/icons.jsx";
+import ExcelJS from "exceljs";
 const Status = {
   New: 0,
   SentToProjectCoordinator: 1,
@@ -296,6 +297,112 @@ export default function SuperVisorExpensesHistory() {
       console.error(error);
     }
   };
+  const handleExportToExcel = async () => {
+    try {
+      // Fetch all expenses matching the search criteria
+      const searchBody = {
+        officeId: isSupervisor ? userOfficeId : selectedOffice,
+        governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
+        profileId: profile?.id,
+        status: status,
+        startDate: startDate ? startDate.toISOString() : null,
+        endDate: endDate ? endDate.toISOString() : null,
+        PaginationParams: {
+          PageNumber: 1,
+          PageSize: totalRecords, // Fetch all records
+        },
+      };
+
+      const response = await axiosInstance.post(
+        `${Url}/api/Expense/search`,
+        searchBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const allExpenses = response.data;
+
+      if (allExpenses.length === 0) {
+        message.error("لا توجد بيانات لتصديرها");
+        return;
+      }
+
+      // Create a new Excel workbook and worksheet
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("تقرير سجل الصرفيات", {
+        properties: { rtl: true }, // Enable RTL
+      });
+
+      // Add header row
+      const headers = ["التاريخ", "مجموع الصرفيات", "المكتب", "المحافظة", "#"];
+      const headerRow = worksheet.addRow(headers);
+
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF4CAF50" },
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+
+      // Add data rows
+      allExpenses.forEach((expense, index) => {
+        const row = worksheet.addRow([
+          new Date(expense.dateCreated).toLocaleDateString("en-CA"),
+          typeof expense.totalAmount === "number"
+            ? expense.totalAmount.toLocaleString()
+            : "",
+          expense.officeName || "",
+          expense.governorateName || "",
+          index + 1, // Index
+        ]);
+
+        row.eachCell((cell) => {
+          cell.alignment = { horizontal: "center", vertical: "middle" };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" },
+          };
+        });
+      });
+
+      // Set column widths
+      worksheet.columns = [
+        { width: 15 }, // Date
+        { width: 15 }, // Total Amount
+        { width: 20 }, // Office
+        { width: 20 }, // Governorate
+        { width: 5 }, // Index
+      ];
+
+      // Generate and save the Excel file
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), "تقرير_سجل_الصرفيات.xlsx");
+      message.success("تم تصدير التقرير بنجاح");
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      message.error("حدث خطأ أثناء تصدير التقرير");
+    }
+  };
 
   const columns = [
     {
@@ -434,26 +541,51 @@ export default function SuperVisorExpensesHistory() {
         </div>
 
         <Button
-          className="expenses-search-button"
+          style={{ width: "120px" }}
+          type="primary"
           onClick={handleSearch}
           loading={isLoading}>
           البحث
         </Button>
 
         <Button
-          className="expenses-reset-button"
+          style={{ width: "fit-content" }}
+          type="primary"
           onClick={handleReset}
           disabled={isLoading}>
           إعادة التعيين
         </Button>
 
-        <Button
-          className="expenses-print-button"
+        <button
+          type="button" // Prevent form submission
           onClick={handlePrintPDF}
-          disabled={isLoading}
-          style={{ marginLeft: "10px" }}>
-          طباعة PDF
-        </Button>
+          className="modern-button pdf-button"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "12px 24px",
+            borderRadius: "8px",
+            width: "fit-content",
+          }}>
+          طباعة كـ PDF
+          <Icons type="pdf" />
+        </button>
+        <button
+          type="button"
+          onClick={handleExportToExcel}
+          className="modern-button excel-button"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            padding: "12px 24px",
+            borderRadius: "8px",
+            width: "fit-content",
+          }}>
+          تصدير إلى Excel
+          <Icons type="excel" />
+        </button>
       </div>
 
       <div className="supervisor-expenses-history-table">
