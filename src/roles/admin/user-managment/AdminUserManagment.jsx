@@ -7,216 +7,17 @@ import {
   Select,
   message,
   Spin,
-  ConfigProvider,
-  Modal
+  ConfigProvider
 } from "antd";
 import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Dashboard from "./../../../pages/dashBoard.jsx";
 import "./AdminUserManagment.css";
 import useAuthStore from "./../../../store/store.js";
 import Url from "./../../../store/url.js";
+import AddUserModal from './addUserModal.jsx';
+import EditUserModal from './editUserManagment.jsx';
 
 const { Option } = Select;
-
-const AddUserModal = ({ 
-  visible, 
-  onCancel, 
-  onFinish, 
-  form, 
-  roles, 
-  governorates, 
-  offices, 
-  selectedGovernorate, 
-  onGovernorateChange 
-}) => {
-  return (
-    <Modal
-      title="إضافة مستخدم جديد"
-      visible={visible}
-      onCancel={onCancel}
-      footer={null}
-      width={800}
-      destroyOnClose
-    >
-      <Form
-        form={form}
-        onFinish={onFinish}
-        layout="vertical"
-        dir="rtl"
-      >
-        <Form.Item
-          name="username"
-          label="اسم المستخدم"
-          rules={[{ required: true, message: 'الرجاء إدخال اسم المستخدم' }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          name="password"
-          label="كلمة المرور"
-          rules={[{ required: true, message: 'الرجاء إدخال كلمة المرور' }]}
-        >
-          <Input.Password />
-        </Form.Item>
-
-        <Form.Item
-          name="fullName"
-          label="الاسم الكامل"
-          rules={[{ required: true, message: 'الرجاء إدخال الاسم الكامل' }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          name="roles"
-          label="الصلاحيات"
-          rules={[{ required: true, message: 'الرجاء اختيار الصلاحيات' }]}
-        >
-          <Select mode="multiple">
-            {roles.map(role => (
-              <Option key={role} value={role}>{role}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item
-          name="position"
-          label="المنصب"
-          rules={[{ required: true, message: 'الرجاء إدخال المنصب' }]}
-        >
-          <Input type="number" />
-        </Form.Item>
-
-        <Form.Item
-          name="governorate"
-          label="المحافظة"
-          rules={[{ required: true, message: 'الرجاء اختيار المحافظة' }]}
-        >
-          <Select onChange={onGovernorateChange}>
-            {governorates.map(gov => (
-              <Option key={gov.id} value={gov.id}>{gov.name}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item
-          name="officeName"
-          label="اسم المكتب"
-          rules={[{ required: true, message: 'الرجاء اختيار المكتب' }]}
-        >
-          <Select disabled={!selectedGovernorate}>
-            {offices.map(office => (
-              <Option key={office.id} value={office.id}>{office.name}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item>
-          <Button type="primary" htmlType="submit">
-            إضافة
-          </Button>
-          <Button onClick={onCancel} style={{ marginRight: 8 }}>
-            إلغاء
-          </Button>
-        </Form.Item>
-      </Form>
-    </Modal>
-  );
-};
-
-const EditUserModal = ({
-  visible,
-  onCancel,
-  onFinish,
-  form,
-  roles,
-  governorates,
-  offices,
-  selectedGovernorate,
-  setSelectedGovernorate,
-  selectedUser
-}) => {
-  return (
-    <Modal
-      title="تعديل المستخدم"
-      visible={visible}
-      onCancel={onCancel}
-      footer={null}
-      width={800}
-      destroyOnClose
-    >
-      <Form
-        form={form}
-        onFinish={onFinish}
-        layout="vertical"
-        dir="rtl"
-        initialValues={selectedUser}
-      >
-        <Form.Item
-          name="fullName"
-          label="الاسم الكامل"
-          rules={[{ required: true, message: 'الرجاء إدخال الاسم الكامل' }]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item
-          name="roles"
-          label="الصلاحيات"
-          rules={[{ required: true, message: 'الرجاء اختيار الصلاحيات' }]}
-        >
-          <Select mode="multiple">
-            {roles.map(role => (
-              <Option key={role} value={role}>{role}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item
-          name="position"
-          label="المنصب"
-          rules={[{ required: true, message: 'الرجاء إدخال المنصب' }]}
-        >
-          <Input type="number" />
-        </Form.Item>
-
-        <Form.Item
-          name="governorate"
-          label="المحافظة"
-          rules={[{ required: true, message: 'الرجاء اختيار المحافظة' }]}
-        >
-          <Select onChange={setSelectedGovernorate}>
-            {governorates.map(gov => (
-              <Option key={gov.id} value={gov.id}>{gov.name}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item
-          name="officeName"
-          label="اسم المكتب"
-          rules={[{ required: true, message: 'الرجاء اختيار المكتب' }]}
-        >
-          <Select disabled={!selectedGovernorate}>
-            {offices.map(office => (
-              <Option key={office.id} value={office.id}>{office.name}</Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item>
-          <Button type="primary" htmlType="submit">
-            حفظ التغييرات
-          </Button>
-          <Button onClick={onCancel} style={{ marginRight: 8 }}>
-            إلغاء
-          </Button>
-        </Form.Item>
-      </Form>
-    </Modal>
-  );
-};
 
 const AdminUserManagment = () => {
   const [userRecords, setUserRecords] = useState([]);
@@ -233,10 +34,12 @@ const AdminUserManagment = () => {
   const { isSidebarCollapsed } = useAuthStore();
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
+  const [currentFilters, setCurrentFilters] = useState({});
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
-    total: 0
+    total: 0,
+    position: ['bottomCenter']
   });
 
   const fetchOffices = async (governorateId) => {
@@ -266,7 +69,7 @@ const AdminUserManagment = () => {
     }
   };
 
-  const fetchUserData = async (pageNumber = 1, pageSize = 10, filters = {}) => {
+  const fetchUserData = async (page = pagination.current, pageSize = pagination.pageSize, filters = currentFilters) => {
     setLoading(true);
     try {
       const payload = {
@@ -275,7 +78,7 @@ const AdminUserManagment = () => {
         governorateId: filters.governorateId || null,
         roles: filters.roles || [],
         paginationParams: {
-          pageNumber: pageNumber,
+          pageNumber: page,
           pageSize: pageSize
         }
       };
@@ -290,21 +93,24 @@ const AdminUserManagment = () => {
         }
       );
 
-      setUserRecords(Array.isArray(response.data) ? response.data : response.data.items || []);
+      const items = Array.isArray(response.data) ? response.data : response.data.items || [];
+      setUserRecords(items);
       
+      let totalItems = 0;
       const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
-        setPagination({
-          ...pagination,
-          total: paginationInfo.totalItems
-        });
+        totalItems = paginationInfo.totalItems;
       } else {
-        setPagination({
-          ...pagination,
-          total: Array.isArray(response.data) ? response.data.length : (response.data.totalCount || response.data.items?.length || 0)
-        });
+        totalItems = Array.isArray(response.data) ? response.data.length : (response.data.totalCount || response.data.items?.length || 0);
       }
+
+      setPagination(prev => ({
+        ...prev,
+        current: page,
+        pageSize: pageSize,
+        total: totalItems
+      }));
     } catch (error) {
       console.error("Error fetching profiles:", error);
       message.error("Failed to load data");
@@ -315,7 +121,7 @@ const AdminUserManagment = () => {
   };
 
   useEffect(() => {
-    fetchUserData(1, 10, { roles: [] });
+    fetchUserData(1, pagination.pageSize, { roles: [] });
   }, []);
 
   useEffect(() => {
@@ -335,23 +141,24 @@ const AdminUserManagment = () => {
     fetchInitialData();
   }, []);
 
-  const handleTableChange = (pagination, filters) => {
-    fetchUserData(pagination.current, pagination.pageSize, {
-      roles: []
-    });
+  const handleTableChange = (paginationParams, filters, sorter) => {
+    fetchUserData(paginationParams.current, paginationParams.pageSize, currentFilters);
   };
 
   const handleFilterSubmit = (values) => {
-    fetchUserData(1, pagination.pageSize, {
+    const newFilters = {
       fullName: values.username || "",
       officeId: values.officeName || null,
       governorateId: values.governorate || null,
       roles: values.role ? [values.role] : []
-    });
+    };
+    setCurrentFilters(newFilters);
+    fetchUserData(1, pagination.pageSize, newFilters);
   };
 
   const resetFilters = () => {
     filterForm.resetFields();
+    setCurrentFilters({});
     fetchUserData(1, pagination.pageSize, { roles: [] });
   };
 
@@ -374,8 +181,9 @@ const AdminUserManagment = () => {
       });
 
       message.success("تمت إضافة المستخدم بنجاح!");
-      closeAddModal();
-      fetchUserData(pagination.current, pagination.pageSize, { roles: [] });
+      setAddModalVisible(false);
+      form.resetFields();
+      fetchUserData(pagination.current, pagination.pageSize, currentFilters);
     } catch (error) {
       console.error("Error adding user:", error);
       message.error("فشل في إضافة المستخدم");
@@ -407,7 +215,8 @@ const AdminUserManagment = () => {
         position: values.position,
         officeId: values.officeName,
         governorateId: values.governorate,
-        roles: values.roles
+        roles: values.roles,
+        newPassword: values.newPassword
       };
 
       await axiosInstance.put(`${Url}/api/account/${selectedUser.userId}`, updatedUser, {
@@ -417,28 +226,15 @@ const AdminUserManagment = () => {
       });
 
       message.success("تم تحديث المستخدم بنجاح!");
-      closeEditModal();
-      fetchUserData(pagination.current, pagination.pageSize, { roles: [] });
+      setEditModalVisible(false);
+      form.resetFields();
+      fetchUserData(pagination.current, pagination.pageSize, currentFilters);
     } catch (error) {
       console.error("Error updating user:", error);
       message.error("فشل في تحديث المستخدم");
     } finally {
       setLoading(false);
     }
-  };
-
-  const closeAddModal = () => {
-    setAddModalVisible(false);
-    setSelectedGovernorate(null);
-    setOffices([]);
-    form.resetFields();
-  };
-
-  const closeEditModal = () => {
-    setEditModalVisible(false);
-    setSelectedGovernorate(null);
-    setOffices([]);
-    form.resetFields();
   };
 
   const columns = [
@@ -549,42 +345,40 @@ const AdminUserManagment = () => {
                 إعادة تعيين
               </Button>
               <Button
-            type="primary"
-            className="usermanagemenr-adduser"
-            style={{
-              width: "170px",
-              backgroundColor: "#04AA6D",
-              border: "none",
-            }}
-            onClick={() => setAddModalVisible(true)}
-          >
-            إضافة مستخدم +
-          </Button>
+                type="primary"
+                className="usermanagemenr-adduser"
+                style={{
+                  width: "170px",
+                  backgroundColor: "#04AA6D",
+                  border: "none",
+                }}
+                onClick={() => setAddModalVisible(true)}
+              >
+                إضافة مستخدم +
+              </Button>
             </Form.Item>
           </Form>
         </div>
 
-
         <div className="data-table-container">
           <Spin spinning={loading}>
-            <Table
-              dataSource={userRecords}
-              columns={columns}
-              rowKey="userId"
-              bordered
-              pagination={{
-                ...pagination,
-                position: ["bottomCenter"]
-              }}              
-              onChange={handleTableChange}
-            />
+<Table
+  dataSource={userRecords}
+  columns={columns}
+  rowKey="userId"
+  bordered
+  pagination={pagination}
+  onChange={handleTableChange}
+/>
           </Spin>
         </div>
 
-        {/* Add User Modal */}
         <AddUserModal 
           visible={addModalVisible}
-          onCancel={closeAddModal}
+          onCancel={() => {
+            setAddModalVisible(false);
+            form.resetFields();
+          }}
           onFinish={handleAddUser}
           form={form}
           roles={roles}
@@ -594,10 +388,12 @@ const AdminUserManagment = () => {
           onGovernorateChange={handleGovernorateChange}
         />
 
-        {/* Edit User Modal */}
         <EditUserModal
           visible={editModalVisible}
-          onCancel={closeEditModal}
+          onCancel={() => {
+            setEditModalVisible(false);
+            form.resetFields();
+          }}
           onFinish={handleSaveEdit}
           form={form}
           roles={roles}

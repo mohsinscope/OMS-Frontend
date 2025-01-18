@@ -26,8 +26,8 @@ const AddUserModal = ({
         <Form
           form={form}
           onFinish={onFinish}
-          layout="vertical"
           className="dammaged-passport-container-edit-modal"
+    
         >
           <h1>اضافة مستخدم جديد</h1>
           <Form.Item
