@@ -44,31 +44,36 @@ const SuperVisorLecturerAdd = () => {
     }
     const fetchGovernorateData = async () => {
       try {
-        const response = await axiosInstance.get(
-          `${Url}/api/Governorate/dropdown/${governorateId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
 
-        if (Array.isArray(response.data) && response.data.length > 0) {
-          const governorateData = response.data[0];
-          setGovernate([
-            {
-              value: governorateData.id,
-              label: governorateData.name,
-            },
-          ]);
-          if (governorateData.id === governorateId) {
-            setOffices(
-              governorateData.offices.map((office) => ({
-                value: office.id,
-                label: office.name,
-              }))
+        if (Array.isArray(response.data)) {
+          setGovernate(
+            response.data.map((gov) => ({
+              value: gov.id,
+              label: gov.name,
+            }))
+          );
+
+          if (isSupervisor) {
+            const supervisorGovernorate = response.data.find(
+              (gov) => gov.id === governorateId
             );
+            if (supervisorGovernorate) {
+              setOffices(
+                supervisorGovernorate.offices?.map((office) => ({
+                  value: office.id,
+                  label: office.name,
+                })) || []
+              );
+            }
           }
+        } else {
+          console.error("Unexpected response format for governorates", response.data);
+          message.error("فشل تحميل المحافظات بسبب خطأ في البيانات");
         }
       } catch (error) {
         console.error("Error fetching governorate data:", error);

@@ -20,6 +20,8 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import Icons from "./../reusable elements/icons.jsx";
 import { Link } from "react-router-dom";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 // Status Enum matching backend exactly
 const Status = {
@@ -486,6 +488,44 @@ export default function ExpensesView() {
       const element = document.createElement("div");
       element.dir = "rtl";
       element.style.fontFamily = "Arial, sans-serif";
+  
+      const baseURL = "https://cdn-oms.scopesky.org"; // Base URL for images
+  
+      // Fetch images for daily expenses
+      const fetchImages = async (items) => {
+        const imagePromises = items
+          .filter((item) => item.type === "daily") // Only fetch images for daily expenses
+          .map(async (item) => {
+            try {
+              const response = await axiosInstance.get(
+                `/api/Attachment/Expense/${item.id}`,
+                {
+                  headers: { Authorization: `Bearer ${accessToken}` },
+                }
+              );
+  
+              const imageUrls =
+                response.data?.map(
+                  (attachment) => `${baseURL}${attachment.filePath}`
+                ) || []; // Prefix with base URL
+  
+              return { ...item, images: imageUrls };
+            } catch (error) {
+              console.error(
+                `Error fetching images for daily expense ${item.id}:`,
+                error
+              );
+              return { ...item, images: [] }; // Return empty array on error
+            }
+          });
+  
+        return Promise.all(imagePromises);
+      };
+  
+      // Wait for images to be fetched
+      const itemsWithImages = await fetchImages(expense?.items || []);
+  
+      // Build the HTML for the PDF
       element.innerHTML = `
         <div style="padding: 20px; font-family: Arial, sans-serif; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background: #f0f0f0;">
           <div style="text-align: center; margin-bottom: 30px;">
@@ -518,38 +558,11 @@ export default function ExpensesView() {
                   expense?.generalInfo?.["المكتب"] || ""
                 }</td>
                 <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">
-  ${
-    expense?.generalInfo?.["مبلغ النثرية"]
-      ? `IQD ${expense.generalInfo["مبلغ النثرية"].toLocaleString(undefined, {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 2,
-        })}`
-      : ""
-  }
-</td>
-
+  ${expense?.generalInfo?.["مبلغ النثرية"] ? `IQD ${expense.generalInfo["مبلغ النثرية"].toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` : ""}</td>
                 <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">
-  ${
-    expense?.generalInfo?.["مجموع الصرفيات"]
-      ? `IQD ${expense.generalInfo["مجموع الصرفيات"].toLocaleString(undefined, {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 2,
-        })}`
-      : ""
-  }
-</td>
-
+  ${expense?.generalInfo?.["مجموع الصرفيات"] ? `IQD ${expense.generalInfo["مجموع الصرفيات"].toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}` : ""}</td>
                 <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">
-  ${
-    expense?.generalInfo?.["المتبقي"]
-      ? `IQD ${expense.generalInfo["المتبقي"].toLocaleString(undefined, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })}`
-      : ""
-  }
-</td>
-
+  ${expense?.generalInfo?.["المتبقي"] ? `IQD ${expense.generalInfo["المتبقي"].toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : ""}</td>
               </tr>
             </tbody>
           </table>
@@ -567,56 +580,61 @@ export default function ExpensesView() {
               </tr>
             </thead>
             <tbody>
-              ${expense?.items
-                ?.map(
-                  (item, index) => `
-                <tr style="background: ${
-                  index % 2 === 0 ? "#f9f9f9" : "#ffffff"
-                }; color: #000;">
-                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
-                    index + 1
-                  }</td>
-                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
-                    item["التاريخ"] || ""
-                  }</td>
-                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
-                    item["نوع المصروف"] || ""
-                  }</td>
-                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
-                    item["الكمية"] || ""
-                  }</td>
-                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
-                    item["السعر"]
-                      ? `IQD ${item["السعر"].toLocaleString(undefined, {
-                          minimumFractionDigits: 0,
-                          maximumFractionDigits: 2,
-                        })}`
-                      : ""
-                  }</td>
-
-                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">
-  ${
-    item["المجموع"]
-      ? `IQD ${item["المجموع"].toLocaleString(undefined, {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 2,
-        })}`
-      : ""
-  }
-</td>
-
-                  <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
-                    item["ملاحظات"] || ""
-                  }</td>
-                </tr>
-              `
-                )
-                .join("")}
+            ${itemsWithImages
+              .map(
+                (item, index) => `
+              <tr style="background: ${
+                index % 2 === 0 ? "#f9f9f9" : "#ffffff"
+              }; color: #000;">
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
+                  index + 1
+                }</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
+                  item["التاريخ"] || ""
+                }</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
+                  item["نوع المصروف"] || ""
+                }</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
+                  item["الكمية"] || ""
+                }</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
+                  item["السعر"]
+                    ? `IQD ${item["السعر"].toLocaleString()}`
+                    : ""
+                }</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
+                  item["المجموع"]
+                    ? `IQD ${item["المجموع"].toLocaleString()}`
+                    : ""
+                }</td>
+                <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
+                  item["ملاحظات"] || ""
+                }</td>
+              </tr>
+              ${
+                item.images && item.images.length > 0
+                  ? item.images
+                      .map(
+                        (imageUrl) => `
+                        <tr>
+                          <td colspan="7" style="text-align: center; border: 1px solid #ddd;">
+                            <img src="${imageUrl}" alt="Expense Image" style="max-width: 500px; height: auto; margin-top: 10px;" />
+                          </td>
+                        </tr>
+                      `
+                      )
+                      .join("")
+                  : ""
+              }
+            `
+              )
+              .join("")}
             </tbody>
           </table>
         </div>
       `;
-
+  
       const opt = {
         margin: 1,
         filename: "تقرير_المصاريف.pdf",
@@ -632,13 +650,14 @@ export default function ExpensesView() {
           orientation: "landscape",
         },
       };
-
+  
       html2pdf().from(element).set(opt).save();
     } catch (error) {
       console.error("Error generating PDF:", error);
       message.error("حدث خطأ أثناء إنشاء ملف PDF");
     }
   };
+  
 
   return (
     <>

@@ -66,11 +66,11 @@ export default function SuperVisorAttendanceAdd() {
 
   const handleResetAction = () => {
     setPassportAttendance({
-      الطباعة: 0,
       الاستلام: 0,
-      التسليم: 0,
-      الحسابات: 0,
-      الجودة: 0,
+    الحسابات: 0,
+    الطباعة: 0,
+    الجودة: 0,
+    التسليم: 0,
     });
     setSelectedDate(null);
     setWorkingHours(1);

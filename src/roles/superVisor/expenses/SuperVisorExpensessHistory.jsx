@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect,useCallback } from "react";
 import {
   Table,
   message,
@@ -15,6 +15,7 @@ import html2pdf from "html2pdf.js";
 import "./styles/SuperVisorExpensesHistory.css";
 import Icons from "./../../../reusable elements/icons.jsx";
 import ExcelJS from "exceljs";
+
 const Status = {
   New: 0,
   SentToProjectCoordinator: 1,
@@ -94,28 +95,51 @@ export default function SuperVisorExpensesHistory() {
     });
   };
 
-  useEffect(() => {
-    const fetchDropdowns = async () => {
-      try {
-        const [govResponse, officeResponse] = await Promise.all([
-          axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          axiosInstance.get(`${Url}/api/Office/dropdown`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-        ]);
+  const fetchGovernorates = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      setGovernorates(response.data);
 
-        setGovernorates(govResponse.data);
-        setOffices(officeResponse.data);
-      } catch (error) {
-        console.error("Error fetching dropdowns:", error);
-        message.error("حدث خطأ أثناء جلب البيانات");
+      if (isSupervisor) {
+        setSelectedGovernorate(profile.governorateId);
+        await fetchOffices(profile.governorateId);
       }
-    };
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المحافظات");
+    }
+  }, [accessToken, isSupervisor, profile]);
+  
+  const fetchOffices = async (governorateId) => {
+    if (!governorateId) {
+      setOffices([]);
+      setSelectedOffice(null);
+      return;
+    }
 
-    fetchDropdowns();
-  }, [accessToken]);
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown/${governorateId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (response.data && response.data[0] && response.data[0].offices) {
+        setOffices(response.data[0].offices);
+
+        if (isSupervisor) {
+          setSelectedOffice(profile.officeId);
+        }
+      }
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المكاتب");
+    }
+  };
 
   const fetchExpensesData = async (pageNumber = 1) => {
     try {
@@ -169,6 +193,16 @@ export default function SuperVisorExpensesHistory() {
   };
 
   useEffect(() => {
+    if (isSupervisor && userGovernorateId) {
+      fetchOffices(userGovernorateId);
+    }
+  }, [isSupervisor, userGovernorateId, accessToken]);
+  useEffect(() => {
+    fetchGovernorates();
+  }, [fetchGovernorates]);
+
+
+  useEffect(() => {
     if (!isAdmin && !isSupervisor && userPosition) {
       const allowedStatuses = getAvailableStatuses();
       if (allowedStatuses.length > 0) {
@@ -201,6 +235,11 @@ export default function SuperVisorExpensesHistory() {
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
+  const handleGovernorateChange = (value) => {
+    setSelectedGovernorate(value);
+    fetchOffices(value);
+  };
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
     fetchExpensesData(page);
@@ -208,7 +247,6 @@ export default function SuperVisorExpensesHistory() {
 
   const handlePrintPDF = async () => {
     try {
-      // Fetch all expenses without pagination
       const searchBody = {
         officeId: isSupervisor ? userOfficeId : selectedOffice,
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
@@ -218,7 +256,7 @@ export default function SuperVisorExpensesHistory() {
         endDate: endDate ? endDate.toISOString() : null,
         PaginationParams: {
           PageNumber: 1,
-          PageSize: totalRecords, // Fetch all records
+          PageSize: totalRecords,
         },
       };
 
@@ -235,7 +273,6 @@ export default function SuperVisorExpensesHistory() {
 
       const allExpenses = response.data;
 
-      // Generate the PDF content
       const element = document.createElement("div");
       element.dir = "rtl";
       element.style.fontFamily = "Arial, sans-serif";
@@ -281,7 +318,6 @@ export default function SuperVisorExpensesHistory() {
           </div>
         `;
 
-      // PDF options
       const options = {
         margin: 1,
         filename: "تقرير_سجل_الصرفيات.pdf",
@@ -290,16 +326,15 @@ export default function SuperVisorExpensesHistory() {
         jsPDF: { unit: "cm", format: "a4", orientation: "portrait" },
       };
 
-      // Generate and save the PDF
       html2pdf().from(element).set(options).save();
     } catch (error) {
       message.error("حدث خطأ أثناء إنشاء التقرير");
       console.error(error);
     }
   };
+
   const handleExportToExcel = async () => {
     try {
-      // Fetch all expenses matching the search criteria
       const searchBody = {
         officeId: isSupervisor ? userOfficeId : selectedOffice,
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
@@ -309,7 +344,7 @@ export default function SuperVisorExpensesHistory() {
         endDate: endDate ? endDate.toISOString() : null,
         PaginationParams: {
           PageNumber: 1,
-          PageSize: totalRecords, // Fetch all records
+          PageSize: totalRecords,
         },
       };
 
@@ -331,13 +366,11 @@ export default function SuperVisorExpensesHistory() {
         return;
       }
 
-      // Create a new Excel workbook and worksheet
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("تقرير سجل الصرفيات", {
-        properties: { rtl: true }, // Enable RTL
+        properties: { rtl: true },
       });
 
-      // Add header row
       const headers = ["التاريخ", "مجموع الصرفيات", "المكتب", "المحافظة", "#"];
       const headerRow = worksheet.addRow(headers);
 
@@ -352,12 +385,11 @@ export default function SuperVisorExpensesHistory() {
         cell.border = {
           top: { style: "thin" },
           bottom: { style: "thin" },
-          left: { style: "thin" },
+          left: { style: "thin"},
           right: { style: "thin" },
         };
       });
 
-      // Add data rows
       allExpenses.forEach((expense, index) => {
         const row = worksheet.addRow([
           new Date(expense.dateCreated).toLocaleDateString("en-CA"),
@@ -366,7 +398,7 @@ export default function SuperVisorExpensesHistory() {
             : "",
           expense.officeName || "",
           expense.governorateName || "",
-          index + 1, // Index
+          index + 1,
         ]);
 
         row.eachCell((cell) => {
@@ -385,7 +417,6 @@ export default function SuperVisorExpensesHistory() {
         });
       });
 
-      // Set column widths
       worksheet.columns = [
         { width: 15 }, // Date
         { width: 15 }, // Total Amount
@@ -394,9 +425,11 @@ export default function SuperVisorExpensesHistory() {
         { width: 5 }, // Index
       ];
 
-      // Generate and save the Excel file
       const buffer = await workbook.xlsx.writeBuffer();
-      saveAs(new Blob([buffer]), "تقرير_سجل_الصرفيات.xlsx");
+      const blob = new Blob([buffer], { 
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      });
+      saveAs(blob, "تقرير_سجل_الصرفيات.xlsx");
       message.success("تم تصدير التقرير بنجاح");
     } catch (error) {
       console.error("Error exporting to Excel:", error);
@@ -474,9 +507,10 @@ export default function SuperVisorExpensesHistory() {
               <Select
                 className="html-dropdown"
                 value={isSupervisor ? userGovernorateId : selectedGovernorate}
-                onChange={(value) => setSelectedGovernorate(value)}
-                disabled={isSupervisor}>
-                <Select.Option value={null}></Select.Option>
+                onChange={handleGovernorateChange}
+                disabled={isSupervisor}
+                placeholder="اختر المحافظة">
+                <Select.Option value={null}>الكل</Select.Option>
                 {governorates.map((gov) => (
                   <Select.Option key={gov.id} value={gov.id}>
                     {gov.name}
@@ -491,8 +525,9 @@ export default function SuperVisorExpensesHistory() {
                 className="html-dropdown"
                 value={isSupervisor ? userOfficeId : selectedOffice}
                 onChange={(value) => setSelectedOffice(value)}
-                disabled={isSupervisor}>
-                <Select.Option value={null}></Select.Option>
+                disabled={isSupervisor || !selectedGovernorate}
+                placeholder="اختر المكتب">
+                <Select.Option value={null}>الكل</Select.Option>
                 {offices.map((office) => (
                   <Select.Option key={office.id} value={office.id}>
                     {office.name}
@@ -557,7 +592,7 @@ export default function SuperVisorExpensesHistory() {
         </Button>
 
         <button
-          type="button" // Prevent form submission
+          type="button"
           onClick={handlePrintPDF}
           className="modern-button pdf-button"
           style={{
