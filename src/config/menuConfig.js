@@ -54,22 +54,22 @@ export const MENU_ITEMS = [
     label: "ادارة القيم",
     icon: "data",
     path: "/admin/listofvalues",
-    requiredPermission: null,
-    role: ["Admin"]
+    requiredPermission: "LOV",
+    role: []
   },
   {
     label: "ادارة المستخدمين",
     icon: "user",
     path: "/admin/users",
     requiredPermission: null,
-    role: ["Admin"]
+    role: ["Admin","SuperAdmin"]
   },
   {
     label:  "ادارة الحظر",
     icon: "ban",
     path: "/admin/ban",
     requiredPermission: null,
-    role: ["Admin"]
+    role: ["Admin","SuperAdmin"]
   }
 ];
 

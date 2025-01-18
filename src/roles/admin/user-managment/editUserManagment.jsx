@@ -1,7 +1,88 @@
-import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, Button, ConfigProvider } from 'antd';
+import React, { useState } from 'react';
+import { Modal, Form, Input, Select, Button, ConfigProvider, message } from 'antd';
+import axiosInstance from './../../../intercepters/axiosInstance.js';
+import Url from './../../../store/url.js';
 
 const { Option } = Select;
+
+const PasswordResetModal = ({ visible, onCancel, userId }) => {
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (values) => {
+    try {
+      setLoading(true);
+      await axiosInstance.post(`${Url}/api/account/reset-password`, {
+        userId: userId,
+        newPassword: values.newPassword
+      });
+      
+      message.success('تم تغيير كلمة السر بنجاح');
+      form.resetFields();
+      onCancel();
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      message.error('فشل في تغيير كلمة السر');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal
+      className="model-container"
+      open={visible}
+      onCancel={onCancel}
+      footer={null}
+    >
+      <Form
+        form={form}
+        onFinish={handleSubmit}
+        layout="vertical"
+        className="dammaged-passport-container-edit-modal"
+      >
+        <h1>اعادة تعيين كلمة السر</h1>
+        <Form.Item
+          name="newPassword"
+          label="كلمة السر الجديدة"
+          rules={[
+            {
+              pattern: /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
+              message: "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية",
+            },
+            { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" },
+          ]}
+        >
+          <Input.Password placeholder="كلمة السر الجديدة" />
+        </Form.Item>
+        <Form.Item
+          name="confirmNewPassword"
+          label="تأكيد كلمة السر الجديدة"
+          dependencies={["newPassword"]}
+          rules={[
+            ({ getFieldValue }) => ({
+              validator(_, value) {
+                if (!value || !getFieldValue("newPassword")) {
+                  return Promise.resolve();
+                }
+                if (value === getFieldValue("newPassword")) {
+                  return Promise.resolve();
+                }
+                return Promise.reject(new Error("كلمات السر غير متطابقة!"));
+              },
+            }),
+          ]}
+        >
+          <Input.Password placeholder="تأكيد كلمة السر الجديدة" />
+        </Form.Item>
+
+        <Button type="primary" htmlType="submit" block loading={loading}>
+          حفظ كلمة السر الجديدة
+        </Button>
+      </Form>
+    </Modal>
+  );
+};
 
 const EditUserModal = ({
   visible,
@@ -13,7 +94,14 @@ const EditUserModal = ({
   offices,
   selectedGovernorate,
   setSelectedGovernorate,
+  selectedUser,
 }) => {
+  const [isPasswordResetVisible, setIsPasswordResetVisible] = useState(false);
+
+  const handleFinish = (values) => {
+    onFinish(values);
+  };
+
   return (
     <ConfigProvider direction="rtl">
       <Modal
@@ -24,7 +112,7 @@ const EditUserModal = ({
       >
         <Form
           form={form}
-          onFinish={onFinish}
+          onFinish={handleFinish}
           layout="vertical"
           className="dammaged-passport-container-edit-modal"
         >
@@ -111,40 +199,14 @@ const EditUserModal = ({
           </Form.Item>
 
           <div className="border-t mt-4 pt-4">
-            <h3 className="mb-4">اعادة تعيين كلمة السر</h3>
-            <Form.Item
-              name="newPassword"
-              label="كلمة السر الجديدة"
-              rules={[
-                {
-                  pattern: /^[A-Z][A-Za-z0-9!@#$%^&*()_+\-=\[\]{};:'",.<>?]*$/,
-                  message: "يجب أن تبدأ كلمة السر بحرف كبير ولا تحتوي على أحرف عربية",
-                },
-                { min: 8, message: "كلمة السر يجب أن تكون 8 أحرف على الأقل" },
-              ]}
+            <Button 
+              type="default" 
+              onClick={() => setIsPasswordResetVisible(true)}
+              style={{ marginBottom: 16 }}
+              block
             >
-              <Input.Password placeholder="كلمة السر الجديدة" />
-            </Form.Item>
-            <Form.Item
-              name="confirmNewPassword"
-              label="تأكيد كلمة السر الجديدة"
-              dependencies={["newPassword"]}
-              rules={[
-                ({ getFieldValue }) => ({
-                  validator(_, value) {
-                    if (!value || !getFieldValue("newPassword")) {
-                      return Promise.resolve();
-                    }
-                    if (value === getFieldValue("newPassword")) {
-                      return Promise.resolve();
-                    }
-                    return Promise.reject(new Error("كلمات السر غير متطابقة!"));
-                  },
-                }),
-              ]}
-            >
-              <Input.Password placeholder="تأكيد كلمة السر الجديدة" />
-            </Form.Item>
+              اعادة تعيين كلمة السر
+            </Button>
           </div>
 
           <Button type="primary" htmlType="submit" block>
@@ -152,6 +214,12 @@ const EditUserModal = ({
           </Button>
         </Form>
       </Modal>
+
+      <PasswordResetModal
+        visible={isPasswordResetVisible}
+        onCancel={() => setIsPasswordResetVisible(false)}
+        userId={selectedUser?.userId}
+      />
     </ConfigProvider>
   );
 };

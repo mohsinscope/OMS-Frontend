@@ -101,7 +101,7 @@ export default function ViewAttendance() {
       { name: "غائب", value: count - total },
     ];
 
-    const COLORS = ["#04AA6D", "#f44336"];
+    const COLORS = ["#04AA6D", "#F44336"];
 
     return (
       <div className="chart-card">
@@ -118,7 +118,7 @@ export default function ViewAttendance() {
             cy="50%"
             innerRadius={30}
             outerRadius={50}
-            paddingAngle={5}
+            paddingAngle={0}
             dataKey="value">
             {data.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -154,7 +154,7 @@ export default function ViewAttendance() {
       { name: "غائب", value: absentCount },
     ];
 
-    const COLORS = ["#4CAF50", "#F44336"];
+    const COLORS = ["#04AA6D", "#F44336"];
 
     return (
       <div className="total-chart-container">
