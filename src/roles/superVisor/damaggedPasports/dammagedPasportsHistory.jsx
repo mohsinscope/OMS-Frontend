@@ -549,7 +549,7 @@ export default function SuperVisorPassport() {
             />
           </div>
 
-          <div className="supervisor-damaged-passport-filter-buttons">
+            
             <Button
               type="primary"
               onClick={() => handleSearch(1)}
@@ -570,7 +570,7 @@ export default function SuperVisorPassport() {
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
-                padding: "12px 24px",
+                padding: "6px 12px",
                 borderRadius: "8px",
                 width: "fit-content",
               }}>
@@ -586,7 +586,7 @@ export default function SuperVisorPassport() {
                 display: "flex",
                 alignItems: "center",
                 gap: "12px",
-                padding: "12px 24px",
+                padding: "6px 12px",
                 borderRadius: "8px",
                 width: "fit-content",
               }}>
@@ -603,7 +603,6 @@ export default function SuperVisorPassport() {
                 </Button>
               </Link>
             )}
-          </div>
         </form>
       </div>
 
