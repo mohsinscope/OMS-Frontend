@@ -301,23 +301,29 @@ const AdminUserManagment = () => {
             onFinish={handleFilterSubmit}
             className="filter-form"
           >
-            <Form.Item name="username" label="اسم المستخدم">
-              <Input className="filter-input" />
+            <Form.Item name="username" label="">
+              <label >اسم المستخدم</label>
+              <Input className="filter-input"style={{marginTop:"10px"}}/>
             </Form.Item>
 
-            <Form.Item name="role" label="الصلاحيات">
-              <Select className="filter-dropdown" allowClear>
+            <Form.Item name="role">
+            <label >الصلاحيات</label>
+
+              <Select className="filter-dropdown" allowClear style={{marginTop:"10px"}}>
                 {roles.map((role) => (
                   <Option key={role} value={role}>{role}</Option>
                 ))}
               </Select>
             </Form.Item>
 
-            <Form.Item name="governorate" label="المحافظة">
+            <Form.Item name="governorate" >
+            <label >المحافظة</label>
+
               <Select 
                 className="filter-dropdown" 
                 onChange={handleGovernorateChange}
                 allowClear
+                style={{marginTop:"10px"}}
               >
                 {governorates.map((gov) => (
                   <Option key={gov.id} value={gov.id}>{gov.name}</Option>
@@ -325,8 +331,10 @@ const AdminUserManagment = () => {
               </Select>
             </Form.Item>
 
-            <Form.Item name="officeName" label="اسم المكتب">
+            <Form.Item name="officeName" label="">
+            <label >اسم المكتب</label>
               <Select 
+               style={{marginTop:"10px"}}
                 className="filter-dropdown"
                 disabled={!selectedGovernorate}
                 allowClear
@@ -336,14 +344,22 @@ const AdminUserManagment = () => {
                 ))}
               </Select>
             </Form.Item>
-
+                
             <Form.Item>
               <Button type="primary" htmlType="submit" className="filter-button">
                 بحث
               </Button>
-              <Button onClick={resetFilters} className="filter-button" style={{ marginRight: '8px' }}>
+              </Form.Item>
+              <Form.Item>
+
+              <Button onClick={resetFilters} className="filter-button">
                 إعادة تعيين
               </Button>
+              </Form.Item>
+
+
+              <Form.Item>
+
               <Button
                 type="primary"
                 className="usermanagemenr-adduser"
@@ -356,11 +372,14 @@ const AdminUserManagment = () => {
               >
                 إضافة مستخدم +
               </Button>
+              
             </Form.Item>
           </Form>
         </div>
 
         <div className="data-table-container">
+              <ConfigProvider direction="rtl">
+          
           <Spin spinning={loading}>
 <Table
   dataSource={userRecords}
@@ -371,6 +390,8 @@ const AdminUserManagment = () => {
   onChange={handleTableChange}
 />
           </Spin>
+              </ConfigProvider>
+          
         </div>
 
         <AddUserModal 
