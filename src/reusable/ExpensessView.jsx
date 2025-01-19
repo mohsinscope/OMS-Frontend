@@ -29,10 +29,11 @@ const Status = {
   SentToManager: 3,
   ReturnedToManager: 4,
   SentToDirector: 5,
-  SentToAccountant: 6,
-  ReturnedToSupervisor: 7,
+/*   SentToAccountant: 6,
+ */  ReturnedToSupervisor: 7,
   RecievedBySupervisor: 8,
   Completed: 9,
+  SentFromDirector:10,
 };
 
 const statusMap = {
@@ -42,9 +43,12 @@ const statusMap = {
   [Status.SentToManager]: "تم الإرسال إلى المدير",
   [Status.ReturnedToManager]: "تم الإرجاع إلى المدير",
   [Status.SentToDirector]: "تم الإرسال إلى المدير التنفيذي",
-  [Status.SentToAccountant]: "تم الإرسال إلى المحاسب",
-  [Status.ReturnedToSupervisor]: "تم الإرجاع إلى المشرف",
+/*   [Status.SentToAccountant]: "تم الإرسال إلى المحاسب",
+ */ 
+ [Status.ReturnedToSupervisor]: "تم الإرجاع إلى المشرف",
   [Status.RecievedBySupervisor]: "تم الاستلام من قبل المشرف",
+  [Status.SentFromDirector]: "تم الموافقة من قبل اسامة",
+
   [Status.Completed]: "مكتمل",
 };
 
@@ -71,14 +75,14 @@ export default function ExpensesView() {
   const getNextStatus = (currentStatus, position) => {
     position = position?.toLowerCase();
 
-    if (position?.includes("accontnt")) {
+    if (position?.includes("coordinator") && currentStatus === Status.SentFromDirector) {
       return Status.RecievedBySupervisor;
     } else if (position?.includes("coordinator")) {
       return Status.SentToManager;
     } else if (position?.includes("manager")) {
       return Status.SentToDirector;
     } else if (position?.includes("director")) {
-      return Status.SentToAccountant;
+      return Status.SentFromDirector;
     } else if (currentStatus === Status.RecievedBySupervisor) {
       return Status.Completed;
     }
