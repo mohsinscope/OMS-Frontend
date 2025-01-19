@@ -23,9 +23,7 @@ export default function SuperVisorExpensesRequest() {
   const [currentMonthlyExpenseId, setCurrentMonthlyExpenseId] = useState(null);
   const [canCreateMonthly, setCanCreateMonthly] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [currentMonthDailyExpenses, setCurrentMonthDailyExpenses] = useState(
-    []
-  );
+  const [currentMonthDailyExpenses, setCurrentMonthDailyExpenses] = useState([]);
   const [expenseTypes, setExpenseTypes] = useState([]);
   const [isMonthlyModalVisible, setIsMonthlyModalVisible] = useState(false);
   const [monthlyForm] = Form.useForm();
@@ -33,7 +31,6 @@ export default function SuperVisorExpensesRequest() {
   const [sendForm] = Form.useForm();
   const [sendLoading, setSendLoading] = useState(false);
   const [lastMonthExpense, setLastMonthExpense] = useState(null);
-
   const [officeInfo, setOfficeInfo] = useState({
     totalCount: 0,
     totalExpenses: 0,
@@ -44,36 +41,42 @@ export default function SuperVisorExpensesRequest() {
   });
 
   const arabicMonths = [
-    "يناير", // January
-    "فبراير", // February
-    "مارس", // March
-    "أبريل", // April
-    "مايو", // May
-    "يونيو", // June
-    "يوليو", // July
-    "أغسطس", // August
-    "سبتمبر", // September
-    "أكتوبر", // October
-    "نوفمبر", // November
-    "ديسمبر", // December
+    "يناير",
+    "فبراير",
+    "مارس",
+    "أبريل",
+    "مايو",
+    "يونيو",
+    "يوليو",
+    "أغسطس",
+    "سبتمبر",
+    "أكتوبر",
+    "نوفمبر",
+    "ديسمبر",
   ];
 
   // Get the current month and year in Arabic
-  const formattedDate = new Date(officeInfo.date); // Use the date from your `officeInfo`
-  const displayMonthName = arabicMonths[formattedDate.getMonth()]; // Get the Arabic name of the month
-  const displayYear = formattedDate.getFullYear(); // Get the year
-
-  // Combine month and year
+  const formattedDate = new Date(officeInfo.date);
+  const displayMonthName = arabicMonths[formattedDate.getMonth()];
+  const displayYear = formattedDate.getFullYear();
   const displayMonthYear = `${displayMonthName} - ${displayYear}`;
+
+  const updateOfficeInfo = (expenses) => {
+    const totalCount = expenses.length;
+    const totalExpenses = expenses.reduce((sum, expense) => sum + expense.totalAmount, 0);
+    
+    setOfficeInfo(prev => ({
+      ...prev,
+      totalCount,
+      totalExpenses
+    }));
+  };
 
   const fetchLastMonthExpense = async () => {
     try {
-      const response = await axiosInstance.post(
-        "/api/Expense/search-last-month",
-        {
-          officeId: profile?.officeId,
-        }
-      );
+      const response = await axiosInstance.post("/api/Expense/search-last-month", {
+        officeId: profile?.officeId,
+      });
       setLastMonthExpense(response.data);
     } catch (error) {
       console.error("Error fetching last month expense:", error);
@@ -93,9 +96,7 @@ export default function SuperVisorExpensesRequest() {
 
   const fetchExpenseTypes = async () => {
     try {
-      const response = await axiosInstance.get(
-        "/api/ExpenseType?PageNumber=1&PageSize=10"
-      );
+      const response = await axiosInstance.get("/api/ExpenseType?PageNumber=1&PageSize=10");
       setExpenseTypes(response.data || []);
     } catch (error) {
       console.error("Error fetching expense types:", error);
@@ -167,30 +168,36 @@ export default function SuperVisorExpensesRequest() {
     }
   };
 
-  const handleCreateMonthlyExpense = async (values) => {
+  const handleCreateMonthlyExpense = async () => {
     try {
       setLoading(true);
       const payload = {
         totalAmount: 0,
-        notes: "",
         status: 0,
         officeId: profile?.officeId,
         governorateId: profile?.governorateId,
         profileId: profile?.profileId,
       };
 
-      const response = await axiosInstance.post(
-        "/api/Expense/MonthlyExpenses",
-        payload
-      );
+      const response = await axiosInstance.post("/api/Expense/MonthlyExpenses", payload);
 
       if (response.data) {
-        setCurrentMonthlyExpenseId(response.data.id);
-        message.success("تم إنشاء المصروف الشهري بنجاح");
+        const monthlyExpensesId = response.data.id;
+
+        const actionPayload = {
+          actionType: "تم انشاء شهر جديد",
+          notes: `تم انشاء مصروف شهر جديد من قبل ${profile.fullName}`,
+          monthlyExpensesId,
+        };
+
+        await axiosInstance.post("/api/Actions", actionPayload);
+
+        message.success("تم إنشاء المصروف الشهري والموافقة عليه بنجاح");
+        setCurrentMonthlyExpenseId(monthlyExpensesId);
         setIsMonthlyModalVisible(false);
         monthlyForm.resetFields();
         setCanCreateMonthly(false);
-        fetchDailyExpenses(response.data.id);
+        fetchDailyExpenses(monthlyExpensesId);
       }
     } catch (error) {
       console.error("Error creating monthly expense:", error);
@@ -203,41 +210,42 @@ export default function SuperVisorExpensesRequest() {
   const handleSendMonthlyExpense = async (values) => {
     try {
       setSendLoading(true);
-      const payload = {
+
+      const actionPayload = {
+        actionType: `تم ارسال الصرفيات من قبل ${profile.position || ""} ${profile.fullName || ""}`,
+        notes: values.notes || "",
+        monthlyExpensesId: currentMonthlyExpenseId,
+      };
+
+      await axiosInstance.post("/api/Actions", actionPayload);
+
+      const statusPayload = {
         monthlyExpensesId: currentMonthlyExpenseId,
         newStatus: 1,
-        notes:
-          values.notes ||
-          "Monthly expenses marked as completed by the Manager.",
       };
 
       await axiosInstance.post(
         `/api/Expense/${currentMonthlyExpenseId}/status`,
-        payload
+        statusPayload
       );
 
       message.success("تم إرسال المصروف الشهري بنجاح");
       setIsSendModalVisible(false);
       sendForm.resetFields();
-      fetchMonthlyExpense();
+      
+      // Reset the current monthly expense states
+      setCurrentMonthlyExpenseId(null);
+      setCurrentMonthDailyExpenses([]);
+      setCanCreateMonthly(true);
+      
+      // Update the last month expense data
+      fetchLastMonthExpense();
     } catch (error) {
       console.error("Error sending monthly expense:", error);
       message.error("حدث خطأ في إرسال المصروف الشهري");
     } finally {
       setSendLoading(false);
     }
-  };
-
-  const updateOfficeInfo = (expenses) => {
-    const totalExpenses = expenses.reduce(
-      (sum, item) => sum + item.totalAmount,
-      0
-    );
-    setOfficeInfo((prev) => ({
-      ...prev,
-      totalCount: expenses.length,
-      totalExpenses,
-    }));
   };
 
   const expandedRowRender = () => {
@@ -252,21 +260,11 @@ export default function SuperVisorExpensesRequest() {
     };
 
     return (
-      <div
-        style={{
-          padding: "20px",
-          backgroundColor: "#fafafa",
-          borderRadius: "8px",
-        }}>
+      <div style={{ padding: "20px", backgroundColor: "#fafafa", borderRadius: "8px" }}>
         <h3 style={{ marginBottom: "16px", color: "#1890ff" }}>
           حالة مصروفات الشهر السابق
         </h3>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "16px",
-          }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
           <div>
             <p>
               <strong>المبلغ الإجمالي:</strong>{" "}
@@ -306,14 +304,6 @@ export default function SuperVisorExpensesRequest() {
       </div>
     );
   };
-
-  useEffect(() => {
-    fetchExpenseTypes();
-    fetchMonthlyExpense();
-    if (profile?.officeId) {
-      fetchLastMonthExpense();
-    }
-  }, [profile?.officeId]);
 
   const columns = [
     {
@@ -538,6 +528,14 @@ export default function SuperVisorExpensesRequest() {
       </div>
     );
   };
+
+  useEffect(() => {
+    fetchExpenseTypes();
+    fetchMonthlyExpense();
+    if (profile?.officeId) {
+      fetchLastMonthExpense();
+    }
+  }, [profile?.officeId]);
 
   return (
     <div
@@ -768,5 +766,4 @@ export default function SuperVisorExpensesRequest() {
         </Form>
       </Modal>
     </div>
-  );
-}
+  );}
