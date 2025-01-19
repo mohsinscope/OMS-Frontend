@@ -31,8 +31,9 @@ const SuperVisorLecturerAdd = () => {
   const [lectureTypeNames, setlectureTypeNames] = useState([]);
   const [governate, setGovernate] = useState([]);
   const [offices, setOffices] = useState([]);
-  const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
-  const { profileId, governorateId, officeId } = profile || {};
+  const { isSidebarCollapsed, accessToken, profile , roles } = useAuthStore();
+  const { profileId , governorateId, officeId,officeName } = profile || {};
+  console.log(profile)
   const isSupervisor = roles?.includes("Supervisor");
   // Set initial form values for supervisor and fetch data
   useEffect(() => {
@@ -404,8 +405,7 @@ const SuperVisorLecturerAdd = () => {
                       ? [
                           {
                             value: officeId,
-                            label: offices.find((o) => o.value === officeId)
-                              ?.label,
+                            label: officeName
                           },
                         ]
                       : offices
