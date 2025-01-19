@@ -23,33 +23,33 @@ const Status = {
   SentToManager: 3,
   ReturnedToManager: 4,
   SentToDirector: 5,
-  SentToAccountant: 6,
   ReturnedToSupervisor: 7,
   RecievedBySupervisor: 8,
   Completed: 9,
+  SentFromDirector: 10,
 };
 
 const statusDisplayNames = {
   [Status.New]: "جديد",
-  [Status.SentToProjectCoordinator]: "مرسل إلى منسق المشروع",
-  [Status.ReturnedToProjectCoordinator]: "معاد إلى منسق المشروع",
-  [Status.SentToManager]: "مرسل إلى المدير",
-  [Status.ReturnedToManager]: "معاد إلى المدير",
-  [Status.SentToDirector]: "مرسل إلى المدير العام",
-  [Status.SentToAccountant]: "مرسل إلى المحاسب",
-  [Status.ReturnedToSupervisor]: "معاد إلى المشرف",
-  [Status.RecievedBySupervisor]: "مستلم من قبل المشرف",
+  [Status.SentToProjectCoordinator]: "تم الإرسال إلى منسق المشروع",
+  [Status.ReturnedToProjectCoordinator]: "تم الإرجاع إلى منسق المشروع",
+  [Status.SentToManager]: "تم الإرسال إلى المدير",
+  [Status.ReturnedToManager]: "تم الإرجاع إلى المدير",
+  [Status.SentToDirector]: "تم الإرسال إلى المدير التنفيذي",
+  [Status.ReturnedToSupervisor]: "تم الإرجاع إلى المشرف",
+  [Status.RecievedBySupervisor]: "تم الاستلام من قبل المشرف",
+  [Status.SentFromDirector]: "تم الموافقة من قبل اسامة",
   [Status.Completed]: "مكتمل",
 };
-
 const positionStatusMap = {
   ProjectCoordinator: [
     Status.SentToProjectCoordinator,
     Status.ReturnedToProjectCoordinator,
+    Status.SentFromDirector,  // Added to be visible by coordinator
   ],
   Manager: [Status.SentToManager, Status.ReturnedToManager],
   Director: [Status.SentToDirector],
-  Accontnt: [Status.SentToAccountant],
+ 
 };
 
 export default function SuperVisorExpensesHistory() {
@@ -464,7 +464,15 @@ export default function SuperVisorExpensesHistory() {
       title: "الحالة",
       dataIndex: "status",
       key: "status",
-      render: (value) => statusDisplayNames[value] || value,
+      render: (value) => {
+        // If the value is a string (like "SentToProjectCoordinator"), convert it to the enum value
+        if (typeof value === 'string') {
+          const enumValue = Status[value];
+          return statusDisplayNames[enumValue] || value;
+        }
+        // If it's already a number, use it directly
+        return statusDisplayNames[value] || value;
+      }
     },
     {
       title: "التاريخ",

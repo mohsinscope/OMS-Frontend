@@ -31,10 +31,11 @@ const Status = {
   SentToManager: 3,
   ReturnedToManager: 4,
   SentToDirector: 5,
-  SentToAccountant: 6,
-  ReturnedToSupervisor: 7,
+/*   SentToAccountant: 6,
+ */  ReturnedToSupervisor: 7,
   RecievedBySupervisor: 8,
   Completed: 9,
+  SentFromDirector:10,
 };
 
 const statusMap = {
@@ -44,9 +45,12 @@ const statusMap = {
   [Status.SentToManager]: "تم الإرسال إلى المدير",
   [Status.ReturnedToManager]: "تم الإرجاع إلى المدير",
   [Status.SentToDirector]: "تم الإرسال إلى المدير التنفيذي",
-  [Status.SentToAccountant]: "تم الإرسال إلى المحاسب",
-  [Status.ReturnedToSupervisor]: "تم الإرجاع إلى المشرف",
+/*   [Status.SentToAccountant]: "تم الإرسال إلى المحاسب",
+ */ 
+ [Status.ReturnedToSupervisor]: "تم الإرجاع إلى المشرف",
   [Status.RecievedBySupervisor]: "تم الاستلام من قبل المشرف",
+  [Status.SentFromDirector]: "تم الموافقة من قبل اسامة",
+
   [Status.Completed]: "مكتمل",
 };
 
@@ -72,23 +76,23 @@ export default function ExpensesView() {
 
   const getNextStatus = (currentStatus, position) => {
     position = position?.toLowerCase();
-
-    if (position?.includes("accontnt")) {
+  
+    if (position?.includes("coordinator") && currentStatus === Status.SentFromDirector) {
       return Status.RecievedBySupervisor;
     } else if (position?.includes("coordinator")) {
       return Status.SentToManager;
-    } else if (position?.includes("manager")) {
+    } else if (position?.includes("manager") && currentStatus === Status.SentToManager) {
       return Status.SentToDirector;
-    } else if (position?.includes("director")) {
-      return Status.SentToAccountant;
+    } else if (position?.includes("director") && currentStatus === Status.SentToDirector) {
+      return Status.SentFromDirector;
     } else if (currentStatus === Status.RecievedBySupervisor) {
       return Status.Completed;
     }
-
+  
     console.warn(
       `Unexpected position: ${position} or status: ${currentStatus}`
     );
-    return currentStatus;
+    return currentStatus; // Default fallback to prevent invalid transitions
   };
 
   const getRejectionStatus = (currentStatus, position) => {
@@ -221,6 +225,9 @@ export default function ExpensesView() {
         setIsModalVisible(true);
       }
     } else {
+
+
+
       // If there's an image ID, fetch the image
       if (record.image) {
         try {
@@ -732,34 +739,40 @@ export default function ExpensesView() {
         </h1>
 
         {/* Action Buttons */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginBottom: "20px",
-            width: "100%",
-          }}>
-          <Button
-            type="primary"
-            style={{ padding: "20px 30px" }}
-            onClick={() => handleActionClick("Approval")}
-            disabled={
-              !profile.profileId ||
-              expense?.generalInfo?.["الحالة"] === Status.Completed
-            }>
-            موافقة
-          </Button>
-          {!isAccountant && (
-            <Button
-              danger
-              type="primary"
-              style={{ padding: "20px 40px" }}
-              onClick={() => handleActionClick("Return")}
-              disabled={!profile.profileId}>
-              ارجاع
-            </Button>
-          )}
-        </div>
+{/* Action Buttons */}
+{profile?.position?.toLowerCase()?.includes("supervisor") ? null : (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      marginBottom: "20px",
+      width: "100%",
+    }}
+  >
+    <Button
+      type="primary"
+      style={{ padding: "20px 30px" }}
+      onClick={() => handleActionClick("Approval")}
+      disabled={
+        !profile.profileId ||
+        expense?.generalInfo?.["الحالة"] === Status.Completed
+      }
+    >
+      موافقة
+    </Button>
+    {!isAccountant && (
+      <Button
+        danger
+        type="primary"
+        style={{ padding: "20px 40px" }}
+        onClick={() => handleActionClick("Return")}
+        disabled={!profile.profileId}
+      >
+        ارجاع
+      </Button>
+    )}
+  </div>
+)}
 
         {/* General Details Table */}
         <Table
@@ -908,12 +921,15 @@ export default function ExpensesView() {
                 key: "actions",
                 render: (_, record) => (
                   <Link
-                    to="/Expensess-view-daily"
-                    state={{ dailyExpenseId: record.id }}>
-                    <Button type="primary" loading={isLoadingDetails}>
-                      عرض
-                    </Button>
-                  </Link>
+                  to="/Expensess-view-daily"
+                  state={{
+                    dailyExpenseId: record.id,
+                    status: expense?.generalInfo?.["الحالة"], // Passing the status
+                  }}>
+                  <Button type="primary" loading={isLoadingDetails}>
+                    عرض
+                  </Button>
+                </Link>
                 ),
               },
             ]}
