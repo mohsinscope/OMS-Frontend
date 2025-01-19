@@ -16,7 +16,6 @@ import { UploadOutlined } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import useAuthStore from "./../../../store/store";
-import Lele from "./../../../reusable elements/icons.jsx";
 import Url from "./../../../store/url.js";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import moment from "moment";
@@ -32,6 +31,8 @@ const ExpensessView = () => {
   });
   // If dailyExpenseId is not available in state, try to get it from the URL params
   const expenseId = dailyExpenseId || new URLSearchParams(location.search).get('id');
+  const status = location.state?.status; // Access the passed status
+
   const [images, setImages] = useState([]);
   const [expenseData, setExpenseData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -41,10 +42,16 @@ const ExpensessView = () => {
   const [form] = Form.useForm();
   
   const { isSidebarCollapsed, permissions,profile } = useAuthStore();
-/*   const hasUpdatePermission = permissions.includes("EXu"); 
-  const hasDeletePermission = permissions.includes("EXd");  */
+   const hasUpdatePermission = permissions.includes("EXu"); 
+  const hasDeletePermission = permissions.includes("EXd"); 
+  const canPerformActions = () => {
+    return (
+      hasUpdatePermission &&
+      hasDeletePermission &&
+      ["New", "ReturnedToSupervisor"].includes(status) // Check the passed status
+    );
+  };
   /* i dont use it for now  */
-  const isSupervisor = profile?.role?.toLowerCase()?.includes('supervisor');
   const fetchExpenseTypes = async () => {
     try {
       const response = await axiosInstance.get('/api/ExpenseType');
@@ -198,7 +205,7 @@ const ExpensessView = () => {
   if (!expenseData) {
     return <div className="loading">جاري التحميل...</div>;
   }
-
+console.log("month" ,expenseData.monthlyStatus)
   return (
     <div
       className={`supervisor-lecture-show-container ${
@@ -216,25 +223,26 @@ const ExpensessView = () => {
               الرجوع
             </Button>
         </div>
-        {isSupervisor && (
-          <div style={{display:"flex", justifyContent:"space-between", marginBottom: "20px"}}>
-            <Button 
-              type="primary" 
-              style={{padding:"20px 30px"}} 
-              onClick={() => navigate('/edit-expense')}
-            >
-              تعديل
-            </Button>
-            <Button 
-              danger 
-              type="primary" 
-              style={{padding:"20px 40px"}}
-              onClick={() => navigate('/delete-expense')}
-            >
-              حذف
-            </Button>
-          </div>
-        )}
+        {canPerformActions() && (
+  <>
+    <Button
+      type="primary"
+      style={{ padding: "20px 30px" }}
+      onClick={() => navigate('/edit-expense')}
+    >
+      تعديل
+    </Button>
+    <Button
+      danger
+      type="primary"
+      style={{ padding: "20px 40px" }}
+      onClick={() => navigate('/delete-expense')}
+    >
+      حذف
+    </Button>
+  </>
+)}
+  
       </div>
 
       <div className="details-container-Lecture">
