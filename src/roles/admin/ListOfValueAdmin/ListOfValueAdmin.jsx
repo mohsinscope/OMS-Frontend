@@ -13,7 +13,7 @@ import {
   Space,
 } from "antd";
 import axiosInstance from './../../../intercepters/axiosInstance.js';
-import { LOV_MENU_ITEMS, getAuthorizedLOVRoutes, LOVConfig } from './LovConfig.js';
+import {  getAuthorizedLOVRoutes, LOVConfig } from './LovConfig.js';
 import useAuthStore from "./../../../store/store.js";
 
 export default function ListOfValueAdmin() {

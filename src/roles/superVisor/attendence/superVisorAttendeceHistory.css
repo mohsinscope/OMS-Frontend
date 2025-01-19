@@ -81,7 +81,7 @@
 /* Button styles */
 .attendance-search-button,
 .attendance-reset-button {
-  height: 40px;
+  height: 45px;
   min-width: 120px;
   background-color: #4880ff;
   color: white;
@@ -100,7 +100,7 @@
 }
 
 .attendance-add-button {
-  height: 40px;
+  height: 45px;
   min-width: 150px;
   background-color: #04aa6d !important;
   border: 2px solid #04aa6d !important;
