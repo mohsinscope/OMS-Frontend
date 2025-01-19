@@ -26,91 +26,64 @@ const handleLogout = () => {
   useAuthStore.getState().logout();
 };
 
-// Simplified request interceptor
+// Add token refresh logic for every request
 axiosInstance.interceptors.request.use(
-  config => {
+  async config => {
     const token = localStorage.getItem('accessToken');
-    if (token) config.headers = { Authorization: `Bearer ${token}` };
+    const refreshToken = localStorage.getItem('refreshToken');
+
+    // Refresh token before making any request
+    if (!isRefreshing && token && refreshToken) {
+      isRefreshing = true;
+      try {
+        const { data: { accessToken: newAccessToken, refreshToken: newRefreshToken } } = 
+          await refreshAxios.post('/api/account/refresh-token', {
+            AccessToken: token,
+            RefreshToken: refreshToken,
+          });
+
+        if (newAccessToken && newRefreshToken) {
+          localStorage.setItem('accessToken', newAccessToken);
+          localStorage.setItem('refreshToken', newRefreshToken);
+          axiosInstance.defaults.headers.Authorization = `Bearer ${newAccessToken}`;
+          await useAuthStore.getState().updateTokens(newAccessToken, newRefreshToken);
+        } else {
+          handleLogout();
+        }
+      } catch (err) {
+        handleLogout();
+        return Promise.reject(err);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    // Attach the latest token to the request
+    const updatedToken = localStorage.getItem('accessToken');
+    if (updatedToken) {
+      config.headers.Authorization = `Bearer ${updatedToken}`;
+    }
     return config;
   },
   error => Promise.reject(error)
 );
 
-// Optimized response interceptor
+// Simplified response interceptor
 axiosInstance.interceptors.response.use(
   response => response,
-  async error => {
-    const originalRequest = error.config;
+  error => {
     const status = error.response?.status;
 
-    // Quick returns for common cases
     if (status === 403) {
       navigator?.('/forbidden');
       return Promise.reject(error);
     }
 
-    if (status !== 401 || originalRequest._retry) {
-      return Promise.reject(error);
-    }
-
-    if (originalRequest.url === '/api/account/refresh-token') {
+    if (status === 401) {
       handleLogout();
-      return Promise.reject(error);
     }
 
-    // Handle token refresh
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      }).then(token => {
-        originalRequest.headers = { Authorization: `Bearer ${token}` };
-        return axiosInstance(originalRequest);
-      }).catch(err => Promise.reject(err));
-    }
-
-    // Perform token refresh
-    originalRequest._retry = true;
-    isRefreshing = true;
-
-    try {
-      const [currentAccessToken, currentRefreshToken] = [
-        localStorage.getItem('accessToken'),
-        localStorage.getItem('refreshToken')
-      ];
-
-      if (!currentAccessToken || !currentRefreshToken) {
-        throw new Error('No tokens available');
-      }
-
-      const { data: { accessToken: newAccessToken, refreshToken: newRefreshToken } } = 
-        await refreshAxios.post('/api/account/refresh-token', {
-          AccessToken: currentAccessToken,
-          RefreshToken: currentRefreshToken
-        });
-
-      if (!newAccessToken || !newRefreshToken) {
-        throw new Error('Invalid refresh response');
-      }
-
-      // Update tokens
-      localStorage.setItem('accessToken', newAccessToken);
-      localStorage.setItem('refreshToken', newRefreshToken);
-      originalRequest.headers = { Authorization: `Bearer ${newAccessToken}` };
-      axiosInstance.defaults.headers = { Authorization: `Bearer ${newAccessToken}` };
-
-      // Process queue and update state
-      processQueue(null, newAccessToken);
-      isRefreshing = false;
-
-      await useAuthStore.getState().updateTokens(newAccessToken, newRefreshToken);
-      return axiosInstance(originalRequest);
-
-    } catch (error) {
-      processQueue(error, null);
-      isRefreshing = false;
-      handleLogout();
-      return Promise.reject(error);
-    }
+    return Promise.reject(error);
   }
 );
 
