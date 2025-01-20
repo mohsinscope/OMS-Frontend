@@ -146,8 +146,9 @@
           }
     
           // Dynamic actionType
-          const dynamicActionType = `تمت الموافقة من ${profile?.position || ""} ${profile?.fullName || ""}`;
-    
+          const dynamicActionType = actionType === "Approval" 
+          ? `تمت الموافقة من ${profile?.position || ""} ${profile?.fullName || ""}`
+          : `تم الارجاع من ${profile?.position || ""} ${profile?.fullName || ""}`;    
           // Call the Actions endpoint
           await axiosInstance.post(
             `${Url}/api/Actions`,
@@ -955,7 +956,7 @@
                       dailyExpenseId: record.id,
                       status: expense?.generalInfo?.["الحالة"], // Passing the status
                     }}>
-                    <Button type="primary" loading={isLoadingDetails}>
+                    <Button type="primary" size="large" loading={isLoadingDetails}>
                       عرض
                     </Button>
                   </Link>
@@ -1075,7 +1076,7 @@
               </Button>,
               <Button
                 key="submit"
-                type={actionType === "Approval" ? "primary" : "danger"}
+                type={actionType === "Approval" ? "primary" : "primary"}
                 loading={isSubmitting}
                 onClick={handleActionSubmit}>
                 تأكيد
