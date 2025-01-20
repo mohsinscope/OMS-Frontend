@@ -278,10 +278,11 @@ export default function ExpensesView() {
         navigate("/expenses-history");
         return;
       }
-
+  
       try {
         setIsLoading(true);
-
+  
+        // Fetch expense and daily expenses in parallel
         const [expenseResponse, dailyExpensesResponse] = await Promise.all([
           axiosInstance.get(`${Url}/api/Expense/${expenseId}`, {
             headers: { Authorization: `Bearer ${accessToken}` },
@@ -290,7 +291,16 @@ export default function ExpensesView() {
             headers: { Authorization: `Bearer ${accessToken}` },
           }),
         ]);
-
+  
+        // Extract officeId to fetch office budget
+        const officeId = expenseResponse.data.officeId;
+        const officeResponse = await axiosInstance.get(`${Url}/api/office/${officeId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+  
+        const officeBudget = officeResponse.data.budget;
+  
+        // Process regular items
         const regularItems =
           expenseResponse.data.expenseItems?.map((item, index) => ({
             تسلسل: index + 1,
@@ -303,7 +313,8 @@ export default function ExpensesView() {
             image: item.receiptImage,
             type: "regular",
           })) || [];
-
+  
+        // Process daily items
         const dailyItems = dailyExpensesResponse.data.map((item, index) => ({
           تسلسل: regularItems.length + index + 1,
           التاريخ: new Date(item.expenseDate).toLocaleDateString(),
@@ -315,23 +326,25 @@ export default function ExpensesView() {
           id: item.id,
           type: "daily",
         }));
-
+  
+        // Combine and sort all items
         const allItems = [...regularItems, ...dailyItems].sort(
           (a, b) => new Date(b.التاريخ) - new Date(a.التاريخ)
         );
-
+  
+        // Calculate remaining amount
+        const remainingAmount = officeBudget - expenseResponse.data.totalAmount;
+  
         setExpense({
           generalInfo: {
             "الرقم التسلسلي": expenseResponse.data.id,
             "اسم المشرف": expenseResponse.data.profileFullName,
             المحافظة: expenseResponse.data.governorateName,
             المكتب: expenseResponse.data.officeName,
-            "مبلغ النثرية": expenseResponse.data.totalAmount,
+            "مبلغ النثرية": officeBudget,
             "مجموع الصرفيات": expenseResponse.data.totalAmount,
-            المتبقي: 0,
-            التاريخ: new Date(
-              expenseResponse.data.dateCreated
-            ).toLocaleDateString(),
+            المتبقي: remainingAmount,
+            التاريخ: new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
             الحالة: expenseResponse.data.status,
           },
           items: allItems,
@@ -344,7 +357,7 @@ export default function ExpensesView() {
         setIsLoading(false);
       }
     };
-
+  
     fetchAllExpenseData();
   }, [expenseId, accessToken, navigate]);
 

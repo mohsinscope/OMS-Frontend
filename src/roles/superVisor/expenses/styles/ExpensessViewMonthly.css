@@ -32,7 +32,9 @@
     margin-bottom: 24px;
     /* padding: 20px; */
   }
-  
+  .send-button{
+    height: 45px;
+  }
   .monthly-info-grid {
     display: grid;
     grid-template-columns: 1fr 6fr;
