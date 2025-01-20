@@ -646,44 +646,7 @@ export default function SuperVisorExpensesRequest() {
                 </ConfigProvider>
               </Card>
               
-              {lastMonthExpense && lastMonthExpense.status !== "New" && (
-                <div className="last-month-expenses">
-                  <div className="table-header" style={{ 
-                    marginBottom: '16px',
-                    padding: '16px',
-                    backgroundColor: '#fff',
-                    borderRadius: '8px',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-                  }}>
-                    <h2 style={{ 
-                      margin: 0,
-                      textAlign: 'center',
-                      color: '#1f2937',
-                      fontSize: '18px',
-                      fontWeight: 'bold'
-                    }}>
-                      مصروفات الشهر السابق
-                    </h2>
-                  </div>
-                  
-                  <ConfigProvider direction="rtl">
-                    <Table
-                      dataSource={[{
-                        key: '1',
-                        ...lastMonthExpense
-                      }]}
-                      columns={lastMonthColumns}
-                      pagination={false}
-                      bordered
-                      style={{
-                        backgroundColor: '#fff',
-                        borderRadius: '8px',
-                        overflow: 'hidden'
-                      }}
-                    />
-                  </ConfigProvider>
-                </div>
-              )}
+              
             </>
           )}
         </div>
