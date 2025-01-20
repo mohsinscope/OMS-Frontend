@@ -80,9 +80,9 @@ export default function ExpensesView() {
   
     if (position?.includes("coordinator") && currentStatus === "SentFromDirector") {
       return Status.RecievedBySupervisor;
-    } else if (position?.includes("coordinator") && currentStatus === "SentToProjectCoordinator") {
+    } else if (position?.includes("coordinator") && currentStatus === "SentToProjectCoordinator"||"ReturnedToProjectCoordinator") {
       return Status.SentToManager;
-    } else if (position?.includes("manager")&& currentStatus === "SentToManager") {
+    } else if (position?.includes("manager")&& currentStatus === "SentToManager"||"ReturnedToManager") {
       return Status.SentToDirector;
     } else if (position?.includes("director")&& currentStatus === "SentToDirector") {
       return Status.SentFromDirector;
