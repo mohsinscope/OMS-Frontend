@@ -141,7 +141,7 @@ export default function ImagePreviewer({
           </>
         ) : (
           <>
-          <div className="pdf-indicator">
+         <div className="pdf-indicator">
             <Tooltip title="فتح PDF">
               <Button
                 type="primary"
