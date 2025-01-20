@@ -350,17 +350,12 @@ export default function SuperVisorExpensesRequest() {
       key: "dateCreated",
       render: (date) => formatDate(date),
     },
-    {
-      title: "ملاحظات",
-      dataIndex: "notes",
-      key: "notes",
-      ellipsis: true,
-    },
+
     {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
-        record.status === "ReturnedToSupervisor" && (
+        (
           <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>
             <Button type="primary" size="large">عرض</Button>
           </Link>
