@@ -328,11 +328,13 @@ export default function ExpensessViewMonthly() {
 
     return (
         <div className={`monthly-expense-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`} dir="rtl">
+            <div style={{margin:"10px"}}>
+            {renderActionButton()}
+            </div>
             <Card className="monthly-expense-card">
                 <div className="monthly-expense-header">
                     <div className="header-content">
                         <h2 className="monthly-expense-title">تفاصيل المصروف الشهري</h2>
-                        {renderActionButton()}
                     </div>
                 </div>
                 
@@ -352,7 +354,7 @@ export default function ExpensessViewMonthly() {
                     />
                 </ConfigProvider>
             </Card>
-
+            <ConfigProvider direction="rtl">
             <Modal
                 title="إرسال المصروف الى منسق المشروع"
                 open={isModalVisible}
@@ -372,6 +374,7 @@ export default function ExpensessViewMonthly() {
                     />
                 </div>
             </Modal>
+            </ConfigProvider>
         </div>
     );
 }
