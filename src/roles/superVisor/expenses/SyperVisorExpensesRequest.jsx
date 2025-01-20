@@ -302,7 +302,19 @@ export default function SuperVisorExpensesRequest() {
       ),
     },
   ];
-
+  const statusDisplayNames = {
+    New: "جديد",
+    SentToProjectCoordinator: "تم الإرسال إلى منسق المشروع",
+    ReturnedToProjectCoordinator: "تم الإرجاع إلى منسق المشروع",
+    SentToManager: "تم الإرسال إلى المدير",
+    ReturnedToManager: "تم الإرجاع إلى المدير",
+    SentToDirector: "تم الإرسال إلى المدير التنفيذي",
+    ReturnedToSupervisor: "تم الإرجاع إلى المشرف",
+    RecievedBySupervisor: "تم الاستلام من قبل المشرف",
+    SentFromDirector: "تم الموافقة من قبل اسامة",
+    Completed: "مكتمل",
+  };
+  
   const lastMonthColumns = [
     {
       title: "المبلغ الإجمالي",
@@ -320,7 +332,7 @@ export default function SuperVisorExpensesRequest() {
       key: "status",
       render: (status) => (
         <span style={{ color: getStatusColor(status) }}>
-          {status}
+          {statusDisplayNames[status] || "غير معروف"}
         </span>
       ),
     },
@@ -429,6 +441,7 @@ export default function SuperVisorExpensesRequest() {
       <Collapse.Panel
         key="1"
         header={
+          <>
           <h2
             style={{
               margin: 0,
@@ -438,8 +451,10 @@ export default function SuperVisorExpensesRequest() {
               fontWeight: "bold",
             }}
           >
-            مصروفات الشهر السابق
+            مصروفات الشهر السابق -{" "}
+            {statusDisplayNames[lastMonthExpense?.status] || "غير معروف"}
           </h2>
+        </>
         }
       >
         <ConfigProvider direction="rtl">
