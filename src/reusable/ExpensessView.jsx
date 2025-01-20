@@ -76,15 +76,15 @@
     const isAccountant = profile?.position?.toLowerCase()?.includes("accontnt");
 
     const getNextStatus = (currentStatus, position) => {
-      position = position?.toLowerCase();
+      position = position?.toLowerCase();  // This line exists
     
       if (position?.includes("coordinator") && currentStatus === Status.SentFromDirector) {
         return Status.RecievedBySupervisor;
       } else if (position?.includes("coordinator")) {
         return Status.SentToManager;
-      } else if (position?.includes("manager") && currentStatus === Status.SentToManager) {
+      } else if (position?.includes("manager")) {
         return Status.SentToDirector;
-      } else if (position?.includes("director") && currentStatus === Status.SentToDirector) {
+      } else if (position?.includes("director")) {
         return Status.SentFromDirector;
       } else if (currentStatus === Status.RecievedBySupervisor) {
         return Status.Completed;
@@ -95,9 +95,9 @@
       );
       return currentStatus; // Default fallback to prevent invalid transitions
     };
-
+    
     const getRejectionStatus = (currentStatus, position) => {
-      position = position?.toLowerCase();
+      position = position?.toLowerCase();  // This line exists
 
       if (position?.includes("coordinator")) {
         return Status.ReturnedToSupervisor;
@@ -951,17 +951,18 @@
                   key: "actions",
                   render: (_, record) => (
                     <Link
-                    to="/Expensess-view-daily"
-                    state={{
-                      dailyExpenseId: record.id,
-                      status: expense?.generalInfo?.["الحالة"], // Passing the status
-                    }}>
-                    <Button type="primary" size="large" loading={isLoadingDetails}>
-                      عرض
-                    </Button>
-                  </Link>
+                      key={`action-${record.id || record.تسلسل}`}
+                      to="/Expensess-view-daily"
+                      state={{
+                        dailyExpenseId: record.id,
+                        status: expense?.generalInfo?.["الحالة"],
+                      }}>
+                      <Button type="primary" size="large" loading={isLoadingDetails}>
+                        عرض
+                      </Button>
+                    </Link>
                   ),
-                },
+                }
               ]}
               dataSource={expense?.items}
               bordered
