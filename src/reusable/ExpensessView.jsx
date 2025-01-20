@@ -267,29 +267,7 @@
         if (selectedItem?.imageUrl) {
           URL.revokeObjectURL(selectedItem.imageUrl);
         }
-        setIsModalVisible(false);
-        setSelectedItem(null);
-      };
 
-      useEffect(() => {
-        const fetchAllExpenseData = async () => {
-          if (!expenseId) {
-            message.error("لم يتم العثور على معرف المصروف");
-            navigate("/expenses-history");
-            return;
-          }
-
-          try {
-            setIsLoading(true);
-
-            const [expenseResponse, dailyExpensesResponse] = await Promise.all([
-              axiosInstance.get(`${Url}/api/Expense/${expenseId}`, {
-                headers: { Authorization: `Bearer ${accessToken}` },
-              }),
-              axiosInstance.get(`${Url}/api/Expense/${expenseId}/daily-expenses`, {
-                headers: { Authorization: `Bearer ${accessToken}` },
-              }),
-            ]);
 
             const regularItems =
               expenseResponse.data.expenseItems?.map((item, index) => ({
@@ -766,19 +744,6 @@
         >
           موافقة
         </Button>
-{expense?.generalInfo?.["الحالة"] === "SentFromDirector" ? null : (
-  <Button
-    danger
-    type="primary"
-    style={{ padding: "20px 40px" }}
-    onClick={() => handleActionClick("Return")}
-    disabled={!profile.profileId}
-  >
-    ارجاع
-  </Button>
-)}
-      </div>
-    )}
 
             {/* General Details Table */}
             <Table
