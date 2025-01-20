@@ -204,7 +204,18 @@ export default function ExpensessViewMonthly() {
             };
             return statusMap[status] || '';
         };
-
+        const statusDisplayNames = {
+            New: "جديد",
+            SentToProjectCoordinator: "تم الإرسال إلى منسق المشروع",
+            ReturnedToProjectCoordinator: "تم الإرجاع إلى منسق المشروع",
+            SentToManager: "تم الإرسال إلى المدير",
+            ReturnedToManager: "تم الإرجاع إلى المدير",
+            SentToDirector: "تم الإرسال إلى المدير التنفيذي",
+            ReturnedToSupervisor: "تم الإرجاع إلى المشرف",
+            RecievedBySupervisor: "تم الاستلام من قبل المشرف",
+            SentFromDirector: "تم الموافقة من قبل اسامة",
+            Completed: "مكتمل",
+          };
         return (
             <Card className="monthly-info-card">
                 <div className="monthly-info-grid">
@@ -232,8 +243,11 @@ export default function ExpensessViewMonthly() {
                         <div>
                         <div className="monthly-info-item">
                             <span className="monthly-info-label">حالة الطلب:</span>
-                            <span className={`monthly-info-value ${getStatusClass(monthlyExpense.status)}`}>
-                                {monthlyExpense.status}
+                            <span
+                                className={`monthly-info-value ${getStatusClass(monthlyExpense.status)}`}
+                            
+                            >
+                                {statusDisplayNames[monthlyExpense.status] || "غير معروف"}
                             </span>
                         </div>
                         <div className="monthly-info-item">
@@ -296,7 +310,7 @@ export default function ExpensessViewMonthly() {
             );
         }
         
-        if (!['Completed', 'RecievedBySupervisor'].includes(monthlyExpense?.status)) {
+        if (monthlyExpense?.status === 'RecievedBySupervisor') {
             return (
                 <Button 
                     type="primary"
@@ -308,8 +322,8 @@ export default function ExpensessViewMonthly() {
                 </Button>
             );
         }
-
-        return null;
+        
+        return null; // Do not render the button for other statuses
     };
 
     return (
