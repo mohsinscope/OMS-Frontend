@@ -487,11 +487,17 @@ export default function SuperVisorExpensesHistory() {
         <Link
           to="/expenses-view"
           state={{ expense: record }}
-          className="supervisor-expenses-history-details-link">
-          عرض
+        >
+          <Button 
+            type="primary" 
+            size="large"  // You can use "small", "middle", or "large"
+            className="supervisor-expenses-history-details-link"
+          >
+            عرض
+          </Button>
         </Link>
       ),
-    },
+    }
   ];
 
   const availableStatuses = getAvailableStatuses();
