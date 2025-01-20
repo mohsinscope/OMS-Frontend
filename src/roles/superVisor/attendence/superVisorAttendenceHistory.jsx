@@ -147,9 +147,8 @@ export default function SupervisorAttendanceHistory() {
         governorateName:
           governorates.find((gov) => gov.id === item.governorateId)?.name ||
           "غير معروف",
-        officeName:
-          offices.find((office) => office.id === item.officeId)?.name ||
-          "غير معروف",
+          officeName: item.officeName || "غير معروف",
+
       }));
 
       setAttendanceData(formattedData);
