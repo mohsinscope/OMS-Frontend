@@ -166,10 +166,10 @@ export default function SupervisorAttendanceHistory() {
 
   useEffect(() => {
     fetchAttendanceData(currentPage);
-  }, [isSupervisor, userGovernorateId, userOfficeId, governorates, offices]);
+  }, [currentPage]);
   useEffect(() => {
       fetchGovernorates();
-    }, [fetchGovernorates]);
+    }, []);
 
   const handleSearch = () => {
     setCurrentPage(1);
