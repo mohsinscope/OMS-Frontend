@@ -277,10 +277,11 @@
           navigate("/expenses-history");
           return;
         }
-
+    
         try {
           setIsLoading(true);
-
+    
+          // Fetch expense and daily expenses in parallel
           const [expenseResponse, dailyExpensesResponse] = await Promise.all([
             axiosInstance.get(`${Url}/api/Expense/${expenseId}`, {
               headers: { Authorization: `Bearer ${accessToken}` },
@@ -289,7 +290,16 @@
               headers: { Authorization: `Bearer ${accessToken}` },
             }),
           ]);
-
+    
+          // Extract officeId to fetch office budget
+          const officeId = expenseResponse.data.officeId;
+          const officeResponse = await axiosInstance.get(`${Url}/api/office/${officeId}`, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+    
+          const officeBudget = officeResponse.data.budget;
+    
+          // Process regular items
           const regularItems =
             expenseResponse.data.expenseItems?.map((item, index) => ({
               تسلسل: index + 1,
@@ -302,7 +312,8 @@
               image: item.receiptImage,
               type: "regular",
             })) || [];
-
+    
+          // Process daily items
           const dailyItems = dailyExpensesResponse.data.map((item, index) => ({
             تسلسل: regularItems.length + index + 1,
             التاريخ: new Date(item.expenseDate).toLocaleDateString(),
@@ -314,11 +325,15 @@
             id: item.id,
             type: "daily",
           }));
-
+    
+          // Combine and sort all items
           const allItems = [...regularItems, ...dailyItems].sort(
             (a, b) => new Date(b.التاريخ) - new Date(a.التاريخ)
           );
-
+    
+          // Calculate remaining amount
+          const remainingAmount = officeBudget - expenseResponse.data.totalAmount;
+    
           setExpense({
             generalInfo: {
               "الرقم التسلسلي": expenseResponse.data.id,
@@ -327,10 +342,8 @@
               المكتب: expenseResponse.data.officeName,
               "مبلغ النثرية": expenseResponse.data.totalAmount,
               "مجموع الصرفيات": expenseResponse.data.totalAmount,
-              المتبقي: 0,
-              التاريخ: new Date(
-                expenseResponse.data.dateCreated
-              ).toLocaleDateString(),
+              المتبقي: remainingAmount,
+              التاريخ: new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
               الحالة: expenseResponse.data.status,
             },
             items: allItems,
@@ -343,9 +356,10 @@
           setIsLoading(false);
         }
       };
-
+    
       fetchAllExpenseData();
     }, [expenseId, accessToken, navigate]);
+    
 
     const handleExportToExcel = async () => {
       try {
@@ -815,7 +829,17 @@
                 title: "المتبقي",
                 dataIndex: "المتبقي",
                 align: "center",
-                render: (text) => `IQD ${Number(text).toLocaleString()}`,
+                render: (text) => {
+                  if (typeof text === "number" && text < 0) {
+                    return (
+                      <span style={{ color: "red", fontWeight: "bold" }}>
+                        تجاوزت مبلغ النثرية <br></br>
+                        {`IQD ${Number(text).toLocaleString()}`}
+                      </span>
+                    );
+                  }
+                  return `IQD ${Number(text).toLocaleString()}`;
+                },
               },
               {
                 title: "الحالة",
