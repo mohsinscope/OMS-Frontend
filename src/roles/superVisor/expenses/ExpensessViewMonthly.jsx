@@ -70,22 +70,29 @@ export default function ExpensessViewMonthly() {
             setLoading(false);
         }
     };
-
     const handleSendToCoordinator = async () => {
         try {
             setSendingLoading(true);
+
+            let actionType = "Approval";
+            let actionNotes = notes || "Approved for processing.";
+
+            // Determine action type and notes based on current status
+            if (monthlyExpense?.status === 'ReturnedToSupervisor') {
+                actionType = "ResubmitAfterReturn";
+                actionNotes = `تم الارسال الى منسق المشروع بعد التعديل من قبل ${profile?.name || ''} ${profile?.position || ''}${notes ? ` - ${notes}` : ''}`;
+            }
 
             // First update the status
             await axiosInstance.post(`/api/Expense/${monthlyExpenseId}/status`, {
                 monthlyExpensesId: monthlyExpenseId,
                 newStatus: 1,
-                notes: notes || "Monthly expenses marked as completed by the Manager."
             });
 
-            // Then create an action
+            // Then create an action with dynamic type and notes
             await axiosInstance.post('/api/Actions', {
-                actionType: "Approval",
-                notes: notes || "Approved for processing.",
+                actionType: actionType,
+                notes: actionNotes,
                 profileId: profile?.profileId,
                 monthlyExpensesId: monthlyExpenseId
             });
@@ -100,8 +107,7 @@ export default function ExpensessViewMonthly() {
             message.error('حدث خطأ في إرسال المصروف');
         } finally {
             setSendingLoading(false);
-        }
-    };
+        }}
 
     const handleCompleteMonthlyExpense = async () => {
         try {
