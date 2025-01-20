@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Table, Card, Typography, ConfigProvider, message, Button, Modal, Input, Space } from 'antd';
+import { Table, Card, ConfigProvider, message, Button, Modal, Input, Space } from 'antd';
 import { Link } from 'react-router-dom';
 import { SendOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import axiosInstance from '../../../intercepters/axiosInstance';
 import useAuthStore from '../../../store/store';
 import './styles/ExpensessViewMonthly.css';
+import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 
-const { Title } = Typography;
 const { TextArea } = Input;
 
 export default function ExpensessViewMonthly() {
@@ -22,6 +22,8 @@ export default function ExpensessViewMonthly() {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [notes, setNotes] = useState('');
     const [completingLoading, setCompletingLoading] = useState(false);
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF6384', '#36A2EB'];
+    const [expenseTypeData, setExpenseTypeData] = useState([]);
 
     const fetchMonthlyExpenseDetails = async () => {
         try {
@@ -48,6 +50,19 @@ export default function ExpensessViewMonthly() {
                 expenseTypeName: expense.expenseTypeName
             }));
             setDailyExpenses(formattedExpenses);
+            const typeDistribution = formattedExpenses.reduce((acc, curr) => {
+                const type = curr.expenseTypeName;
+                if (!acc[type]) acc[type] = 0;
+                acc[type] += curr.totalAmount;
+                return acc;
+            }, {});
+            
+            const chartData = Object.entries(typeDistribution).map(([type, value]) => ({
+                name: type,
+                value,
+            }));
+            
+            setExpenseTypeData(chartData);
         } catch (error) {
             console.error('Error fetching daily expenses:', error);
             message.error('حدث خطأ في جلب المصروفات اليومية');
@@ -193,7 +208,7 @@ export default function ExpensessViewMonthly() {
         return (
             <Card className="monthly-info-card">
                 <div className="monthly-info-grid">
-                    <div>
+                    <div style={{width:"300px"}}>
                         <div className="monthly-info-item">
                             <span className="monthly-info-label">المبلغ الإجمالي:</span>
                             <span className="monthly-info-value amount">
@@ -201,10 +216,8 @@ export default function ExpensessViewMonthly() {
                             </span>
                         </div>
                         <div className="monthly-info-item">
-                            <span className="monthly-info-label">حالة الطلب:</span>
-                            <span className={`monthly-info-value ${getStatusClass(monthlyExpense.status)}`}>
-                                {monthlyExpense.status}
-                            </span>
+                            <span className="monthly-info-label">اسم المشرف:</span>
+                            <span className="monthly-info-value">{monthlyExpense.profileFullName}</span>
                         </div>
                         <div className="monthly-info-item">
                             <span className="monthly-info-label">اسم المكتب:</span>
@@ -215,10 +228,13 @@ export default function ExpensessViewMonthly() {
                             <span className="monthly-info-value">{monthlyExpense.governorateName}</span>
                         </div>
                     </div>
-                    <div>
+                    <div className='left-content-monthly-expenseview'>
+                        <div>
                         <div className="monthly-info-item">
-                            <span className="monthly-info-label">اسم المشرف:</span>
-                            <span className="monthly-info-value">{monthlyExpense.profileFullName}</span>
+                            <span className="monthly-info-label">حالة الطلب:</span>
+                            <span className={`monthly-info-value ${getStatusClass(monthlyExpense.status)}`}>
+                                {monthlyExpense.status}
+                            </span>
                         </div>
                         <div className="monthly-info-item">
                             <span className="monthly-info-label">مستوى الإنفاق:</span>
@@ -236,8 +252,31 @@ export default function ExpensessViewMonthly() {
                                 {monthlyExpense.notes || 'لا توجد ملاحظات'}
                             </span>
                         </div>
+                        </div>
+                        <div style={{textAlign:"center"}} >
+                            <h2> أنواع المصروفات</h2>
+                            <PieChart width={300} height={300}>
+                                <Pie
+                                    data={expenseTypeData}
+                                    cx="50%"
+                                    cy="50%"
+                                    labelLine={false}
+                                    outerRadius={120}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                >
+                                    {expenseTypeData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                            
+                        </div>
                     </div>
+                    
                 </div>
+                
             </Card>
         );
     };
@@ -278,7 +317,7 @@ export default function ExpensessViewMonthly() {
             <Card className="monthly-expense-card">
                 <div className="monthly-expense-header">
                     <div className="header-content">
-                        <Title level={3} className="monthly-expense-title">تفاصيل المصروف الشهري</Title>
+                        <h2 className="monthly-expense-title">تفاصيل المصروف الشهري</h2>
                         {renderActionButton()}
                     </div>
                 </div>
@@ -292,7 +331,7 @@ export default function ExpensessViewMonthly() {
                         columns={columns}
                         loading={loading}
                         pagination={{
-                            pageSize: 10,
+                            pageSize: 5,
                             position: ['bottomCenter'],
                             showSizeChanger: false,
                         }}

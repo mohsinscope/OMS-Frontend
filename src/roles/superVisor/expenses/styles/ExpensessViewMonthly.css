@@ -1,6 +1,4 @@
 .monthly-expense-container {
-   
-    background-color: #f5f5f5;
     min-height: 100vh;  
     padding: 20px;
     border-radius: 8px;
@@ -8,7 +6,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: start;
-    margin-top: 1%;
+    margin-top: 6%;
   }
   
   .monthly-expense-card {
@@ -32,21 +30,28 @@
     background: white;
     border-radius: 8px;
     margin-bottom: 24px;
-    padding: 20px;
+    /* padding: 20px; */
   }
   
   .monthly-info-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 6fr;
     gap: 24px;
   }
   
   .monthly-info-item {
+    width: 100%;
+    gap: 30px;
     display: flex;
     justify-content: space-between;
     margin-bottom: 12px;
     padding: 8px 0;
     border-bottom: 1px solid #f0f0f0;
+  }
+  .left-content-monthly-expenseview{
+    display: flex;
+    justify-content: space-evenly;
+    padding: 0px 20px;
   }
   
   .monthly-info-label {
