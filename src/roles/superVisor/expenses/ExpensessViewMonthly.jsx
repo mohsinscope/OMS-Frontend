@@ -140,7 +140,7 @@ export default function ExpensessViewMonthly() {
             const typeDistribution = formattedExpenses.reduce((acc, curr) => {
                 const type = curr.expenseTypeName;
                 if (!acc[type]) acc[type] = 0;
-                acc[type] += curr.totalAmount;
+                acc[type] += curr.price * curr.quantity;
                 return acc;
             }, {});
             
@@ -370,9 +370,22 @@ export default function ExpensessViewMonthly() {
                                 </span>
                             </div>
                             <div className="monthly-info-item">
-                                <span className="monthly-info-label">مستوى الإنفاق:</span>
-                                <span className="monthly-info-value">{monthlyExpense.thresholdName}</span>
+                              <span className="monthly-info-label">مستوى الإنفاق:</span>
+                              <span
+                                className="monthly-info-value"
+                                style={{
+                                  color:
+                                    monthlyExpense.thresholdName === "Low"
+                                      ? "green"
+                                      : monthlyExpense.thresholdName === "Medium"
+                                      ? "#ffd700"
+                                      : "red", // Default to red for "High"
+                                }}
+                              >
+                                {monthlyExpense.thresholdName}
+                              </span>
                             </div>
+
                             <div className="monthly-info-item">
                                 <span className="monthly-info-label">تاريخ الإنشاء:</span>
                                 <span className="monthly-info-value">

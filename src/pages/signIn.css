@@ -55,6 +55,7 @@
 .input-field {
   width: 100%;
   padding: 15px;
+  margin-top: 10px;
   border: 1px solid #afacac;
   border-radius: 5px;
   font-size: 1rem;
@@ -166,7 +167,7 @@
 
 .input-wrapper {
   width: 100%; /* Matches button width */
-
+  padding: 5px;
 }
 
 
@@ -184,10 +185,11 @@
 .password-field-login{
   border: #bcc1ca 1px solid;
   width: 400px;
+  margin-top: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: white;
+  /* background-color: white; */
   transition: border 0.3s ease, box-shadow 0.3s ease;
   border-radius: 5px;
 
@@ -235,6 +237,7 @@
 }
 
 .input-field, .input-field-password {
+  border-radius: 5px;
   transition: all 0.3s ease;
   animation: fadeInUp 0.5s ease-out;
 }
