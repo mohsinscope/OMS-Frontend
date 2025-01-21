@@ -334,7 +334,7 @@ export default function ExpensessViewMonthly() {
             SentToDirector: "تم الإرسال إلى المدير التنفيذي",
             ReturnedToSupervisor: "تم الإرجاع إلى المشرف",
             RecievedBySupervisor: "تم الاستلام من قبل المشرف",
-            SentFromDirector: "تم الموافقة من قبل اسامة",
+            SentFromDirector: "تم الموافقة من المدير التنفيذي",
             Completed: "مكتمل",
         };
 

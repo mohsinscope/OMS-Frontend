@@ -51,7 +51,6 @@ const ExpensessView = () => {
       ["New", "ReturnedToSupervisor"].includes(status) // Check the passed status
     );
   };
-  /* i dont use it for now  */
   const fetchExpenseTypes = async () => {
     try {
       const response = await axiosInstance.get('/api/ExpenseType');
