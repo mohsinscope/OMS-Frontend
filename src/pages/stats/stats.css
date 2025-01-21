@@ -68,7 +68,7 @@
   .stats-main-section {
     display: flex;
     align-items: self-start;
-    margin: 20px 20px;
+    /* margin: 20px 20px; */
     gap: 20px;
     justify-content: start;
   }
@@ -104,6 +104,7 @@
   
   .stats-form {
     display: flex;
+    flex-wrap: wrap;
     justify-content: start;
     gap: 20px;
     align-items: end;

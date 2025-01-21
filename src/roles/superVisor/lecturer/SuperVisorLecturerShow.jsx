@@ -169,24 +169,28 @@ const LecturerShow = () => {
       const updatedValues = {
         id: lectureId,
         title: values.title,
-        date: values.date.toISOString(),
+        // Convert the string date to a Date object and then call toISOString()
+        date: new Date(values.date).toISOString(),
         note: values.note || "",
         officeId: lectureData.officeId,
         governorateId: lectureData.governorateId,
         profileId: lectureData.profileId,
         companyId: values.companyId,
-        lectureTypeIds: values.lectureTypeIds, // Multiple lecture type IDs
+        lectureTypeIds: Array.isArray(values.lectureTypeIds)
+          ? values.lectureTypeIds
+          : [values.lectureTypeIds], // Ensure it's always an array
       };
-
+  
       await axiosInstance.put(`${Url}/api/Lecture/${lectureId}`, updatedValues);
       message.success("تم تحديث المحضر بنجاح");
       setEditModalVisible(false);
-      await fetchLectureDetails();
+      await fetchLectureDetails(); // Refresh lecture details after update
     } catch (error) {
+      console.error("Error updating lecture:", error); // Log the error for debugging
       message.error("حدث خطأ أثناء تعديل المحضر");
     }
   };
-
+  
   const handleDelete = async () => {
     try {
       await axiosInstance.delete(`${Url}/api/Lecture/${lectureId}`);
@@ -371,22 +375,24 @@ const LecturerShow = () => {
               </Select>
             </Form.Item>
             <Form.Item
-              name="lectureTypeIds"
-              label="نوع المحضر"
-              rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
-              <Select
-                mode="multiple"
-                placeholder="اختر نوع المحضر"
-                disabled={!form.getFieldValue("companyId")}
-                value={form.getFieldValue("lectureTypeIds") || []}
-                onChange={(value) => form.setFieldValue("lectureTypeIds", value)}>
-                {lectureTypes.map((type) => (
-                  <Select.Option key={type.id} value={type.id}>
-                    {type.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
+  name="lectureTypeIds"
+  label="نوع المحضر"
+  rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
+  <Select
+    mode="multiple"
+    placeholder="اختر نوع المحضر"
+    disabled={!form.getFieldValue("companyId")} // Disable if companyId is not selected
+    onChange={(value) => form.setFieldsValue({ lectureTypeIds: value })} // Update form values
+    allowClear // Allow clearing the selection
+  >
+    {lectureTypes.map((type) => (
+      <Select.Option key={type.id} value={type.id}>
+        {type.name}
+      </Select.Option>
+    ))}
+  </Select>
+</Form.Item>
+
 
             <Form.Item name="note" label="الملاحظات">
               <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />

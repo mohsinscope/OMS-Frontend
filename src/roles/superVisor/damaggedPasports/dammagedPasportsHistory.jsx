@@ -551,7 +551,6 @@ export default function SuperVisorPassport() {
 
             
             <Button
-              type="primary"
               onClick={() => handleSearch(1)}
               className="supervisor-passport-dameged-button">
               البحث
@@ -561,7 +560,15 @@ export default function SuperVisorPassport() {
               className="supervisor-passport-dameged-button">
               إعادة تعيين
             </Button>
-
+            {hasCreatePermission && (
+              <Link to="/supervisor/damagedpasportshistory/supervisordammagepasportadd">
+                <Button
+                  type="primary"
+                  className="supervisor-passport-dameged-add-button">
+                  اضافة جواز تالف +
+                </Button>
+              </Link>
+            )}
             <button
               type="button" // Prevent form submission
               onClick={handlePrintPDF}
@@ -594,15 +601,7 @@ export default function SuperVisorPassport() {
               <Icons type="excel" />
             </button>
 
-            {hasCreatePermission && (
-              <Link to="/supervisor/damagedpasportshistory/supervisordammagepasportadd">
-                <Button
-                  type="primary"
-                  className="supervisor-passport-dameged-add-button">
-                  اضافة جواز تالف +
-                </Button>
-              </Link>
-            )}
+            
         </form>
       </div>
 

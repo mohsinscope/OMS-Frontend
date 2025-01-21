@@ -242,7 +242,7 @@ export default function SupervisorAttendanceHistory() {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
-        <Button type="primary" size="small" onClick={() => handleView(record)}>
+        <Button type="primary" style={{height:"40px",width:"fit-content"}} onClick={() => handleView(record)}>
           عرض
         </Button>
       ),
@@ -328,14 +328,14 @@ export default function SupervisorAttendanceHistory() {
         </div>
 
         <Button
-          className="attendance-search-button"
+          className="supervisor-passport-dameged-button"
           onClick={handleSearch}
           loading={isLoading}>
           البحث
         </Button>
 
         <Button
-          className="attendance-reset-button"
+          className="supervisor-passport-dameged-button"
           onClick={handleReset}
           disabled={isLoading}>
           إعادة التعيين

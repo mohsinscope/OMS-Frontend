@@ -446,12 +446,11 @@ const SuperVisorLecturerhistory = () => {
 
           <div className="supervisor-Lectur-buttons">
             <Button
-              type="primary"
               htmlType="submit"
-              className="supervisor-Lectur-button">
+              className="supervisor-passport-dameged-button">
               ابحث
             </Button>
-            <Button onClick={handleReset} className="supervisor-Lectur-button">
+            <Button onClick={handleReset} className="supervisor-passport-dameged-button">
               إعادة تعيين
             </Button>
           </div>

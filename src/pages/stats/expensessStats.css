@@ -18,6 +18,7 @@
   
   .exp-filter-form {
     display: flex;
+    flex-wrap: wrap;
     justify-content: start;
     gap: 20px;
     align-items: end;
