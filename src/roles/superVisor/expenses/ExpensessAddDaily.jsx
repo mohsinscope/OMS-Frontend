@@ -26,7 +26,8 @@ export default function ExpensessAddDaily() {
   const navigate = useNavigate();
   const location = useLocation();
   const monthlyExpenseId = location.state?.monthlyExpenseId;
-
+  const totalMonthlyAmount = location.state?.totalMonthlyAmount;
+  console.log("totalMonthlyAmount", totalMonthlyAmount);
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -51,7 +52,23 @@ export default function ExpensessAddDaily() {
     officeName: officeName || "",
     supervisorName: supervisorName || "",
   });
-
+  // define state to set office budget
+  const [officeBudget, setOfficeBudget] = useState();
+  // define a request to get office budget by /api/office/${profile?.officeId} 
+  const fetchOfficeBudget = async () => {
+    try {
+      const response = await axiosInstance.get(`/api/office/${profile?.officeId}`);
+      setOfficeBudget(response.data.budget);
+    } catch (error) {
+      console.error("Error fetching office budget:", error);
+      message.error("حدث خطأ في جلب ميزانية المكتب");
+    }
+  };
+  // call fetchOfficeBudget function
+  useEffect(() => {
+    fetchOfficeBudget();
+  }, [profile?.officeId]);
+  console.log("officeBudget", officeBudget);
   useEffect(() => {
     if (!monthlyExpenseId) {
       message.error("لم يتم العثور على معرف المصروف الشهري");
@@ -124,7 +141,13 @@ export default function ExpensessAddDaily() {
         expenseDate: values.date.format("YYYY-MM-DDTHH:mm:ss"),
         expenseTypeId: values.expenseTypeId,
       };
-
+      if(values.totalamount + totalMonthlyAmount > officeBudget){
+        message.error("الميزانية غير كافية");
+        // and then print message to use with remaing budget
+        message.info(`الميزانية المتبقية ${officeBudget - totalMonthlyAmount}`);
+        setIsSubmitting(false);
+        return;
+      }
       const response = await axiosInstance.post(
         `/api/Expense/${monthlyExpenseId}/daily-expenses`,
         payload
