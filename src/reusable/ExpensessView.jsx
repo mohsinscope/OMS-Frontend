@@ -82,7 +82,7 @@ export default function ExpensesView() {
       return Status.RecievedBySupervisor;
     } else if (position?.includes("coordinator") ) {
       return Status.SentToManager;
-    } else if (position?.includes("Manager")) {
+    } else if (position?.includes("manager")) {
       return Status.SentToDirector;
     } else if (position?.includes("director")) {
       return Status.SentFromDirector;
@@ -101,7 +101,7 @@ export default function ExpensesView() {
 
     if (position?.includes("coordinator")) {
       return Status.ReturnedToSupervisor;
-    } else if (position?.includes("Manager")) {
+    } else if (position?.includes("manager")) {
       return Status.ReturnedToProjectCoordinator;
     } else if (position?.includes("director")) {
       return Status.ReturnedToManager;
