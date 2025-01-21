@@ -10,7 +10,8 @@ import {
   Form,
   Input,
   ConfigProvider,
-  Collapse 
+  Collapse,
+  Spin 
 } from "antd";
 import { PlusCircleOutlined, CalendarOutlined } from "@ant-design/icons";
 import useAuthStore from "../../../store/store";
@@ -31,6 +32,7 @@ export default function SuperVisorExpensesRequest() {
   const [sendForm] = Form.useForm();
   const [sendLoading, setSendLoading] = useState(false);
   const [lastMonthExpense, setLastMonthExpense] = useState(null);
+  const [isLastMonthLoading, setIsLastMonthLoading] = useState(true);
   const [officeInfo, setOfficeInfo] = useState({
     totalCount: 0,
     totalExpenses: 0,
@@ -41,21 +43,10 @@ export default function SuperVisorExpensesRequest() {
   });
 
   const arabicMonths = [
-    "يناير",
-    "فبراير",
-    "مارس",
-    "أبريل",
-    "مايو",
-    "يونيو",
-    "يوليو",
-    "أغسطس",
-    "سبتمبر",
-    "أكتوبر",
-    "نوفمبر",
-    "ديسمبر",
+    "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+    "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
   ];
 
-  // Get the current month and year in Arabic
   const formattedDate = new Date(officeInfo.date);
   const displayMonthName = arabicMonths[formattedDate.getMonth()];
   const displayYear = formattedDate.getFullYear();
@@ -64,7 +55,6 @@ export default function SuperVisorExpensesRequest() {
   const updateOfficeInfo = (expenses) => {
     const totalCount = expenses.length;
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.totalAmount, 0);
-    
     setOfficeInfo(prev => ({
       ...prev,
       totalCount,
@@ -73,17 +63,32 @@ export default function SuperVisorExpensesRequest() {
   };
 
   const fetchLastMonthExpense = async () => {
+    if (!profile?.officeId) {
+      setIsLastMonthLoading(false);
+      return;
+    }
+    
     try {
+      setIsLastMonthLoading(true);
       const response = await axiosInstance.post("/api/Expense/search-last-month", {
         officeId: profile?.officeId,
       });
-      setLastMonthExpense(response.data);
+      
+      // Extract first item from array since response.data is an array
+      if (response.data && response.data.length > 0) {
+        setLastMonthExpense(response.data[0]);
+      } else {
+        setLastMonthExpense(null);
+      }
     } catch (error) {
       console.error("Error fetching last month expense:", error);
       message.error("حدث خطأ في جلب بيانات الشهر السابق");
+      setLastMonthExpense(null);
+    } finally {
+      setIsLastMonthLoading(false);
     }
   };
-
+  
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("ar-IQ", {
       year: "numeric",
@@ -91,7 +96,7 @@ export default function SuperVisorExpensesRequest() {
       day: "numeric",
     });
   };
-
+  
   const getStatusColor = (status) => {
     const statusColors = {
       Pending: "#ffa940",
@@ -255,6 +260,19 @@ export default function SuperVisorExpensesRequest() {
     }
   };
 
+  const statusDisplayNames = {
+    New: "جديد",
+    SentToProjectCoordinator: "تم الإرسال إلى منسق المشروع",
+    ReturnedToProjectCoordinator: "تم الإرجاع إلى منسق المشروع",
+    SentToManager: "تم الإرسال إلى المدير",
+    ReturnedToManager: "تم الإرجاع إلى المدير",
+    SentToDirector: "تم الإرسال إلى المدير التنفيذي",
+    ReturnedToSupervisor: "تم الإرجاع إلى المشرف",
+    RecievedBySupervisor: "تم الاستلام من قبل المشرف",
+    SentFromDirector: "تم الموافقة من قبل اسامة",
+    Completed: "مكتمل",
+  };
+
   const currentMonthColumns = [
     {
       title: "التاريخ",
@@ -302,19 +320,7 @@ export default function SuperVisorExpensesRequest() {
       ),
     },
   ];
-  const statusDisplayNames = {
-    New: "جديد",
-    SentToProjectCoordinator: "تم الإرسال إلى منسق المشروع",
-    ReturnedToProjectCoordinator: "تم الإرجاع إلى منسق المشروع",
-    SentToManager: "تم الإرسال إلى المدير",
-    ReturnedToManager: "تم الإرجاع إلى المدير",
-    SentToDirector: "تم الإرسال إلى المدير التنفيذي",
-    ReturnedToSupervisor: "تم الإرجاع إلى المشرف",
-    RecievedBySupervisor: "تم الاستلام من قبل المشرف",
-    SentFromDirector: "تم الموافقة من قبل اسامة",
-    Completed: "مكتمل",
-  };
-  
+
   const lastMonthColumns = [
     {
       title: "المبلغ الإجمالي",
@@ -362,16 +368,13 @@ export default function SuperVisorExpensesRequest() {
       key: "dateCreated",
       render: (date) => formatDate(date),
     },
-
     {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
-        (
-          <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>
-            <Button type="primary" size="large">عرض</Button>
-          </Link>
-        )
+        <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>
+          <Button type="primary" size="large">عرض</Button>
+        </Link>
       ),
     }
   ];
@@ -429,68 +432,87 @@ export default function SuperVisorExpensesRequest() {
           </Button>
         </div>
 
-        {lastMonthExpense && (
-       <Collapse
-      style={{
-        background: "#fff",
-        borderRadius: "8px",
-        marginTop: "24px",
-        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-      }}
-    >
-      <Collapse.Panel
-        key="1"
-        header={
-          <>
-          <h2
+        {isLastMonthLoading ? (
+          <Collapse
             style={{
-              margin: 0,
-              textAlign: "center",
-              color: "#1f2937",
-              fontSize: "18px",
-              fontWeight: "bold",
+              background: "#fff",
+              borderRadius: "8px",
+              marginTop: "24px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+            }}>
+            <Collapse.Panel
+              key="1"
+              header={
+                <h2 style={{
+                  margin: 0,
+                  textAlign: "center",
+                  color: "#1f2937",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                }}>
+                  جاري تحميل بيانات الشهر السابق...
+                </h2>
+              }
+            >
+              <div style={{ padding: "20px", textAlign: "center" }}>
+                <Spin size="large" />
+              </div>
+            </Collapse.Panel>
+          </Collapse>
+        ) : lastMonthExpense && (
+          <Collapse
+            style={{
+              background: "#fff",
+              borderRadius: "8px",
+              marginTop: "24px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
             }}
           >
-            مصروفات الشهر السابق -{" "}
-            {statusDisplayNames[lastMonthExpense?.status] || "غير معروف"}
-          </h2>
-        </>
-        }
-      >
-        <ConfigProvider direction="rtl">
-          <Table
-            dataSource={[
-              {
-                key: "1",
-                ...lastMonthExpense,
-              },
-            ]}
-            columns={lastMonthColumns}
-            pagination={false}
-            bordered
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: "8px",
-              overflow: "hidden",
-            }}
-          />
-        </ConfigProvider>
-      </Collapse.Panel>
-    </Collapse>
-
+            <Collapse.Panel
+              key="1"
+              header={
+                <h2 style={{
+                  margin: 0,
+                  textAlign: "center",
+                  color: "#1f2937",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                }}>
+                  مصروفات الشهر السابق -{" "}
+                  {statusDisplayNames[lastMonthExpense?.status] || "غير معروف"}
+                </h2>
+              }
+            >
+              <ConfigProvider direction="rtl">
+                <Table
+                  dataSource={[{ key: "1", ...lastMonthExpense }]}
+                  columns={lastMonthColumns}
+                  pagination={false}
+                  bordered
+                  style={{
+                    backgroundColor: "#fff",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                  }}
+                />
+              </ConfigProvider>
+            </Collapse.Panel>
+          </Collapse>
         )}
       </div>
-      
     );
   };
 
-  useEffect(() => {
-    fetchExpenseTypes();
-    fetchMonthlyExpense();
+   // Correct dependency array
+   useEffect(() => {
     if (profile?.officeId) {
       fetchLastMonthExpense();
     }
-  }, [profile?.officeId]);
+  }, [profile?.officeId]); // Only re-run when officeId changes
+
+  useEffect(() => {
+    console.log('Last month expense updated:', lastMonthExpense);
+  }, [lastMonthExpense]); // Log when lastMonthExpense changes
 
   return (
     <div
@@ -645,8 +667,6 @@ export default function SuperVisorExpensesRequest() {
                   />
                 </ConfigProvider>
               </Card>
-              
-              
             </>
           )}
         </div>
