@@ -617,7 +617,7 @@ export default function SuperVisorExpensesHistory() {
             borderRadius: "8px",
             width: "fit-content",
           }}>
-          طباعة كـ PDF
+          انشاء ملف PDF
           <Icons type="pdf" />
         </button>
         <button
@@ -632,7 +632,7 @@ export default function SuperVisorExpensesHistory() {
             borderRadius: "8px",
             width: "fit-content",
           }}>
-          تصدير إلى Excel
+          انشاء ملف Excel
           <Icons type="excel" />
         </button>
       </div>

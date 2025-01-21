@@ -574,7 +574,7 @@ export default function SuperVisorPassport() {
                 borderRadius: "8px",
                 width: "fit-content",
               }}>
-              طباعة كـ PDF
+              انشاء ملف PDF
               <Icons type="pdf" />
             </button>
 
@@ -590,7 +590,7 @@ export default function SuperVisorPassport() {
                 borderRadius: "8px",
                 width: "fit-content",
               }}>
-              تصدير إلى Excel
+              انشاء ملف Excel
               <Icons type="excel" />
             </button>
 

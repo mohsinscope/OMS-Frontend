@@ -214,7 +214,7 @@ console.log("month" ,expenseData.monthlyStatus)
       dir="rtl">
       <div className="title-container">
         <h1>تفاصيل المصروف</h1>
-        <div style={{display:"flex", justifyContent:"space-between", marginBottom: "20px"}}>
+        <div style={{display:"flex", justifyContent:"space-between", marginBottom: "20px",gap:"20px"}}>
         <Button 
               type="primary" 
               style={{padding:"20px 30px",backgroundColor:"#efb034"}} 
@@ -222,13 +222,12 @@ console.log("month" ,expenseData.monthlyStatus)
             >
               الرجوع
             </Button>
-        </div>
-        {canPerformActions() && (
+            {canPerformActions() && (
   <>
     <Button
       type="primary"
       style={{ padding: "20px 30px" }}
-      onClick={() => navigate('/edit-expense')}
+      onClick={() => setEditModalVisible(true)}
     >
       تعديل
     </Button>
@@ -236,12 +235,14 @@ console.log("month" ,expenseData.monthlyStatus)
       danger
       type="primary"
       style={{ padding: "20px 40px" }}
-      onClick={() => navigate('/delete-expense')}
+      onClick={() => handleDelete()}
     >
       حذف
     </Button>
   </>
 )}
+        </div>
+        
   
       </div>
 
