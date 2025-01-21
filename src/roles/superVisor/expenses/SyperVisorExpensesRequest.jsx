@@ -50,7 +50,23 @@ export default function SuperVisorExpensesRequest() {
   const displayMonthName = arabicMonths[formattedDate.getMonth()];
   const displayYear = formattedDate.getFullYear();
   const displayMonthYear = `${displayMonthName} - ${displayYear}`;
-
+  // define state to set office budget
+  const [officeBudget, setOfficeBudget] = useState();
+  // define a request to get office budget by /api/office/${profile?.officeId} 
+  const fetchOfficeBudget = async () => {
+    try {
+      const response = await axiosInstance.get(`/api/office/${profile?.officeId}`);
+      setOfficeBudget(response.data.budget);
+    } catch (error) {
+      console.error("Error fetching office budget:", error);
+      message.error("حدث خطأ في جلب ميزانية المكتب");
+    }
+  };
+  // call fetchOfficeBudget function
+  useEffect(() => {
+    fetchOfficeBudget();
+  }, [profile?.officeId]);
+  console.log("officeBudget", officeBudget);
   const updateOfficeInfo = (expenses) => {
     const totalCount = expenses.length;
     const totalExpenses = expenses.reduce((sum, expense) => sum + expense.totalAmount, 0);
@@ -644,16 +660,29 @@ export default function SuperVisorExpensesRequest() {
               </div>
             </div>
             <Space
-              direction="vertical"
-              style={{ width: "100%", marginTop: "24px" }}>
-              <Link
-                to="/add-daily-expense"
-                state={{ monthlyExpenseId: currentMonthlyExpenseId }}>
-                <Button type="primary" block size="large">
-                  إضافة مصروف يومي
-                </Button>
-              </Link>
-            </Space>
+  direction="vertical"
+  style={{ width: "100%", marginTop: "24px" }}
+>
+  <Link
+    to="/add-daily-expense"
+    state={{ monthlyExpenseId: currentMonthlyExpenseId , officeBudget: officeBudget , totalMonthlyAmount: officeInfo.totalExpenses}}
+  >
+    <Button
+      type="primary"
+      block
+      size="large"
+      disabled={officeInfo.totalExpenses >= officeBudget} // Disable button if total expenses exceed budget
+    >
+      إضافة مصروف يومي
+    </Button>
+  </Link>
+  {officeInfo.totalExpenses >= officeBudget && (
+    <span style={{ color: "red", textAlign: "center" }}>
+      لقد تجاوزت ميزانية المكتب المحددة لهذا الشهر!
+    </span>
+  )}
+</Space>
+
           </Card>
         ) : null}
 
