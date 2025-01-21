@@ -150,7 +150,6 @@ button {
 }
 .expenses-table-card h1 {
   display: flex;
-  width: 100%;
   justify-content: center;
 }
 .new-expensess-monthly {

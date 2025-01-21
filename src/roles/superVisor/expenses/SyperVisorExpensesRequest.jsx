@@ -245,7 +245,7 @@ export default function SuperVisorExpensesRequest() {
         statusPayload
       );
 
-      message.success("تم إرسال المصروف الشهري بنجاح");
+      message.success("تم إرسال المصروف الشهرية بنجاح");
       setIsSendModalVisible(false);
       sendForm.resetFields();
       
@@ -256,7 +256,7 @@ export default function SuperVisorExpensesRequest() {
       fetchLastMonthExpense();
     } catch (error) {
       console.error("Error sending monthly expense:", error);
-      message.error("حدث خطأ في إرسال المصروف الشهري");
+      message.error("حدث خطأ في إرسال المصروف الشهرية");
     } finally {
       setSendLoading(false);
     }
@@ -653,13 +653,6 @@ export default function SuperVisorExpensesRequest() {
                   إضافة مصروف يومي
                 </Button>
               </Link>
-              <Button
-                type="default"
-                block
-                size="large"
-                onClick={() => setIsSendModalVisible(true)}>
-                ارسال طلبات الشهر الكلية
-              </Button>
             </Space>
           </Card>
         ) : null}
@@ -670,9 +663,23 @@ export default function SuperVisorExpensesRequest() {
           ) : (
             <>
               <Card className="expenses-table-card" style={{ marginBottom: "24px" }}>
+                <div style={{display:"flex", justifyContent:"space-between",width:"100%"}}>
+
+
                 <h1 style={{ marginBottom: "5px" }}>
                   المصروفات اليومية للشهر الحالي
-                </h1>
+                  </h1>
+              <Button
+                type="primary"
+                
+                size="large"
+                onClick={() => setIsSendModalVisible(true)}>
+                ارسال طلبات الشهر الكلية
+              </Button>
+             
+           
+                </div>
+                
                 <ConfigProvider direction="rtl">
                   <Table
                     dataSource={currentMonthDailyExpenses}
@@ -741,6 +748,7 @@ export default function SuperVisorExpensesRequest() {
           onFinish={handleSendMonthlyExpense}
           layout="vertical"
           style={{ marginTop: "10px" }}>
+            <span style={{color:"red"}}> * يرجى التاكد من ادخال جميع المصاريف اليومية الخاصة بهذا الشهر قبل الارسال</span>
           <Form.Item name="notes" label="ملاحظات" style={{ width: "100%" }}>
             <Input.TextArea
               rows={4}
