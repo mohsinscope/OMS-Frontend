@@ -7,6 +7,90 @@ import axiosInstance from '../../../intercepters/axiosInstance';
 import useAuthStore from '../../../store/store';
 import './styles/ExpensessViewMonthly.css';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
+// Actions Table Component
+const ActionsTable = ({ monthlyExpensesId }) => {
+    const [actions, setActions] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const fetchActions = async () => {
+        try {
+            setLoading(true);
+            const response = await axiosInstance.get(`/api/Actions/${monthlyExpensesId}`);
+            const formattedActions = response.data.map((action, index) => {
+                const date = new Date(action.dateCreated);
+                return {
+                    key: action.id,
+                    actionType: action.actionType,
+                    notes: action.notes,
+                    date: date.toISOString().split('T')[0],
+                    time: date.toLocaleTimeString('ar-EG', { 
+                        hour12: true,
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    })
+                };
+            });
+            setActions(formattedActions);
+        } catch (error) {
+            console.error('Error fetching actions:', error);
+            message.error('حدث خطأ في جلب سجل الإجراءات');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (monthlyExpensesId) {
+            fetchActions();
+        }
+    }, [monthlyExpensesId]);
+
+    const actionColumns = [
+        {
+            title: 'نوع الإجراء',
+            dataIndex: 'actionType',
+            key: 'actionType',
+            align: 'right',
+        },
+        {
+            title: 'الملاحظات',
+            dataIndex: 'notes',
+            key: 'notes',
+            align: 'right',
+        },
+        {
+            title: 'التاريخ',
+            dataIndex: 'date',
+            key: 'date',
+            align: 'center',
+        },
+        {
+            title: 'الوقت',
+            dataIndex: 'time',
+            key: 'time',
+            align: 'center',
+        }
+      
+       
+        
+    ];
+
+    return (
+        <ConfigProvider direction="rtl">
+            <Table
+                className="actions-table"
+                columns={actionColumns}
+                dataSource={actions}
+                loading={loading}
+                pagination={{
+                    pageSize: 5,
+                    position: ['bottomCenter'],
+                    showSizeChanger: false
+                }}
+            />
+        </ConfigProvider>
+    );
+};
 
 const { TextArea } = Input;
 
@@ -70,6 +154,7 @@ export default function ExpensessViewMonthly() {
             setLoading(false);
         }
     };
+
     const handleSendToCoordinator = async () => {
         try {
             setSendingLoading(true);
@@ -107,7 +192,8 @@ export default function ExpensessViewMonthly() {
             message.error('حدث خطأ في إرسال المصروف');
         } finally {
             setSendingLoading(false);
-        }}
+        }
+    };
 
     const handleCompleteMonthlyExpense = async () => {
         try {
@@ -178,7 +264,6 @@ export default function ExpensessViewMonthly() {
                 </span>
             ),
         },
-        
         {
             title: 'ملاحظات',
             dataIndex: 'notes',
@@ -210,6 +295,7 @@ export default function ExpensessViewMonthly() {
             };
             return statusMap[status] || '';
         };
+
         const statusDisplayNames = {
             New: "جديد",
             SentToProjectCoordinator: "تم الإرسال إلى منسق المشروع",
@@ -221,7 +307,8 @@ export default function ExpensessViewMonthly() {
             RecievedBySupervisor: "تم الاستلام من قبل المشرف",
             SentFromDirector: "تم الموافقة من قبل اسامة",
             Completed: "مكتمل",
-          };
+        };
+
         return (
             <Card className="monthly-info-card">
                 <div className="monthly-info-grid">
@@ -247,34 +334,31 @@ export default function ExpensessViewMonthly() {
                     </div>
                     <div className='left-content-monthly-expenseview'>
                         <div>
-                        <div className="monthly-info-item">
-                            <span className="monthly-info-label">حالة الطلب:</span>
-                            <span
-                                className={`monthly-info-value ${getStatusClass(monthlyExpense.status)}`}
-                            
-                            >
-                                {statusDisplayNames[monthlyExpense.status] || "غير معروف"}
-                            </span>
+                            <div className="monthly-info-item">
+                                <span className="monthly-info-label">حالة الطلب:</span>
+                                <span className={`monthly-info-value ${getStatusClass(monthlyExpense.status)}`}>
+                                    {statusDisplayNames[monthlyExpense.status] || "غير معروف"}
+                                </span>
+                            </div>
+                            <div className="monthly-info-item">
+                                <span className="monthly-info-label">مستوى الإنفاق:</span>
+                                <span className="monthly-info-value">{monthlyExpense.thresholdName}</span>
+                            </div>
+                            <div className="monthly-info-item">
+                                <span className="monthly-info-label">تاريخ الإنشاء:</span>
+                                <span className="monthly-info-value">
+                                    {new Date(monthlyExpense.dateCreated).toLocaleDateString('en')}
+                                </span>
+                            </div>
+                            <div className="monthly-info-item">
+                                <span className="monthly-info-label">ملاحظات:</span>
+                                <span className="monthly-info-value">
+                                    {monthlyExpense.notes || 'لا توجد ملاحظات'}
+                                </span>
+                            </div>
                         </div>
-                        <div className="monthly-info-item">
-                            <span className="monthly-info-label">مستوى الإنفاق:</span>
-                            <span className="monthly-info-value">{monthlyExpense.thresholdName}</span>
-                        </div>
-                        <div className="monthly-info-item">
-                            <span className="monthly-info-label">تاريخ الإنشاء:</span>
-                            <span className="monthly-info-value">
-                                {new Date(monthlyExpense.dateCreated).toLocaleDateString('en')}
-                            </span>
-                        </div>
-                        <div className="monthly-info-item">
-                            <span className="monthly-info-label">ملاحظات:</span>
-                            <span className="monthly-info-value">
-                                {monthlyExpense.notes || 'لا توجد ملاحظات'}
-                            </span>
-                        </div>
-                        </div>
-                        <div style={{textAlign:"center"}} >
-                            <h2> أنواع المصروفات</h2>
+                        <div style={{textAlign:"center"}}>
+                            <h2>أنواع المصروفات</h2>
                             <PieChart width={300} height={300}>
                                 <Pie
                                     data={expenseTypeData}
@@ -291,12 +375,9 @@ export default function ExpensessViewMonthly() {
                                 </Pie>
                                 <Tooltip />
                             </PieChart>
-                            
                         </div>
                     </div>
-                    
                 </div>
-                
             </Card>
         );
     };
@@ -316,7 +397,7 @@ export default function ExpensessViewMonthly() {
             );
         }
         
-        if (monthlyExpense?.status === 'RecievedBySupervisor') {
+        if (monthlyExpense?.status === 'RecievedBySupervisor' || monthlyExpense?.status === 'ReturnedToSupervisor') {
             return (
                 <Button 
                     type="primary"
@@ -329,13 +410,13 @@ export default function ExpensessViewMonthly() {
             );
         }
         
-        return null; // Do not render the button for other statuses
+        return null;
     };
 
     return (
         <div className={`monthly-expense-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`} dir="rtl">
             <div style={{margin:"10px"}}>
-            {renderActionButton()}
+                {renderActionButton()}
             </div>
             <Card className="monthly-expense-card">
                 <div className="monthly-expense-header">
@@ -359,27 +440,36 @@ export default function ExpensessViewMonthly() {
                         }}
                     />
                 </ConfigProvider>
+
+                {/* Actions Table Section */}
+                {monthlyExpenseId && (
+                    <div style={{ marginTop: '20px' }}>
+                        <h2 className="monthly-expense-title">سجل الإجراءات</h2>
+                        <ActionsTable monthlyExpensesId={monthlyExpenseId} />
+                    </div>
+                )}
             </Card>
+
             <ConfigProvider direction="rtl">
-            <Modal
-                title="إرسال المصروف الى منسق المشروع"
-                open={isModalVisible}
-                onOk={handleSendToCoordinator}
-                onCancel={() => setIsModalVisible(false)}
-                confirmLoading={sendingLoading}
-                okText="إرسال"
-                cancelText="إلغاء"
-                dir="rtl"
-            >
-                <div style={{ marginTop: '16px' }}>
-                    <TextArea
-                        rows={4}
-                        placeholder="أدخل الملاحظات..."
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                    />
-                </div>
-            </Modal>
+                <Modal
+                    title="إرسال المصروف الى منسق المشروع"
+                    open={isModalVisible}
+                    onOk={handleSendToCoordinator}
+                    onCancel={() => setIsModalVisible(false)}
+                    confirmLoading={sendingLoading}
+                    okText="إرسال"
+                    cancelText="إلغاء"
+                    dir="rtl"
+                >
+                    <div style={{ marginTop: '16px' }}>
+                        <TextArea
+                            rows={4}
+                            placeholder="أدخل الملاحظات..."
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </div>
+                </Modal>
             </ConfigProvider>
         </div>
     );
