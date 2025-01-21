@@ -1,4 +1,4 @@
-import { useState, useEffect , useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   Button,
@@ -16,6 +16,7 @@ import "./superVisorAttendeceHistory.css";
 import Url from "./../../../store/url.js";
 
 export default function SupervisorAttendanceHistory() {
+  // State declarations
   const [attendanceData, setAttendanceData] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -27,38 +28,27 @@ export default function SupervisorAttendanceHistory() {
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
   const [totalRecords, setTotalRecords] = useState(0);
-  console.log(attendanceData);
-  const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } =
-    useAuthStore();
+  const pageSize = 10;
 
+  // Store hooks
+  const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } = useAuthStore();
   const { hasAnyPermission } = usePermissionsStore();
   const hasCreatePermission = hasAnyPermission("create");
   const navigate = useNavigate();
+  
+  // User role checks
   const isSupervisor = roles.includes("Supervisor");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
 
-  const fetchGovernorates = useCallback(async () => {
-    try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-      setGovernorates(response.data);
+  const formatDateForAPI = (date) => {
+    if (!date) return null;
+    const formattedDate = new Date(date);
+    formattedDate.setUTCHours(14, 0, 0, 0);
+    return formattedDate.toISOString();
+  };
 
-      if (isSupervisor) {
-        setSelectedGovernorate(profile.governorateId);
-        await fetchOffices(profile.governorateId);
-      }
-    } catch (error) {
-      message.error("حدث خطأ أثناء جلب بيانات المحافظات");
-    }
-  }, [accessToken, isSupervisor, profile]);
-  
   const fetchOffices = async (governorateId) => {
     if (!governorateId) {
       setOffices([]);
@@ -74,10 +64,9 @@ export default function SupervisorAttendanceHistory() {
         }
       );
 
-      if (response.data && response.data[0] && response.data[0].offices) {
+      if (response.data?.[0]?.offices) {
         setOffices(response.data[0].offices);
-
-        if (isSupervisor) {
+        if (isSupervisor && profile?.officeId) {
           setSelectedOffice(profile.officeId);
         }
       }
@@ -86,10 +75,30 @@ export default function SupervisorAttendanceHistory() {
     }
   };
 
+  const fetchGovernorates = async () => {
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      setGovernorates(response.data);
+
+      if (isSupervisor && profile?.governorateId) {
+        setSelectedGovernorate(profile.governorateId);
+        await fetchOffices(profile.governorateId);
+      }
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المحافظات");
+    }
+  };
+
   const fetchAttendanceData = async (pageNumber = 1) => {
+    if (isLoading) return;
+
     try {
       setIsLoading(true);
-
       const searchBody = {
         workingHours,
         officeId: isSupervisor ? userOfficeId : selectedOffice,
@@ -112,7 +121,8 @@ export default function SupervisorAttendanceHistory() {
           },
         }
       );
-      console.log(response);
+
+      // Handle pagination
       const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
@@ -121,6 +131,7 @@ export default function SupervisorAttendanceHistory() {
         setTotalRecords(response.data.length);
       }
 
+      // Format response data
       const formattedData = response.data.map((item) => ({
         id: item.id,
         date: new Date(item.date).toLocaleDateString("en-CA"),
@@ -129,26 +140,15 @@ export default function SupervisorAttendanceHistory() {
           hour: "2-digit",
           minute: "2-digit",
         }),
-
         totalStaff:
           item.receivingStaff +
           item.accountStaff +
           item.printingStaff +
           item.qualityStaff +
           item.deliveryStaff,
-        shift:
-          item.workingHours === 1
-            ? "صباحي"
-            : item.workingHours === 2
-            ? "مسائي"
-            : item.workingHours === 3
-            ? "الكل"
-            : "غير معروف",
-        governorateName:
-          governorates.find((gov) => gov.id === item.governorateId)?.name ||
-          "غير معروف",
-          officeName: item.officeName || "غير معروف",
-
+        shift: item.workingHours === 1 ? "صباحي" : item.workingHours === 2 ? "مسائي" : "الكل",
+        governorateName: governorates.find((gov) => gov.id === item.governorateId)?.name || "غير معروف",
+        officeName: item.officeName || "غير معروف",
       }));
 
       setAttendanceData(formattedData);
@@ -164,12 +164,11 @@ export default function SupervisorAttendanceHistory() {
     }
   };
 
-  useEffect(() => {
-    fetchAttendanceData(currentPage);
-  }, [currentPage]);
-  useEffect(() => {
-      fetchGovernorates();
-    }, []);
+  // Event handlers
+  const handleGovernorateChange = (value) => {
+    setSelectedGovernorate(value);
+    fetchOffices(value);
+  };
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -188,27 +187,27 @@ export default function SupervisorAttendanceHistory() {
     fetchAttendanceData(1);
     message.success("تمت إعادة التعيين بنجاح");
   };
-  const handleGovernorateChange = (value) => {
-    setSelectedGovernorate(value);
-    fetchOffices(value);
-  };
+
   const handlePageChange = (page) => {
     setCurrentPage(page);
     fetchAttendanceData(page);
-  };
-
-  const formatDateForAPI = (date) => {
-    if (!date) return null;
-    const formattedDate = new Date(date);
-    formattedDate.setUTCHours(14, 0, 0, 0);
-    return formattedDate.toISOString();
   };
 
   const handleView = (record) => {
     navigate("/attendance/view", { state: { id: record.id } });
   };
 
-  const getTableColumns = () => [
+  // Single useEffect for initialization
+  useEffect(() => {
+    const initData = async () => {
+      await fetchGovernorates();
+      await fetchAttendanceData(1);
+    };
+
+    initData();
+  }, []); // Empty dependency array - only run once on mount
+
+  const columns = [
     {
       title: "التاريخ",
       dataIndex: "date",
@@ -253,9 +252,7 @@ export default function SupervisorAttendanceHistory() {
   return (
     <div
       className={`supervisor-attendance-history-main-container ${
-        isSidebarCollapsed
-          ? "sidebar-collapsed"
-          : "supervisor-attendance-history-main-container"
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
       <div className="supervisor-attendance-history-title">
@@ -360,7 +357,7 @@ export default function SupervisorAttendanceHistory() {
         <ConfigProvider direction="rtl">
           <Table
             dataSource={attendanceData}
-            columns={getTableColumns()}
+            columns={columns}
             rowKey={(record) => record.id}
             bordered
             pagination={{
