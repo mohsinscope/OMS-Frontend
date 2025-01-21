@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Table, Card, ConfigProvider, message, Button, Modal, Input, Space } from 'antd';
+import { Table, Card, ConfigProvider, message, Button, Modal, Input, Space, Form } from 'antd';
 import { Link } from 'react-router-dom';
 import { SendOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import axiosInstance from '../../../intercepters/axiosInstance';
 import useAuthStore from '../../../store/store';
 import './styles/ExpensessViewMonthly.css';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
+
+const { TextArea } = Input;
+
 // Actions Table Component
 const ActionsTable = ({ monthlyExpensesId }) => {
     const [actions, setActions] = useState([]);
@@ -16,7 +19,7 @@ const ActionsTable = ({ monthlyExpensesId }) => {
         try {
             setLoading(true);
             const response = await axiosInstance.get(`/api/Actions/${monthlyExpensesId}`);
-            const formattedActions = response.data.map((action, index) => {
+            const formattedActions = response.data.map((action) => {
                 const date = new Date(action.dateCreated);
                 return {
                     key: action.id,
@@ -70,9 +73,6 @@ const ActionsTable = ({ monthlyExpensesId }) => {
             key: 'time',
             align: 'center',
         }
-      
-       
-        
     ];
 
     return (
@@ -92,8 +92,6 @@ const ActionsTable = ({ monthlyExpensesId }) => {
     );
 };
 
-const { TextArea } = Input;
-
 export default function ExpensessViewMonthly() {
     const location = useLocation();
     const navigate = useNavigate();
@@ -104,8 +102,11 @@ export default function ExpensessViewMonthly() {
     const [monthlyExpense, setMonthlyExpense] = useState(null);
     const [dailyExpenses, setDailyExpenses] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isCompletionModalVisible, setIsCompletionModalVisible] = useState(false);
     const [notes, setNotes] = useState('');
     const [completingLoading, setCompletingLoading] = useState(false);
+    const [form] = Form.useForm();
+    const [completionForm] = Form.useForm();
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF6384', '#36A2EB'];
     const [expenseTypeData, setExpenseTypeData] = useState([]);
 
@@ -134,6 +135,8 @@ export default function ExpensessViewMonthly() {
                 expenseTypeName: expense.expenseTypeName
             }));
             setDailyExpenses(formattedExpenses);
+            
+            // Process data for pie chart
             const typeDistribution = formattedExpenses.reduce((acc, curr) => {
                 const type = curr.expenseTypeName;
                 if (!acc[type]) acc[type] = 0;
@@ -157,15 +160,18 @@ export default function ExpensessViewMonthly() {
 
     const handleSendToCoordinator = async () => {
         try {
+            // Validate form before proceeding
+            await form.validateFields();
+            
             setSendingLoading(true);
 
             let actionType = "Approval";
-            let actionNotes = notes || "Approved for processing.";
+            let actionNotes = notes;
 
             // Determine action type and notes based on current status
             if (monthlyExpense?.status === 'ReturnedToSupervisor') {
-                actionType = "ResubmitAfterReturn";
-                actionNotes = `تم الارسال الى منسق المشروع بعد التعديل من قبل ${profile?.name || ''} ${profile?.position || ''}${notes ? ` - ${notes}` : ''}`;
+                actionType = `تم التعديل من قبل المشرف ${profile?.name || ''} `;
+                actionNotes = notes;
             }
 
             // First update the status
@@ -184,12 +190,17 @@ export default function ExpensessViewMonthly() {
 
             message.success('تم إرسال المصروف بنجاح إلى منسق المشروع');
             setIsModalVisible(false);
-            // Navigate back
+            form.resetFields();
+            setNotes('');
             navigate(-1);
             
         } catch (error) {
-            console.error('Error sending to coordinator:', error);
-            message.error('حدث خطأ في إرسال المصروف');
+            if (error.errorFields) {
+                message.error('الرجاء إدخال جميع المعلومات المطلوبة');
+            } else {
+                console.error('Error sending to coordinator:', error);
+                message.error('حدث خطأ في إرسال المصروف');
+            }
         } finally {
             setSendingLoading(false);
         }
@@ -197,22 +208,40 @@ export default function ExpensessViewMonthly() {
 
     const handleCompleteMonthlyExpense = async () => {
         try {
+            await completionForm.validateFields();
+            
             setCompletingLoading(true);
             
             // Update status to Completed (9)
             await axiosInstance.post(`/api/Expense/${monthlyExpenseId}/status`, {
                 monthlyExpensesId: monthlyExpenseId,
                 newStatus: 9,
-                notes: "Monthly expenses completed by Supervisor"
+            });
+
+            // Create action with supervisor completion note
+            const actionType = `تم اتمام مصروف الشهر من قبل المشرف ${profile?.name || ''}`;
+            const actionNotes = notes;
+
+            await axiosInstance.post('/api/Actions', {
+                actionType: actionType,
+                notes: actionNotes,
+                profileId: profile?.profileId,
+                monthlyExpensesId: monthlyExpenseId
             });
 
             message.success('تم اتمام عملية مصاريف الشهر بنجاح');
-            // Navigate back
+            setIsCompletionModalVisible(false);
+            completionForm.resetFields();
+            setNotes('');
             navigate(-1);
             
         } catch (error) {
-            console.error('Error completing monthly expense:', error);
-            message.error('حدث خطأ في اتمام عملية مصاريف الشهر');
+            if (error.errorFields) {
+                message.error('الرجاء إدخال جميع المعلومات المطلوبة');
+            } else {
+                console.error('Error completing monthly expense:', error);
+                message.error('حدث خطأ في اتمام عملية مصاريف الشهر');
+            }
         } finally {
             setCompletingLoading(false);
         }
@@ -388,7 +417,7 @@ export default function ExpensessViewMonthly() {
                 <Button 
                     type="primary"
                     icon={<CheckCircleOutlined />}
-                    onClick={handleCompleteMonthlyExpense}
+                    onClick={() => setIsCompletionModalVisible(true)}
                     loading={completingLoading}
                     className="send-button"
                 >
@@ -397,7 +426,7 @@ export default function ExpensessViewMonthly() {
             );
         }
         
-        if (monthlyExpense?.status === 'RecievedBySupervisor' || monthlyExpense?.status === 'ReturnedToSupervisor') {
+        if (monthlyExpense?.status === 'ReturnedToSupervisor') {
             return (
                 <Button 
                     type="primary"
@@ -450,27 +479,83 @@ export default function ExpensessViewMonthly() {
                 )}
             </Card>
 
-            <ConfigProvider direction="rtl">
-                <Modal
-                    title="إرسال المصروف الى منسق المشروع"
-                    open={isModalVisible}
-                    onOk={handleSendToCoordinator}
-                    onCancel={() => setIsModalVisible(false)}
-                    confirmLoading={sendingLoading}
-                    okText="إرسال"
-                    cancelText="إلغاء"
-                    dir="rtl"
+            {/* Send to Coordinator Modal */}
+            <Modal
+                title="إرسال المصروف الى منسق المشروع"
+                open={isModalVisible}
+                onOk={() => form.submit()}
+                onCancel={() => {
+                    setIsModalVisible(false);
+                    form.resetFields();
+                    setNotes('');
+                }}
+                confirmLoading={sendingLoading}
+                okText="إرسال"
+                cancelText="إلغاء"
+                dir="rtl"
+            >
+                <Form
+                    form={form}
+                    onFinish={handleSendToCoordinator}
+                    layout="vertical"
                 >
-                    <div style={{ marginTop: '16px' }}>
+                    <Form.Item
+                        name="notes"
+                        label="الملاحظات"
+                        rules={[
+                            {
+                                required: true,
+                                message: 'الرجاء إدخال الملاحظات',
+                            }
+                        ]}
+                    >
                         <TextArea
                             rows={4}
                             placeholder="أدخل الملاحظات..."
-                            value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                         />
-                    </div>
-                </Modal>
-            </ConfigProvider>
+                    </Form.Item>
+                </Form>
+            </Modal>
+
+            {/* Completion Modal */}
+            <Modal
+                title="اتمام عملية مصاريف الشهر"
+                open={isCompletionModalVisible}
+                onOk={() => completionForm.submit()}
+                onCancel={() => {
+                    setIsCompletionModalVisible(false);
+                    completionForm.resetFields();
+                    setNotes('');
+                }}
+                confirmLoading={completingLoading}
+                okText="تأكيد"
+                cancelText="إلغاء"
+                dir="rtl"
+            >
+                <Form
+                    form={completionForm}
+                    onFinish={handleCompleteMonthlyExpense}
+                    layout="vertical"
+                >
+                    <Form.Item
+                        name="notes"
+                        label="الملاحظات"
+                        rules={[
+                            {
+                                required: true,
+                                message: 'الرجاء إدخال الملاحظات',
+                            }
+                        ]}
+                    >
+                        <TextArea
+                            rows={4}
+                            placeholder="أدخل الملاحظات..."
+                            onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 }
