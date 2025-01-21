@@ -1,10 +1,13 @@
 import React from 'react';
 import { Building2, Clock, DollarSign, Bell } from 'lucide-react';
 import './landingPage.css';
+import useAuthStore from './../store/store.js';
 
 const LandingPage = () => {
+  
+  const { isSidebarCollapsed} = useAuthStore();
   return (
-    <div className="landing-container" dir="rtl">
+    <div className={`landing-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`} dir="rtl">
       <div className="content-wrapper">
         {/* Header */}
         <div className="header">
