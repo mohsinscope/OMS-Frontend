@@ -80,11 +80,11 @@ export default function ExpensesView() {
   
     if (position?.includes("coordinator") && currentStatus === "SentFromDirector") {
       return Status.RecievedBySupervisor;
-    } else if (position?.includes("coordinator") && currentStatus === "SentToProjectCoordinator"||"ReturnedToProjectCoordinator") {
+    } else if (position?.includes("coordinator") ) {
       return Status.SentToManager;
-    } else if (position?.includes("manager")&& currentStatus === "SentToManager"||"ReturnedToManager") {
+    } else if (position?.includes("Manager")) {
       return Status.SentToDirector;
-    } else if (position?.includes("director")&& currentStatus === "SentToDirector") {
+    } else if (position?.includes("director")) {
       return Status.SentFromDirector;
     } else if (currentStatus === Status.RecievedBySupervisor) {
       return Status.Completed;
@@ -101,7 +101,7 @@ export default function ExpensesView() {
 
     if (position?.includes("coordinator")) {
       return Status.ReturnedToSupervisor;
-    } else if (position?.includes("manager")) {
+    } else if (position?.includes("Manager")) {
       return Status.ReturnedToProjectCoordinator;
     } else if (position?.includes("director")) {
       return Status.ReturnedToManager;
@@ -135,26 +135,28 @@ export default function ExpensesView() {
         setIsSubmitting(true);
   
         const currentStatus = expense?.generalInfo?.["الحالة"];
-        const newStatus =
-          actionType === "Approval"
-            ? getNextStatus(currentStatus, profile?.position)
-            : getRejectionStatus(currentStatus, profile?.position);
-  
-        if (newStatus === currentStatus) {
-          message.error("لا يمكن تغيير الحالة في هذه المرحلة");
-          return;
-        }
+        console.log('Current Status before update:', currentStatus);
+        
+        const newStatus = actionType === "Approval"
+          ? getNextStatus(currentStatus, profile?.position)
+          : getRejectionStatus(currentStatus, profile?.position);
+        
+        console.log('New Status to be sent:', newStatus);
+        console.log('Profile Position:', profile?.position);
+        console.log('Action Type:', actionType);
   
         // Dynamic actionType
         const dynamicActionType = actionType === "Approval" 
-        ? `تمت الموافقة من ${profile?.position || ""} ${profile?.fullName || ""}`
-        : `تم الارجاع من ${profile?.position || ""} ${profile?.fullName || ""}`;    
+          ? `تمت الموافقة من ${profile?.position || ""} ${profile?.fullName || ""}`
+          : `تم الارجاع من ${profile?.position || ""} ${profile?.fullName || ""}`;    
+  
+        console.log('Making Actions API call...');
         // Call the Actions endpoint
-        await axiosInstance.post(
+        const actionResponse = await axiosInstance.post(
           `${Url}/api/Actions`,
           {
-            actionType: dynamicActionType, // Dynamic value
-            notes: actionNote, // User-provided notes
+            actionType: dynamicActionType,
+            notes: actionNote,
             profileId: profile.profileId,
             monthlyExpensesId: expenseId,
           },
@@ -162,9 +164,11 @@ export default function ExpensesView() {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
+        console.log('Actions API Response:', actionResponse);
   
+        console.log('Making Status Update API call...');
         // Update the expense status
-        await axiosInstance.post(
+        const statusResponse = await axiosInstance.post(
           `${Url}/api/Expense/${expenseId}/status`,
           {
             monthlyExpensesId: expenseId,
@@ -174,6 +178,7 @@ export default function ExpensesView() {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
+        console.log('Status Update API Response:', statusResponse);
   
         message.success(
           `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`
@@ -182,6 +187,7 @@ export default function ExpensesView() {
         navigate(-1);
       } catch (error) {
         console.error(`Error processing ${actionType}:`, error);
+        console.error('Error response:', error.response?.data);  // Log detailed error response
         message.error(
           `حدث خطأ أثناء ${actionType === "Approval" ? "الموافقة" : "الإرجاع"}`
         );
@@ -272,6 +278,8 @@ export default function ExpensesView() {
   };
 
   useEffect(() => {
+    let isMounted = true;
+  
     const fetchAllExpenseData = async () => {
       if (!expenseId) {
         message.error("لم يتم العثور على معرف المصروف");
@@ -282,39 +290,48 @@ export default function ExpensesView() {
       try {
         setIsLoading(true);
   
-        // Fetch expense and daily expenses in parallel
+        // Create an array of all required API calls
+        const expensePromise = axiosInstance.get(`${Url}/api/Expense/${expenseId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+  
+        const dailyExpensesPromise = axiosInstance.get(`${Url}/api/Expense/${expenseId}/daily-expenses`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+  
+        // Wait for both initial requests to complete
         const [expenseResponse, dailyExpensesResponse] = await Promise.all([
-          axiosInstance.get(`${Url}/api/Expense/${expenseId}`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
-          axiosInstance.get(`${Url}/api/Expense/${expenseId}/daily-expenses`, {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }),
+          expensePromise,
+          dailyExpensesPromise
         ]);
   
-        // Extract officeId to fetch office budget
+        // Only proceed if component is still mounted
+        if (!isMounted) return;
+  
+        // Extract officeId and fetch office budget
         const officeId = expenseResponse.data.officeId;
         const officeResponse = await axiosInstance.get(`${Url}/api/office/${officeId}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
   
+        if (!isMounted) return;
+  
         const officeBudget = officeResponse.data.budget;
   
-        // Process regular items
-        const regularItems =
-          expenseResponse.data.expenseItems?.map((item, index) => ({
-            تسلسل: index + 1,
-            التاريخ: new Date(item.date).toLocaleDateString(),
-            "نوع المصروف": item.description,
-            الكمية: item.quantity,
-            السعر: item.unitPrice,
-            المجموع: item.totalAmount,
-            ملاحظات: item.notes,
-            image: item.receiptImage,
-            type: "regular",
-          })) || [];
+        // Process regular expense items
+        const regularItems = expenseResponse.data.expenseItems?.map((item, index) => ({
+          تسلسل: index + 1,
+          التاريخ: new Date(item.date).toLocaleDateString(),
+          "نوع المصروف": item.description,
+          الكمية: item.quantity,
+          السعر: item.unitPrice,
+          المجموع: item.totalAmount,
+          ملاحظات: item.notes,
+          image: item.receiptImage,
+          type: "regular",
+        })) || [];
   
-        // Process daily items
+        // Process daily expense items
         const dailyItems = dailyExpensesResponse.data.map((item, index) => ({
           تسلسل: regularItems.length + index + 1,
           التاريخ: new Date(item.expenseDate).toLocaleDateString(),
@@ -327,7 +344,7 @@ export default function ExpensesView() {
           type: "daily",
         }));
   
-        // Combine and sort all items
+        // Combine and sort all items by date
         const allItems = [...regularItems, ...dailyItems].sort(
           (a, b) => new Date(b.التاريخ) - new Date(a.التاريخ)
         );
@@ -335,6 +352,9 @@ export default function ExpensesView() {
         // Calculate remaining amount
         const remainingAmount = officeBudget - expenseResponse.data.totalAmount;
   
+        if (!isMounted) return;
+  
+        // Set the final expense state
         setExpense({
           generalInfo: {
             "الرقم التسلسلي": expenseResponse.data.id,
@@ -350,15 +370,25 @@ export default function ExpensesView() {
           items: allItems,
         });
       } catch (error) {
-        console.error("Error fetching expense data:", error);
-        message.error("حدث خطأ أثناء جلب البيانات");
-        navigate("/expenses-history");
+        if (isMounted) {
+          console.error("Error fetching expense data:", error);
+          message.error("حدث خطأ أثناء جلب البيانات");
+          navigate("/expenses-history");
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
   
+    // Call the fetch function
     fetchAllExpenseData();
+  
+    // Cleanup function to prevent memory leaks and state updates on unmounted component
+    return () => {
+      isMounted = false;
+    };
   }, [expenseId, accessToken, navigate]);
 
   const handleExportToExcel = async () => {

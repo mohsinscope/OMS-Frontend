@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Table, Card, ConfigProvider, message, Button, Modal, Input, Space } from 'antd';
+import { Table, Card, ConfigProvider, message, Button, Modal, Input, Space, Form } from 'antd';
 import { Link } from 'react-router-dom';
 import { SendOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import axiosInstance from '../../../intercepters/axiosInstance';
@@ -9,6 +9,88 @@ import './styles/ExpensessViewMonthly.css';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
 
 const { TextArea } = Input;
+
+// Actions Table Component
+const ActionsTable = ({ monthlyExpensesId }) => {
+    const [actions, setActions] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const fetchActions = async () => {
+        try {
+            setLoading(true);
+            const response = await axiosInstance.get(`/api/Actions/${monthlyExpensesId}`);
+            const formattedActions = response.data.map((action) => {
+                const date = new Date(action.dateCreated);
+                return {
+                    key: action.id,
+                    actionType: action.actionType,
+                    notes: action.notes,
+                    date: date.toISOString().split('T')[0],
+                    time: date.toLocaleTimeString('ar-EG', { 
+                        hour12: true,
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    })
+                };
+            });
+            setActions(formattedActions);
+        } catch (error) {
+            console.error('Error fetching actions:', error);
+            message.error('حدث خطأ في جلب سجل الإجراءات');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        if (monthlyExpensesId) {
+            fetchActions();
+        }
+    }, [monthlyExpensesId]);
+
+    const actionColumns = [
+        {
+            title: 'نوع الإجراء',
+            dataIndex: 'actionType',
+            key: 'actionType',
+            align: 'right',
+        },
+        {
+            title: 'الملاحظات',
+            dataIndex: 'notes',
+            key: 'notes',
+            align: 'right',
+        },
+        {
+            title: 'التاريخ',
+            dataIndex: 'date',
+            key: 'date',
+            align: 'center',
+        },
+        {
+            title: 'الوقت',
+            dataIndex: 'time',
+            key: 'time',
+            align: 'center',
+        }
+    ];
+
+    return (
+        <ConfigProvider direction="rtl">
+            <Table
+                className="actions-table"
+                columns={actionColumns}
+                dataSource={actions}
+                loading={loading}
+                pagination={{
+                    pageSize: 5,
+                    position: ['bottomCenter'],
+                    showSizeChanger: false
+                }}
+            />
+        </ConfigProvider>
+    );
+};
 
 export default function ExpensessViewMonthly() {
     const location = useLocation();
@@ -20,8 +102,11 @@ export default function ExpensessViewMonthly() {
     const [monthlyExpense, setMonthlyExpense] = useState(null);
     const [dailyExpenses, setDailyExpenses] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isCompletionModalVisible, setIsCompletionModalVisible] = useState(false);
     const [notes, setNotes] = useState('');
     const [completingLoading, setCompletingLoading] = useState(false);
+    const [form] = Form.useForm();
+    const [completionForm] = Form.useForm();
     const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF6384', '#36A2EB'];
     const [expenseTypeData, setExpenseTypeData] = useState([]);
 
@@ -50,6 +135,8 @@ export default function ExpensessViewMonthly() {
                 expenseTypeName: expense.expenseTypeName
             }));
             setDailyExpenses(formattedExpenses);
+            
+            // Process data for pie chart
             const typeDistribution = formattedExpenses.reduce((acc, curr) => {
                 const type = curr.expenseTypeName;
                 if (!acc[type]) acc[type] = 0;
@@ -70,17 +157,21 @@ export default function ExpensessViewMonthly() {
             setLoading(false);
         }
     };
+
     const handleSendToCoordinator = async () => {
         try {
+            // Validate form before proceeding
+            await form.validateFields();
+            
             setSendingLoading(true);
 
             let actionType = "Approval";
-            let actionNotes = notes || "Approved for processing.";
+            let actionNotes = notes;
 
             // Determine action type and notes based on current status
             if (monthlyExpense?.status === 'ReturnedToSupervisor') {
-                actionType = "ResubmitAfterReturn";
-                actionNotes = `تم الارسال الى منسق المشروع بعد التعديل من قبل ${profile?.name || ''} ${profile?.position || ''}${notes ? ` - ${notes}` : ''}`;
+                actionType = `تم التعديل من قبل المشرف ${profile?.name || ''} `;
+                actionNotes = notes;
             }
 
             // First update the status
@@ -99,34 +190,58 @@ export default function ExpensessViewMonthly() {
 
             message.success('تم إرسال المصروف بنجاح إلى منسق المشروع');
             setIsModalVisible(false);
-            // Navigate back
+            form.resetFields();
+            setNotes('');
             navigate(-1);
             
         } catch (error) {
-            console.error('Error sending to coordinator:', error);
-            message.error('حدث خطأ في إرسال المصروف');
+            if (error.errorFields) {
+                message.error('الرجاء إدخال جميع المعلومات المطلوبة');
+            } else {
+                console.error('Error sending to coordinator:', error);
+                message.error('حدث خطأ في إرسال المصروف');
+            }
         } finally {
             setSendingLoading(false);
-        }}
+        }
+    };
 
     const handleCompleteMonthlyExpense = async () => {
         try {
+            await completionForm.validateFields();
+            
             setCompletingLoading(true);
             
             // Update status to Completed (9)
             await axiosInstance.post(`/api/Expense/${monthlyExpenseId}/status`, {
                 monthlyExpensesId: monthlyExpenseId,
                 newStatus: 9,
-                notes: "Monthly expenses completed by Supervisor"
+            });
+
+            // Create action with supervisor completion note
+            const actionType = `تم اتمام مصروف الشهر من قبل المشرف ${profile?.name || ''}`;
+            const actionNotes = notes;
+
+            await axiosInstance.post('/api/Actions', {
+                actionType: actionType,
+                notes: actionNotes,
+                profileId: profile?.profileId,
+                monthlyExpensesId: monthlyExpenseId
             });
 
             message.success('تم اتمام عملية مصاريف الشهر بنجاح');
-            // Navigate back
+            setIsCompletionModalVisible(false);
+            completionForm.resetFields();
+            setNotes('');
             navigate(-1);
             
         } catch (error) {
-            console.error('Error completing monthly expense:', error);
-            message.error('حدث خطأ في اتمام عملية مصاريف الشهر');
+            if (error.errorFields) {
+                message.error('الرجاء إدخال جميع المعلومات المطلوبة');
+            } else {
+                console.error('Error completing monthly expense:', error);
+                message.error('حدث خطأ في اتمام عملية مصاريف الشهر');
+            }
         } finally {
             setCompletingLoading(false);
         }
@@ -178,7 +293,6 @@ export default function ExpensessViewMonthly() {
                 </span>
             ),
         },
-        
         {
             title: 'ملاحظات',
             dataIndex: 'notes',
@@ -210,6 +324,7 @@ export default function ExpensessViewMonthly() {
             };
             return statusMap[status] || '';
         };
+
         const statusDisplayNames = {
             New: "جديد",
             SentToProjectCoordinator: "تم الإرسال إلى منسق المشروع",
@@ -221,7 +336,8 @@ export default function ExpensessViewMonthly() {
             RecievedBySupervisor: "تم الاستلام من قبل المشرف",
             SentFromDirector: "تم الموافقة من قبل اسامة",
             Completed: "مكتمل",
-          };
+        };
+
         return (
             <Card className="monthly-info-card">
                 <div className="monthly-info-grid">
@@ -247,34 +363,31 @@ export default function ExpensessViewMonthly() {
                     </div>
                     <div className='left-content-monthly-expenseview'>
                         <div>
-                        <div className="monthly-info-item">
-                            <span className="monthly-info-label">حالة الطلب:</span>
-                            <span
-                                className={`monthly-info-value ${getStatusClass(monthlyExpense.status)}`}
-                            
-                            >
-                                {statusDisplayNames[monthlyExpense.status] || "غير معروف"}
-                            </span>
+                            <div className="monthly-info-item">
+                                <span className="monthly-info-label">حالة الطلب:</span>
+                                <span className={`monthly-info-value ${getStatusClass(monthlyExpense.status)}`}>
+                                    {statusDisplayNames[monthlyExpense.status] || "غير معروف"}
+                                </span>
+                            </div>
+                            <div className="monthly-info-item">
+                                <span className="monthly-info-label">مستوى الإنفاق:</span>
+                                <span className="monthly-info-value">{monthlyExpense.thresholdName}</span>
+                            </div>
+                            <div className="monthly-info-item">
+                                <span className="monthly-info-label">تاريخ الإنشاء:</span>
+                                <span className="monthly-info-value">
+                                    {new Date(monthlyExpense.dateCreated).toLocaleDateString('en')}
+                                </span>
+                            </div>
+                            <div className="monthly-info-item">
+                                <span className="monthly-info-label">ملاحظات:</span>
+                                <span className="monthly-info-value">
+                                    {monthlyExpense.notes || 'لا توجد ملاحظات'}
+                                </span>
+                            </div>
                         </div>
-                        <div className="monthly-info-item">
-                            <span className="monthly-info-label">مستوى الإنفاق:</span>
-                            <span className="monthly-info-value">{monthlyExpense.thresholdName}</span>
-                        </div>
-                        <div className="monthly-info-item">
-                            <span className="monthly-info-label">تاريخ الإنشاء:</span>
-                            <span className="monthly-info-value">
-                                {new Date(monthlyExpense.dateCreated).toLocaleDateString('en')}
-                            </span>
-                        </div>
-                        <div className="monthly-info-item">
-                            <span className="monthly-info-label">ملاحظات:</span>
-                            <span className="monthly-info-value">
-                                {monthlyExpense.notes || 'لا توجد ملاحظات'}
-                            </span>
-                        </div>
-                        </div>
-                        <div style={{textAlign:"center"}} >
-                            <h2> أنواع المصروفات</h2>
+                        <div style={{textAlign:"center"}}>
+                            <h2>أنواع المصروفات</h2>
                             <PieChart width={300} height={300}>
                                 <Pie
                                     data={expenseTypeData}
@@ -291,12 +404,9 @@ export default function ExpensessViewMonthly() {
                                 </Pie>
                                 <Tooltip />
                             </PieChart>
-                            
                         </div>
                     </div>
-                    
                 </div>
-                
             </Card>
         );
     };
@@ -307,7 +417,7 @@ export default function ExpensessViewMonthly() {
                 <Button 
                     type="primary"
                     icon={<CheckCircleOutlined />}
-                    onClick={handleCompleteMonthlyExpense}
+                    onClick={() => setIsCompletionModalVisible(true)}
                     loading={completingLoading}
                     className="send-button"
                 >
@@ -316,7 +426,7 @@ export default function ExpensessViewMonthly() {
             );
         }
         
-        if (monthlyExpense?.status === 'RecievedBySupervisor') {
+        if (monthlyExpense?.status === 'ReturnedToSupervisor') {
             return (
                 <Button 
                     type="primary"
@@ -329,13 +439,13 @@ export default function ExpensessViewMonthly() {
             );
         }
         
-        return null; // Do not render the button for other statuses
+        return null;
     };
 
     return (
         <div className={`monthly-expense-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`} dir="rtl">
             <div style={{margin:"10px"}}>
-            {renderActionButton()}
+                {renderActionButton()}
             </div>
             <Card className="monthly-expense-card">
                 <div className="monthly-expense-header">
@@ -359,28 +469,93 @@ export default function ExpensessViewMonthly() {
                         }}
                     />
                 </ConfigProvider>
+
+                {/* Actions Table Section */}
+                {monthlyExpenseId && (
+                    <div style={{ marginTop: '20px' }}>
+                        <h2 className="monthly-expense-title">سجل الإجراءات</h2>
+                        <ActionsTable monthlyExpensesId={monthlyExpenseId} />
+                    </div>
+                )}
             </Card>
-            <ConfigProvider direction="rtl">
+
+            {/* Send to Coordinator Modal */}
             <Modal
                 title="إرسال المصروف الى منسق المشروع"
                 open={isModalVisible}
-                onOk={handleSendToCoordinator}
-                onCancel={() => setIsModalVisible(false)}
+                onOk={() => form.submit()}
+                onCancel={() => {
+                    setIsModalVisible(false);
+                    form.resetFields();
+                    setNotes('');
+                }}
                 confirmLoading={sendingLoading}
                 okText="إرسال"
                 cancelText="إلغاء"
                 dir="rtl"
             >
-                <div style={{ marginTop: '16px' }}>
-                    <TextArea
-                        rows={4}
-                        placeholder="أدخل الملاحظات..."
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                    />
-                </div>
+                <Form
+                    form={form}
+                    onFinish={handleSendToCoordinator}
+                    layout="vertical"
+                >
+                    <Form.Item
+                        name="notes"
+                        label="الملاحظات"
+                        rules={[
+                            {
+                                required: true,
+                                message: 'الرجاء إدخال الملاحظات',
+                            }
+                        ]}
+                    >
+                        <TextArea
+                            rows={4}
+                            placeholder="أدخل الملاحظات..."
+                            onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </Form.Item>
+                </Form>
             </Modal>
-            </ConfigProvider>
+
+            {/* Completion Modal */}
+            <Modal
+                title="اتمام عملية مصاريف الشهر"
+                open={isCompletionModalVisible}
+                onOk={() => completionForm.submit()}
+                onCancel={() => {
+                    setIsCompletionModalVisible(false);
+                    completionForm.resetFields();
+                    setNotes('');
+                }}
+                confirmLoading={completingLoading}
+                okText="تأكيد"
+                cancelText="إلغاء"
+                dir="rtl"
+            >
+                <Form
+                    form={completionForm}
+                    onFinish={handleCompleteMonthlyExpense}
+                    layout="vertical"
+                >
+                    <Form.Item
+                        name="notes"
+                        label="الملاحظات"
+                        rules={[
+                            {
+                                required: true,
+                                message: 'الرجاء إدخال الملاحظات',
+                            }
+                        ]}
+                    >
+                        <TextArea
+                            rows={4}
+                            placeholder="أدخل الملاحظات..."
+                            onChange={(e) => setNotes(e.target.value)}
+                        />
+                    </Form.Item>
+                </Form>
+            </Modal>
         </div>
     );
 }
