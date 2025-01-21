@@ -258,13 +258,32 @@ const EditUserModal = ({
 
   const handleFinish = async (values) => {
     try {
+      console.log('Form values being submitted:', values);  // Debug log
+      
+      // Add validation before submitting
+      const requiredFields = ['fullName', 'roles', 'position', 'governorate', 'officeName'];
+      const missingFields = requiredFields.filter(field => !values[field]);
+      
+      if (missingFields.length > 0) {
+        console.log('Missing fields:', missingFields); // Debug log
+        message.error(`Missing required fields: ${missingFields.join(', ')}`);
+        return;
+      }
+  
+      // Add loading state
+      form.setFields([{ name: '_loading', value: true }]);
+      
+      // Call the parent onFinish function
       await onFinish(values);
-      message.success('تم تحديث المستخدم بنجاح');
+      
     } catch (error) {
-      console.error('Error updating user:', error);
+      console.error('Error details:', error); // More detailed error logging
       message.error('فشل في تحديث المستخدم');
+    } finally {
+      form.setFields([{ name: '_loading', value: false }]);
     }
   };
+  
 
   return (
     <ConfigProvider direction="rtl">
@@ -279,6 +298,7 @@ const EditUserModal = ({
           onFinish={handleFinish}
           layout="vertical"
           className="dammaged-passport-container-edit-modal"
+          
         >
           <h1>تعديل المستخدم</h1>
           <Form.Item
