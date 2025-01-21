@@ -3,7 +3,6 @@ import {
   Table,
   Button,
   Card,
-  Typography,
   Space,
   message,
   Modal,
@@ -137,7 +136,6 @@ export default function SuperVisorExpensesRequest() {
 
       if (response.data && response.data.length > 0) {
         const currentExpense = response.data[0];
-        console.log("Current monthly expense:", currentExpense);
         // set dateCreated
         const dateCreated = new Date(currentExpense.dateCreated).toISOString().split("T")[0];
         setOfficeInfo(prev => ({ ...prev, date: dateCreated }));
@@ -278,6 +276,12 @@ export default function SuperVisorExpensesRequest() {
   };
 
   const currentMonthColumns = [
+    {
+      title: "نوع المصروف",
+      dataIndex: "expenseTypeName",
+      key: "expenseTypeName",
+      className: "supervisor-expenses-history-table-column",
+    },
     {
       title: "التاريخ",
       dataIndex: "date",

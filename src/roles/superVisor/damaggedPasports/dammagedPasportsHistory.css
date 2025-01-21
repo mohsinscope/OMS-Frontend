@@ -87,12 +87,19 @@
 .supervisor-passport-dameged-button {
   background-color: #4880ff;
   color: white;
+  border: 2px solid #4880ff;
   width: 120px;
   height: 45px;
   border: none;
   cursor: pointer;
   border-radius: 6px;
   font-size: large;
+}
+.supervisor-passport-dameged-button:hover {
+  background-color: white;
+  color: #4880ff;
+  border: 1px solid #4880ff;
+  transition: all 0.3s ease;
 }
 
 .supervisor-passport-dameged-table-container {

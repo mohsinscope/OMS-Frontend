@@ -109,21 +109,18 @@
 .supervisor-add-Lectur-button {
   background-color: #04aa6d;
   color: white;
-  width: 150px;
+  width: fit-content;
   height: 45px;
-  border: none;
+  border: #04aa6d 2px solid;
   cursor: pointer;
   border-radius: 6px;
   font-size: large;
   transition: background-color 0.3s ease, transform 0.2s ease;
 }
 .supervisor-add-Lectur-button:hover {
-  transform: translateY(-2px); /* Lift effect */
-  height: 45px;
-  width: 150px !important;
   background-color: white !important;
   color: #04aa6d !important;
-  border: #04aa6d 2px solid;
+  transition: all 0.3s ease;
 }
 
 .supervisor-Lectur-table-container {

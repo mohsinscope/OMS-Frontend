@@ -5,7 +5,7 @@ import Icons from "./../reusable elements/icons.jsx";
 import axios from "axios";
 import "./styles/settings.css";
 import BASE_URL from "../store/url.js";
-
+import { useLocation, useNavigate } from "react-router-dom";
 export default function Settings() {
   const { user, accessToken, profile } = useAuthStore();
   const { isSidebarCollapsed } = useAuthStore();
@@ -22,7 +22,7 @@ export default function Settings() {
     newPassword: "",
     confirmPassword: "",
   });
-
+  const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
   const [step, setStep] = useState(1); // Step 1: Current Password, Step 2: New Password
   const [showPassword, setShowPassword] = useState(false);
@@ -157,7 +157,7 @@ export default function Settings() {
           onClick={() => setShowModal(true)}>
           تغيير كلمة السر
         </button>
-        <button className="cancel-button" onClick={() => setShowModal(false)}>
+        <button className="cancel-button" onClick={() => navigate(-1)}>
           الغاء
         </button>
       </div>
