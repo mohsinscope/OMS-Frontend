@@ -137,6 +137,10 @@ export default function SuperVisorExpensesRequest() {
 
       if (response.data && response.data.length > 0) {
         const currentExpense = response.data[0];
+        console.log("Current monthly expense:", currentExpense);
+        // set dateCreated
+        const dateCreated = new Date(currentExpense.dateCreated).toISOString().split("T")[0];
+        setOfficeInfo(prev => ({ ...prev, date: dateCreated }));
         setCurrentMonthlyExpenseId(currentExpense.id);
         setCanCreateMonthly(false);
         fetchDailyExpenses(currentExpense.id);
@@ -314,8 +318,10 @@ export default function SuperVisorExpensesRequest() {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
-        <Link to="/Expensess-view-daily" state={{ dailyExpenseId: record.id }}>
-          <Button type="primary">عرض</Button>
+        <Link to="/Expensess-view-daily" state={{ dailyExpenseId: record.id }} >
+          <Button type="primary"
+            size="large"  // You can use "small", "middle", or "large"
+            className="supervisor-expenses-history-details-link">عرض</Button>
         </Link>
       ),
     },
