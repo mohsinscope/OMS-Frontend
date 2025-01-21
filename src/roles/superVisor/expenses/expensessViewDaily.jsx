@@ -99,7 +99,12 @@ const ExpensessView = () => {
       message.error("حدث خطأ أثناء جلب صور المصروف");
     }
   };
-  
+  useEffect(() => {
+    console.log("Monthly Status:", expenseData?.monthlyStatus);
+    console.log("Has Update Permission:", hasUpdatePermission);
+    console.log("Has Delete Permission:", hasDeletePermission);
+    console.log("Can Perform Actions:", canPerformActions());
+  }, [expenseData, hasUpdatePermission, hasDeletePermission]);
   
 
   useEffect(() => {
