@@ -322,10 +322,20 @@ export default function SuperVisorExpensesRequest() {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
-        <Link to="/Expensess-view-daily" state={{ dailyExpenseId: record.id }} >
-          <Button type="primary"
-            size="large"  // You can use "small", "middle", or "large"
-            className="supervisor-expenses-history-details-link">عرض</Button>
+        <Link 
+          to="/Expensess-view-daily" 
+          state={{ 
+            dailyExpenseId: record.id,
+            status: "New" // Set status as "New" for current month expenses
+          }}
+        >
+          <Button 
+            type="primary"
+            size="large"
+            className="supervisor-expenses-history-details-link"
+          >
+            عرض
+          </Button>
         </Link>
       ),
     },
