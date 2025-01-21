@@ -507,6 +507,7 @@ export default function SuperVisorExpensesRequest() {
    useEffect(() => {
     if (profile?.officeId) {
       fetchLastMonthExpense();
+      fetchMonthlyExpense();
     }
   }, [profile?.officeId]); // Only re-run when officeId changes
 
