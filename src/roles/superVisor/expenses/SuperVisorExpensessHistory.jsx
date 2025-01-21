@@ -38,7 +38,7 @@ const statusDisplayNames = {
   [Status.SentToDirector]: "تم الإرسال إلى المدير التنفيذي",
   [Status.ReturnedToSupervisor]: "تم الإرجاع إلى المشرف",
   [Status.RecievedBySupervisor]: "تم الاستلام من قبل المشرف",
-  [Status.SentFromDirector]: "تم الموافقة من قبل اسامة",
+  [Status.SentFromDirector]: "تم الموافقة من قبل المدير التنفيذي",
   [Status.Completed]: "مكتمل",
 };
 const positionStatusMap = {
