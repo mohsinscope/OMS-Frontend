@@ -865,7 +865,11 @@ disabled={!profile.profileId}
               title: "الحالة",
               dataIndex: "الحالة",
               align: "center",
-              render: (status) => statusMap[status] || status,
+              render: (status) => {
+                // Handle both string and numeric status values
+                const statusCode = typeof status === 'string' ? Status[status] : status;
+                return statusMap[statusCode] || status;
+              },
             },
           ]}
           dataSource={[expense?.generalInfo]}
