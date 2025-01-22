@@ -187,3 +187,7 @@
   padding: 0;
   margin: 0;
 }
+
+admin-user-management-container-sidebar-collapsed{
+  width: 120%;
+}

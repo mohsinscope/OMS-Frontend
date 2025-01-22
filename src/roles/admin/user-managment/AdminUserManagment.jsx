@@ -146,16 +146,17 @@ const AdminUserManagment = () => {
   };
 
   const handleFilterSubmit = (values) => {
+    console.log('Form Values:', values); // Add this line to debug
     const newFilters = {
-      fullName: values.username || "",
+      fullName: values.fullName || "",
       officeId: values.officeName || null,
       governorateId: values.governorate || null,
       roles: values.role ? [values.role] : []
     };
     setCurrentFilters(newFilters);
     fetchUserData(1, pagination.pageSize, newFilters);
+    console.log('Filters being sent:', newFilters);
   };
-
   const resetFilters = () => {
     filterForm.resetFields();
     setCurrentFilters({});
@@ -205,37 +206,59 @@ const AdminUserManagment = () => {
     setEditModalVisible(true);
   };
 
-  const handleSaveEdit = async (values) => {
-    setLoading(true);
-    try {
-      const updatedUser = {
-        userId: selectedUser.userId,
-        userName: selectedUser.username,
-        fullName: values.fullName,
-        position: values.position,
-        officeId: values.officeName,
-        governorateId: values.governorate,
-        roles: values.roles,
-        newPassword: values.newPassword
-      };
+// AdminUserManagement.jsx
+// Update the handleSaveEdit function:
 
-      await axiosInstance.put(`${Url}/api/account/${selectedUser.userId}`, updatedUser, {
+const handleSaveEdit = async (values) => {
+  setLoading(true);
+  try {
+    // Make sure we have all required values
+    if (!selectedUser || !selectedUser.userId) {
+      throw new Error('No user selected');
+    }
+
+    const updatedUser = {
+      userId: selectedUser.userId,
+      userName: selectedUser.username, // Keep the original username
+      fullName: values.fullName,
+      position: parseInt(values.position, 10),
+      officeId: values.officeName,
+      governorateId: values.governorate,
+      roles: values.roles
+    };
+
+    // Only include newPassword if it was provided
+    if (values.newPassword) {
+      updatedUser.newPassword = values.newPassword;
+    }
+
+    console.log('Sending update request with data:', updatedUser);
+
+    const response = await axiosInstance.put(
+      `${Url}/api/account/${selectedUser.userId}`,
+      updatedUser,
+      {
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
-      });
+      }
+    );
 
+    if (response.status === 200) {
       message.success("تم تحديث المستخدم بنجاح!");
       setEditModalVisible(false);
       form.resetFields();
-      fetchUserData(pagination.current, pagination.pageSize, currentFilters);
-    } catch (error) {
-      console.error("Error updating user:", error);
-      message.error("فشل في تحديث المستخدم");
-    } finally {
-      setLoading(false);
+      // Refresh the table data
+      await fetchUserData(pagination.current, pagination.pageSize, currentFilters);
     }
-  };
+  } catch (error) {
+    console.error("Error updating user:", error);
+    message.error(error.response?.data?.message || "فشل في تحديث المستخدم");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const columns = [
     {
@@ -284,7 +307,7 @@ const AdminUserManagment = () => {
       <Dashboard />
       <div
         className={`admin-user-management-container ${
-          isSidebarCollapsed ? "sidebar-collapsed" : ""
+          isSidebarCollapsed ? "admin-user-management-container-sidebar-collapsed" : ""
         }`}
         dir="rtl"
       >
@@ -295,61 +318,62 @@ const AdminUserManagment = () => {
             searchVisible ? "animate-show" : "animate-hide"
           }`}
         >
-          <Form
-            form={filterForm}
-            layout="horizontal"
-            onFinish={handleFilterSubmit}
-            className="filter-form"
-          >
-            <Form.Item name="username" label="">
-              <label >اسم المستخدم</label>
-              <Input className="filter-input"style={{marginTop:"10px"}}/>
-            </Form.Item>
+       <Form
+  form={filterForm}
+  layout="horizontal"
+  onFinish={handleFilterSubmit}
+  className="filter-form"
+>
+  <Form.Item name="fullName" label="اسم المستخدم">
+    <Input  />
+  </Form.Item>
 
-            <Form.Item name="role">
-            <label >الصلاحيات</label>
+  <Form.Item name="role" label="الصلاحية">
 
-              <Select className="filter-dropdown" allowClear style={{marginTop:"10px"}}>
-                {roles.map((role) => (
-                  <Option key={role} value={role}>{role}</Option>
-                ))}
-              </Select>
-            </Form.Item>
+    <Select className="filter-dropdown" allowClear>
+      {roles.map((role) => (
+        <Option key={role} value={role}>{role}</Option>
+      ))}
+    </Select>
+  </Form.Item>
 
-            <Form.Item name="governorate" >
-            <label >المحافظة</label>
+  <Form.Item name="governorate" label="المحافظة">
+   
 
-              <Select 
-                className="filter-dropdown" 
-                onChange={handleGovernorateChange}
-                allowClear
-                style={{marginTop:"10px"}}
-              >
-                {governorates.map((gov) => (
-                  <Option key={gov.id} value={gov.id}>{gov.name}</Option>
-                ))}
-              </Select>
-            </Form.Item>
+    <Select 
+      className="filter-dropdown" 
+      onChange={handleGovernorateChange}  // Keep this one since it's needed for office dropdown
+      allowClear
+    >
+      {governorates.map((gov) => (
+        <Option key={gov.id} value={gov.id}>{gov.name}</Option>
+      ))}
+    </Select>
+  </Form.Item>
 
-            <Form.Item name="officeName" label="">
-            <label >اسم المكتب</label>
-              <Select 
-               style={{marginTop:"10px"}}
-                className="filter-dropdown"
-                disabled={!selectedGovernorate}
-                allowClear
-              >
-                {offices.map((office) => (
-                  <Option key={office.id} value={office.id}>{office.name}</Option>
-                ))}
-              </Select>
-            </Form.Item>
-                
-            <Form.Item>
-              <Button type="primary" htmlType="submit" className="filter-button">
-                بحث
-              </Button>
-              </Form.Item>
+  <Form.Item name="officeName" label="اسم المكتب">
+ 
+
+    <Select 
+      className="filter-dropdown"
+      disabled={!selectedGovernorate}
+      allowClear
+    >
+      {offices.map((office) => (
+        <Option key={office.id} value={office.id}>{office.name}</Option>
+      ))}
+    </Select>
+  </Form.Item>
+
+  <Form.Item>
+    <Button 
+      type="primary" 
+      htmlType="submit" 
+      className="filter-button"
+    >
+      بحث
+    </Button>
+  </Form.Item>
               <Form.Item>
 
               <Button onClick={resetFilters} className="filter-button">

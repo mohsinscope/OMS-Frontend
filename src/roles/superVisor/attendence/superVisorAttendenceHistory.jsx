@@ -121,6 +121,7 @@ export default function SupervisorAttendanceHistory() {
           },
         }
       );
+      console.log("response", response)
 
       // Handle pagination
       const paginationHeader = response.headers["pagination"];
@@ -147,10 +148,10 @@ export default function SupervisorAttendanceHistory() {
           item.qualityStaff +
           item.deliveryStaff,
         shift: item.workingHours === 1 ? "صباحي" : item.workingHours === 2 ? "مسائي" : "الكل",
-        governorateName: governorates.find((gov) => gov.id === item.governorateId)?.name || "غير معروف",
+        governorateName: item.governorateName || "غير معروف",
         officeName: item.officeName || "غير معروف",
       }));
-
+      console.log("عوعو",formattedData)
       setAttendanceData(formattedData);
 
       if (response.data.length === 0) {
@@ -206,7 +207,7 @@ export default function SupervisorAttendanceHistory() {
 
     initData();
   }, []); // Empty dependency array - only run once on mount
-
+  console.log(attendanceData)
   const columns = [
     {
       title: "التاريخ",
