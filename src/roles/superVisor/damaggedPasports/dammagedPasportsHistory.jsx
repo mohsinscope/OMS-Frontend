@@ -614,6 +614,8 @@ export default function SuperVisorPassport() {
               current: currentPage,
               pageSize: pageSize,
               total: totalPassports,
+              showSizeChanger: false,
+
               position: ["bottomCenter"],
               onChange: (page) => {
                 setCurrentPage(page);
