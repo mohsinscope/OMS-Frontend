@@ -50,10 +50,12 @@ textarea {
 
 table thead tr th {
   background-color: #f3f4f6 !important;
+  text-align: center !important;
 }
 
 table {
   font-size: large !important;
+  text-align: center !important;
 }
 
 /* Custom Scrollbar for Webkit browsers (Chrome, Safari, Edge) */
