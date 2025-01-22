@@ -154,9 +154,7 @@ export default function SuperVisorPassport() {
                 .map(
                   (passport, index) => `
                     <tr>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                        fullPassportList.length - index
-                      }</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${index + 1}</td>
                       <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(
                         passport.date
                       ).toLocaleDateString("en-CA")}</td>
@@ -179,7 +177,7 @@ export default function SuperVisorPassport() {
       `;
 
       const options = {
-        margin: 1,
+        margin: 3,
         filename: "تقرير_الجوازات_التالفة.pdf",
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2 },
@@ -261,7 +259,7 @@ export default function SuperVisorPassport() {
           passport.officeName,
           passport.governorateName,
           new Date(passport.date).toLocaleDateString("en-CA"),
-          fullPassportList.length - index, // Reverse index
+          index + 1, // Index column
         ]);
 
         row.eachCell((cell) => {
