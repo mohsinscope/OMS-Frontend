@@ -6,7 +6,6 @@
       deleteEndpoint: (id) => `/api/office/${id}`,
       columns: [
         { title: "اسم المكتب", dataIndex: "name", key: "name" },
-        { title: "الكود", dataIndex: "code", key: "code" },
         {
           title: "موظفو الاستلام",
           dataIndex: "receivingStaff",
@@ -39,7 +38,6 @@
       ],
       formFields: [
         { name: "name", label: "اسم المكتب", type: "text" },
-        { name: "code", label: "الكود", type: "number" },
         { name: "receivingStaff", label: "موظفو الاستلام", type: "number" },
         { name: "accountStaff", label: "موظفو الحسابات", type: "number" },
         { name: "printingStaff", label: "موظفو الطباعة", type: "number" },

@@ -512,6 +512,7 @@ export default function ListOfValueAdmin() {
             type="primary"
             onClick={handleAddNew}
             disabled={!selectedConfig || loading}
+            className="attendance-add-button"
           >
             إضافة <Icons type="add" />
           </Button>
