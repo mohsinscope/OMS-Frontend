@@ -367,6 +367,7 @@ export default function SupervisorAttendanceHistory() {
               pageSize: pageSize,
               total: totalRecords,
               onChange: handlePageChange,
+              showSizeChanger: false,
             }}
             loading={isLoading}
           />
