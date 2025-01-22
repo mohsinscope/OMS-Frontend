@@ -324,13 +324,11 @@ const handleSaveEdit = async (values) => {
   onFinish={handleFilterSubmit}
   className="filter-form"
 >
-  <Form.Item name="fullName">
-    <label htmlFor="">اسم المستخدم</label>
+  <Form.Item name="fullName" label="اسم المستخدم">
     <Input  />
   </Form.Item>
 
-  <Form.Item name="role">
-  <label htmlFor="">الصلاحية</label>
+  <Form.Item name="role" label="الصلاحية">
 
     <Select className="filter-dropdown" allowClear>
       {roles.map((role) => (
@@ -339,8 +337,8 @@ const handleSaveEdit = async (values) => {
     </Select>
   </Form.Item>
 
-  <Form.Item name="governorate">
-  <label htmlFor="">اسم المحافظة</label>
+  <Form.Item name="governorate" label="المحافظة">
+   
 
     <Select 
       className="filter-dropdown" 
@@ -353,8 +351,8 @@ const handleSaveEdit = async (values) => {
     </Select>
   </Form.Item>
 
-  <Form.Item name="officeName">
-  <label htmlFor="">اسم المكتب</label>
+  <Form.Item name="officeName" label="اسم المكتب">
+ 
 
     <Select 
       className="filter-dropdown"

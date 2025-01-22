@@ -399,6 +399,7 @@ const EditUserModal = ({
               type="default" 
               onClick={() => setIsPasswordResetVisible(true)}
               className="flex-1"
+              style={{margin:"10px 0"}}
             >
               اعادة تعيين كلمة السر
             </Button>
