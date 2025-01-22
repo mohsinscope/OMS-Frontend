@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DatePicker } from 'antd';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import axiosInstance from '../../intercepters/axiosInstance';
 import Url from '../../store/url.js';
 import useAuthStore from '../../store/store.js';
@@ -20,54 +20,76 @@ export default function ExpensessStats() {
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedThreshold, setSelectedThreshold] = useState(null);
   const [expensesData, setExpensesData] = useState([]);
-  const [lastTwoMonthsData, setLastTwoMonthsData] = useState([]);
+  const [lastMonthData, setLastMonthData] = useState(null);
   const [thresholds, setThresholds] = useState([]);
 
   const fetchGovernorates = useCallback(async () => {
+    console.log('Fetching governorates');
     try {
       const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
+      console.log('Governorates fetched:', response.data);
       setGovernorates(response.data);
     } catch (error) {
+      console.error('Error fetching governorates:', error);
       setError("فشل في جلب المحافظات. الرجاء المحاولة مرة أخرى.");
     }
   }, [accessToken]);
 
   const fetchThresholds = useCallback(async () => {
+    console.log('Fetching thresholds');
     try {
       const response = await axiosInstance.get(`${Url}/api/Threshold`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
+      console.log('Thresholds fetched:', response.data);
       setThresholds(response.data);
     } catch (error) {
-      console.error("فشل في جلب مستويات المصاريف:", error);
+      console.error('Error fetching thresholds:', error);
       setError("فشل في جلب مستويات المصاريف. الرجاء المحاولة مرة أخرى.");
     }
   }, [accessToken]);
 
-  const fetchLastTwoMonths = useCallback(async () => {
-    try {
-      const response = await axiosInstance.get(`${Url}/api/Expense/statistics/last-two-months`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-      
-      setLastTwoMonthsData([
-        {
-          name: 'الشهر الحالي',
-          value: response.data.expenses[0]?.totalAmount || 0,
-          percentage: response.data.totalPercentage
-        },
-        {
-          name: 'الشهر السابق',
-          value: response.data.expenses[1]?.totalAmount || 0,
-          percentage: response.data.totalPercentage
-        }
-      ]);
-    } catch (error) {
-      console.error("فشل في جلب بيانات الشهرين الأخيرين:", error);
+  const fetchLastMonthData = useCallback(async () => {
+    console.log('Fetching last month data with officeId:', selectedOffice);
+    if (!selectedOffice) {
+      console.log('No office selected, skipping last month data fetch');
+      setLastMonthData(null);
+      return;
     }
-  }, [accessToken]);
+
+    try {
+      console.log('Making last month data request');
+      const response = await axiosInstance.post(
+        `${Url}/api/Expense/search-last-month`,
+        { officeId: selectedOffice },
+        { headers: { Authorization: `Bearer ${accessToken}` }}
+      );
+      
+      console.log('Last month data response:', response.data);
+      
+      if (response.data && response.data.length > 0) {
+        const data = response.data[0];
+        console.log('Setting last month data with:', data);
+        setLastMonthData({
+          totalAmount: data.totalAmount,
+          officeName: data.officeName,
+          governorateName: data.governorateName,
+          thresholdName: data.thresholdName,
+          status: data.status,
+          profileFullName: data.profileFullName,
+          dateCreated: data.dateCreated
+        });
+      } else {
+        console.log('No last month data found');
+        setLastMonthData(null);
+      }
+    } catch (error) {
+      console.error('Error fetching last month data:', error);
+      setLastMonthData(null);
+    }
+  }, [accessToken, selectedOffice]);
 
   const fetchOffices = useCallback(async (governorateId) => {
     if (!governorateId) {
@@ -107,7 +129,14 @@ export default function ExpensessStats() {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
-      setExpensesData(response.data || []);
+      // Transform the expenses data for the bar chart
+      const transformedData = response.data.expenses.map(expense => ({
+        name: expense.officeName,
+        value: expense.totalAmount,
+        percentage: expense.percentageOfBudget
+      }));
+
+      setExpensesData(transformedData);
     } catch (error) {
       setError("فشل في جلب البيانات. الرجاء المحاولة مرة أخرى.");
     } finally {
@@ -115,21 +144,40 @@ export default function ExpensessStats() {
     }
   };
 
+  // Component initialization log
   useEffect(() => {
+    console.log('Component initialized');
     const initializeData = async () => {
+      console.log('Starting initial data fetch');
       await Promise.all([
         fetchGovernorates(),
-        fetchThresholds(),
-        fetchLastTwoMonths()
+        fetchThresholds()
       ]);
+      console.log('Initial data fetch completed');
     };
     
     initializeData();
-  }, [fetchGovernorates, fetchThresholds, fetchLastTwoMonths]);
+  }, [fetchGovernorates, fetchThresholds]);
 
-  const handleSubmit = (e) => {
+  // Remove automatic last month data fetching
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    fetchExpensesData();
+    console.log('Search button clicked - Starting data fetch');
+    setLoading(true);
+    try {
+      console.log('Fetching both expenses and last month data');
+      await Promise.all([
+        fetchExpensesData(),
+        fetchLastMonthData()
+      ]);
+      console.log('Data fetch completed successfully');
+    } catch (error) {
+      console.error("Error during search:", error);
+    } finally {
+      setLoading(false);
+      console.log('Search completed - Loading state reset');
+    }
   };
 
   const formatCurrency = (value) => {
@@ -143,6 +191,9 @@ export default function ExpensessStats() {
         <div className="exp-tooltip">
           <p>{payload[0].payload.name}</p>
           <p>{formatCurrency(payload[0].value)}</p>
+          {payload[0].payload.percentage && (
+            <p>النسبة: {payload[0].payload.percentage}%</p>
+          )}
         </div>
       );
     }
@@ -227,61 +278,69 @@ export default function ExpensessStats() {
       <h2 className="exp-chart-title">احصائيات المصاريف</h2>
 
       <div className="exp-charts-wrapper">
-        <div className="exp-bar-chart-section">
-          <div className="exp-chart-container">
+        <div className="exp-bar-chart-section" style={{ width: '100%', minHeight: '500px' }}>
+          <div className="exp-chart-container" style={{ width: '100%', height: '100%' }}>
             {!loading && expensesData.length > 0 ? (
-              <BarChart
-                width={800}
-                height={400}
-                data={expensesData}
-                layout="vertical"
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis dataKey="name" type="category" width={150} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="value" fill="#36B37E" barSize={20} />
-              </BarChart>
+              <ResponsiveContainer width="100%" height={500}>
+                <BarChart
+                  data={expensesData}
+                  layout="vertical"
+                  margin={{ top: 20, right: 30, left: 120, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                  <XAxis 
+                    type="number" 
+                    tickFormatter={(value) => value.toLocaleString()}
+                    axisLine={{ stroke: '#E0E0E0' }}
+                    tickLine={{ stroke: '#E0E0E0' }}
+                  />
+                  <YAxis 
+                    dataKey="name" 
+                    type="category" 
+                    width={110}
+                    axisLine={{ stroke: '#E0E0E0' }}
+                    tickLine={{ stroke: '#E0E0E0' }}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar 
+                    dataKey="value" 
+                    fill="#36B37E"
+                    barSize={30}
+                    radius={[0, 4, 4, 0]}
+                  >
+                    {expensesData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`}
+                        fill={`rgba(54, 179, 126, ${0.7 + (index * 0.3 / expensesData.length)})`}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             ) : !loading ? (
               <div className="exp-no-data">لا توجد بيانات للعرض</div>
             ) : null}
           </div>
         </div>
 
-        <div className="exp-pie-chart-section">
-          <div className="exp-chart-container">
-            <PieChart width={400} height={300}>
-              <Pie
-                data={lastTwoMonthsData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {lastTwoMonthsData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip content={<CustomTooltip />} />
-            </PieChart>
-            <div className="exp-pie-legend">
-              <div className="exp-legend-item">
-                <span className="exp-legend-color" style={{ backgroundColor: COLORS[0] }}></span>
-                <span>الشهر الحالي: {formatCurrency(lastTwoMonthsData[0]?.value || 0)}</span>
-              </div>
-              <div className="exp-legend-item">
-                <span className="exp-legend-color" style={{ backgroundColor: COLORS[1] }}></span>
-                <span>الشهر السابق: {formatCurrency(lastTwoMonthsData[1]?.value || 0)}</span>
-              </div>
-              <div className="exp-legend-total">
-                <span>النسبة المئوية الإجمالية: {lastTwoMonthsData[0]?.percentage?.toFixed(2) || 0}%</span>
+        {lastMonthData && (
+          <div className="exp-pie-chart-section">
+            <div className="exp-chart-container">
+              <div className="exp-last-month-data">
+                <h3>بيانات الشهر الماضي</h3>
+                {lastMonthData.officeName && <p>المكتب: {lastMonthData.officeName}</p>}
+                {lastMonthData.governorateName && <p>المحافظة: {lastMonthData.governorateName}</p>}
+                {lastMonthData.thresholdName && <p>مستوى المصاريف: {lastMonthData.thresholdName}</p>}
+                <p>إجمالي المبلغ: {formatCurrency(lastMonthData.totalAmount)}</p>
+                {lastMonthData.status && <p>الحالة: {lastMonthData.status}</p>}
+                {lastMonthData.profileFullName && <p>اسم المستخدم: {lastMonthData.profileFullName}</p>}
+                {lastMonthData.dateCreated && (
+                  <p>تاريخ الإنشاء: {new Date(lastMonthData.dateCreated).toLocaleDateString('ar-IQ')}</p>
+                )}
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

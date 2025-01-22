@@ -326,7 +326,7 @@ export default function Stats() {
               className={`stats-navbar-item ${selectedTab === "attendanceUnavailable" ? "active" : ""}`}
               onClick={() => handleTabChange("attendanceUnavailable")}
             >
-              مكاتب الغياب
+              المكاتب الغائبة
             </li>
             </>
             
