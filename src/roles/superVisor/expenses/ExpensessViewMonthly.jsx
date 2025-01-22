@@ -463,7 +463,7 @@ export default function ExpensessViewMonthly() {
             <Card className="monthly-expense-card">
                 <div className="monthly-expense-header">
                     <div className="header-content">
-                        <h2 className="monthly-expense-title">تفاصيل المصروف الشهري</h2>
+                        <h1 className="header-content">تفاصيل المصروف الشهري</h1>
                     </div>
                 </div>
                 
@@ -486,7 +486,7 @@ export default function ExpensessViewMonthly() {
                 {/* Actions Table Section */}
                 {monthlyExpenseId && (
                     <div style={{ marginTop: '20px' }}>
-                        <h2 className="monthly-expense-title">سجل الإجراءات</h2>
+                        <h1 className="header-content">سجل الإجراءات</h1>
                         <ActionsTable monthlyExpensesId={monthlyExpenseId} />
                     </div>
                 )}

@@ -84,14 +84,9 @@ export default function ExpensessViewActionsTable({ monthlyExpensesId }) {
 
   return (
     <div style={{ marginTop: "24px", width: "100%" }}>
-      <h2 style={{ 
-        marginBottom: "16px", 
-        textAlign: "right",
-        fontSize: "16px",
-        fontWeight: "bold"
-      }}>
+      <h1 className="header-content">
         سجل الإجراءات
-      </h2>
+      </h1>
       <ConfigProvider direction="rtl">
         <Table
           loading={loading}
