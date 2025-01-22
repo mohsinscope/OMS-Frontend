@@ -123,8 +123,8 @@ export default function ExpensessStats() {
         officeId: selectedOffice,
         governorateId: selectedGovernorate,
         thresholdId: selectedThreshold,
-        startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
-        endDate: endDate ? endDate.format('YYYY-MM-DD') : null
+        startDate: startDate ? startDate.toDate().toISOString() : null,
+        endDate: endDate ? endDate.toDate().toISOString() : null
       }, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
