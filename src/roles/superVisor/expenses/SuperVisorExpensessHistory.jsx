@@ -60,7 +60,7 @@ export default function SuperVisorExpensesHistory() {
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
-  const [status, setStatus] = useState(null);
+  const [selectedStatuses, setSelectedStatuses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -141,6 +141,7 @@ export default function SuperVisorExpensesHistory() {
     }
   };
 
+  // Update fetchExpensesData function
   const fetchExpensesData = async (pageNumber = 1) => {
     try {
       setIsLoading(true);
@@ -149,7 +150,7 @@ export default function SuperVisorExpensesHistory() {
         officeId: isSupervisor ? userOfficeId : selectedOffice,
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
         profileId: profile?.id,
-        status: status,
+        statuses: selectedStatuses.length > 0 ? selectedStatuses : null,
         startDate: startDate ? startDate.toISOString() : null,
         endDate: endDate ? endDate.toISOString() : null,
         PaginationParams: {
@@ -158,9 +159,9 @@ export default function SuperVisorExpensesHistory() {
         },
       };
 
-      if (!status && !isAdmin && !isSupervisor) {
+      if (selectedStatuses.length === 0 && !isAdmin && !isSupervisor) {
         const allowedStatuses = getAvailableStatuses();
-        searchBody.allowedStatuses = allowedStatuses;
+        searchBody.statuses = allowedStatuses;
       }
 
       const response = await axiosInstance.post(
@@ -192,6 +193,7 @@ export default function SuperVisorExpensesHistory() {
     }
   };
 
+
   useEffect(() => {
     if (isSupervisor && userGovernorateId) {
       fetchOffices(userGovernorateId);
@@ -202,11 +204,12 @@ export default function SuperVisorExpensesHistory() {
   }, [fetchGovernorates]);
 
 
+  // Update useEffect for initial status setting
   useEffect(() => {
     if (!isAdmin && !isSupervisor && userPosition) {
       const allowedStatuses = getAvailableStatuses();
       if (allowedStatuses.length > 0) {
-        setStatus(allowedStatuses[0]);
+        setSelectedStatuses(allowedStatuses); // Set all allowed statuses initially
       }
     }
     fetchExpensesData(1);
@@ -216,15 +219,15 @@ export default function SuperVisorExpensesHistory() {
     setCurrentPage(1);
     fetchExpensesData(1);
   };
-
+  // Update handleReset function
   const handleReset = () => {
     setStartDate(null);
     setEndDate(null);
     if (isAdmin || isSupervisor) {
-      setStatus(null);
+      setSelectedStatuses([]); // Reset to empty array for admin/supervisor
     } else {
       const allowedStatuses = getAvailableStatuses();
-      setStatus(allowedStatuses[0] || null);
+      setSelectedStatuses(allowedStatuses); // Set all allowed statuses for others
     }
     if (!isSupervisor) {
       setSelectedGovernorate(null);
@@ -552,22 +555,28 @@ export default function SuperVisorExpensesHistory() {
           </>
         )}
 
-        <div className="supervisor-Lectur-field-wrapper">
-          <label>الحالة</label>
-          <Select
-            className="html-dropdown"
-            value={status}
-            onChange={(value) => setStatus(value)}>
-            {(isAdmin || isSupervisor) && (
-              <Select.Option value={null}>الكل</Select.Option>
-            )}
-            {availableStatuses.map((statusValue) => (
-              <Select.Option key={statusValue} value={statusValue}>
-                {statusDisplayNames[statusValue]}
-              </Select.Option>
-            ))}
-          </Select>
-        </div>
+<div className="supervisor-Lectur-field-wrapper">
+  <label>الحالة</label>
+  <Select
+    className="html-dropdown"
+    mode="multiple"
+    value={selectedStatuses}
+    onChange={(values) => setSelectedStatuses(values)}
+    placeholder="اختر الحالات"
+    style={{
+      width: '100%',
+      minHeight: '40px'
+    }}
+    maxTagCount={3}
+    maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
+  >
+    {availableStatuses.map((statusValue) => (
+      <Select.Option key={statusValue} value={statusValue}>
+        {statusDisplayNames[statusValue]}
+      </Select.Option>
+    ))}
+  </Select>
+</div>
 
         <div className="supervisor-Lectur-field-wrapper">
           <label>التاريخ من</label>
