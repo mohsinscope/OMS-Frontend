@@ -558,20 +558,17 @@ export default function SuperVisorExpensesHistory() {
 <div className="supervisor-Lectur-field-wrapper">
   <label>الحالة</label>
   <Select
-    className="html-dropdown"
     mode="multiple"
     value={selectedStatuses}
     onChange={(values) => setSelectedStatuses(values)}
     placeholder="اختر الحالات"
-    style={{
-      width: '100%',
-      minHeight: '40px'
-    }}
     maxTagCount={3}
     maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
+    className="supervisor-Lectur-select"
+    style={{ width: "fit-content", maxHeight: "200px", overflowY: "auto" }}
   >
     {availableStatuses.map((statusValue) => (
-      <Select.Option key={statusValue} value={statusValue}>
+      <Select.Option key={statusValue} value={statusValue} className="supervisor-expenses-history-select-option">
         {statusDisplayNames[statusValue]}
       </Select.Option>
     ))}
@@ -599,16 +596,15 @@ export default function SuperVisorExpensesHistory() {
         </div>
 
         <Button
-          style={{ width: "120px" }}
-          type="primary"
+        className="supervisor-passport-dameged-button"
           onClick={handleSearch}
           loading={isLoading}>
           البحث
         </Button>
 
         <Button
-          style={{ width: "fit-content" }}
-          type="primary"
+        className="supervisor-passport-dameged-button"
+        style={{width: "fit-content"}}
           onClick={handleReset}
           disabled={isLoading}>
           إعادة التعيين

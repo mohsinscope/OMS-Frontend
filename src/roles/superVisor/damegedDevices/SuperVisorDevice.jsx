@@ -440,14 +440,13 @@ const SuperVisorDevices = () => {
 
           <div className="supervisor-device-filter-buttons">
             <Button
-              type="primary"
               htmlType="submit"
-              className="supervisor-devices-dameged-button">
+              className="supervisor-passport-dameged-button">
               ابحث
             </Button>
             <Button
               onClick={handleReset}
-              className="supervisor-devices-dameged-button">
+              className="supervisor-passport-dameged-button">
               إعادة تعيين
             </Button>
             {/* <button
