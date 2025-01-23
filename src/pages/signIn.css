@@ -505,3 +505,98 @@
   20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 
+/* Tablet Landscape */
+@media (max-width: 1024px) {
+  .container { gap: 20px; }
+  .left-side {
+    width: 50%;
+    padding: 4%;
+  }
+  .logo { width: 280px; }
+  .input-wrapper,
+  .password-field-login { width: 95%; }
+}
+
+/* Tablet Portrait */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    height: auto;
+  }
+  .left-side {
+    width: 110%;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .logo {
+    width: 250px;
+    margin: 20px auto;
+  }
+  .right-side {
+    width: 100%;
+    padding: 20px;
+    align-items: center;
+    margin-left: 40px;
+  }
+  .input-wrapper,
+  .password-field-login { width: 100%; }
+  .login-btn { width: 80%; }
+}
+
+/* Mobile Large */
+@media (max-width: 425px) {
+  .container {
+    flex-direction: column;
+    height: auto;
+  }
+  .left-side {
+    width: 100%;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .left-side h1{
+    font-size: 2rem;
+  }
+  .logo {
+    width: 250px;
+    margin: 20px auto;
+  }
+  .right-side {
+    width: 100%;
+    padding: 20px;
+    align-items: center;
+    margin-left: 40px;
+  }
+  .input-wrapper,
+  .password-field-login { width: 100%; }
+  .login-btn { width: 80%; }
+}
+
+/* Mobile Small */
+@media (max-width: 375px) {
+  .container {
+    flex-direction: column;
+    height: auto;
+  }
+  .left-side {
+    width: 100%;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    text-align: center;
+    padding: 0px 0px;
+  }
+  .logo {
+    width: 250px;
+    margin: 10px auto;
+  }
+  .right-side {
+    width: 100%;
+    padding: 1px;
+    align-items: center;
+    margin-left: 40px;
+  }
+  .input-wrapper,
+  .password-field-login { width: 100%; }
+  .login-btn { width: 70%; }
+}

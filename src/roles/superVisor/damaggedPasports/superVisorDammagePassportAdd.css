@@ -122,3 +122,176 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 1200px) {
+  .supervisor-damaged-passport-add-container {
+    margin: 4% 15px 15px;
+  }
+  
+  .add-passport-fields-container {
+    padding: 20px;
+    gap: 15px;
+  }
+
+  .ant-input, .ant-select, .ant-picker {
+    width: 250px;
+  }
+}
+
+@media (max-width: 992px) {
+  .add-image-section {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .image-previewer-container {
+    min-height: 250px;
+  }
+
+  .ant-input-textarea {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .supervisor-damaged-passport-add-container {
+    margin:40% 5px 5px;
+    width: 100%;
+  }
+  supervisor-damaged-passport-add-container sidebar-collapsed{
+    width: 130%;
+  }
+
+  .add-passport-fields-container {
+    padding: 15px;
+    flex-direction: column;
+  }
+
+  .ant-form-item {
+    width: 100%;
+  }
+
+  .ant-input, .ant-select, .ant-picker {
+    width: 100% !important;
+  }
+
+  .image-previewer-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .submit-button, .add-back-button {
+    width: 100%;
+  }
+}
+@media (max-width: 480px) {
+  .image-previewer-container {
+    width: 100% !important;
+    min-height: 200px !important;
+  }
+ 
+  .supervisor-damaged-passport-add-container {
+    margin: 40% 5px 5px;
+    width: 100%;
+  }
+ 
+  .supervisor-damaged-passport-add-container.sidebar-collapsed {
+    width: 155%;
+  }
+ 
+  .add-passport-fields-container {
+    padding: 15px;
+  }
+ 
+  .add-passport-fields-container .ant-form-item {
+    width: 100%;
+  }
+ 
+  .add-passport-fields-container .ant-input,
+  .add-passport-fields-container .ant-select,
+  .add-passport-fields-container .ant-picker,
+  .add-passport-fields-container .ant-input-textarea {
+    width: 100% !important;
+  }
+ 
+  .add-image-section {
+    display: flex;
+    flex-direction: column !important;
+    padding: 10px;
+    gap: 10px;
+  }
+ 
+  .dragger-container {
+    width: 100% !important;
+    min-height: 150px;
+    display: block;
+  }
+ .image-previewer-container{
+  margin-top: 90px;
+  width: 30% !important;
+  position: relative;
+  right: 50px;
+  
+ }
+  .image-previewer-section {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  .ant-image{
+    width: 300px !important;
+   
+  }
+  .image-display{
+    display: block;
+  }
+  .submit-button,
+  .add-back-button {
+    width: 100%;
+    margin: 5px 0;
+  }
+ }
+
+
+ @media (max-width: 390px) {
+  .supervisor-damaged-passport-add-container {
+    margin: 40% 2px 2px;
+    width: 100%;
+    margin-left: 30px;
+  }
+  .image-previewer-container{
+    margin-top: 90px;
+    width: 25% !important;
+    position: relative;
+    right: 50px;
+    
+   }
+   .add-details-container{ 
+    width: 110% !important;
+   }
+}
+
+@media (max-width: 375px) {
+  .supervisor-damaged-passport-add-container {
+    margin: 40% 1px 1px;
+    width: 10%;
+    margin-left: 50px;
+  }
+  .add-damagedpassport-section-container{
+    width: 110%;
+  }
+  .image-previewer-container{
+    margin-top: 90px;
+    width: 25% !important;
+    position: relative;
+    right: 50px;
+    
+   }
+   .add-details-container{ 
+    width: 115% !important;
+   }
+   .ant-image{
+    width: 250px !important;
+   
+  }
+}

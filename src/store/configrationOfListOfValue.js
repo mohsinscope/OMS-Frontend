@@ -38,7 +38,10 @@
       ],
       formFields: [
         { name: "name", label: "اسم المكتب", type: "text" },
+        { name: "code", label: "الكود", type: "number" },
+
         { name: "receivingStaff", label: "موظفو الاستلام", type: "number" },
+
         { name: "accountStaff", label: "موظفو الحسابات", type: "number" },
         { name: "printingStaff", label: "موظفو الطباعة", type: "number" },
         { name: "qualityStaff", label: "موظفو الجودة", type: "number" },
