@@ -178,3 +178,60 @@
   color: #04aa6d !important;
   border: 2px solid #04aa6d !important;
 }
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .supervisor-passport-dameged-page {
+    margin-top: 40%;
+    padding: 5px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: start;
+    transition: all 0.3s ease-in-out;
+    overflow: auto; 
+  }
+  .sidebar-collapsed.supervisor-passport-dameged-page {
+    margin-left: 40px;
+    width: 130%;
+    height: 150%;
+  }
+
+  .supervisor-passport-dameged-form {
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    justify-content: start;
+    align-items: end;
+    gap: 10px;
+    z-index: 10;
+  }
+  .filter-field {
+    display: none !important;
+  }
+  
+
+  .supervisor-passport-dameged-form .filter-field {
+    width: 100%;
+  }
+  .supervisor-passport-dameged-input,
+  .supervisor-passport-dameged-dropdown {
+    width: 100%;
+  }
+
+  .supervisor-passport-dameged-button,
+  .supervisor-passport-dameged-add-button,
+  .modern-button {
+    display: flex;
+    justify-content: center;
+    width: fit-content !important;
+    margin-top: 10px;
+  }
+  .ant-table-container {
+  overflow: auto; /* Ensure scrolling works */
+}
+.supervisor-passport-dameged-page .sidebar-collapsed{
+  margin: auto;
+}
+
+}

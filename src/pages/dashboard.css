@@ -363,4 +363,45 @@
   height: 50px;
   border-radius: 10px;
 }
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .navbar-container {
+    height: 80px; 
+    z-index: 1000;
+  }
 
+  .dashboard-content {
+    height: 100%;
+    margin-right: 150px;
+    transition: margin-right 0.3s ease;
+  }
+
+  .navbar-left {
+    gap: 10px;
+    color: #636ae8;
+  }
+
+  .navbar-right {
+    gap: 2px;
+  }
+
+  .navbar-right .user-info {
+    display: none;
+  }
+
+  h1 {
+    display: none;
+  }
+  .navbar-logo {
+    max-height: 80px;
+}
+
+  .icons-sidebar-adjusment-for-mohsen {
+    width: 40px; 
+    height: 40px;
+    border-radius: 8px;
+  }
+  .sidebar.collapsed {
+    display: none;
+}
+}
