@@ -178,8 +178,14 @@ const DynamicSidebar = ({
   if (!isLoggedIn && visibleCommonItems.length === 0) {
     return null;
   }
+  const handleOverlayClick = () => {
+    if (window.innerWidth <= 768) {
+      toggleSidebar();
+    }
+  };
 
   return (
+    <>
     <div
       className={`${sidebarClassName || "sidebar"} ${
         isSidebarCollapsed ? "collapsed" : ""
@@ -197,6 +203,8 @@ const DynamicSidebar = ({
         </div>
       )}
     </div>
+    <div className="sidebar-overlay" onClick={handleOverlayClick} />
+    </>
   );
 };
 

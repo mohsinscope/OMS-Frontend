@@ -12,7 +12,7 @@
   top: 0;
   left: 0;
   right: 0;
-  z-index: 10; /* Ensure it stays above the sidebar */
+  z-index: 1001; /* Ensure sidebar appears above other content */
   color: (--bg-color);
 }
 /* Update these styles in your existing CSS */
@@ -367,15 +367,19 @@
 @media (max-width: 768px) {
   .navbar-container {
     height: 80px; 
-    z-index: 1000;
+    z-index: 20;
   }
 
   .dashboard-content {
     height: 100%;
     margin-right: 150px;
     transition: margin-right 0.3s ease;
+    
   }
-
+  .sidebar:not(.collapsed) ~ .dashboard-content,
+ .sidebar:not() ~ .supervisor-passport-damaged-page {
+   margin-right: 0;
+ }
   .navbar-left {
     gap: 10px;
     color: #636ae8;
@@ -401,7 +405,24 @@
     height: 40px;
     border-radius: 8px;
   }
+  .sidebar {
+    width: 50%;
+    right: -100%;
+    top: 8%;
+    height: 100vh;
+    position: fixed;
+    transition: right 0.3s ease;
+    background: white;
+    z-index: 15;
+  }
+  .sidebar:not(.collapsed) {
+    right: 0;
+  }
   .sidebar.collapsed {
-    display: none;
-}
+    right: -100%;
+  }
+  .collpsed{
+    margin-right: 0;
+  }
+
 }
