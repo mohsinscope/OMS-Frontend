@@ -32,7 +32,6 @@
   flex-wrap: wrap;
 }
 .supervisor-passport-dameged-filters.animate-show {
-  max-height: 300px;
   opacity: 1;
   display: flex;
   justify-content: flex-start;
@@ -234,4 +233,27 @@
   margin: auto;
 }
 
+}
+
+@media (max-width: 768px) {
+  .supervisor-passport-dameged-page {
+    margin-right: 0;
+    padding: 0;
+
+  }
+
+  .supervisor-passport-dameged-page.sidebar-collapsed {
+    margin-right: 0;
+  }
+
+  .supervisor-passport-dameged-form {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .supervisor-passport-dameged-button,
+  .modern-button {
+    width: 100%;
+    margin-top: 8px;
+  }
 }
