@@ -177,83 +177,70 @@
   color: #04aa6d !important;
   border: 2px solid #04aa6d !important;
 }
-/* Mobile Styles */
-@media (max-width: 768px) {
+
+}
+/* Small devices (landscape phones) */
+@media (max-width: 576px) {
   .supervisor-passport-dameged-page {
-    margin-top: 40%;
+    margin-top: 25%;
+    padding: 10px;
+    width: 100%;
+    margin-right: 0;
+    margin-left: 0;
+  }
+
+  .supervisor-passport-dameged-filters {
+    width: 100%;
     padding: 5px;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: start;
-    transition: all 0.3s ease-in-out;
-    overflow: auto; 
-  }
-  .sidebar-collapsed.supervisor-passport-dameged-page {
-    margin-left: 40px;
-    width: 130%;
-    height: 150%;
   }
 
   .supervisor-passport-dameged-form {
-    display: flex;
-    flex-wrap: wrap;
-    flex-direction: row;
-    justify-content: start;
-    align-items: end;
-    gap: 10px;
-    z-index: 10;
-  }
-  .filter-field {
-    display: none !important;
-  }
-  
-
-  .supervisor-passport-dameged-form .filter-field {
-    width: 100%;
-  }
-  .supervisor-passport-dameged-input,
-  .supervisor-passport-dameged-dropdown {
-    width: 100%;
-  }
-
-  .supervisor-passport-dameged-button,
-  .supervisor-passport-dameged-add-button,
-  .modern-button {
-    display: flex;
-    justify-content: center;
-    width: fit-content !important;
-    margin-top: 10px;
-  }
-  .ant-table-container {
-  overflow: auto; /* Ensure scrolling works */
-}
-.supervisor-passport-dameged-page .sidebar-collapsed{
-  margin: auto;
-}
-
-}
-
-@media (max-width: 768px) {
-  .supervisor-passport-dameged-page {
-    margin-right: 0;
-    padding: 0;
-
-  }
-
-  .supervisor-passport-dameged-page.sidebar-collapsed {
-    margin-right: 0;
-  }
-
-  .supervisor-passport-dameged-form {
+    display: grid;
     grid-template-columns: 1fr;
-    padding: 16px;
+    gap: 10px;
+    width: 100%;
   }
 
-  .supervisor-passport-dameged-button,
-  .modern-button {
+  .filter-field {
+    width: 100% !important;
+    margin-bottom: 10px;
+  }
+
+  .ant-table-wrapper {
+    width: 100% !important;
+  }
+
+  .supervisor-passport-dameged-table-container {
     width: 100%;
-    margin-top: 8px;
+    overflow: hidden;
+    margin-top: 15px;
+  }
+
+  .ant-table {
+    width: 100%;
+  }
+
+  .ant-table-content {
+    overflow-x: auto !important;
+  }
+
+  .ant-table-body {
+    overflow-x: auto !important;
+    width: 375px !important;
+  }
+
+  .modern-button.pdf-button,
+  .modern-button.excel-button,
+  .supervisor-passport-dameged-button,
+  .supervisor-passport-dameged-add-button {
+    width: 100% !important;
+    margin: 5px 0;
+    min-height: 40px;
+  }
+
+  .ant-pagination {
+    display: flex;
+    justify-content: center;
+    transform: scale(0.9);
   }
 }

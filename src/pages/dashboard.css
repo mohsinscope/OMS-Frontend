@@ -376,9 +376,9 @@
     transition: margin-right 0.3s ease;
     
   }
-  .sidebar:not(.collapsed) ~ .dashboard-content,
- .sidebar:not() ~ .supervisor-passport-damaged-page {
-   margin-right: 0;
+  .dashboard-content
+ {
+   margin-right: 20px;
  }
   .navbar-left {
     gap: 10px;
