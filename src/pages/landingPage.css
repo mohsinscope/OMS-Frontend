@@ -191,26 +191,54 @@
     }
   }
   
-  /* Responsive adjustments */
-  @media screen and (max-width: 768px) {
-    .content-wrapper {
-      padding: 1rem;
-    }
-    
-    .features-list {
-      padding: 0;
-    }
-    
-    .feature-item {
-      padding: 1.25rem;
-    }
-    
-    .icon-wrapper {
-      padding: 0.5rem;
-    }
-    
-    .feature-icon {
-      width: 1.5rem;
-      height: 1.5rem;
-    }
+
+
+/* Mobile Breakpoint */
+@media screen and (max-width: 767px) {
+  .sidebar-collapsed
+  {
+   
+    margin-top: 40%;
+    width: 100%;
   }
+  .landing-container {
+    padding: 1rem;
+    margin-top: 30%;
+    width: 100%;
+    margin-left: 10px;
+  }
+
+  .content-wrapper {
+    padding: 0.75rem;
+  }
+
+  .features-list {
+    grid-template-columns: 1fr;
+  }
+
+  .feature-item {
+    padding: 1rem;
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .feature-item {
+  flex-direction: row;
+}
+
+[dir="rtl"] .feature-title {
+  margin-right: 0;
+  margin-left: 1rem;
+}
+
+[dir="rtl"] .icon-wrapper {
+  margin-left: 0;
+  margin-right: 1rem;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .feature-item {
+    transition: none;
+  }
+}

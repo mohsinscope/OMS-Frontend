@@ -111,3 +111,92 @@
   width: 450px !important;
 margin-bottom: 20px;
 }
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .supervisor-passport-damage-show-container {
+    margin: 80px 10px 10px;
+    padding: 10px;
+  }
+
+  .details-lecture-container,
+  .image-container {
+    width: 100%;
+  }
+
+  .edit-button-and-delete {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .edit-button-passport,
+  .delete-button-passport,
+  .back-button {
+    width: 100%;
+    margin: 5px 0;
+    padding: 15px;
+  }
+
+  .details-row {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .details-value,
+  .textarea-value {
+    width: 100%;
+  }
+  .title-container{
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+
+
+
+@media (max-width: 576px) 
+ {
+  .title-container{
+    align-items: center;
+    justify-content: center;
+  }
+  .supervisor-passport-damage-show-container {
+   
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .image-container {
+    margin-top: 20px;
+  }
+
+  .dammaged-passport-container-edit-modal input,
+  .dammaged-passport-container-edit-modal .ant-select,
+  .dammaged-passport-container-edit-modal .ant-form-item-control-input-content {
+    width: 100% !important;
+  }
+  .details-container-Lecture .image-container{
+    width: 128%;
+  }
+  .details-lecture-container .details-row{
+    width: 190%;
+  }
+  .ant-modal {
+    width: 90% !important;
+    margin: 0 auto;
+  }
+
+  .ant-image {
+    width: 100% !important;
+    max-width: 250px;
+  }
+ 
+  .details-container-Lecture{
+    align-items: center;
+    justify-content: center ;
+  }
+}

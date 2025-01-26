@@ -144,20 +144,7 @@
   width: 100%;
 }
 
-.sidebar-collapsed {
-  width: 105%;
-  /* Limit the width */
-  margin-top: 6%;
 
-  padding: 20px;
-
-  border-radius: 8px;
-  /* Smooth rounded corners */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: start;
-}
 
 .sidebar-collapsed .supervisor-expenses-history-page {
   margin-left: 7%;
