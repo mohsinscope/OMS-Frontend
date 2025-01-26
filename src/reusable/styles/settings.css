@@ -144,12 +144,14 @@
  
  @media (max-width: 768px) {
   .settings-container {
-    margin-top: 15%;
+    margin-top: 40%;
+    width: 100%;
   }
  
   .settings-buttons-container {
     flex-direction: column;
     gap: 15px;
+    margin-top: 80px;
   }
  
   .settings-buttons-container button {
@@ -159,9 +161,9 @@
  
  @media (max-width: 480px) {
   .settings-container {
-    margin-top: 55%;
+
     padding: 10px;
-    width: 150%;
+  
   }
  
   .settings-form input {

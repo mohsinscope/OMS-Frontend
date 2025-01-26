@@ -127,7 +127,20 @@
   transition: all 0.3s ease; /* Smooth transition for hover effect */
   right: 0; /* Align to the right */
 }
+.sidebar-collapsed {
+  width: 105%;
+  /* Limit the width */
+  margin-top: 6%;
 
+  padding: 20px;
+
+  border-radius: 8px;
+  /* Smooth rounded corners */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+}
 /* Sidebar Top Section */
 .sidebar-top {
   display: flex;
@@ -369,6 +382,7 @@
     height: 80px; 
     z-index: 20;
   }
+
 
   .dashboard-content {
     height: 100%;
