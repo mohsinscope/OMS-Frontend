@@ -304,7 +304,7 @@ export default function ExpensessViewMonthly() {
             key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Link to="/Expensess-view-daily" state={{ dailyExpenseId: record.id }}>
+                    <Link to="/Expensess-view-daily" state={{ dailyExpenseId: record.id ,status: "New"  }}>
                         <Button type="primary" className="action-button">عرض</Button>
                     </Link>
                 </Space>

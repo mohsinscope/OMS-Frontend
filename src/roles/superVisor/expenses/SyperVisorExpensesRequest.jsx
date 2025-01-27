@@ -408,7 +408,7 @@ export default function SuperVisorExpensesRequest() {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
-        <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>
+        <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id  }}>
           <Button type="primary" size="large">عرض</Button>
         </Link>
       ),
