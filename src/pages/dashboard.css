@@ -126,6 +126,7 @@
   top: 8%;
   transition: all 0.3s ease; /* Smooth transition for hover effect */
   right: 0; /* Align to the right */
+  z-index: 15;
 }
 .sidebar-collapsed {
   width: 105%;
@@ -392,7 +393,7 @@
   }
   .dashboard-content
  {
-   margin-right: 20px;
+   margin-right: 0px;
  }
   .navbar-left {
     gap: 10px;
@@ -407,7 +408,7 @@
     display: none;
   }
 
-  h1 {
+  #title-navbar {
     display: none;
   }
   .navbar-logo {
@@ -439,4 +440,59 @@
     margin-right: 0;
   }
 
+}
+@media (min-width: 640px) and (max-width: 1024px) and (orientation: portrait) {
+  .sidebar {
+    width: 200px;
+    height: 97vh;
+    background-color: white;
+    border-left: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0px;
+    padding-top: 20px;
+    position: fixed;
+    top: 6%;
+    transition: all 0.3s ease;
+    right: 0;
+  }
+  .dashboard-content {
+    margin-right: 100px;
+    transition: margin-right 0.3s ease;
+  }
+#title-navbar {
+  display: flex;
+}
+}
+@media (min-width: 640px) and (max-width: 1420px) and (orientation: landscape) {
+  .sidebar {
+    width: 200px;
+    height: 100vh;
+    background-color: white;
+    border-left: 1px solid #ddd;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 0px;
+    padding-top: 20px;
+    position: fixed;
+    top: 8%;
+    transition: all 0.3s ease;
+    right: 0;
+}
+.dashboard-content {
+  margin-top: 6%;
+  margin-right: 100px;
+  transition: margin-right 0.3s ease;
+}
+}
+
+
+
+@media (width: 768px) and (height: 1024px) and (orientation: portrait){
+  .dashboard-content {
+    margin-right: 10px;
+    transition: all 0.3s ease;
+  }
 }

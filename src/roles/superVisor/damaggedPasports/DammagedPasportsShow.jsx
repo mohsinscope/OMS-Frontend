@@ -336,6 +336,7 @@ const DamagedPassportsShow = () => {
                 <>
                   <span className="note-details-label">صور الجواز التالف:</span>
                   <ImagePreviewer
+                  className="edit-model-container"
                     uploadedImages={images.map((img) => img.url)}
                     onImageSelect={(index) => {
                       const selectedImage = images[index]; // Correctly map selected index to image data

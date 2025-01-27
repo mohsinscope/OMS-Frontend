@@ -43,7 +43,7 @@ export default function NavBar({ onSidebarToggle }) {
 
       {/* Right Section */}
       <div className="navbar-right">
-        <h1 style={{ marginRight: "20px" }}>نظام إدارة المكاتب</h1>
+        <h1 id="title-navbar" style={{ marginRight: "20px" }}>نظام إدارة المكاتب</h1>
         <div
           style={{ cursor: "pointer" }}
           onClick={() => {

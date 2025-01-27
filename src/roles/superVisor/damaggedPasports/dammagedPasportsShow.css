@@ -123,8 +123,12 @@ margin-bottom: 20px;
   .image-container {
     width: 100%;
   }
-
+  .details-container-Lecture{
+    flex-direction: column-reverse !important;
+    gap: 20px;
+  }
   .edit-button-and-delete {
+    width: 100%;
     flex-wrap: wrap;
     gap: 10px;
   }
@@ -132,6 +136,7 @@ margin-bottom: 20px;
   .edit-button-passport,
   .delete-button-passport,
   .back-button {
+    height: 45px;
     width: 100%;
     margin: 5px 0;
     padding: 15px;
@@ -180,7 +185,7 @@ margin-bottom: 20px;
     width: 100% !important;
   }
   .details-container-Lecture .image-container{
-    width: 128%;
+    width: 100%;
   }
   .details-lecture-container .details-row{
     width: 190%;
@@ -198,5 +203,47 @@ margin-bottom: 20px;
   .details-container-Lecture{
     align-items: center;
     justify-content: center ;
+  }
+}
+@media (min-width: 640px) and (max-width: 1024px) and (orientation: portrait){
+  .supervisor-passport-damage-show-container{
+    margin: 10% 10px 10px;
+  }
+  .sidebar-collapsed {
+    margin-top: 12%;
+    margin-left: 0%;
+    width: 100%;
+  }
+  .image-container {
+    width: 100% !important;
+  }
+  .details-lecture-container {
+    width: 100% !important;
+  }
+  .edit-button-and-delete {
+    width: 100% !important;
+    justify-content: start !important;
+    align-items: center !important;
+    gap: 10px;
+  }
+  .edit-button-passport,
+  .delete-button-passport,
+  .back-button {
+    height: 45px;
+    width: fit-content;
+    margin: 5px 0;
+    padding: 15px;
+  }
+  
+}
+@media (width: 1024px) and (height: 768px) and (orientation: landscape){
+  .details-container-Lecture{
+    flex-direction: row-reverse !important;
+  }
+  .details-lecture-container{
+    width: 40% !important;
+  }
+  .image-container{
+    width: 100% !important;
   }
 }

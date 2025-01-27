@@ -7,7 +7,7 @@
   width: 99%;
 }
 .supervisor-damaged-passport-add-container.sidebar-collapsed{
-  width: 105%;
+  width: 100%;
 }
 .add-damagedpassport-section-container {
   display: flex;
@@ -155,7 +155,7 @@
 
 @media (max-width: 768px) {
   .supervisor-damaged-passport-add-container {
-    margin:40% 5px 5px;
+    margin:10% 5px 5px;
     width: 100%;
   }
 
@@ -183,7 +183,7 @@
 }
 @media (max-width: 576px) {
   .supervisor-damaged-passport-add-container {
-    margin: 40% 2px 2px;
+    margin: 10% 2px 2px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -200,7 +200,7 @@
 
   .image-previewer-container {
     margin-top: 90px;
-    width: 25% !important;
+    width: 60% !important;
     position: relative;
     right: 50px;
   }
@@ -246,5 +246,24 @@
   .add-back-button {
     width: 100%;
     margin: 5px 0;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1024px) and (orientation: portrait) {
+  .supervisor-damaged-passport-add-container {
+    margin: 10% 5px 5px;
+    width: 100%;
+}
+  .add-image-section {
+    display: flex;
+    flex-direction: column !important;
+    padding: 10px;
+    gap: 10px;
+  }
+  .dragger-container {
+    width: 100% !important;
+  }
+  .image-display{
+    margin-top: 50px;
   }
 }
