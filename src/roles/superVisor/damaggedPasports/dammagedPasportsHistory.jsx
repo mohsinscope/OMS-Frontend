@@ -547,7 +547,7 @@ export default function SuperVisorPassport() {
             />
           </div>
 
-            
+          <div className="supervisor-device-filter-buttons">
             <Button
               onClick={() => handleSearch(1)}
               className="supervisor-passport-dameged-button">
@@ -558,6 +558,7 @@ export default function SuperVisorPassport() {
               className="supervisor-passport-dameged-button">
               إعادة تعيين
             </Button>
+            </div>
             {hasCreatePermission && (
               <Link to="/supervisor/damagedpasportshistory/supervisordammagepasportadd">
                 <Button
@@ -567,6 +568,7 @@ export default function SuperVisorPassport() {
                 </Button>
               </Link>
             )}
+            <div className="supervisor-device-filter-buttons">
             <button
               type="button" // Prevent form submission
               onClick={handlePrintPDF}
@@ -598,7 +600,7 @@ export default function SuperVisorPassport() {
               انشاء ملف Excel
               <Icons type="excel" />
             </button>
-
+            </div>
             
         </form>
       </div>
