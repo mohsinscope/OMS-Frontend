@@ -13,7 +13,7 @@
 
 .sidebar-collapsed.supervisor-passport-dameged-page {
   margin-left: 1%;
-  width: 105%;
+  width: 100%;
 }
 
 .supervisor-passport-dameged-title {
@@ -180,7 +180,7 @@
 
 
 /* Small devices (landscape phones) */
-@media (max-width: 576px) {
+@media (max-width: 639px) {
   .supervisor-passport-dameged-page {
     margin-top: 25%;
     padding: 10px;
@@ -242,5 +242,36 @@
     display: flex;
     justify-content: center;
     transform: scale(0.9);
+  }
+}
+/* iPad Mini 6 (2021) - 8.3" screen */
+@media (min-width: 640px) and (max-width: 1024px) and (orientation: portrait) {
+  .sidebar-collapsed.supervisor-passport-dameged-page {
+    margin-top: 12%;
+    margin-left: 0%;
+    width: 100%;
+  }
+  .supervisor-passport-dameged-page {
+    margin-top: 12%;
+  }
+}
+@media (min-width: 640px) and (max-width: 1024px) and (orientation: landscape) {
+  .sidebar-collapsed.supervisor-passport-dameged-page {
+    margin-top: 10%;
+    margin-left: 8%;
+    width: 100%;
+  }
+  .supervisor-passport-dameged-page {
+    margin-top: 12%;
+  }
+}
+
+@media (width: 1024px) and (height: 768px) and (orientation: landscape){
+  .sidebar-collapsed.supervisor-passport-dameged-page {
+    margin-left: 0px;
+    width: 100%;
+  }
+  .supervisor-passport-dameged-page {
+    margin-top: 10%;
   }
 }

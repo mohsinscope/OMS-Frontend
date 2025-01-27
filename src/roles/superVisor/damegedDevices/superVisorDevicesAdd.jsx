@@ -322,13 +322,13 @@ const SuperVisorDammageDeviceAdd = () => {
 
   return (
     <div
-      className={`supervisor-devices-add-container ${
+      className={`supervisor-damaged-passport-add-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl"
     >
       <h1 className="SuperVisor-title-container">إضافة جهاز تالف</h1>
-      <div className="superVisor-Add-field-section-container">
+      <div className="add-details-container" style={{ width: "100%" }}>
         <Form
           form={form}
           onFinish={handleFormSubmit}
@@ -426,8 +426,8 @@ const SuperVisorDammageDeviceAdd = () => {
           </div>
 
           <h1 className="SuperVisor-title-container">إضافة صورة الجهاز التالف</h1>
-          <div className="uplaod-item-damaged-device-container">
-            <div className="add-image-section-container">
+          <div className="add-image-section">
+            <div className="dragger-container">
               <Form.Item
                 name="uploadedImages"
                 rules={[
@@ -444,12 +444,10 @@ const SuperVisorDammageDeviceAdd = () => {
                 ]}
               >
                 <Dragger
-                  className="upload-dragger"
                   fileList={fileList}
                   onChange={handleFileChange}
                   beforeUpload={() => false}
                   multiple
-                  style={{ width: "500px", height: "200px" }}
                   showUploadList={false}
                 >
                   <p className="ant-upload-drag-icon">📂</p>
@@ -469,15 +467,17 @@ const SuperVisorDammageDeviceAdd = () => {
                   {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
                 </Button>
               </Form.Item>
-              <ImagePreviewer
-                uploadedImages={previewUrls}
-                defaultWidth={600}
-                defaultHeight={300}
-                onDeleteImage={handleDeleteImage}
-              />
             </div>
+            <div className="image-previewer-container">
+                <ImagePreviewer
+                  uploadedImages={previewUrls}
+                  defaultWidth={600}
+                  defaultHeight={300}
+                  onDeleteImage={handleDeleteImage}
+                />
+              </div>
           </div>
-          <div className="supervisor-add-damageddevice-button">
+          <div className="image-previewer-section">
             <Button
               type="primary"
               htmlType="submit"

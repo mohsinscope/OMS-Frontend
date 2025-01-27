@@ -354,19 +354,19 @@ const SuperVisorDevices = () => {
 
   return (
     <div
-      className={`supervisor-devices-dameged-page ${
+      className={`supervisor-passport-dameged-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
 
       <div
-        className={`supervisor-devices-dameged-filters ${
+        className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
         <form
           onSubmit={handleFormSubmit}
-          className="supervisor-devices-dameged-form">
+          className="supervisor-passport-dameged-form">
           <div className="supervisor-devices-dameged-field-wrapper">
             <label className="supervisor-devices-dameged-label">المحافظة</label>
             <Select
@@ -461,7 +461,7 @@ const SuperVisorDevices = () => {
           </div>
           {hasCreatePermission && (
             <Link to="/damegedDevices/add">
-              <Button type="primary" className="supervisor-filter-buttons">
+              <Button type="primary" className="supervisor-passport-dameged-add-button">
                 اضافة جهاز جديد +
               </Button>
             </Link>
