@@ -78,15 +78,15 @@ export default function ExpensesView() {
   const getNextStatus = (currentStatus, position) => {
     position = position?.toLowerCase();  // This line exists
   
-    if (position?.includes("coordinator") && currentStatus === "SentFromDirector") {
+    if (currentStatus === "SentFromDirector") {
       return Status.RecievedBySupervisor;
-    } else if (position?.includes("coordinator") ) {
+    } else if (currentStatus === "SentToProjectCoordinator" ) {
       return Status.SentToManager;
-    } else if (position?.includes("manager")) {
+    } else if(currentStatus === "SentToManager" ) {
       return Status.SentToDirector;
-    } else if (position?.includes("director")) {
+    } else if (currentStatus === "SentToDirector" ) {
       return Status.SentFromDirector;
-    } else if (currentStatus === Status.RecievedBySupervisor) {
+    } else if (currentStatus === "RecievedBySupervisor") {
       return Status.Completed;
     }
   
