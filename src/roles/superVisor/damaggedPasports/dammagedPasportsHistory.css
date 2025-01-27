@@ -12,7 +12,7 @@
 }
 
 .sidebar-collapsed.supervisor-passport-dameged-page {
-  margin-left: 1%;
+  /* margin-left: 1%; */
   width: 100%;
 }
 
@@ -237,13 +237,20 @@
     margin: 5px 0;
     min-height: 40px;
   }
-
+  .modern-button.excel-button,.modern-button.pdf-button{
+    height: 65px !important;
+  }
+  .filter-field .ant-select {
+    width: 100% !important;
+  }
   .ant-pagination {
     display: flex;
     justify-content: center;
     transform: scale(0.9);
   }
-}
+  .supervisor-device-filter-buttons {
+    margin-top: 0px;
+  }
 /* iPad Mini 6 (2021) - 8.3" screen */
 @media (min-width: 640px) and (max-width: 1024px) and (orientation: portrait) {
   .sidebar-collapsed.supervisor-passport-dameged-page {
@@ -274,4 +281,5 @@
   .supervisor-passport-dameged-page {
     margin-top: 10%;
   }
+}
 }

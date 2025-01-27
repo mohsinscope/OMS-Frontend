@@ -219,6 +219,6 @@
   width: 130px !important;
 }
 .filter-field .ant-select {
-  width: 200px !important;
+  width: 200px ;
   height: 47px !important;
 }
