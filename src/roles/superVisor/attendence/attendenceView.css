@@ -102,3 +102,16 @@
   width: 136px;
   height: 52px;
 }
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+
+  .single-total-container{
+    width: 370px;
+    align-items: center;
+  }
+  .total-chart-container h2{
+    margin-right: 30px;
+  }
+
+}

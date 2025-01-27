@@ -228,10 +228,7 @@ margin: 10px 20px;
     display: flex;
     flex-direction: column;
   }
-  /* Specific style for pie chart section */
-.stats-chart-section:has(.recharts-pie) {
-  width: 600px;
-}
+
   /* Chart container */
   .recharts-wrapper {
     margin: 0 auto;
@@ -257,14 +254,13 @@ margin: 10px 20px;
       margin-right: auto;
       
     }
-    .chart-container{
-      margin: 10px 20px;
-    }
+ 
    
     .recharts-surface {
       padding-left: 0 !important;
     }
     .stats-chart-section {
+      width: 300px;
     
     }
   }

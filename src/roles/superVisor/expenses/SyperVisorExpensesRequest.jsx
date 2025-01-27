@@ -139,7 +139,7 @@ export default function SuperVisorExpensesRequest() {
         officeId: profile?.officeId,
         governorateId: profile?.governorateId,
         profileId: profile?.profileId,
-        status: 0,
+        statuses: [0],
         startDate: null,
         endDate: null,
         PaginationParams: {
@@ -468,73 +468,7 @@ export default function SuperVisorExpensesRequest() {
           </Button>
         </div>
 
-        {isLastMonthLoading ? (
-          <Collapse
-            style={{
-              background: "#fff",
-              borderRadius: "8px",
-              marginTop: "24px",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-            }}>
-            <Collapse.Panel
-              key="1"
-              header={
-                <h2 style={{
-                  margin: 0,
-                  textAlign: "center",
-                  color: "#1f2937",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                }}>
-                  جاري تحميل بيانات الشهر السابق...
-                </h2>
-              }
-            >
-              <div style={{ padding: "20px", textAlign: "center" }}>
-                <Spin size="large" />
-              </div>
-            </Collapse.Panel>
-          </Collapse>
-        ) : lastMonthExpense && (
-          <Collapse
-            style={{
-              background: "#fff",
-              borderRadius: "8px",
-              marginTop: "24px",
-              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-            }}
-          >
-            <Collapse.Panel
-              key="1"
-              header={
-                <h2 style={{
-                  margin: 0,
-                  textAlign: "center",
-                  color: "#1f2937",
-                  fontSize: "18px",
-                  fontWeight: "bold",
-                }}>
-                  مصروفات الشهر السابق -{" "}
-                  {statusDisplayNames[lastMonthExpense?.status] || "غير معروف"}
-                </h2>
-              }
-            >
-              <ConfigProvider direction="rtl">
-                <Table
-                  dataSource={[{ key: "1", ...lastMonthExpense }]}
-                  columns={lastMonthColumns}
-                  pagination={false}
-                  bordered
-                  style={{
-                    backgroundColor: "#fff",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                  }}
-                />
-              </ConfigProvider>
-            </Collapse.Panel>
-          </Collapse>
-        )}
+
       </div>
     );
   };
@@ -683,7 +617,10 @@ export default function SuperVisorExpensesRequest() {
   )}
 </Space>
 
+
+
           </Card>
+          
         ) : null}
 
         <div style={{ flex: 1 }}>
@@ -727,8 +664,77 @@ export default function SuperVisorExpensesRequest() {
             </>
           )}
         </div>
+        
+        
       </div>
 
+      {isLastMonthLoading ? (
+          <Collapse
+            style={{
+              background: "#fff",
+              borderRadius: "8px",
+              marginTop: "24px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+            }}>
+            <Collapse.Panel
+              key="1"
+              header={
+                <h2 style={{
+                  margin: 0,
+                  textAlign: "center",
+                  color: "#1f2937",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                }}>
+                  جاري تحميل بيانات الشهر السابق...
+                </h2>
+              }
+            >
+              <div style={{ padding: "20px", textAlign: "center" }}>
+                <Spin size="large" />
+              </div>
+            </Collapse.Panel>
+          </Collapse>
+        ) : lastMonthExpense && (
+          <Collapse
+            style={{
+              background: "#fff",
+              borderRadius: "8px",
+              marginTop: "24px",
+              boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
+            }}
+          >
+            <Collapse.Panel
+              key="1"
+              header={
+                <h2 style={{
+                  margin: 0,
+                  textAlign: "center",
+                  color: "#1f2937",
+                  fontSize: "18px",
+                  fontWeight: "bold",
+                }}>
+                  مصروفات الشهر السابق -{" "}
+                  {statusDisplayNames[lastMonthExpense?.status] || "غير معروف"}
+                </h2>
+              }
+            >
+              <ConfigProvider direction="rtl">
+                <Table
+                  dataSource={[{ key: "1", ...lastMonthExpense }]}
+                  columns={lastMonthColumns}
+                  pagination={false}
+                  bordered
+                  style={{
+                    backgroundColor: "#fff",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                  }}
+                />
+              </ConfigProvider>
+            </Collapse.Panel>
+          </Collapse>
+        )}
       {/* Monthly Expense Modal */}
       <Modal
         title="إنشاء مصروف شهري"
