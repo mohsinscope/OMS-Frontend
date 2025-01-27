@@ -98,3 +98,21 @@
   box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
   outline: 0;
 }
+/* Responsive adjustments */
+@media (max-width: 768px) {
+
+  .supervisor-attendence-register-container.sidebar-collapsed{
+    margin-top: 25%;
+    margin-left: 20px;
+  }
+  .attendance-buttons{
+    width: 100%;
+    display: flex;
+  }
+  .attendance-field-wrapper-add{
+    width: 100%;
+  }
+  .attendance-dropdown{
+    width: 100%;
+  }
+}
