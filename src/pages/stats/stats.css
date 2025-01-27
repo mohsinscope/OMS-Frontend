@@ -343,3 +343,129 @@
     transform: translateY(-4px);
     box-shadow: rgba(0, 0, 0, 0.15) 0px 8px 24px;
   }
+
+
+  /* Mobile Responsive Styles */
+@media (max-width: 767px) {
+  .stats-container-collapsed {
+    width: 100%;
+    padding: 0 10px;
+    margin-top: 20%;
+    margin-left: 10px;
+  }
+  .chart-container{
+    margin: 0;
+  }
+  .stats-navbar {
+    margin-top: 15px;
+    border-radius: 6px;
+  }
+  .stats-chart-section:has(.recharts-pie){
+    width: 300px;
+    min-height: 200px;
+  }
+  .small-stats-navbar-warber ul {
+    height: auto;
+    padding: 10px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 15px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .small-stats-navbar-warber ul li {
+    padding: 8px 12px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .stats-main-section {
+    flex-direction: column;
+    margin: 10px 0;
+    gap: 15px;
+    align-items: center;
+  }
+
+  .chart-container {
+    margin: 0;
+    padding: 10px;
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  .stats-form {
+    margin: 10px 0;
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .stats-form .form-group {
+    width: 100%;
+  }
+
+  .stats-form input,
+  .stats-form select {
+    width: 100%;
+    height: 40px;
+    font-size: 14px;
+  }
+
+  .stats-form button {
+    width: 100%;
+    height: 40px;
+  }
+
+  .summary-card,
+  .summary-card-attendence {
+    width: 100%;
+    height: auto;
+    min-height: 150px;
+    padding: 15px;
+    margin-bottom: 15px;
+    width: 300px;
+  }
+
+  .summary-card-attendence {
+    flex-direction: column;
+  }
+
+  .stats-summary {
+    padding: 10px;
+    gap: 15px;
+  }
+}
+
+/* Extra Small Devices */
+@media (max-width: 375px) {
+  .stats-navbar {
+    margin-top: 10px;
+  }
+
+  .small-stats-navbar-warber ul {
+    padding: 8px;
+    gap: 10px;
+  }
+
+  .small-stats-navbar-warber ul li {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .stats-form {
+    padding: 12px;
+  }
+
+  .stats-form input,
+  .stats-form select,
+  .stats-form button {
+    height: 38px;
+    font-size: 13px;
+  }
+
+  .summary-card,
+  .summary-card-attendence {
+    min-height: 130px;
+    padding: 12px;
+    width: 300px;
+  }
+}
