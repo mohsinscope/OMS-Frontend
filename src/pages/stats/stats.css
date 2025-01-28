@@ -432,6 +432,7 @@
   .stats-summary {
     padding: 10px;
     gap: 15px;
+    justify-content: center;
   }
 }
 

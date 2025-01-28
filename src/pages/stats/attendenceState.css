@@ -212,7 +212,6 @@ margin: 10px 20px;
   }
   
   .attendance-charts-stats .attendance-card {
-    flex: 1;
     min-width: calc(50% - 12px);
     background: white;
     border: 1px solid #E5E7EB;
