@@ -149,55 +149,46 @@ const AttendanceStats = () => {
   };
 
   // Fetch governorate statistics with auth
-  const fetchGovernorateStats = async (govList = []) => {
-    try {
-      const baseBody = {
-        Date: `${selectedDate}T00:00:00Z`,
-        PaginationParams: { PageNumber: 1, PageSize: 10 }
-      };
+// Replace the fetchGovernorateStats function with this new version
+const fetchGovernorateStats = async () => {
+  try {
+    const response = await axiosInstance.post(
+      `${Url}/api/Attendance/governorate-statistics`,
+      {
+        date: `${selectedDate}T00:00:00Z`
+      },
+      getAuthHeaders()
+    );
 
+    if (response.data && response.data.governorateStatistics) {
       const morningStatsData = [];
       const eveningStatsData = [];
 
-      const governoratesToUse = govList.length > 0 ? govList : governorates;
-
-      for (const gov of governoratesToUse) {
-        const [morningResponse, eveningResponse] = await Promise.all([
-          axiosInstance.post(`${Url}/api/Attendance/search/statistics`, {
-            ...baseBody,
-            GovernorateId: gov.id,
-            WorkingHours: 1
-          }, getAuthHeaders()),
-          axiosInstance.post(`${Url}/api/Attendance/search/statistics`, {
-            ...baseBody,
-            GovernorateId: gov.id,
-            WorkingHours: 2
-          }, getAuthHeaders())
-        ]);
-
+      response.data.governorateStatistics.forEach(stat => {
         morningStatsData.push({
-          name: gov.name,
-          value: morningResponse.data.availableStaff || 0
+          name: stat.governorateName,
+          value: stat.morningShiftCount
         });
 
         eveningStatsData.push({
-          name: gov.name,
-          value: eveningResponse.data.availableStaff || 0
+          name: stat.governorateName,
+          value: stat.eveningShiftCount
         });
-      }
+      });
 
+      // Sort the data by value in descending order
       const sortedMorningData = morningStatsData.sort((a, b) => b.value - a.value);
       const sortedEveningData = eveningStatsData.sort((a, b) => b.value - a.value);
-      
+
       setGovernorateData({
         morning: sortedMorningData,
         evening: sortedEveningData
       });
-    } catch (error) {
-      console.error("Failed to fetch governorate stats:", error);
     }
-  };
-
+  } catch (error) {
+    console.error("Failed to fetch governorate stats:", error);
+  }
+};
   // Initialize data on component mount
   useEffect(() => {
     const initData = async () => {
