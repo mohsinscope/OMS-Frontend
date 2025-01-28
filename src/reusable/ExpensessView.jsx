@@ -1035,7 +1035,8 @@ disabled={!profile.profileId}
               }
             ]}
             dataSource={expense?.items}
-            bordered
+            bordered={true}
+
             pagination={{ pageSize: 5, position: ["bottomCenter"] }}
             locale={{ emptyText: "لا توجد عناصر للصرف." }}
             summary={(pageData) => {

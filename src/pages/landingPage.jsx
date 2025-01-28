@@ -10,7 +10,7 @@ const LandingPage = () => {
     <div className={`landing-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`} dir="rtl">
       <div className="content-wrapper">
         {/* Header */}
-        <div className="header">
+        <div className="header-title">
           <h1 className="title" style={{textAlign:"center"}}>
             اهلا بكم في نظام إدارة المكاتب
           </h1>

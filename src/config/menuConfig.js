@@ -22,7 +22,7 @@ export const MENU_ITEMS = [
     role: []
   },
   {
-    label: "المصاريف",
+    label: "سجل المصاريف",
     icon: "bill",
     path: "/supervisor/Expensess",
     requiredPermission: "EXr",

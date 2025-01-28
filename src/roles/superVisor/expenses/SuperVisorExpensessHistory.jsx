@@ -507,14 +507,14 @@ export default function SuperVisorExpensesHistory() {
 
   return (
     <div
-      className={`supervisor-expenses-history-page ${
+      className={`supervisor-passport-dameged-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
       <h1 className="supervisor-expenses-history-title">سجل الصرفيات</h1>
 
       <div
-        className={`supervisor-expenses-history-filters ${
+        className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
         {(isAdmin || !isSupervisor) && (

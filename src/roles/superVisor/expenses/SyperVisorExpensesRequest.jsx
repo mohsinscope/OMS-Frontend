@@ -493,12 +493,7 @@ export default function SuperVisorExpensesRequest() {
       dir="rtl"
       style={{ padding: "24px" }}>
       <div
-        style={{
-          display: "flex",
-          flexDirection: "row",
-          gap: "24px",
-          marginBottom: "24px",
-        }}>
+        className="this-month-container">
         {!canCreateMonthly ? (
           <Card
             className="office-info-card"
@@ -629,7 +624,7 @@ export default function SuperVisorExpensesRequest() {
           ) : (
             <>
               <Card className="expenses-table-card" style={{ marginBottom: "24px" }}>
-                <div style={{display:"flex", justifyContent:"space-between",width:"100%"}}>
+                <div  className="this-month-daily-container">
 
 
                 <h1 style={{ marginBottom: "5px" }}>

@@ -115,8 +115,7 @@ margin-bottom: 20px;
 /* Responsive styles */
 @media (max-width: 768px) {
   .supervisor-passport-damage-show-container {
-    margin: 80px 10px 10px;
-    padding: 10px;
+    margin: 80px 0px 0px;
   }
 
   .details-lecture-container,

@@ -223,7 +223,6 @@ margin: 10px 20px;
   }
   
   .stats-chart-section {
-    width: 100%;
     min-height: 600px;
     display: flex;
     flex-direction: column;
