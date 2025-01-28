@@ -276,7 +276,9 @@
   .expenses-table-monthley-in-details .ant-table {
       display: block;
   }
-
+  .monthly-expense-container .monthly-expense-card {
+    background: none;
+  }
   .expenses-table-monthley-in-details .ant-table-thead {
       display: none;
   }

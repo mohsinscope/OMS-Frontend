@@ -25,7 +25,7 @@ const useAuthStore = create((set, get) => ({
   isInitialized: false,
   isRefreshing: false,
   searchVisible: true,
-  isSidebarCollapsed: true,
+  isSidebarCollapsed: false,
 
   toggleSidebar: () => {
     set((state) => ({
