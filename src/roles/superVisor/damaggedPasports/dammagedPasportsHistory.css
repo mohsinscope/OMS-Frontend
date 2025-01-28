@@ -188,7 +188,9 @@
     margin-right: 0;
     margin-left: 0;
   }
-
+  .supervisor-device-filter-buttons{
+    width: 100%;
+  }
   .supervisor-passport-dameged-filters {
     width: 100%;
     padding: 5px;
@@ -261,6 +263,10 @@
   .supervisor-passport-dameged-page {
     margin-top: 12%;
   }
+  .supervisor-device-filter-buttons{
+    width: 100%;
+  }
+  
 }
 @media (min-width: 640px) and (max-width: 1024px) and (orientation: landscape) {
   .sidebar-collapsed.supervisor-passport-dameged-page {
@@ -271,6 +277,9 @@
   .supervisor-passport-dameged-page {
     margin-top: 12%;
   }
+  .supervisor-device-filter-buttons{
+    width: 100%;
+  }
 }
 
 @media (width: 1024px) and (height: 768px) and (orientation: landscape){
@@ -280,6 +289,9 @@
   }
   .supervisor-passport-dameged-page {
     margin-top: 10%;
+  }
+  .supervisor-device-filter-buttons{
+    width: 100%;
   }
 }
 }
