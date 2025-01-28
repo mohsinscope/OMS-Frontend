@@ -522,12 +522,12 @@ export default function ExpensesView() {
       // Set Column Widths
       worksheet.columns = [
         { width: 30 }, // ملاحظات
-        { width: 15 }, // المجموع
-        { width: 15 }, // سعر المفرد
-        { width: 10 }, // العدد
+        { width: 30 }, // المجموع
+        { width: 30 }, // سعر المفرد
+        { width: 30 }, // العدد
         { width: 30 }, // البند
-        { width: 15 }, // التاريخ
-        { width: 10 }, // تسلسل
+        { width: 25 }, // التاريخ
+        { width: 20 }, // تسلسل
       ];
 
       const buffer = await workbook.xlsx.writeBuffer();
@@ -698,7 +698,7 @@ export default function ExpensesView() {
   ${
     expense?.generalInfo?.["المتبقي"]
       ? `IQD ${expense.generalInfo["المتبقي"].toLocaleString(undefined, {
-          minimumFractionDigits: 2,
+          minimumFractionDigits: 0,
           maximumFractionDigits: 2,
         })}`
       : ""
@@ -759,7 +759,7 @@ export default function ExpensesView() {
     </table>
 
     <!-- Images Section -->
-    <div style="margin-top: 40px; text-align: center;">
+    <div style="margin-top: 40px; text-align: center; page-break-before: always;">
   <h2 style="font-size: 20px; color: #000; margin-bottom: 20px;">صور المصروفات</h2>
   ${itemsWithImages
     .filter((item) => item.images && item.images.length > 0)

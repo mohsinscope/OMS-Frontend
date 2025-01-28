@@ -333,18 +333,18 @@ const SuperVisorLecturerhistory = () => {
 
   return (
     <div
-      className={`supervisor-Lectur-page ${
-        isSidebarCollapsed ? "sidebar-collapsed" : "supervisor-Lectur-page"
+      className={`supervisor-passport-dameged-page ${
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
-      <h1 className="supervisor-Lectur-title">المحاضر</h1>
+      <h1 className="supervisor-passport-dameged-title">المحاضر</h1>
 
       <div
-        className={`supervisor-Lectur-filters ${
+        className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
-        <form onSubmit={handleFormSubmit} className="supervisor-Lectur-form">
-          <div className="supervisor-Lectur-field-wrapper">
+        <form onSubmit={handleFormSubmit} className="supervisor-passport-dameged-form">
+          <div className="filter-field">
             <label htmlFor="governorate" className="supervisor-Lectur-label">
               المحافظة
             </label>
@@ -363,7 +363,7 @@ const SuperVisorLecturerhistory = () => {
             </Select>
           </div>
 
-          <div className="supervisor-Lectur-field-wrapper">
+          <div className="filter-field">
             <label htmlFor="office" className="supervisor-Lectur-label">
               اسم المكتب
             </label>
@@ -381,7 +381,7 @@ const SuperVisorLecturerhistory = () => {
             </Select>
           </div>
 
-          <div className="supervisor-Lectur-field-wrapper">
+          <div className="filter-field">
             <label htmlFor="company" className="supervisor-Lectur-label">
               الشركة
             </label>
@@ -398,7 +398,7 @@ const SuperVisorLecturerhistory = () => {
             </Select>
           </div>
 
-          <div className="supervisor-Lectur-field-wrapper">
+          <div className="filter-field">
             <label htmlFor="title" className="supervisor-Lectur-label">
               عنوان المحضر
             </label>
@@ -410,8 +410,8 @@ const SuperVisorLecturerhistory = () => {
             />
           </div>
 
-          <div className="supervisor-Lectur-field-wrapper">
-            <label htmlFor="lectureType" className="supervisor-Lectur-label">
+          <div className="filter-field">
+            <label>
               نوع المحضر
             </label>
             <Select
@@ -421,8 +421,8 @@ const SuperVisorLecturerhistory = () => {
               onChange={(value) =>
                 setFormData((prev) => ({ ...prev, lectureTypeIds: value }))
               }
-              className="supervisor-Lectur-select"
-              style={{ width: "fit-content", maxHeight: "200px", overflowY: "auto" }}>
+              className="filter-dropdown"
+              style={{ maxHeight: "200px", overflowY: "auto" }}>
               {lectureTypeNames.map((type) => (
                 <Select.Option key={type.id} value={type.id}>
                   {type.name}
@@ -433,14 +433,14 @@ const SuperVisorLecturerhistory = () => {
 
           <div className="supervisor-Lectur-field-wrapper">
             <label htmlFor="startDate" className="supervisor-Lectur-label">
-              التاريخ من
+              التاريخ
             </label>
             <DatePicker
               id="startDate"
               placeholder="اختر التاريخ"
               onChange={(date) => handleDateChange(date, "startDate")}
               value={formData.startDate}
-              className="supervisor-Lectur-input"
+              className="supervisor-passport-dameged-input"
             />
           </div>
 
@@ -457,7 +457,7 @@ const SuperVisorLecturerhistory = () => {
 
           {hasCreatePermission && (
             <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
-              <Button type="primary" className="supervisor-add-Lectur-button">
+              <Button type="primary" className="supervisor-passport-dameged-add-button">
                 اضافة محضر جديد +
               </Button>
             </Link>

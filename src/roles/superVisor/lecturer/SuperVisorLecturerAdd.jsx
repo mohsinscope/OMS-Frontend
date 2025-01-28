@@ -346,11 +346,11 @@ const SuperVisorLecturerAdd = () => {
 
   return (
     <div
-      className={`supervisor-Lecturer-add-container ${
+      className={`supervisor-damaged-passport-add-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
-      <h1 className="SuperVisor-Lecturer-title-conatiner">إضافة محضر جديد</h1>
+      <h1 className="SuperVisor-title-container">إضافة محضر جديد</h1>
       <div className="add-Lecturer-details-container">
         <Form
           form={form}
@@ -474,53 +474,58 @@ const SuperVisorLecturerAdd = () => {
             <h1 className="SuperVisor-Lecturer-title-conatiner">
               إضافة صورة محضر
             </h1>
-            <div className="Lecturer-add-image-section">
-              <Form.Item
-                name="uploadedImages"
-                rules={[
-                  {
-                    validator: (_, value) =>
-                      fileList.length > 0 || previewUrls.length > 0
-                        ? Promise.resolve()
-                        : Promise.reject(
-                            new Error(
-                              "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
-                            )
-                          ),
-                  },
-                ]}>
-                <Dragger
-                  className="upload-dragger"
-                  fileList={fileList}
-                  onChange={handleFileChange}
-                  beforeUpload={() => false}
-                  multiple
-                  style={{ width: "500px", height: "200px" }}
-                  showUploadList={false}>
-                  <p className="ant-upload-drag-icon">📂</p>
-                  <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
-                </Dragger>
-                <Button
-                  type="primary"
-                  onClick={onScanHandler}
-                  disabled={isScanning}
-                  style={{
-                    width: "100%",
-                    height: "45px",
-                    marginTop: "10px",
-                    marginBottom: "10px",
-                  }}>
-                  {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
-                </Button>
-              </Form.Item>
+            <div className="add-image-section">
+              <div className="dragger-container">
+                <Form.Item
+                  name="uploadedImages"
+                  rules={[
+                    {
+                      validator: (_, value) =>
+                        fileList.length > 0 || previewUrls.length > 0
+                          ? Promise.resolve()
+                          : Promise.reject(
+                              new Error(
+                                "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
+                              )
+                            ),
+                    },
+                  ]}>
+                  <Dragger
+                    className="upload-dragger"
+                    fileList={fileList}
+                    onChange={handleFileChange}
+                    beforeUpload={() => false}
+                    multiple
+                    showUploadList={false}>
+                    <p className="ant-upload-drag-icon">📂</p>
+                    <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
+                  </Dragger>
+                  <Button
+                    type="primary"
+                    onClick={onScanHandler}
+                    disabled={isScanning}
+                    style={{
+                      width: "100%",
+                      height: "45px",
+                      marginTop: "10px",
+                      marginBottom: "10px",
+                    }}>
+                    {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
+                  </Button>
+                </Form.Item>
+                  
+              </div>
+            <div className="image-previewer-container">
               <ImagePreviewer
                 uploadedImages={previewUrls}
                 defaultWidth={600}
                 defaultHeight={300}
-                onDeleteImage={handleDeleteImage}
+                onDe
+                leteImage={handleDeleteImage}
               />
-            </div>
-            <div className="Lecturer-image-previewer-section">
+              </div>
+              </div>
+            <div className="image-previewer-section">
               <Button
                 type="primary"
                 htmlType="submit"
