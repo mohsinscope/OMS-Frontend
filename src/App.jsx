@@ -10,6 +10,10 @@ import LandingPage from "./pages/landingPage.jsx";
 import NotFound from "./pages/pageNotFound.jsx";
 import Forbidden from "./pages/forbidden.jsx";
 import axiosInstance from "./intercepters/axiosInstance.js";
+import DevToolsBlocker from './DevToolsBlocker.jsx';
+
+
+
 //admin
 import AdminUserManagement from "./roles/admin/user-managment/AdminUserManagment.jsx";
 import ListOfValueAdmin from "./roles/admin/ListOfValueAdmin/ListOfValueAdmin.jsx";
@@ -153,6 +157,8 @@ const App = () => {
 
   return (
     <Router>
+          <DevToolsBlocker /> {/* Add this line */}
+
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<SignInPage />} />
