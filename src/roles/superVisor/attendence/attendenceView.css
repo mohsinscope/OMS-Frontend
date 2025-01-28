@@ -113,5 +113,10 @@
   .total-chart-container h2{
     margin-right: 30px;
   }
-
+  .attendence-view-container{
+    margin: 20% 0;
+  }
+  .charts-section{
+    justify-content: center;
+  }
 }

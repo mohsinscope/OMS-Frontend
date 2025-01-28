@@ -163,6 +163,7 @@ const AdminUserManagment = () => {
     fetchUserData(1, pagination.pageSize, { roles: [] });
   };
 
+
   const handleAddUser = async (values) => {
     try {
       const payload = {
@@ -190,16 +191,31 @@ const AdminUserManagment = () => {
       message.error("فشل في إضافة المستخدم");
     }
   };
-
+  const positionEnums = {
+    'Manager': 1,
+    'Director': 2,
+    'Supervisor': 3,
+    'Accontnt': 4,
+    'FollowUpEmployee': 5,
+    'Reporting Analyst': 6,
+    'Sr.Controller': 7,
+    'Project Coordinator': 8,
+    'Operation Manager': 9
+  };
   const handleEditUser = async (user) => {
     setSelectedUser(user);
     setSelectedGovernorate(user.governorateId);
     await fetchOffices(user.governorateId);
+      // Map the position string to its enum value
+      let positionValue = user.position;
+      if (typeof user.position === 'string') {
+        positionValue = positionEnums[user.position] || user.position;
+      }
     form.setFieldsValue({
       username: user.username,
       fullName: user.fullName,
       roles: user.roles,
-      position: user.position,
+      position: positionValue,
       governorate: user.governorateId,
       officeName: user.officeId,
     });
