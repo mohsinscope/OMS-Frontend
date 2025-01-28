@@ -216,7 +216,7 @@ const LecturerShow = () => {
 
   return (
     <div
-      className={`supervisor-lecture-show-container ${
+      className={`supervisor-passport-damage-show-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
@@ -230,7 +230,7 @@ const LecturerShow = () => {
           {hasDeletePermission && (
             <Button
               onClick={() => setDeleteModalVisible(true)}
-              className="delete-button-lecture">
+              className="delete-button-passport">
               حذف <Lele type="delete" />
             </Button>
           )}
@@ -252,7 +252,7 @@ const LecturerShow = () => {
                 // Open the edit modal
                 setEditModalVisible(true);
               }}
-              className="edit-button-lecture">
+              className="edit-button-passport">
               تعديل <Lele type="edit" />
             </Button>
           )}
@@ -309,7 +309,7 @@ const LecturerShow = () => {
               disabled
             />
           </div>
-          <div className="note-details-value">
+          <div className="details-row">
             <span className="details-label">الملاحظات:</span>
             <textarea
               className="textarea-value"
@@ -318,10 +318,9 @@ const LecturerShow = () => {
             />
           </div>
         </div>
-        <div className="image-lecture-container">
+        <div className="image-container">
           {images.length > 0 && (
-            <div className="image-lecture-preview-container">
-              <span className="note-details-label">صور المحضر:</span>
+            <div className="image-preview-container">
               <ImagePreviewer
                 uploadedImages={images.map((img) => img.url)}
                 defaultWidth={600}
