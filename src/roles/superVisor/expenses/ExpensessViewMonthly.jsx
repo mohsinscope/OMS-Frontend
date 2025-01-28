@@ -471,7 +471,7 @@ export default function ExpensessViewMonthly() {
 
                 <ConfigProvider direction="rtl">
                     <Table
-                        className="expenses-table"
+                        className="expenses-table-monthley-in-details"
                         dataSource={dailyExpenses}
                         columns={columns}
                         loading={loading}

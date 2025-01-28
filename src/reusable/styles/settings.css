@@ -145,7 +145,6 @@
  @media (max-width: 768px) {
   .settings-container {
     margin-top: 40%;
-    width: 100%;
   }
  
   .settings-buttons-container {
@@ -163,13 +162,14 @@
   .settings-container {
 
     padding: 10px;
-  
+    gap: 10px;
   }
  
   .settings-form input {
     height: 45px;
     width: 250px;
     font-size: 14px;
+    margin-bottom: 15px;
   }
  
   .settings-buttons-container button {
