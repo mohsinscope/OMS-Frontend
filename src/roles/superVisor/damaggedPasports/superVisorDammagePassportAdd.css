@@ -155,7 +155,7 @@
 
 @media (max-width: 768px) {
   .supervisor-damaged-passport-add-container {
-    margin:10% 5px 5px;
+    margin:10% 0px 0px;
     width: 100%;
   }
 
@@ -183,7 +183,7 @@
 }
 @media (max-width: 576px) {
   .supervisor-damaged-passport-add-container {
-    margin: 10% 2px 2px;
+    margin: 20% 0px 0px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -228,7 +228,10 @@
   .add-passport-fields-container .ant-form-item {
     width: 100%;
   }
+  .form-item-damaged-device-container .ant-form-item{
+    width: 100%;
 
+  }
   .add-passport-fields-container .ant-input,
   .add-passport-fields-container .ant-select,
   .add-passport-fields-container .ant-picker,

@@ -540,11 +540,14 @@
     width: 100%;
     padding: 20px;
     align-items: center;
-    margin-left: 40px;
   }
   .input-wrapper,
   .password-field-login { width: 100%; }
   .login-btn { width: 80%; }
+  #sign-in-title{
+    margin: auto;
+  }
+
 }
 
 /* Mobile Large */
@@ -552,6 +555,7 @@
   .container {
     flex-direction: column;
     height: auto;
+    align-items: center;
   }
   .left-side {
     width: 100%;
@@ -570,7 +574,7 @@
     width: 100%;
     padding: 20px;
     align-items: center;
-    margin-left: 40px;
+    justify-content: center;
   }
   .input-wrapper,
   .password-field-login { width: 100%; }

@@ -304,7 +304,7 @@ export default function ExpensessViewMonthly() {
             key: 'actions',
             render: (_, record) => (
                 <Space>
-                    <Link to="/Expensess-view-daily" state={{ dailyExpenseId: record.id ,status: "New"  }}>
+                    <Link to="/Expensess-view-daily" state={{ dailyExpenseId: record.id ,status: monthlyExpense?.status }}>
                         <Button type="primary" className="action-button">عرض</Button>
                     </Link>
                 </Space>
@@ -475,6 +475,7 @@ export default function ExpensessViewMonthly() {
                         dataSource={dailyExpenses}
                         columns={columns}
                         loading={loading}
+                        bordered={true}
                         pagination={{
                             pageSize: 5,
                             position: ['bottomCenter'],

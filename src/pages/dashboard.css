@@ -383,7 +383,9 @@
     height: 80px; 
     z-index: 20;
   }
-
+  .user-avatar{
+    display: none;
+  }
 
   .dashboard-content {
     height: 100%;

@@ -92,13 +92,14 @@ export default function ExpensessViewActionsTable({ monthlyExpensesId }) {
           loading={loading}
           dataSource={actions}
           columns={columns}
+          bordered={true}
           rowKey="id"
           pagination={{ 
             pageSize: 5, 
             position: ["bottomCenter"],
             showSizeChanger: false,
           }}
-          bordered
+          
           className="actions-table"
           style={{
             width: "100%"

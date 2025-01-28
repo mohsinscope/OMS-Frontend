@@ -19,7 +19,6 @@ import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import moment from "moment";
-import './../lecturer/LecturerShow.css';
 const ExpensessView = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -212,7 +211,7 @@ const ExpensessView = () => {
 console.log("month" ,expenseData.monthlyStatus)
   return (
     <div
-      className={`supervisor-lecture-show-container ${
+      className={`supervisor-passport-damage-show-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
@@ -231,6 +230,7 @@ console.log("month" ,expenseData.monthlyStatus)
     <Button
       type="primary"
       style={{ padding: "20px 30px" }}
+      
       onClick={() => setEditModalVisible(true)}
     >
       تعديل
@@ -309,7 +309,7 @@ console.log("month" ,expenseData.monthlyStatus)
               disabled
             />
           </div>
-          <div className="note-details-value">
+          <div className="details-row">
             <span className="details-label">الملاحظات:</span>
             <textarea
               className="textarea-value"
@@ -319,9 +319,9 @@ console.log("month" ,expenseData.monthlyStatus)
           </div>
           
         </div>
-        <div className="image-lecture-container">
+        <div className="image-container">
                     {images.length > 0 && (
-                      <div className="image-lecture-preview-container">
+                      <div className="image-preview-container">
                         <span className="note-details-label">صورة المصروف:</span>
                         <ImagePreviewer
                           uploadedImages={images.map((img) => img.url)}
