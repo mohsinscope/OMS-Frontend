@@ -1,4 +1,4 @@
-import React, { useState, useEffect,useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Table,
   message,
@@ -45,11 +45,10 @@ const positionStatusMap = {
   ProjectCoordinator: [
     Status.SentToProjectCoordinator,
     Status.ReturnedToProjectCoordinator,
-    Status.SentFromDirector,  // Added to be visible by coordinator
+    Status.SentFromDirector, // Added to be visible by coordinator
   ],
   Manager: [Status.SentToManager, Status.ReturnedToManager],
   Director: [Status.SentToDirector],
- 
 };
 
 export default function SuperVisorExpensesHistory() {
@@ -113,7 +112,7 @@ export default function SuperVisorExpensesHistory() {
       message.error("حدث خطأ أثناء جلب بيانات المحافظات");
     }
   }, [accessToken, isSupervisor, profile]);
-  
+
   const fetchOffices = async (governorateId) => {
     if (!governorateId) {
       setOffices([]);
@@ -193,7 +192,6 @@ export default function SuperVisorExpensesHistory() {
     }
   };
 
-
   useEffect(() => {
     if (isSupervisor && userGovernorateId) {
       fetchOffices(userGovernorateId);
@@ -202,7 +200,6 @@ export default function SuperVisorExpensesHistory() {
   useEffect(() => {
     fetchGovernorates();
   }, [fetchGovernorates]);
-
 
   // Update useEffect for initial status setting
   useEffect(() => {
@@ -388,7 +385,7 @@ export default function SuperVisorExpensesHistory() {
         cell.border = {
           top: { style: "thin" },
           bottom: { style: "thin" },
-          left: { style: "thin"},
+          left: { style: "thin" },
           right: { style: "thin" },
         };
       });
@@ -429,8 +426,8 @@ export default function SuperVisorExpensesHistory() {
       ];
 
       const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], { 
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
       saveAs(blob, "تقرير_سجل_الصرفيات.xlsx");
       message.success("تم تصدير التقرير بنجاح");
@@ -469,13 +466,13 @@ export default function SuperVisorExpensesHistory() {
       key: "status",
       render: (value) => {
         // If the value is a string (like "SentToProjectCoordinator"), convert it to the enum value
-        if (typeof value === 'string') {
+        if (typeof value === "string") {
           const enumValue = Status[value];
           return statusDisplayNames[enumValue] || value;
         }
         // If it's already a number, use it directly
         return statusDisplayNames[value] || value;
-      }
+      },
     },
     {
       title: "التاريخ",
@@ -487,20 +484,16 @@ export default function SuperVisorExpensesHistory() {
       title: "التفاصيل",
       key: "details",
       render: (_, record) => (
-        <Link
-          to="/expenses-view"
-          state={{ expense: record }}
-        >
-          <Button 
-            type="primary" 
-            size="large"  // You can use "small", "middle", or "large"
-            className="supervisor-expenses-history-details-link"
-          >
+        <Link to="/expenses-view" state={{ expense: record }}>
+          <Button
+            type="primary"
+            size="large" // You can use "small", "middle", or "large"
+            className="supervisor-expenses-history-details-link">
             عرض
           </Button>
         </Link>
       ),
-    }
+    },
   ];
 
   const availableStatuses = getAvailableStatuses();
@@ -511,15 +504,15 @@ export default function SuperVisorExpensesHistory() {
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
-      <h1 className="supervisor-expenses-history-title">سجل الصرفيات</h1>
+      <h1 className="supervisor-passport-dameged-title">سجل الصرفيات</h1>
 
       <div
         className={`supervisor-passport-dameged-filters ${
           searchVisible ? "animate-show" : "animate-hide"
         }`}>
         {(isAdmin || !isSupervisor) && (
-          <>
-            <div className="supervisor-Lectur-field-wrapper">
+          <form className="supervisor-passport-dameged-form">
+            <div className="filter-field">
               <label>المحافظة</label>
               <Select
                 className="html-dropdown"
@@ -536,7 +529,7 @@ export default function SuperVisorExpensesHistory() {
               </Select>
             </div>
 
-            <div className="supervisor-Lectur-field-wrapper">
+            <div className="filter-field">
               <label>المكتب</label>
               <Select
                 className="html-dropdown"
@@ -552,64 +545,68 @@ export default function SuperVisorExpensesHistory() {
                 ))}
               </Select>
             </div>
-          </>
+          </form>
         )}
+        <div className="filter-field">
+          <label>الحالة</label>
+          <Select
+            mode="multiple"
+            value={selectedStatuses}
+            onChange={(values) => setSelectedStatuses(values)}
+            placeholder="اختر الحالات"
+            maxTagCount={3}
+            maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
+            className="filter-dropdown"
+            style={{ maxHeight: "200px", overflowY: "auto" }}>
+            {availableStatuses.map((statusValue) => (
+              <Select.Option
+                key={statusValue}
+                value={statusValue}
+                className="supervisor-expenses-history-select-option">
+                {statusDisplayNames[statusValue]}
+              </Select.Option>
+            ))}
+          </Select>
+        </div>
 
-<div className="supervisor-Lectur-field-wrapper">
-  <label>الحالة</label>
-  <Select
-    mode="multiple"
-    value={selectedStatuses}
-    onChange={(values) => setSelectedStatuses(values)}
-    placeholder="اختر الحالات"
-    maxTagCount={3}
-    maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
-    className="supervisor-Lectur-select"
-    style={{ width: "fit-content", maxHeight: "200px", overflowY: "auto" }}
-  >
-    {availableStatuses.map((statusValue) => (
-      <Select.Option key={statusValue} value={statusValue} className="supervisor-expenses-history-select-option">
-        {statusDisplayNames[statusValue]}
-      </Select.Option>
-    ))}
-  </Select>
-</div>
-
-        <div className="supervisor-Lectur-field-wrapper">
+        <div className="filter-field">
           <label>التاريخ من</label>
           <DatePicker
             placeholder="التاريخ من"
             onChange={(date) => setStartDate(date)}
             value={startDate}
+            className="supervisor-passport-dameged-input"
             style={{ width: "100%" }}
           />
         </div>
 
-        <div className="supervisor-Lectur-field-wrapper">
+        <div className="filter-field">
           <label>التاريخ إلى</label>
           <DatePicker
             placeholder="التاريخ إلى"
             onChange={(date) => setEndDate(date)}
             value={endDate}
+            className="supervisor-passport-dameged-input"
             style={{ width: "100%" }}
           />
         </div>
 
-        <Button
-        className="supervisor-passport-dameged-button"
-          onClick={handleSearch}
-          loading={isLoading}>
-          البحث
-        </Button>
+        <div className="supervisor-device-filter-buttons">
+          <Button
+            onClick={handleSearch}
+            className="supervisor-passport-dameged-button"
+            loading={isLoading}>
+            البحث
+          </Button>
 
-        <Button
-        className="supervisor-passport-dameged-button"
-        style={{width: "fit-content"}}
-          onClick={handleReset}
-          disabled={isLoading}>
-          إعادة التعيين
-        </Button>
-
+          <Button
+            className="supervisor-passport-dameged-button"
+            onClick={handleReset}
+            disabled={isLoading}>
+            إعادة التعيين
+          </Button>
+        </div>
+        <div className="supervisor-device-filter-buttons">
         <button
           type="button"
           onClick={handlePrintPDF}
@@ -641,6 +638,8 @@ export default function SuperVisorExpensesHistory() {
           <Icons type="excel" />
         </button>
       </div>
+      </div>
+      
 
       <div className="supervisor-expenses-history-table">
         <ConfigProvider direction="rtl">

@@ -32,11 +32,11 @@ const Status = {
   SentToManager: 3,
   ReturnedToManager: 4,
   SentToDirector: 5,
-/*   SentToAccountant: 6,
-*/  ReturnedToSupervisor: 7,
+  /*   SentToAccountant: 6,
+   */ ReturnedToSupervisor: 7,
   RecievedBySupervisor: 8,
   Completed: 9,
-  SentFromDirector:10,
+  SentFromDirector: 10,
 };
 
 const statusMap = {
@@ -46,9 +46,9 @@ const statusMap = {
   [Status.SentToManager]: "تم الإرسال إلى المدير",
   [Status.ReturnedToManager]: "تم الإرجاع إلى المدير",
   [Status.SentToDirector]: "تم الإرسال إلى المدير التنفيذي",
-/*   [Status.SentToAccountant]: "تم الإرسال إلى المحاسب",
-*/ 
-[Status.ReturnedToSupervisor]: "تم الإرجاع إلى المشرف",
+  /*   [Status.SentToAccountant]: "تم الإرسال إلى المحاسب",
+   */
+  [Status.ReturnedToSupervisor]: "تم الإرجاع إلى المشرف",
   [Status.RecievedBySupervisor]: "تم الاستلام من قبل المشرف",
   [Status.SentFromDirector]: "تم الموافقة من قبل المدير التنفيذي",
 
@@ -76,28 +76,28 @@ export default function ExpensesView() {
   const isAccountant = profile?.position?.toLowerCase()?.includes("accontnt");
 
   const getNextStatus = (currentStatus, position) => {
-    position = position?.toLowerCase();  // This line exists
-  
+    position = position?.toLowerCase(); // This line exists
+
     if (currentStatus === "SentFromDirector") {
       return Status.RecievedBySupervisor;
-    } else if (currentStatus === "SentToProjectCoordinator" ) {
+    } else if (currentStatus === "SentToProjectCoordinator") {
       return Status.SentToManager;
-    } else if(currentStatus === "SentToManager" ) {
+    } else if (currentStatus === "SentToManager") {
       return Status.SentToDirector;
-    } else if (currentStatus === "SentToDirector" ) {
+    } else if (currentStatus === "SentToDirector") {
       return Status.SentFromDirector;
     } else if (currentStatus === "RecievedBySupervisor") {
       return Status.Completed;
     }
-  
+
     console.warn(
       `Unexpected position: ${position} or status: ${currentStatus}`
     );
     return currentStatus; // Default fallback to prevent invalid transitions
   };
-  
+
   const getRejectionStatus = (currentStatus, position) => {
-    position = position?.toLowerCase();  // This line exists
+    position = position?.toLowerCase(); // This line exists
 
     if (position?.includes("coordinator")) {
       return Status.ReturnedToSupervisor;
@@ -125,32 +125,38 @@ export default function ExpensesView() {
   const handleActionSubmit = async () => {
     try {
       await form.validateFields();
-  
+
       if (!profile.profileId) {
         message.error("لم يتم العثور على معلومات المستخدم");
         return;
       }
-  
+
       try {
         setIsSubmitting(true);
-  
+
         const currentStatus = expense?.generalInfo?.["الحالة"];
-        console.log('Current Status before update:', currentStatus);
-        
-        const newStatus = actionType === "Approval"
-          ? getNextStatus(currentStatus, profile?.position)
-          : getRejectionStatus(currentStatus, profile?.position);
-        
-        console.log('New Status to be sent:', newStatus);
-        console.log('Profile Position:', profile?.position);
-        console.log('Action Type:', actionType);
-  
+        console.log("Current Status before update:", currentStatus);
+
+        const newStatus =
+          actionType === "Approval"
+            ? getNextStatus(currentStatus, profile?.position)
+            : getRejectionStatus(currentStatus, profile?.position);
+
+        console.log("New Status to be sent:", newStatus);
+        console.log("Profile Position:", profile?.position);
+        console.log("Action Type:", actionType);
+
         // Dynamic actionType
-        const dynamicActionType = actionType === "Approval" 
-          ? `تمت الموافقة من ${profile?.position || ""} ${profile?.fullName || ""}`
-          : `تم الارجاع من ${profile?.position || ""} ${profile?.fullName || ""}`;    
-  
-        console.log('Making Actions API call...');
+        const dynamicActionType =
+          actionType === "Approval"
+            ? `تمت الموافقة من ${profile?.position || ""} ${
+                profile?.fullName || ""
+              }`
+            : `تم الارجاع من ${profile?.position || ""} ${
+                profile?.fullName || ""
+              }`;
+
+        console.log("Making Actions API call...");
         // Call the Actions endpoint
         const actionResponse = await axiosInstance.post(
           `${Url}/api/Actions`,
@@ -164,9 +170,9 @@ export default function ExpensesView() {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
-        console.log('Actions API Response:', actionResponse);
-  
-        console.log('Making Status Update API call...');
+        console.log("Actions API Response:", actionResponse);
+
+        console.log("Making Status Update API call...");
         // Update the expense status
         const statusResponse = await axiosInstance.post(
           `${Url}/api/Expense/${expenseId}/status`,
@@ -178,8 +184,8 @@ export default function ExpensesView() {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
         );
-        console.log('Status Update API Response:', statusResponse);
-  
+        console.log("Status Update API Response:", statusResponse);
+
         message.success(
           `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`
         );
@@ -187,7 +193,7 @@ export default function ExpensesView() {
         navigate(-1);
       } catch (error) {
         console.error(`Error processing ${actionType}:`, error);
-        console.error('Error response:', error.response?.data);  // Log detailed error response
+        console.error("Error response:", error.response?.data); // Log detailed error response
         message.error(
           `حدث خطأ أثناء ${actionType === "Approval" ? "الموافقة" : "الإرجاع"}`
         );
@@ -237,9 +243,6 @@ export default function ExpensesView() {
         setIsModalVisible(true);
       }
     } else {
-
-
-
       // If there's an image ID, fetch the image
       if (record.image) {
         try {
@@ -279,58 +282,68 @@ export default function ExpensesView() {
 
   useEffect(() => {
     let isMounted = true;
-  
+
     const fetchAllExpenseData = async () => {
       if (!expenseId) {
         message.error("لم يتم العثور على معرف المصروف");
         navigate("/expenses-history");
         return;
       }
-  
+
       try {
         setIsLoading(true);
-  
+
         // Create an array of all required API calls
-        const expensePromise = axiosInstance.get(`${Url}/api/Expense/${expenseId}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-  
-        const dailyExpensesPromise = axiosInstance.get(`${Url}/api/Expense/${expenseId}/daily-expenses`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-  
+        const expensePromise = axiosInstance.get(
+          `${Url}/api/Expense/${expenseId}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+
+        const dailyExpensesPromise = axiosInstance.get(
+          `${Url}/api/Expense/${expenseId}/daily-expenses`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+
         // Wait for both initial requests to complete
         const [expenseResponse, dailyExpensesResponse] = await Promise.all([
           expensePromise,
-          dailyExpensesPromise
+          dailyExpensesPromise,
         ]);
-  
+
         // Only proceed if component is still mounted
         if (!isMounted) return;
-  
+
         // Extract officeId and fetch office budget
         const officeId = expenseResponse.data.officeId;
-        const officeResponse = await axiosInstance.get(`${Url}/api/office/${officeId}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-  
+        const officeResponse = await axiosInstance.get(
+          `${Url}/api/office/${officeId}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+
         if (!isMounted) return;
-  
+
         const officeBudget = officeResponse.data.budget;
-  
+
         // Process regular expense items
-        const regularItems = expenseResponse.data.expenseItems?.map((item, index) => ({
-          تسلسل: index + 1,
-          التاريخ: new Date(item.date).toLocaleDateString(),
-          "نوع المصروف": item.description,
-          الكمية: item.quantity,
-          السعر: item.unitPrice,
-          المجموع: item.totalAmount,
-          ملاحظات: item.notes,
-          image: item.receiptImage,
-          type: "regular",
-        })) || [];
-  
+        const regularItems =
+          expenseResponse.data.expenseItems?.map((item, index) => ({
+            تسلسل: index + 1,
+            التاريخ: new Date(item.date).toLocaleDateString(),
+            "نوع المصروف": item.description,
+            الكمية: item.quantity,
+            السعر: item.unitPrice,
+            المجموع: item.totalAmount,
+            ملاحظات: item.notes,
+            image: item.receiptImage,
+            type: "regular",
+          })) || [];
+
         // Process daily expense items
         const dailyItems = dailyExpensesResponse.data.map((item, index) => ({
           تسلسل: regularItems.length + index + 1,
@@ -343,17 +356,17 @@ export default function ExpensesView() {
           id: item.id,
           type: "daily",
         }));
-  
+
         // Combine and sort all items by date
         const allItems = [...regularItems, ...dailyItems].sort(
           (a, b) => new Date(b.التاريخ) - new Date(a.التاريخ)
         );
-  
+
         // Calculate remaining amount
         const remainingAmount = officeBudget - expenseResponse.data.totalAmount;
-  
+
         if (!isMounted) return;
-  
+
         // Set the final expense state
         setExpense({
           generalInfo: {
@@ -364,7 +377,9 @@ export default function ExpensesView() {
             "مبلغ النثرية": officeBudget,
             "مجموع الصرفيات": expenseResponse.data.totalAmount,
             المتبقي: remainingAmount,
-            التاريخ: new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
+            التاريخ: new Date(
+              expenseResponse.data.dateCreated
+            ).toLocaleDateString(),
             الحالة: expenseResponse.data.status,
           },
           items: allItems,
@@ -381,10 +396,10 @@ export default function ExpensesView() {
         }
       }
     };
-  
+
     // Call the fetch function
     fetchAllExpenseData();
-  
+
     // Cleanup function to prevent memory leaks and state updates on unmounted component
     return () => {
       isMounted = false;
@@ -545,36 +560,37 @@ export default function ExpensesView() {
       const element = document.createElement("div");
       element.dir = "rtl";
       element.style.fontFamily = "Arial, sans-serif";
-  
+
       // List of CORS proxies to try
       const proxyUrls = [
         (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-        (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        (url) =>
+          `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
         (url) => `https://proxy.cors.sh/${url}`,
-        (url) => `https://cors-anywhere.herokuapp.com/${url}`
+        (url) => `https://cors-anywhere.herokuapp.com/${url}`,
       ];
-  
+
       // Try each proxy until one works
       const fetchImageWithProxy = async (url, proxyIndex = 0) => {
         if (proxyIndex >= proxyUrls.length) {
           throw new Error("All proxies failed");
         }
-  
+
         try {
           const proxyUrl = proxyUrls[proxyIndex](url);
           const img = document.createElement("img");
           img.crossOrigin = "anonymous";
-  
+
           return new Promise((resolve, reject) => {
             img.onload = () => {
               try {
                 const canvas = document.createElement("canvas");
                 canvas.width = img.width;
                 canvas.height = img.height;
-  
+
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0);
-  
+
                 const base64String = canvas.toDataURL("image/jpeg", 0.8); // Reduced quality for better performance
                 resolve(base64String);
               } catch (error) {
@@ -582,12 +598,12 @@ export default function ExpensesView() {
                 resolve(fetchImageWithProxy(url, proxyIndex + 1));
               }
             };
-  
+
             img.onerror = () => {
               console.warn(`Proxy ${proxyIndex + 1} failed, trying next...`);
               resolve(fetchImageWithProxy(url, proxyIndex + 1));
             };
-  
+
             img.src = proxyUrl;
           });
         } catch (error) {
@@ -595,7 +611,7 @@ export default function ExpensesView() {
           return fetchImageWithProxy(url, proxyIndex + 1);
         }
       };
-  
+
       // Fetch images for daily expenses
       const fetchImages = async (items) => {
         const imagePromises = items
@@ -608,25 +624,27 @@ export default function ExpensesView() {
                   headers: { Authorization: `Bearer ${accessToken}` },
                 }
               );
-  
+
               const imageUrls =
                 response.data?.map(
                   (attachment) =>
                     `https://cdn-oms.scopesky.org${attachment.filePath}`
                 ) || [];
-  
+
               // Fetch and convert images to Base64 with proxy
               const imagesWithBase64 = await Promise.all(
                 imageUrls.map(async (url) => {
                   try {
                     return await fetchImageWithProxy(url);
                   } catch (error) {
-                    console.error(`Failed to fetch image after all proxies: ${url}`);
+                    console.error(
+                      `Failed to fetch image after all proxies: ${url}`
+                    );
                     return null;
                   }
                 })
               );
-  
+
               return { ...item, images: imagesWithBase64.filter(Boolean) };
             } catch (error) {
               console.error(
@@ -636,13 +654,13 @@ export default function ExpensesView() {
               return { ...item, images: [] };
             }
           });
-  
+
         return Promise.all(imagePromises);
       };
-  
+
       // Get items with images
       const itemsWithImages = await fetchImages(expense?.items || []);
-  
+
       // Build the HTML for the PDF
       element.innerHTML = `
   <div style="padding: 20px; font-family: Arial, sans-serif; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); background: #f0f0f0;">
@@ -740,14 +758,10 @@ export default function ExpensesView() {
               item["الكمية"] || ""
             }</td>
             <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
-              item["السعر"]
-                ? `IQD ${item["السعر"].toLocaleString()}`
-                : ""
+              item["السعر"] ? `IQD ${item["السعر"].toLocaleString()}` : ""
             }</td>
             <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
-              item["المجموع"]
-                ? `IQD ${item["المجموع"].toLocaleString()}`
-                : ""
+              item["المجموع"] ? `IQD ${item["المجموع"].toLocaleString()}` : ""
             }</td>
             <td style="padding: 12px; text-align: center; font-size: 14px; border: 1px solid #ddd;">${
               item["ملاحظات"] || ""
@@ -777,7 +791,7 @@ export default function ExpensesView() {
 </div>
 
 `;
-  
+
       const opt = {
         margin: 2,
         filename: "تقرير_المصاريف.pdf",
@@ -791,29 +805,26 @@ export default function ExpensesView() {
           unit: "cm",
           format: "a4",
           orientation: "portrait", // Changed from "landscape" to "portrait"
-        }
-        
+        },
       };
-  
+
       html2pdf().from(element).set(opt).save();
     } catch (error) {
       console.error("Error generating PDF:", error);
       message.error("حدث خطأ أثناء إنشاء ملف PDF");
-    }finally {
+    } finally {
       setIsPrinting(false); // Reset loading state
     }
   };
-  
 
-  
-  console.log(expense)
+  console.log(expense);
 
   return (
     <>
       <Dashboard />
       <div
         dir="rtl"
-        className={`supervisor-expenses-history-page ${
+        className={`supervisor-passport-dameged-page ${
           isSidebarCollapsed ? "sidebar-collapsed" : ""
         }`}>
         <h1 className="expensess-date">
@@ -822,40 +833,37 @@ export default function ExpensesView() {
         </h1>
 
         {/* Action Buttons */}
-{/* Action Buttons */}
-{profile?.position?.toLowerCase()?.includes("supervisor") ? null : (
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      marginBottom: "20px",
-      width: "100%",
-    }}
-  >
-    <Button
-      type="primary"
-      style={{ padding: "20px 30px" }}
-      onClick={() => handleActionClick("Approval")}
-      disabled={
-        !profile.profileId ||
-        expense?.generalInfo?.["الحالة"] === Status.Completed
-      }
-    >
-      موافقة
-    </Button>
-{expense?.generalInfo?.["الحالة"] === "SentFromDirector" ? null : (
-<Button
-danger
-type="primary"
-style={{ padding: "20px 40px" }}
-onClick={() => handleActionClick("Return")}
-disabled={!profile.profileId}
->
-ارجاع
-</Button>
-)}
-  </div>
-)}
+        {/* Action Buttons */}
+        {profile?.position?.toLowerCase()?.includes("supervisor") ? null : (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginBottom: "20px",
+              width: "100%",
+            }}>
+            <Button
+              type="primary"
+              style={{ padding: "20px 30px" }}
+              onClick={() => handleActionClick("Approval")}
+              disabled={
+                !profile.profileId ||
+                expense?.generalInfo?.["الحالة"] === Status.Completed
+              }>
+              موافقة
+            </Button>
+            {expense?.generalInfo?.["الحالة"] === "SentFromDirector" ? null : (
+              <Button
+                danger
+                type="primary"
+                style={{ padding: "20px 40px" }}
+                onClick={() => handleActionClick("Return")}
+                disabled={!profile.profileId}>
+                ارجاع
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* General Details Table */}
         <Table
@@ -901,7 +909,8 @@ disabled={!profile.profileId}
               align: "center",
               render: (status) => {
                 // Handle both string and numeric status values
-                const statusCode = typeof status === 'string' ? Status[status] : status;
+                const statusCode =
+                  typeof status === "string" ? Status[status] : status;
                 return statusMap[statusCode] || status;
               },
             },
@@ -912,40 +921,38 @@ disabled={!profile.profileId}
           locale={{ emptyText: "لا توجد بيانات" }}
         />
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "centers",
-            marginBottom: "20px",
-            gap: "10px",
-          }}>
+        <div className="supervisor-device-filter-buttons" style={{marginTop: "0px",marginBottom: "20px"}}>
           {/* Export to PDF Button */}
-          <div>
-      {/* Your existing content... */}
-      <button
-        className="modern-button pdf-button"
-        onClick={handlePrint}
-        disabled={isPrinting} // Disable button during loading
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          padding: "12px 24px",
-          borderRadius: "8px",
-        }}
-      >
-        {isPrinting ? (
-          <span style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span className="spinner"></span> جاري التنزيل...
-          </span>
-        ) : (
-          <>
-            انشاء ملف PDF
-            <Icons type="pdf" />
-          </>
-        )}
-      </button>
-    </div>
+          <div className="supervisor-device-filter-buttons" style={{marginTop: "0px",marginBottom: "20px"}}>
+            {/* Your existing content... */}
+            <button
+              className="modern-button pdf-button"
+              onClick={handlePrint}
+              disabled={isPrinting} // Disable button during loading
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                padding: "12px 24px",
+                borderRadius: "8px",
+              }}>
+              {isPrinting ? (
+                <span
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                  }}>
+                  <span className="spinner"></span> جاري التنزيل...
+                </span>
+              ) : (
+                <>
+                  انشاء ملف PDF
+                  <Icons type="pdf" />
+                </>
+              )}
+            </button>
+          </div>
 
           {/* Export to Excel Button */}
           <button
@@ -1027,16 +1034,18 @@ disabled={!profile.profileId}
                       dailyExpenseId: record.id,
                       status: expense?.generalInfo?.["الحالة"],
                     }}>
-                    <Button type="primary" size="large" loading={isLoadingDetails}>
+                    <Button
+                      type="primary"
+                      size="large"
+                      loading={isLoadingDetails}>
                       عرض
                     </Button>
                   </Link>
                 ),
-              }
+              },
             ]}
             dataSource={expense?.items}
             bordered={true}
-
             pagination={{ pageSize: 5, position: ["bottomCenter"] }}
             locale={{ emptyText: "لا توجد عناصر للصرف." }}
             summary={(pageData) => {
@@ -1170,7 +1179,6 @@ disabled={!profile.profileId}
           </Form>
         </Modal>
         <ExpensessViewActionsTable monthlyExpensesId={expenseId} />
-
       </div>
     </>
   );
