@@ -1,6 +1,7 @@
 import axios from 'axios';
 import BASE_URL from '../store/url';
 import useAuthStore from './../store/store';
+import { notification } from 'antd';
 
 // Create axios instances with shared config
 const createAxiosInstance = () => axios.create({
@@ -77,6 +78,19 @@ axiosInstance.interceptors.response.use(
     if (status === 403) {
       navigator?.('/forbidden');
       return Promise.reject(error);
+    }
+    if (status === 409) {
+      const message = 'رقم الجواز موجود'; // "Passport number already exists"
+      notification.error({
+        message: 'خطأ',  // "Error"
+        description: message,
+        placement: 'top',
+        rtl: true
+      });
+      return Promise.reject({
+        ...error,
+        customMessage: message
+      });
     }
 
     if (status === 401) {

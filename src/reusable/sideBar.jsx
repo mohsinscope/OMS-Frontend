@@ -1,4 +1,5 @@
 import React from "react";
+import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import NavBar from "./navBar.jsx";
 import DynamicSidebar from "./../reusable elements/SideBarRuseable";
@@ -8,7 +9,23 @@ import "./../pages/dashboard.css";
 export default function Sidebar() {
   const { logout, isSidebarCollapsed, toggleSidebar } = useAuthStore();
   const location = useLocation();
+  // Add this useEffect for responsive behavior
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 768) {
+        useAuthStore.setState({ isSidebarCollapsed: true });
+      }
+    };
 
+    // Initial check
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   return (
     <div>
       {/* Navigation Bar */}
