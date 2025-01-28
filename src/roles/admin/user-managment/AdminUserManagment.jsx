@@ -7,7 +7,8 @@ import {
   Select,
   message,
   Spin,
-  ConfigProvider
+  ConfigProvider,
+  Modal
 } from "antd";
 import axiosInstance from './../../../intercepters/axiosInstance.js';
 import Dashboard from "./../../../pages/dashBoard.jsx";
@@ -146,7 +147,6 @@ const AdminUserManagment = () => {
   };
 
   const handleFilterSubmit = (values) => {
-    console.log('Form Values:', values); // Add this line to debug
     const newFilters = {
       fullName: values.fullName || "",
       officeId: values.officeName || null,
@@ -155,8 +155,8 @@ const AdminUserManagment = () => {
     };
     setCurrentFilters(newFilters);
     fetchUserData(1, pagination.pageSize, newFilters);
-    console.log('Filters being sent:', newFilters);
   };
+
   const resetFilters = () => {
     filterForm.resetFields();
     setCurrentFilters({});
@@ -206,59 +206,69 @@ const AdminUserManagment = () => {
     setEditModalVisible(true);
   };
 
-// AdminUserManagement.jsx
-// Update the handleSaveEdit function:
+  const handleSaveEdit = async (values) => {
+    setLoading(true);
+    try {
+      if (!selectedUser || !selectedUser.userId) {
+        throw new Error('No user selected');
+      }
 
-const handleSaveEdit = async (values) => {
-  setLoading(true);
-  try {
-    // Make sure we have all required values
-    if (!selectedUser || !selectedUser.userId) {
-      throw new Error('No user selected');
+      const updatedUser = {
+        userId: selectedUser.userId,
+        userName: selectedUser.username,
+        fullName: values.fullName,
+        position: parseInt(values.position, 10),
+        officeId: values.officeName,
+        governorateId: values.governorate,
+        roles: values.roles
+      };
+
+      if (values.newPassword) {
+        updatedUser.newPassword = values.newPassword;
+      }
+
+      const response = await axiosInstance.put(
+        `${Url}/api/account/${selectedUser.userId}`,
+        updatedUser,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.status === 200) {
+        message.success("تم تحديث المستخدم بنجاح!");
+        setEditModalVisible(false);
+        form.resetFields();
+        await fetchUserData(pagination.current, pagination.pageSize, currentFilters);
+      }
+    } catch (error) {
+      console.error("Error updating user:", error);
+      message.error(error.response?.data?.message || "فشل في تحديث المستخدم");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const updatedUser = {
-      userId: selectedUser.userId,
-      userName: selectedUser.username, // Keep the original username
-      fullName: values.fullName,
-      position: parseInt(values.position, 10),
-      officeId: values.officeName,
-      governorateId: values.governorate,
-      roles: values.roles
-    };
-
-    // Only include newPassword if it was provided
-    if (values.newPassword) {
-      updatedUser.newPassword = values.newPassword;
-    }
-
-    console.log('Sending update request with data:', updatedUser);
-
-    const response = await axiosInstance.put(
-      `${Url}/api/account/${selectedUser.userId}`,
-      updatedUser,
-      {
+  const handleDeleteUser = async (userId) => {
+    try {
+      const response = await axiosInstance.delete(`${Url}/api/account/${userId}`, {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
         },
+      });
+  
+      if (response.status === 200) {
+        message.success("تم حذف المستخدم بنجاح!");
+        await fetchUserData(pagination.current, pagination.pageSize, currentFilters);
       }
-    );
-
-    if (response.status === 200) {
-      message.success("تم تحديث المستخدم بنجاح!");
-      setEditModalVisible(false);
-      form.resetFields();
-      // Refresh the table data
-      await fetchUserData(pagination.current, pagination.pageSize, currentFilters);
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      message.error("فشل في حذف المستخدم");
     }
-  } catch (error) {
-    console.error("Error updating user:", error);
-    message.error(error.response?.data?.message || "فشل في تحديث المستخدم");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const columns = [
     {
@@ -291,13 +301,30 @@ const handleSaveEdit = async (values) => {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
-        <Button
-          type="primary"
-          onClick={() => handleEditUser(record)}
-          className="actions-button-usermanagement"
-        >
-          تعديل
-        </Button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button
+            type="primary"
+            onClick={() => handleEditUser(record)}
+            className="actions-button-usermanagement"
+          >
+            تعديل
+          </Button>
+          <Button
+            type="primary"
+            danger
+            onClick={() => {
+              Modal.confirm({
+                title: 'تأكيد الحذف',
+                content: 'هل أنت متأكد أنك تريد حذف هذا المستخدم؟',
+                okText: 'نعم',
+                cancelText: 'لا',
+                onOk: () => handleDeleteUser(record.userId)
+              });
+            }}
+          >
+            حذف
+          </Button>
+        </div>
       ),
     },
   ];
@@ -318,72 +345,65 @@ const handleSaveEdit = async (values) => {
             searchVisible ? "animate-show" : "animate-hide"
           }`}
         >
-       <Form
-  form={filterForm}
-  layout="horizontal"
-  onFinish={handleFilterSubmit}
-  className="filter-form"
->
-  <Form.Item name="fullName" label="اسم المستخدم">
-    <Input  />
-  </Form.Item>
+          <Form
+            form={filterForm}
+            layout="horizontal"
+            onFinish={handleFilterSubmit}
+            className="filter-form"
+          >
+            <Form.Item name="fullName" label="اسم المستخدم">
+              <Input />
+            </Form.Item>
 
-  <Form.Item name="role" label="الصلاحية">
+            <Form.Item name="role" label="الصلاحية">
+              <Select className="filter-dropdown" allowClear>
+                {roles.map((role) => (
+                  <Option key={role} value={role}>{role}</Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-    <Select className="filter-dropdown" allowClear>
-      {roles.map((role) => (
-        <Option key={role} value={role}>{role}</Option>
-      ))}
-    </Select>
-  </Form.Item>
+            <Form.Item name="governorate" label="المحافظة">
+              <Select 
+                className="filter-dropdown" 
+                onChange={handleGovernorateChange}
+                allowClear
+              >
+                {governorates.map((gov) => (
+                  <Option key={gov.id} value={gov.id}>{gov.name}</Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-  <Form.Item name="governorate" label="المحافظة">
-   
+            <Form.Item name="officeName" label="اسم المكتب">
+              <Select 
+                className="filter-dropdown"
+                disabled={!selectedGovernorate}
+                allowClear
+              >
+                {offices.map((office) => (
+                  <Option key={office.id} value={office.id}>{office.name}</Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-    <Select 
-      className="filter-dropdown" 
-      onChange={handleGovernorateChange}  // Keep this one since it's needed for office dropdown
-      allowClear
-    >
-      {governorates.map((gov) => (
-        <Option key={gov.id} value={gov.id}>{gov.name}</Option>
-      ))}
-    </Select>
-  </Form.Item>
+            <Form.Item>
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                className="filter-button"
+              >
+                بحث
+              </Button>
+            </Form.Item>
 
-  <Form.Item name="officeName" label="اسم المكتب">
- 
-
-    <Select 
-      className="filter-dropdown"
-      disabled={!selectedGovernorate}
-      allowClear
-    >
-      {offices.map((office) => (
-        <Option key={office.id} value={office.id}>{office.name}</Option>
-      ))}
-    </Select>
-  </Form.Item>
-
-  <Form.Item>
-    <Button 
-      type="primary" 
-      htmlType="submit" 
-      className="filter-button"
-    >
-      بحث
-    </Button>
-  </Form.Item>
-              <Form.Item>
-
+            <Form.Item>
               <Button onClick={resetFilters} className="filter-button">
                 إعادة تعيين
               </Button>
-              </Form.Item>
+            </Form.Item>
 
-
-              <Form.Item>
-
+            <Form.Item>
               <Button
                 type="primary"
                 className="usermanagemenr-adduser"
@@ -396,26 +416,23 @@ const handleSaveEdit = async (values) => {
               >
                 إضافة مستخدم +
               </Button>
-              
             </Form.Item>
           </Form>
         </div>
 
         <div className="data-table-container">
-              <ConfigProvider direction="rtl">
-          
-          <Spin spinning={loading}>
-<Table
-  dataSource={userRecords}
-  columns={columns}
-  rowKey="userId"
-  bordered
-  pagination={pagination}
-  onChange={handleTableChange}
-/>
-          </Spin>
-              </ConfigProvider>
-          
+          <ConfigProvider direction="rtl">
+            <Spin spinning={loading}>
+              <Table
+                dataSource={userRecords}
+                columns={columns}
+                rowKey="userId"
+                bordered
+                pagination={pagination}
+                onChange={handleTableChange}
+              />
+            </Spin>
+          </ConfigProvider>
         </div>
 
         <AddUserModal 
