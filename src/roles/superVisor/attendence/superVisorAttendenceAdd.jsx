@@ -1,16 +1,22 @@
 import { useState, useEffect } from "react";
-import { Button, Modal, message, Input, DatePicker } from "antd";
+import { Button, Modal, message, Input, DatePicker, Skeleton } from "antd";
 import { useNavigate } from "react-router-dom";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import "./superVisorAteensenceAdd.css";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 import IconName from "./../../../reusable elements/icons.jsx";
+
 const { TextArea } = Input;
 
 export default function SuperVisorAttendanceAdd() {
   const navigate = useNavigate();
   const { isSidebarCollapsed, profile, accessToken } = useAuthStore();
+
+  // Loading state to control the full-page skeleton
+  const [loading, setLoading] = useState(true);
+
+  // Form fields
   const [selectedDate, setSelectedDate] = useState(null);
   const [workingHours, setWorkingHours] = useState(1);
   const [passportAttendance, setPassportAttendance] = useState({
@@ -22,23 +28,24 @@ export default function SuperVisorAttendanceAdd() {
   });
   const [employeeNumbers, setEmployeeNumbers] = useState({});
   const [notes, setNotes] = useState("");
+
+  // Modal control
   const [modalVisible, setModalVisible] = useState(false);
   const [modalAction, setModalAction] = useState("");
+
+  // Profile data
   const governorateId = profile?.governorateId;
   const officeId = profile?.officeId;
   const profileId = profile?.profileId;
 
+  // Fetch employee numbers
   useEffect(() => {
     const fetchEmployeeNumbers = async () => {
       try {
-        const response = await axiosInstance.get(
-          `${Url}/api/office/${officeId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        const response = await axiosInstance.get(`${Url}/api/office/${officeId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+
         const data = response.data;
         setEmployeeNumbers({
           الاستلام: data.receivingStaff,
@@ -50,12 +57,16 @@ export default function SuperVisorAttendanceAdd() {
       } catch (error) {
         console.error("Error fetching employee numbers:", error);
         message.error("حدث خطأ أثناء جلب بيانات الموظفين");
+      } finally {
+        // Turn off the loading skeleton
+        setLoading(false);
       }
     };
 
     if (officeId) fetchEmployeeNumbers();
-  }, [officeId, profile]);
+  }, [officeId, accessToken]);
 
+  // Handlers
   const handleInputChange = (key, value) => {
     const parsedValue = Math.max(0, Math.min(value, employeeNumbers[key] || 0));
     setPassportAttendance((prev) => ({
@@ -67,10 +78,10 @@ export default function SuperVisorAttendanceAdd() {
   const handleResetAction = () => {
     setPassportAttendance({
       الاستلام: 0,
-    الحسابات: 0,
-    الطباعة: 0,
-    الجودة: 0,
-    التسليم: 0,
+      الحسابات: 0,
+      الطباعة: 0,
+      الجودة: 0,
+      التسليم: 0,
     });
     setSelectedDate(null);
     setWorkingHours(1);
@@ -93,17 +104,13 @@ export default function SuperVisorAttendanceAdd() {
         officeId,
         profileId,
       };
-      // Make sure the token is passed in the headers correctly
-      const response = await axiosInstance.post(
-        `${Url}/api/Attendance`,
-        dataToSend,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+
+      await axiosInstance.post(`${Url}/api/Attendance`, dataToSend, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       message.success("تم حفظ الحضور وإرساله بنجاح");
       navigate(-1);
@@ -113,11 +120,11 @@ export default function SuperVisorAttendanceAdd() {
     }
   };
 
+  // Modal
   const showModal = (action) => {
     setModalAction(action);
     setModalVisible(true);
   };
-
   const handleModalConfirm = () => {
     if (modalAction === "reset") {
       handleResetAction();
@@ -126,15 +133,38 @@ export default function SuperVisorAttendanceAdd() {
     }
     setModalVisible(false);
   };
-
   const handleModalCancel = () => {
     setModalVisible(false);
   };
 
+  // Go back
   const handleBack = () => {
     navigate(-1);
   };
 
+  // ---------------- FULL PAGE SKELETON EXAMPLE ----------------
+  if (loading) {
+    // While loading, render a full-page skeleton placeholder
+    return (
+      <div
+        className={`supervisor-attendence-register-container ${
+          isSidebarCollapsed
+            ? "sidebar-collapsed"
+            : "supervisor-attendence-register-container"
+        }`}
+        dir="rtl"
+      >
+        <Skeleton
+          active
+          paragraph={{ rows: 12 }}
+          // You can add a className or style here to tweak the skeleton layout
+          style={{ marginTop: 20 }}
+        />
+      </div>
+    );
+  }
+
+  // ---------------- RENDER ACTUAL CONTENT ----------------
   return (
     <div
       className={`supervisor-attendence-register-container ${
@@ -142,7 +172,8 @@ export default function SuperVisorAttendanceAdd() {
           ? "sidebar-collapsed"
           : "supervisor-attendence-register-container"
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       <div className="supervisor-attendence-add-title-content">
         <Button type="primary" style={{ height: "45px" }} onClick={handleBack}>
           <IconName type="back" />
@@ -150,6 +181,7 @@ export default function SuperVisorAttendanceAdd() {
         </Button>
         <h2>حضور موظفين الجوازات</h2>
       </div>
+
       <div className="attendance-input-group">
         <div className="attendance-field-wrapper-add">
           <label>اسم المحافظة</label>
@@ -174,7 +206,8 @@ export default function SuperVisorAttendanceAdd() {
           <select
             className="attendance-dropdown"
             value={workingHours}
-            onChange={(e) => setWorkingHours(Number(e.target.value))}>
+            onChange={(e) => setWorkingHours(Number(e.target.value))}
+          >
             <option value={1}>صباحي</option>
             <option value={2}>مسائي</option>
           </select>
@@ -222,13 +255,15 @@ export default function SuperVisorAttendanceAdd() {
           type="default"
           danger
           onClick={() => showModal("reset")}
-          style={{ margin: "10px" }}>
+          style={{ margin: "10px" }}
+        >
           إعادة التعيين
         </Button>
         <Button
           type="primary"
           onClick={() => showModal("save")}
-          style={{ margin: "10px" }}>
+          style={{ margin: "10px" }}
+        >
           الحفظ والإرسال
         </Button>
       </div>
@@ -239,7 +274,8 @@ export default function SuperVisorAttendanceAdd() {
         onOk={handleModalConfirm}
         onCancel={handleModalCancel}
         okText="نعم"
-        cancelText="الغاء">
+        cancelText="الغاء"
+      >
         <p>
           {modalAction === "reset"
             ? "هل أنت متأكد من إعادة التعيين؟"
