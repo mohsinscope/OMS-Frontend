@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  Table,
-  Button,
-  Modal,
-  message,
-  DatePicker,
-  ConfigProvider,
-  Select,
-} from "antd";
+import { Table, Button, Modal, message, DatePicker, ConfigProvider, Select, Skeleton } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
 import usePermissionsStore from "./../../../store/permissionsStore";
@@ -16,13 +8,12 @@ import "./superVisorAttendeceHistory.css";
 import Url from "./../../../store/url.js";
 
 export default function SupervisorAttendanceHistory() {
-  // State declarations
   const [attendanceData, setAttendanceData] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [workingHours, setWorkingHours] = useState(3);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
@@ -31,13 +22,11 @@ export default function SupervisorAttendanceHistory() {
   const [totalRecords, setTotalRecords] = useState(0);
   const pageSize = 10;
 
-  // Store hooks
   const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } = useAuthStore();
   const { hasAnyPermission } = usePermissionsStore();
   const hasCreatePermission = hasAnyPermission("create");
   const navigate = useNavigate();
   
-  // User role checks
   const isSupervisor = roles.includes("Supervisor");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
@@ -57,12 +46,9 @@ export default function SupervisorAttendanceHistory() {
     }
 
     try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown/${governorateId}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${governorateId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
 
       if (response.data?.[0]?.offices) {
         setOffices(response.data[0].offices);
@@ -77,12 +63,9 @@ export default function SupervisorAttendanceHistory() {
 
   const fetchGovernorates = async () => {
     try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       setGovernorates(response.data);
 
       if (isSupervisor && profile?.governorateId) {
@@ -95,8 +78,6 @@ export default function SupervisorAttendanceHistory() {
   };
 
   const fetchAttendanceData = async (pageNumber = 1) => {
-    if (isLoading) return;
-
     try {
       setIsLoading(true);
       const searchBody = {
@@ -111,19 +92,13 @@ export default function SupervisorAttendanceHistory() {
         },
       };
 
-      const response = await axiosInstance.post(
-        `${Url}/api/Attendance/search`,
-        searchBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-      console.log("response", response)
+      const response = await axiosInstance.post(`${Url}/api/Attendance/search`, searchBody, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
-      // Handle pagination
       const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
@@ -132,7 +107,6 @@ export default function SupervisorAttendanceHistory() {
         setTotalRecords(response.data.length);
       }
 
-      // Format response data
       const formattedData = response.data.map((item) => ({
         id: item.id,
         date: new Date(item.date).toLocaleDateString("en-CA"),
@@ -151,7 +125,7 @@ export default function SupervisorAttendanceHistory() {
         governorateName: item.governorateName || "غير معروف",
         officeName: item.officeName || "غير معروف",
       }));
-      console.log("عوعو",formattedData)
+
       setAttendanceData(formattedData);
 
       if (response.data.length === 0) {
@@ -165,7 +139,6 @@ export default function SupervisorAttendanceHistory() {
     }
   };
 
-  // Event handlers
   const handleGovernorateChange = (value) => {
     setSelectedGovernorate(value);
     fetchOffices(value);
@@ -198,7 +171,6 @@ export default function SupervisorAttendanceHistory() {
     navigate("/attendance/view", { state: { id: record.id } });
   };
 
-  // Single useEffect for initialization
   useEffect(() => {
     const initData = async () => {
       await fetchGovernorates();
@@ -206,8 +178,8 @@ export default function SupervisorAttendanceHistory() {
     };
 
     initData();
-  }, []); // Empty dependency array - only run once on mount
-  console.log(attendanceData)
+  }, []);
+
   const columns = [
     {
       title: "التاريخ",
@@ -251,128 +223,127 @@ export default function SupervisorAttendanceHistory() {
   ];
 
   return (
-    <div
-      className={`supervisor-attendance-history-main-container ${
-        isSidebarCollapsed ? "sidebar-collapsed" : ""
-      }`}
-      dir="rtl">
+    <div className={`supervisor-attendance-history-main-container ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`} dir="rtl">
       <div className="supervisor-attendance-history-title">
         <h1>الحضور</h1>
       </div>
 
-      <div
-        className={`supervisor-attendance-history-fields ${
-          searchVisible ? "animate-show" : "animate-hide"
-        }`}>
-        <div className="filter-row">
-          <label>المحافظة</label>
-          <Select
-            className="html-dropdown"
-            value={isSupervisor ? userGovernorateId : selectedGovernorate}
-            onChange={handleGovernorateChange}
-            disabled={isSupervisor}>
-            <Select.Option value=""></Select.Option>
-            {governorates.map((gov) => (
-              <Select.Option key={gov.id} value={gov.id}>
-                {gov.name}
-              </Select.Option>
-            ))}
-          </Select>
-        </div>
+      {isLoading ? (
+        <Skeleton active paragraph={{ rows: 10 }} />
+      ) : (
+        <>
+          <div className={`supervisor-attendance-history-fields ${searchVisible ? "animate-show" : "animate-hide"}`}>
+            <div className="filter-row">
+              <label>المحافظة</label>
+              <Select
+                className="html-dropdown"
+                value={isSupervisor ? userGovernorateId : selectedGovernorate}
+                onChange={handleGovernorateChange}
+                disabled={isSupervisor}>
+                <Select.Option value=""></Select.Option>
+                {governorates.map((gov) => (
+                  <Select.Option key={gov.id} value={gov.id}>
+                    {gov.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
 
-        <div className="filter-row">
-          <label>المكتب</label>
-          <Select
-            className="html-dropdown"
-            value={isSupervisor ? userOfficeId : selectedOffice}
-            onChange={(value) => setSelectedOffice(value)}
-            disabled={isSupervisor || !selectedGovernorate}>
-            <Select.Option value=""></Select.Option>
-            {offices.map((office) => (
-              <Select.Option key={office.id} value={office.id}>
-                {office.name}
-              </Select.Option>
-            ))}
-          </Select>
-        </div>
+            <div className="filter-row">
+              <label>المكتب</label>
+              <Select
+                className="html-dropdown"
+                value={isSupervisor ? userOfficeId : selectedOffice}
+                onChange={(value) => setSelectedOffice(value)}
+                disabled={isSupervisor || !selectedGovernorate}>
+                <Select.Option value=""></Select.Option>
+                {offices.map((office) => (
+                  <Select.Option key={office.id} value={office.id}>
+                    {office.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
 
-        <div className="filter-row">
-          <label>التاريخ من</label>
-          <DatePicker
-            placeholder="التاريخ من"
-            onChange={(date) => setStartDate(date)}
-            value={startDate}
-            style={{ width: "100%" }}
-          />
-        </div>
+            <div className="filter-row">
+              <label>التاريخ من</label>
+              <DatePicker
+                placeholder="التاريخ من"
+                onChange={(date) => setStartDate(date)}
+                value={startDate}
+                style={{ width: "100%" }}
+              />
+            </div>
 
-        <div className="filter-row">
-          <label>التاريخ إلى</label>
-          <DatePicker
-            placeholder="التاريخ إلى"
-            onChange={(date) => setEndDate(date)}
-            value={endDate}
-            style={{ width: "100%" }}
-          />
-        </div>
+            <div className="filter-row">
+              <label>التاريخ إلى</label>
+              <DatePicker
+                placeholder="التاريخ إلى"
+                onChange={(date) => setEndDate(date)}
+                value={endDate}
+                style={{ width: "100%" }}
+              />
+            </div>
 
-        <div className="attendance-dropdown-wrapper">
-          <label>نوع الدوام</label>
-          <Select
-            className="html-dropdown"
-            value={workingHours}
-            onChange={(value) => setWorkingHours(value)}>
-            <Select.Option value={3}>الكل</Select.Option>
-            <Select.Option value={1}>صباحي</Select.Option>
-            <Select.Option value={2}>مسائي</Select.Option>
-          </Select>
-        </div>
+            <div className="attendance-dropdown-wrapper">
+              <label>نوع الدوام</label>
+              <Select
+                className="html-dropdown"
+                value={workingHours}
+                onChange={(value) => setWorkingHours(value)}>
+                <Select.Option value={3}>الكل</Select.Option>
+                <Select.Option value={1}>صباحي</Select.Option>
+                <Select.Option value={2}>مسائي</Select.Option>
+              </Select>
+            </div>
 
-        <Button
-          className="supervisor-passport-dameged-button"
-          onClick={handleSearch}
-          loading={isLoading}>
-          البحث
-        </Button>
-
-        <Button
-          className="supervisor-passport-dameged-button"
-          onClick={handleReset}
-          disabled={isLoading}>
-          إعادة التعيين
-        </Button>
-
-        {hasCreatePermission && (
-          <Link to="AttendenceAdd">
             <Button
-              className="attendance-add-button"
-              disabled={isLoading}
-              type="primary">
-              اضافة حضور +
+              className="supervisor-passport-dameged-button"
+              onClick={handleSearch}
+              loading={isLoading}>
+              البحث
             </Button>
-          </Link>
-        )}
-      </div>
 
-      <div className="supervisor-attendance-history-table">
-        <ConfigProvider direction="rtl">
-          <Table
-            dataSource={attendanceData}
-            columns={columns}
-            rowKey={(record) => record.id}
-            bordered
-            pagination={{
-              position: ["bottomCenter"],
-              current: currentPage,
-              pageSize: pageSize,
-              total: totalRecords,
-              onChange: handlePageChange,
-              showSizeChanger: false,
-            }}
-            loading={isLoading}
-          />
-        </ConfigProvider>
-      </div>
+            <Button
+              className="supervisor-passport-dameged-button"
+              onClick={handleReset}
+              disabled={isLoading}>
+              إعادة التعيين
+            </Button>
+
+            {hasCreatePermission && (
+              <Link to="AttendenceAdd">
+                <Button
+                  className="attendance-add-button"
+                  disabled={isLoading}
+                  type="primary">
+                  اضافة حضور +
+                </Button>
+              </Link>
+            )}
+          </div>
+
+          <div className="supervisor-attendance-history-table">
+            <ConfigProvider direction="rtl">
+              <Table
+                dataSource={attendanceData}
+                columns={columns}
+                rowKey={(record) => record.id}
+                bordered
+                pagination={{
+                  position: ["bottomCenter"],
+                  current: currentPage,
+                  pageSize: pageSize,
+                  total: totalRecords,
+                  onChange: handlePageChange,
+                  showSizeChanger: false,
+                }}
+                loading={isLoading}
+              />
+            </ConfigProvider>
+          </div>
+        </>
+      )}
 
       <Modal
         title="تنبيه"

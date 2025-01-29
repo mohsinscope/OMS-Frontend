@@ -9,6 +9,7 @@ import {
   message,
   Upload,
   Modal,
+  Skeleton,
 } from "antd";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
@@ -16,6 +17,7 @@ import useAuthStore from "../../../store/store";
 import moment from "moment";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./superVisorDevicesAdd.css";
+
 const { Dragger } = Upload;
 
 const SuperVisorDammageDeviceAdd = () => {
@@ -35,6 +37,7 @@ const SuperVisorDammageDeviceAdd = () => {
   const isSupervisor = roles.includes("Supervisor");
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // Loading state for initial data
 
   useEffect(() => {
     if (isSupervisor && profile) {
@@ -44,58 +47,55 @@ const SuperVisorDammageDeviceAdd = () => {
       });
     }
 
-    const fetchDeviceTypes = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await axiosInstance.get(`${Url}/api/devicetype`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        const [deviceTypesResponse, damagedTypesResponse, governoratesResponse] =
+          await Promise.all([
+            axiosInstance.get(`${Url}/api/devicetype`, {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }),
+            axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }),
+            axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+            }),
+          ]);
+
         setDeviceTypes(
-          response.data.map((deviceType) => ({
+          deviceTypesResponse.data.map((deviceType) => ({
             value: deviceType.id,
             label: deviceType.name,
           }))
         );
-      } catch (error) {
-        message.error("خطأ في جلب أنواع الأجهزة");
-      }
-    };
 
-    const fetchGovernorates = async () => {
-      try {
-        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        setGovernorates(response.data);
-        if (isSupervisor) {
-          setSelectedGovernorate(governorateId);
-          fetchOffices(governorateId);
-        }
-      } catch (error) {
-        message.error("حدث خطأ أثناء جلب بيانات المحافظات");
-      }
-    };
-
-    const fetchDamagedTypes = async () => {
-      try {
-        const response = await axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
         setDamagedTypes(
-          response.data.map((damagedType) => ({
+          damagedTypesResponse.data.map((damagedType) => ({
             value: damagedType.id,
             label: damagedType.name,
           }))
         );
+
+        setGovernorates(governoratesResponse.data);
+
+        if (isSupervisor) {
+          setSelectedGovernorate(governorateId);
+          await fetchOffices(governorateId);
+        }
       } catch (error) {
-        message.error("خطأ في جلب أنواع التلف");
+        message.error("حدث خطأ أثناء جلب البيانات الأولية");
+      } finally {
+        setIsLoading(false); // Stop loading after data is fetched
       }
     };
 
-    fetchDeviceTypes();
-    fetchDamagedTypes();
-    fetchGovernorates();
+    fetchInitialData();
   }, [accessToken, governorateId, isSupervisor, profile]);
 
   const fetchOffices = async (governorateId) => {
@@ -132,10 +132,12 @@ const SuperVisorDammageDeviceAdd = () => {
   const handleBack = () => {
     navigate(-1);
   };
+
   const handleGovernorateChange = async (value) => {
     setSelectedGovernorate(value);
     await fetchOffices(value);
   };
+
   const rollbackDamagedDevice = async (entityId) => {
     try {
       await axiosInstance.delete(`${Url}/api/DamagedDevice/${entityId}`, {
@@ -154,12 +156,16 @@ const SuperVisorDammageDeviceAdd = () => {
       formData.append("EntityType", "DamagedDevice");
 
       try {
-        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        await axiosInstance.post(
+          `${Url}/api/Attachment/add-attachment`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
       } catch (error) {
         throw new Error("فشل في إرفاق الملفات.");
       }
@@ -184,12 +190,16 @@ const SuperVisorDammageDeviceAdd = () => {
         profileId,
       };
 
-      const response = await axiosInstance.post(`${Url}/api/DamagedDevice`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await axiosInstance.post(
+        `${Url}/api/DamagedDevice`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       const entityId = response.data?.id || response.data;
       if (!entityId) throw new Error("فشل في استرداد معرف الكيان.");
@@ -270,7 +280,9 @@ const SuperVisorDammageDeviceAdd = () => {
         type: "image/jpeg",
       });
 
-      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
+      if (
+        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
+      ) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -328,147 +340,154 @@ const SuperVisorDammageDeviceAdd = () => {
       dir="rtl"
     >
       <h1 className="SuperVisor-title-container">إضافة جهاز تالف</h1>
-      <div className="add-details-container" style={{ width: "100%" }}>
-        <Form
-          form={form}
-          onFinish={handleFormSubmit}
-          layout="vertical"
-          className="superVisor-Add-form-container"
-        >
-          <div className="form-item-damaged-device-container">
-            <Form.Item
-              name="governorateId"
-              label="اسم المحافظة"
-              rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
-            >
-              <Select
-              style={{ width: "267px", height: "45px" }}
-              dir="rtl"
-                value={selectedGovernorate || undefined}
-                onChange={handleGovernorateChange}
-                disabled={isSupervisor}
-                className="supervisor-devices-dameged-dropdown"
-                placeholder="اختر المحافظة"
-              >
-                {governorates.map((gov) => (
-                  <Select.Option key={gov.id} value={gov.id}>
-                    {gov.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              name="officeId"
-              label="اسم المكتب"
-              rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
-            >
-              <Select
-                placeholder="اختر المكتب"
-                style={{ width: "267px", height: "45px" }}
-                disabled={isSupervisor || !selectedGovernorate}
-                value={selectedOffice || undefined}
-                onChange={(value) => setSelectedOffice(value)}
-                options={offices}
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="serialNumber"
-              label="الرقم التسلسلي"
-              rules={[{ required: true, message: "يرجى إدخال الرقم التسلسلي" }]}
-            >
-              <Input placeholder="أدخل الرقم التسلسلي" />
-            </Form.Item>
-
-            <Form.Item
-              name="damagedDeviceTypeId"
-              label="سبب التلف"
-              rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}
-            >
-              <Select
-                style={{ width: "267px", height: "45px" }}
-                options={damagedTypes}
-                placeholder="اختر سبب التلف"
-                allowClear
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="deviceTypeId"
-              label="نوع الجهاز"
-              rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}
-            >
-              <Select
-                style={{ width: "267px", height: "45px" }}
-                options={deviceTypes}
-                placeholder="اختر نوع الجهاز"
-                allowClear
-              />
-            </Form.Item>
-
-            <Form.Item
-              name="date"
-              label="التاريخ"
-              rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
-            >
-              <DatePicker style={{ width: "100%" }} />
-            </Form.Item>
-
-            <Form.Item
-              name="note"
-              label="ملاحظات"
-              initialValue="لا يوجد"
-              rules={[{ message: "يرجى إدخال الملاحظات" }]}
-            >
-              <Input.TextArea placeholder="أدخل الملاحظات" />
-            </Form.Item>
-          </div>
-
-          <h1 className="SuperVisor-title-container">إضافة صورة الجهاز التالف</h1>
-          <div className="add-image-section">
-            <div className="dragger-container">
+      {isLoading ? (
+        <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
+      ) : (
+        <div className="add-details-container" style={{ width: "100%" }}>
+          <Form
+            form={form}
+            onFinish={handleFormSubmit}
+            layout="vertical"
+            className="superVisor-Add-form-container"
+          >
+            <div className="form-item-damaged-device-container">
               <Form.Item
-                name="uploadedImages"
+                name="governorateId"
+                label="اسم المحافظة"
+                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
+              >
+                <Select
+                  style={{ width: "267px", height: "45px" }}
+                  dir="rtl"
+                  value={selectedGovernorate || undefined}
+                  onChange={handleGovernorateChange}
+                  disabled={isSupervisor}
+                  className="supervisor-devices-dameged-dropdown"
+                  placeholder="اختر المحافظة"
+                >
+                  {governorates.map((gov) => (
+                    <Select.Option key={gov.id} value={gov.id}>
+                      {gov.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="officeId"
+                label="اسم المكتب"
+                rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
+              >
+                <Select
+                  placeholder="اختر المكتب"
+                  style={{ width: "267px", height: "45px" }}
+                  disabled={isSupervisor || !selectedGovernorate}
+                  value={selectedOffice || undefined}
+                  onChange={(value) => setSelectedOffice(value)}
+                  options={offices}
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="serialNumber"
+                label="الرقم التسلسلي"
                 rules={[
-                  {
-                    validator: (_, value) =>
-                      fileList.length > 0 || previewUrls.length > 0
-                        ? Promise.resolve()
-                        : Promise.reject(
-                            new Error(
-                              "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
-                            )
-                          ),
-                  },
+                  { required: true, message: "يرجى إدخال الرقم التسلسلي" },
                 ]}
               >
-                <Dragger
-                  fileList={fileList}
-                  onChange={handleFileChange}
-                  beforeUpload={() => false}
-                  multiple
-                  showUploadList={false}
-                >
-                  <p className="ant-upload-drag-icon">📂</p>
-                  <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
-                </Dragger>
-                <Button
-                  type="primary"
-                  onClick={onScanHandler}
-                  disabled={isScanning}
-                  style={{
-                    width: "100%",
-                    height: "45px",
-                    marginTop: "10px",
-                    marginBottom: "10px",
-                  }}
-                >
-                  {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
-                </Button>
+                <Input placeholder="أدخل الرقم التسلسلي" />
+              </Form.Item>
+
+              <Form.Item
+                name="damagedDeviceTypeId"
+                label="سبب التلف"
+                rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}
+              >
+                <Select
+                  style={{ width: "267px", height: "45px" }}
+                  options={damagedTypes}
+                  placeholder="اختر سبب التلف"
+                  allowClear
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="deviceTypeId"
+                label="نوع الجهاز"
+                rules={[{ required: true, message: "يرجى اختيار نوع الجهاز" }]}
+              >
+                <Select
+                  style={{ width: "267px", height: "45px" }}
+                  options={deviceTypes}
+                  placeholder="اختر نوع الجهاز"
+                  allowClear
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="date"
+                label="التاريخ"
+                rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
+              >
+                <DatePicker style={{ width: "100%" }} />
+              </Form.Item>
+
+              <Form.Item
+                name="note"
+                label="ملاحظات"
+                initialValue="لا يوجد"
+                rules={[{ message: "يرجى إدخال الملاحظات" }]}
+              >
+                <Input.TextArea placeholder="أدخل الملاحظات" />
               </Form.Item>
             </div>
-            <div className="image-previewer-container">
+
+            <h1 className="SuperVisor-title-container">
+              إضافة صورة الجهاز التالف
+            </h1>
+            <div className="add-image-section">
+              <div className="dragger-container">
+                <Form.Item
+                  name="uploadedImages"
+                  rules={[
+                    {
+                      validator: (_, value) =>
+                        fileList.length > 0 || previewUrls.length > 0
+                          ? Promise.resolve()
+                          : Promise.reject(
+                              new Error(
+                                "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
+                              )
+                            ),
+                    },
+                  ]}
+                >
+                  <Dragger
+                    fileList={fileList}
+                    onChange={handleFileChange}
+                    beforeUpload={() => false}
+                    multiple
+                    showUploadList={false}
+                  >
+                    <p className="ant-upload-drag-icon">📂</p>
+                    <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
+                  </Dragger>
+                  <Button
+                    type="primary"
+                    onClick={onScanHandler}
+                    disabled={isScanning}
+                    style={{
+                      width: "100%",
+                      height: "45px",
+                      marginTop: "10px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
+                  </Button>
+                </Form.Item>
+              </div>
+              <div className="image-previewer-container">
                 <ImagePreviewer
                   uploadedImages={previewUrls}
                   defaultWidth={600}
@@ -476,28 +495,29 @@ const SuperVisorDammageDeviceAdd = () => {
                   onDeleteImage={handleDeleteImage}
                 />
               </div>
-          </div>
-          <div className="image-previewer-section">
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={isSubmitting}
-              disabled={isSubmitting}
-              className="submit-button"
-            >
-              حفظ
-            </Button>
-            <Button
-              danger
-              onClick={handleBack}
-              disabled={isSubmitting}
-              className="add-back-button"
-            >
-              رجوع
-            </Button>
-          </div>
-        </Form>
-      </div>
+            </div>
+            <div className="image-previewer-section">
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={isSubmitting}
+                disabled={isSubmitting}
+                className="submit-button"
+              >
+                حفظ
+              </Button>
+              <Button
+                danger
+                onClick={handleBack}
+                disabled={isSubmitting}
+                className="add-back-button"
+              >
+                رجوع
+              </Button>
+            </div>
+          </Form>
+        </div>
+      )}
     </div>
   );
 };

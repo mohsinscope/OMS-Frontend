@@ -9,6 +9,8 @@ import {
   message,
   Upload,
   Modal,
+  Skeleton,
+
 } from "antd";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
@@ -34,6 +36,7 @@ const SuperVisorDammagePassportAdd = () => {
   const isSupervisor = roles?.includes("Supervisor");
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true); // Loading state for initial data
 
   useEffect(() => {
     if (isSupervisor && profile) {
@@ -108,6 +111,8 @@ const SuperVisorDammagePassportAdd = () => {
       } catch (error) {
         console.error("Error fetching damaged types:", error);
         message.error("خطأ في جلب أنواع التلف للجوازات");
+      } finally {
+        setIsLoading(false); // Stop loading after data is fetched
       }
     };
 
@@ -352,6 +357,9 @@ const SuperVisorDammagePassportAdd = () => {
       dir="rtl"
     >
       <h1 className="SuperVisor-title-container">إضافة جواز تالف</h1>
+      {isLoading ? (
+        <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
+      ): (
       <div className="add-details-container" style={{ width: "100%" }}>
         <Form
           form={form}
@@ -384,7 +392,7 @@ const SuperVisorDammagePassportAdd = () => {
                   placeholder="اختر المكتب"
                   style={{ width: "267px", height: "45px" }}
                   disabled={isSupervisor || !selectedGovernorate}
-                  value={selectedOffice || undefined}
+                  value={selectedOffice || "undefined"}
                   onChange={(value) => setSelectedOffice(value)}
                   options={offices}
                 />
@@ -503,7 +511,7 @@ const SuperVisorDammagePassportAdd = () => {
             </div>
           </div>
         </Form>
-      </div>
+      </div>)}
     </div>
   );
 };

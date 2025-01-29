@@ -157,8 +157,8 @@ const App = () => {
 
   return (
     <Router>
-          <DevToolsBlocker /> {/* Add this line */}
-
+{/*           <DevToolsBlocker /> 
+ */}
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<SignInPage />} />
