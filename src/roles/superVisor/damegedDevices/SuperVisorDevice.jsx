@@ -28,7 +28,7 @@ const SuperVisorDevices = () => {
   } = useAuthStore();
   
   const hasCreatePermission = permissions.includes("DDc");
-  const isSupervisor = roles.includes("Supervisor");
+  const isSupervisor =  roles.includes("Supervisor") || roles.includes("I.T");
 
   const [devices, setDevices] = useState([]);
   const [totalDevices, setTotalDevices] = useState(0);
