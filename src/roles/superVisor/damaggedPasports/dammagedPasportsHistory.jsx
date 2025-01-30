@@ -156,6 +156,7 @@ export default function SuperVisorPassport() {
                 <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">التاريخ</th>
                 <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المحافظة</th>
                 <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المكتب</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">اسم المستخدم</th>
                 <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">رقم الجواز</th>
               </tr>
             </thead>
@@ -175,6 +176,9 @@ export default function SuperVisorPassport() {
                       }</td>
                       <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
                         passport.officeName
+                      }</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
+                        passport.profileFullName
                       }</td>
                       <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
                         passport.passportNumber
@@ -207,6 +211,7 @@ export default function SuperVisorPassport() {
     try {
       const payload = {
         passportNumber: formData.passportNumber || "",
+        profileFullName: formData.profileFullName || "",
         officeId: isSupervisor ? profile.officeId : selectedOffice || null,
         governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
         damagedTypeId: formData.damagedTypeId || null,
@@ -241,7 +246,7 @@ export default function SuperVisorPassport() {
         properties: { rtl: true },
       });
 
-      const headers = ["رقم الجواز", "المكتب", "المحافظة", "التاريخ", "ت"];
+      const headers = ["رقم الجواز","اسم المستخدم", "المكتب", "المحافظة", "التاريخ", "ت"];
       const headerRow = worksheet.addRow(headers);
 
       headerRow.eachCell((cell) => {
@@ -263,6 +268,7 @@ export default function SuperVisorPassport() {
       fullPassportList.forEach((passport, index) => {
         const row = worksheet.addRow([
           passport.passportNumber,
+          passport.profileFullName,
           passport.officeName,
           passport.governorateName,
           new Date(passport.date).toLocaleDateString("en-CA"),
@@ -286,6 +292,7 @@ export default function SuperVisorPassport() {
       });
 
       worksheet.columns = [
+        { width: 25 },
         { width: 25 },
         { width: 20 },
         { width: 20 },
@@ -444,6 +451,12 @@ export default function SuperVisorPassport() {
       title: "المكتب",
       dataIndex: "officeName",
       key: "officeName",
+      className: "table-column-office-name",
+    },
+    {
+      title: "اسم المستخدم",
+      dataIndex: "profileFullName",
+      key: "profileFullName",
       className: "table-column-office-name",
     },
     {

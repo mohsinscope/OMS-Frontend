@@ -231,6 +231,12 @@ export default function ViewAttendance() {
             {attendanceData.officeName}
           </span>
         </h3>
+        <h3>
+          الملاحظات:{" "}
+          <span style={{ color: "#666", fontStyle: "italic" }}>
+            {attendanceData.note || "لا يوجد"}
+          </span>
+        </h3>
       </div>
 
       <div className="attendence-buttons">
