@@ -10,7 +10,6 @@ import {
   Upload,
   Modal,
   Skeleton,
-
 } from "antd";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
@@ -24,21 +23,34 @@ const { Dragger } = Upload;
 const SuperVisorDammagePassportAdd = () => {
   const navigate = useNavigate();
   const [form] = Form.useForm();
+
   const [fileList, setFileList] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+
+  // Loading / submission states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Data arrays
   const [damagedTypes, setDamagedTypes] = useState([]);
-  const [governate, setGovernate] = useState([]);
+  const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
-  const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
+
+  // Auth-related
+  const { accessToken, profile, roles, isSidebarCollapsed } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
+
   const isSupervisor =  roles.includes("Supervisor") || (roles === "I.T");
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
-  const [isLoading, setIsLoading] = useState(true); // Loading state for initial data
+  const [selectedOffice, setSelectedOffice] = useState(null);
 
+  // -----------------------------
+  // 1) Fetch initial data
+  // -----------------------------
   useEffect(() => {
+    // Pre-fill form if Supervisor
     if (isSupervisor && profile) {
       form.setFieldsValue({
         governorateId: governorateId,
@@ -46,81 +58,63 @@ const SuperVisorDammagePassportAdd = () => {
       });
     }
 
-    const fetchGovernorateData = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        // Promise.all to fetch Damaged Types + Governorates
+        const [damagedTypesResponse, governoratesResponse] = await Promise.all([
+          axiosInstance.get(`${Url}/api/damagedtype/all`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
+          axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
+        ]);
 
-        if (Array.isArray(response.data)) {
-          setGovernate(
-            response.data.map((gov) => ({
-              value: gov.id,
-              label: gov.name,
-            }))
-          );
-
-          if (isSupervisor) {
-            const supervisorGovernorate = response.data.find(
-              (gov) => gov.id === governorateId
-            );
-            if (supervisorGovernorate) {
-              setOffices(
-                supervisorGovernorate.offices?.map((office) => ({
-                  value: office.id,
-                  label: office.name,
-                })) || []
-              );
-            }
-          }
-        } else {
-          console.error("Unexpected response format for governorates", response.data);
-          message.error("فشل تحميل المحافظات بسبب خطأ في البيانات");
-        }
-      } catch (error) {
-        console.error("Error fetching governorate data:", error);
-        message.error("فشل تحميل المحافظات");
-      }
-    };
-
-    fetchGovernorateData();
-  }, [isSupervisor, profile, governorateId, officeId, accessToken]);
-
-  useEffect(() => {
-    const fetchDamagedTypes = async () => {
-      try {
-        const response = await axiosInstance.get(`${Url}/api/damagedtype/all`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        if (Array.isArray(response.data)) {
+        // Set damaged types
+        if (Array.isArray(damagedTypesResponse.data)) {
           setDamagedTypes(
-            response.data.map((type) => ({
+            damagedTypesResponse.data.map((type) => ({
               value: type.id,
               label: type.name,
             }))
           );
         } else {
-          console.error("Unexpected response format for damaged types", response.data);
           message.error("فشل تحميل أنواع التلف بسبب خطأ في البيانات");
         }
+
+        // Set governorates
+        if (Array.isArray(governoratesResponse.data)) {
+          setGovernorates(governoratesResponse.data);
+        } else {
+          message.error("فشل تحميل المحافظات بسبب خطأ في البيانات");
+        }
+
+        // If Supervisor, set selectedGovernorate + fetch offices for that gov
+        if (isSupervisor) {
+          setSelectedGovernorate(governorateId);
+          await fetchOffices(governorateId);
+          setSelectedOffice(officeId);
+        }
       } catch (error) {
-        console.error("Error fetching damaged types:", error);
-        message.error("خطأ في جلب أنواع التلف للجوازات");
+        console.error("Error in fetchInitialData:", error);
+        message.error("حدث خطأ أثناء جلب البيانات الأولية");
       } finally {
-        setIsLoading(false); // Stop loading after data is fetched
+        setIsLoading(false);
       }
     };
 
-    fetchDamagedTypes();
-  }, [accessToken]);
+    fetchInitialData();
+  }, [isSupervisor, profile, governorateId, officeId, accessToken, form]);
 
-  const fetchOffices = async (governorateId) => {
-    if (!governorateId) {
+  // -----------------------------
+  // 2) Fetch offices per governorate
+  // -----------------------------
+  const fetchOffices = async (govId) => {
+    if (!govId) {
       setOffices([]);
       setSelectedOffice(null);
       return;
@@ -128,9 +122,11 @@ const SuperVisorDammagePassportAdd = () => {
 
     try {
       const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown/${governorateId}`,
+        `${Url}/api/Governorate/dropdown/${govId}`,
         {
-          headers: { Authorization: `Bearer ${accessToken}` },
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
         }
       );
       const governorateData = response.data[0];
@@ -141,20 +137,83 @@ const SuperVisorDammagePassportAdd = () => {
             label: office.name,
           }))
         );
-        if (isSupervisor) {
-          setSelectedOffice(officeId);
-          
-        }
+
       }
     } catch (error) {
       message.error("فشل تحميل المكاتب");
     }
   };
 
-  const handleBack = () => {
-    navigate(-1);
+  // -----------------------------
+  // 3) Handle form submission
+  // -----------------------------
+  const handleFormSubmit = async (values) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        passportNumber: values.passportNumber,
+        date: values.date
+          ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
+          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
+        damagedTypeId: values.damagedTypeId,
+        officeId: isSupervisor ? officeId : selectedOffice,
+        governorateId: isSupervisor ? governorateId : selectedGovernorate,
+        profileId,
+        note: values.note || "",
+      };
+
+      const response = await axiosInstance.post(`${Url}/api/DamagedPassport`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      const entityId = response.data?.id || response.data;
+      if (!entityId) {
+        throw new Error("فشل في استرداد معرف الكيان.");
+      }
+
+      // Attach files if any
+      if (fileList.length > 0) {
+        try {
+          await attachFiles(entityId);
+          message.success("تم إرسال البيانات والمرفقات بنجاح");
+        } catch (attachmentError) {
+          // Rollback on attachment error
+          await rollbackDamagedPassport(entityId);
+          throw new Error(
+            "فشل في إرفاق الملفات. تم إلغاء الإنشاء لضمان سلامة البيانات."
+          );
+        }
+      } else {
+        message.success("تم إرسال البيانات بنجاح بدون مرفقات");
+      }
+
+      // Navigate back after success
+      navigate(-1);
+    } catch (error) {
+      message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  // -----------------------------
+  // 4) Handle Governorate selection
+  // -----------------------------
+  const handleGovernorateChange = async (value) => {
+    setSelectedGovernorate(value);
+    setSelectedOffice(null);
+    form.setFieldsValue({ officeId: undefined }); // reset office
+    await fetchOffices(value);
+  };
+
+  // -----------------------------
+  // 5) Rollback method on attach error
+  // -----------------------------
   const rollbackDamagedPassport = async (entityId) => {
     try {
       await axiosInstance.delete(`${Url}/api/DamagedPassport/${entityId}`, {
@@ -167,6 +226,9 @@ const SuperVisorDammagePassportAdd = () => {
     }
   };
 
+  // -----------------------------
+  // 6) Attach files
+  // -----------------------------
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
       const formData = new FormData();
@@ -183,69 +245,14 @@ const SuperVisorDammagePassportAdd = () => {
     }
   };
 
-  const handleFormSubmit = async (values) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-
-    try {
-      const payload = {
-        passportNumber: values.passportNumber,
-        date: values.date
-          ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
-          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-        damagedTypeId: values.damagedTypeId,
-        officeId: isSupervisor ? officeId : values.officeId,
-        governorateId: isSupervisor ? governorateId : values.governorateId,
-        profileId,
-        note: values.note || "",
-      };
-
-      const response = await axiosInstance.post(
-        `${Url}/api/DamagedPassport`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      const entityId = response.data?.id || response.data;
-      if (!entityId) throw new Error("Failed to retrieve entity ID.");
-
-      try {
-        if (fileList.length > 0) {
-          await attachFiles(entityId);
-          message.success("تم إرسال البيانات والمرفقات بنجاح");
-        } else {
-          message.success("تم إرسال البيانات بنجاح بدون مرفقات");
-        }
-        navigate(-1);
-      } catch (attachmentError) {
-        await rollbackDamagedPassport(entityId);
-        throw new Error(
-          "فشل في إرفاق الملفات. تم إلغاء إنشاء الجواز التالف لضمان سلامة البيانات."
-        );
-      }
-    } catch (error) {
-      message.error(
-        error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleGovernorateChange = async (value) => {
-    setSelectedGovernorate(value);
-    setSelectedOffice(null); // Clear the selected office when governorate changes
-    await fetchOffices(value);
-  };
-  
-
+  // -----------------------------
+  // 7) File changes & scanning
+  // -----------------------------
   const handleFileChange = (info) => {
-    const uniqueFiles = info.fileList.filter(
+    const updatedFiles = info.fileList;
+
+    // Only keep unique new files
+    const uniqueFiles = updatedFiles.filter(
       (newFile) =>
         !fileList.some(
           (existingFile) =>
@@ -313,13 +320,14 @@ const SuperVisorDammagePassportAdd = () => {
             originFileObj: scannedFile,
           },
         ]);
-
         setPreviewUrls((prev) => [...prev, scannedPreviewUrl]);
+
         message.success("تم إضافة الصورة الممسوحة بنجاح!");
       } else {
         message.info("تم بالفعل إضافة هذه الصورة.");
       }
     } catch (error) {
+      // Show a modal if scanning fails
       Modal.error({
         title: "خطأ",
         content: (
@@ -350,6 +358,16 @@ const SuperVisorDammagePassportAdd = () => {
     }
   };
 
+  // -----------------------------
+  // 8) Navigation
+  // -----------------------------
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  // -----------------------------
+  // RENDER
+  // -----------------------------
   return (
     <div
       className={`supervisor-damaged-passport-add-container ${
@@ -358,161 +376,193 @@ const SuperVisorDammagePassportAdd = () => {
       dir="rtl"
     >
       <h1 className="SuperVisor-title-container">إضافة جواز تالف</h1>
+
       {isLoading ? (
-        <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
-      ): (
-      <div className="add-details-container" style={{ width: "100%" }}>
-        <Form
-          form={form}
-          onFinish={handleFormSubmit}
-          layout="vertical"
-          style={{ direction: "rtl", display: "flex", gap: "30px" }}
-        >
-          <div className="add-damagedpassport-section-container">
-            <div className="add-passport-fields-container">
-              <Form.Item
-                name="governorateId"
-                label="اسم المحافظة"
-                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
-              >
-                <Select
-                  placeholder="اختر المحافظة"
-                  disabled={isSupervisor}
-                  style={{ width: "267px", height: "45px" }}
-                  options={governate}
-                  onChange={handleGovernorateChange}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="officeId"
-                label="اسم المكتب"
-                rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
-              >
-                <Select
-                  placeholder="اختر المكتب"
-                  style={{ width: "267px", height: "45px" }}
-                  disabled={isSupervisor || !selectedGovernorate}
-                  value={selectedOffice || "undefined"}
-                  onChange={(value) => setSelectedOffice(value)}
-                  options={offices}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="passportNumber"
-                label="رقم الجواز"
-                rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}
-              >
-                <Input placeholder="أدخل رقم الجواز" />
-              </Form.Item>
-
-              <Form.Item
-                name="damagedTypeId"
-                label="سبب التلف"
-                rules={[{ required: true, message: "يرجى إدخال سبب التلف" }]}
-              >
-                <Select
-                  options={damagedTypes}
-                  placeholder="اختر سبب التلف"
-                  allowClear
-                  style={{ width: "267px", height: "45px" }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="date"
-                label="التاريخ"
-                rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
-              >
-                <DatePicker
-                  placeholder="اختر التاريخ"
-                  style={{ width: "267px", height: "45px" }}
-                />
-              </Form.Item>
-
-              <Form.Item name="note" label="ملاحظات">
-                <Input.TextArea
-                  placeholder="أدخل الملاحظات"
-                  style={{ width: "450px", maxHeight: "650px" }}
-                />
-              </Form.Item>
-            </div>
-
-            <h1 className="SuperVisor-title-container">إضافة صورة الجواز التالف</h1>
-            <div className="add-image-section">
-              <div className="dragger-container">
+        <Skeleton active paragraph={{ rows: 10 }} />
+      ) : (
+        <div className="add-details-container" style={{ width: "100%" }}>
+          <Form
+            form={form}
+            onFinish={handleFormSubmit}
+            layout="vertical"
+            style={{ direction: "rtl" }}
+          >
+            {/* Form Fields Section */}
+            <div className="add-damagedpassport-section-container">
+              <div className="add-passport-fields-container">
+                {/* Governorate */}
                 <Form.Item
-                  name="uploadedImages"
+                  name="governorateId"
+                  label="اسم المحافظة"
                   rules={[
-                    {
-                      validator: (_, value) =>
-                        fileList.length > 0 || previewUrls.length > 0
-                          ? Promise.resolve()
-                          : Promise.reject(
-                              new Error(
-                                "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
-                              )
-                            ),
-                    },
+                    { required: true, message: "يرجى اختيار المحافظة" },
                   ]}
                 >
-                  <Dragger
-                    fileList={fileList}
-                    onChange={handleFileChange}
-                    beforeUpload={() => false}
-                    multiple
-                    showUploadList={false}
+                  <Select
+                    placeholder="اختر المحافظة"
+                    disabled={isSupervisor}
+                    style={{ width: "267px", height: "45px" }}
+                    value={selectedGovernorate || undefined}
+                    onChange={handleGovernorateChange}
                   >
-                    <p className="ant-upload-drag-icon">📂</p>
-                    <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
-                  </Dragger>
-                  <Button
-                    type="primary"
-                    style={{
-                      width: "100%",
-                      height: "45px",
-                      marginTop: "10px",
-                      marginBottom: "10px",
-                    }}
-                    onClick={onScanHandler}
-                    disabled={isScanning}
-                  >
-                    {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
-                  </Button>
+                    {governorates.map((gov) => (
+                      <Select.Option key={gov.id} value={gov.id}>
+                        {gov.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                {/* Office */}
+                <Form.Item
+                  name="officeId"
+                  label="اسم المكتب"
+                  rules={[
+                    { required: true, message: "يرجى اختيار المكتب" },
+                  ]}
+                >
+                  <Select
+                    placeholder="اختر المكتب"
+                    style={{ width: "267px", height: "45px" }}
+                    disabled={isSupervisor || !selectedGovernorate}
+                    value={selectedOffice || undefined}
+                    onChange={(value) => setSelectedOffice(value)}
+                    options={offices} // each office has { value, label }
+                  />
+                </Form.Item>
+
+                {/* Passport Number */}
+                <Form.Item
+                  name="passportNumber"
+                  label="رقم الجواز"
+                  rules={[
+                    { required: true, message: "يرجى إدخال رقم الجواز" },
+                  ]}
+                >
+                  <Input placeholder="أدخل رقم الجواز" />
+                </Form.Item>
+
+                {/* Damaged Type */}
+                <Form.Item
+                  name="damagedTypeId"
+                  label="سبب التلف"
+                  rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}
+                >
+                  <Select
+                    placeholder="اختر سبب التلف"
+                    style={{ width: "267px", height: "45px" }}
+                    options={damagedTypes}
+                    allowClear
+                  />
+                </Form.Item>
+
+                {/* Date */}
+                <Form.Item
+                  name="date"
+                  label="التاريخ"
+                  rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
+                >
+                  <DatePicker
+                    placeholder="اختر التاريخ"
+                    style={{ width: "267px", height: "45px" }}
+                  />
+                </Form.Item>
+
+                {/* Note */}
+                <Form.Item
+                  name="note"
+                  label="ملاحظات"
+                  initialValue=""
+                >
+                  <Input.TextArea
+                    placeholder="أدخل الملاحظات"
+                    style={{ width: "450px", maxHeight: "650px" }}
+                  />
                 </Form.Item>
               </div>
-              <div className="image-previewer-container">
-                <ImagePreviewer
-                  uploadedImages={previewUrls}
-                  defaultWidth={600}
-                  defaultHeight={300}
-                  onDeleteImage={handleDeleteImage}
-                />
+
+              {/* Image Upload / Scan Section */}
+              <h1 className="SuperVisor-title-container">
+                إضافة صورة الجواز التالف
+              </h1>
+              <div className="add-image-section">
+                <div className="dragger-container">
+                  <Form.Item
+                    name="uploadedImages"
+                    rules={[
+                      {
+                        validator: (_, value) =>
+                          fileList.length > 0 || previewUrls.length > 0
+                            ? Promise.resolve()
+                            : Promise.reject(
+                                new Error(
+                                  "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
+                                )
+                              ),
+                      },
+                    ]}
+                  >
+                    <Dragger
+                      fileList={fileList}
+                      onChange={handleFileChange}
+                      beforeUpload={() => false}
+                      multiple
+                      showUploadList={false}
+                    >
+                      <p className="ant-upload-drag-icon">📂</p>
+                      <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
+                    </Dragger>
+
+                    <Button
+                      type="primary"
+                      style={{
+                        width: "100%",
+                        height: "45px",
+                        marginTop: "10px",
+                        marginBottom: "10px",
+                      }}
+                      onClick={onScanHandler}
+                      disabled={isScanning}
+                    >
+                      {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
+                    </Button>
+                  </Form.Item>
+                </div>
+
+                <div className="image-previewer-container">
+                  <ImagePreviewer
+                    uploadedImages={previewUrls}
+                    defaultWidth={600}
+                    defaultHeight={300}
+                    onDeleteImage={handleDeleteImage}
+                  />
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="image-previewer-section">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  className="submit-button"
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
+                >
+                  حفظ
+                </Button>
+                <Button
+                  danger
+                  onClick={handleBack}
+                  className="add-back-button"
+                  disabled={isSubmitting}
+                >
+                  رجوع
+                </Button>
               </div>
             </div>
-            <div className="image-previewer-section">
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="submit-button"
-                loading={isSubmitting}
-                disabled={isSubmitting}
-              >
-                حفظ
-              </Button>
-              <Button
-                danger
-                onClick={handleBack}
-                className="add-back-button"
-                disabled={isSubmitting}
-              >
-                رجوع
-              </Button>
-            </div>
-          </div>
-        </Form>
-      </div>)}
+          </Form>
+        </div>
+      )}
     </div>
   );
 };
