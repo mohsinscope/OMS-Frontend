@@ -27,7 +27,7 @@ export default function SupervisorAttendanceHistory() {
   const hasCreatePermission = hasAnyPermission("create");
   const navigate = useNavigate();
   
-  const isSupervisor =  roles.includes("Supervisor") || (roles === "I.T");
+  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
 

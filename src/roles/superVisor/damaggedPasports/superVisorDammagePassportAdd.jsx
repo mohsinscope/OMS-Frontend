@@ -41,7 +41,7 @@ const SuperVisorDammagePassportAdd = () => {
   const { accessToken, profile, roles, isSidebarCollapsed } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
 
-  const isSupervisor =  roles.includes("Supervisor") || (roles === "I.T");
+  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T");
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
 
