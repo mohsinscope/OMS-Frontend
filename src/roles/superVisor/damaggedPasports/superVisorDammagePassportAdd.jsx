@@ -143,6 +143,7 @@ const SuperVisorDammagePassportAdd = () => {
         );
         if (isSupervisor) {
           setSelectedOffice(officeId);
+          
         }
       }
     } catch (error) {
