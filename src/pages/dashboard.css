@@ -83,13 +83,13 @@
 
 .user-info h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: small;
   font-weight: bold;
 }
 
 .user-info h4 {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: small;
 }
 
 .user-avatar {
@@ -406,10 +406,7 @@
     gap: 2px;
   }
 
-  .navbar-right .user-info {
-    display: none;
-  }
-
+ 
   #title-navbar {
     display: none;
   }
