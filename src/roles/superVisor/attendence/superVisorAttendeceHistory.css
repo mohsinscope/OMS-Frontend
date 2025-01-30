@@ -109,6 +109,7 @@
   transition: all 0.3s ease;
   align-self: flex-end;
   margin-top: 24px;
+  text-decoration: none;
 }
 
 .attendance-add-button:hover {
