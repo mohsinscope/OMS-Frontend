@@ -1,5 +1,6 @@
 import React from 'react';
-import { Building2, Clock, DollarSign, Bell } from 'lucide-react';
+import { Building2, Clock, DollarSign, Bell,FileCheck ,BookX,  // for damaged passport
+  MonitorX  } from 'lucide-react';
 import './landingPage.css';
 import useAuthStore from './../store/store.js';
 import {Link} from 'react-router-dom'
@@ -18,29 +19,28 @@ const LandingPage = () => {
 
         {/* Features List */}
         <div className="features-list">
+         
           <FeatureItem
-            icon={<Building2 className="feature-icon" />}
-            title="ادارة المكاتب"
-          />
-                    <Link to="/supervisor/Attendence"   style={{ textDecoration: "none", color: "inherit" }}
-                    >
+            icon={<DollarSign className="feature-icon" />}
+            title="ادارة المصاريف"
+            />
+           
+                 
 
           <FeatureItem
             icon={<Clock className="feature-icon" />}
             title="ادارة الحضور"
           />
-                      </Link>
 
-          <Link to="/supervisor/Expensess"   style={{ textDecoration: "none", color: "inherit" }}
-          >
+                     
           <FeatureItem
-            icon={<DollarSign className="feature-icon" />}
-            title="ادارة المصاريف"
-            />
-            </Link>
+            icon={<BookX  className="feature-icon" />}
+            title="الجوازات التالفة"
+          />
+
           <FeatureItem
-            icon={<Bell className="feature-icon" />}
-            title="الاشعارات"
+            icon={<MonitorX  className="feature-icon" />}
+            title="الاجهزة التالفة"
           />
         </div>
           <p className="subtitle" style={{textAlign:"center", marginTop:"10px "}}>

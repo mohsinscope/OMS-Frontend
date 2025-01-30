@@ -175,6 +175,7 @@ const fetchGovernorateStats = async () => {
           value: stat.eveningShiftCount
         });
       });
+      console.log(morningStatsData)
 
       // Sort the data by value in descending order
       const sortedMorningData = morningStatsData.sort((a, b) => b.value - a.value);
@@ -248,7 +249,7 @@ const fetchGovernorateStats = async () => {
     }
     return null;
   };
-
+  
   // Render chart function
   const renderChart = (data, title) => (
     <AttendanceCard>
@@ -269,7 +270,7 @@ const fetchGovernorateStats = async () => {
             tick={false}
             domain={[0, 'dataMax + 5']}
           />
-          <YAxis
+           <YAxis
             dataKey="name"
             type="category"
             axisLine={false}
@@ -279,7 +280,8 @@ const fetchGovernorateStats = async () => {
               fontSize: 14,
               dx: -10
             }}
-            width={120}
+            width={150}
+            interval={0}
           />
           <Tooltip content={<CustomTooltip />} cursor={false} />
           <Bar
