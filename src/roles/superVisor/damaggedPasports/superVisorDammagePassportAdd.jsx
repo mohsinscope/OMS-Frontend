@@ -44,7 +44,6 @@ const SuperVisorDammagePassportAdd = () => {
   const isSupervisor =  roles.includes("Supervisor") || (roles === "I.T");
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
-  const [selectedOffice, setSelectedOffice] = useState(null);
 
   // -----------------------------
   // 1) Fetch initial data
@@ -139,6 +138,10 @@ const SuperVisorDammagePassportAdd = () => {
         );
 
       }
+         if (isSupervisor) {
+          setSelectedOffice(officeId);
+          
+        }
     } catch (error) {
       message.error("فشل تحميل المكاتب");
     }

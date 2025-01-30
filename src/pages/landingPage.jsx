@@ -2,7 +2,7 @@ import React from 'react';
 import { Building2, Clock, DollarSign, Bell } from 'lucide-react';
 import './landingPage.css';
 import useAuthStore from './../store/store.js';
-
+import {Link} from 'react-router-dom'
 const LandingPage = () => {
   
   const { isSidebarCollapsed} = useAuthStore();
@@ -22,14 +22,22 @@ const LandingPage = () => {
             icon={<Building2 className="feature-icon" />}
             title="ادارة المكاتب"
           />
+                    <Link to="/supervisor/Attendence"   style={{ textDecoration: "none", color: "inherit" }}
+                    >
+
           <FeatureItem
             icon={<Clock className="feature-icon" />}
             title="ادارة الحضور"
           />
+                      </Link>
+
+          <Link to="/supervisor/Expensess"   style={{ textDecoration: "none", color: "inherit" }}
+          >
           <FeatureItem
             icon={<DollarSign className="feature-icon" />}
             title="ادارة المصاريف"
-          />
+            />
+            </Link>
           <FeatureItem
             icon={<Bell className="feature-icon" />}
             title="الاشعارات"
