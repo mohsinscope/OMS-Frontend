@@ -10,6 +10,7 @@ import {
   DatePicker,
   Select,
   Upload,
+  Skeleton, // 1) Import Skeleton from antd
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import { UploadOutlined } from "@ant-design/icons";
@@ -57,9 +58,7 @@ const LecturerShow = () => {
 
   const fetchLectureDetails = async () => {
     try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Lecture/${lectureId}`
-      );
+      const response = await axiosInstance.get(`${Url}/api/Lecture/${lectureId}`);
       const lecture = response.data;
       setLectureData(lecture);
 
@@ -147,15 +146,11 @@ const LecturerShow = () => {
       formData.append("entityType", "Lecture");
       formData.append("file", file);
 
-      await axiosInstance.put(
-        `${Url}/api/attachment/${imageData.imageId}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      await axiosInstance.put(`${Url}/api/attachment/${imageData.imageId}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       message.success("تم تحديث الصورة بنجاح");
       await fetchLectureImages();
@@ -180,17 +175,17 @@ const LecturerShow = () => {
           ? values.lectureTypeIds
           : [values.lectureTypeIds], // Ensure it's always an array
       };
-  
+
       await axiosInstance.put(`${Url}/api/Lecture/${lectureId}`, updatedValues);
       message.success("تم تحديث المحضر بنجاح");
       setEditModalVisible(false);
       await fetchLectureDetails(); // Refresh lecture details after update
     } catch (error) {
-      console.error("Error updating lecture:", error); // Log the error for debugging
+      console.error("Error updating lecture:", error);
       message.error("حدث خطأ أثناء تعديل المحضر");
     }
   };
-  
+
   const handleDelete = async () => {
     try {
       await axiosInstance.delete(`${Url}/api/Lecture/${lectureId}`);
@@ -202,253 +197,262 @@ const LecturerShow = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="loading">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (!lectureData) {
-    return <div className="loading">جاري التحميل...</div>;
-  }
-
   return (
     <div
       className={`supervisor-passport-damage-show-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl">
-      <div className="title-container">
-        <h1>تفاصيل المحضر</h1>
-        <div className="edit-button-and-delete">
-          <Button onClick={() => navigate(-1)} className="back-button">
-            <Lele type="back" />
-            الرجوع
-          </Button>
-          {hasDeletePermission && (
-            <Button
-              onClick={() => setDeleteModalVisible(true)}
-              className="delete-button-passport">
-              حذف <Lele type="delete" />
-            </Button>
-          )}
-          {hasUpdatePermission && (
-            <Button
-              onClick={() => {
-                // Reset company and lecture type to their initial values
-                form.setFieldsValue({
-                  companyId: initialCompanyId,
-                  lectureTypeIds: initialLectureTypeIds,
-                });
-
-                // Preload lecture types based on the initial company
-                const selectedCompany = companies.find(
-                  (c) => c.id === initialCompanyId
-                );
-                setLectureTypes(selectedCompany?.lectureTypes || []);
-
-                // Open the edit modal
-                setEditModalVisible(true);
-              }}
-              className="edit-button-passport">
-              تعديل <Lele type="edit" />
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <div className="details-container-Lecture">
-        <div className="details-lecture-container">
-          <div className="details-row">
-            <span className="details-label">عنوان المحضر:</span>
-            <input
-              className="details-value"
-              value={lectureData.title}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">التاريخ:</span>
-            <input
-              className="details-value"
-              value={moment(lectureData.date).format("YYYY-MM-DD ")}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">المكتب:</span>
-            <input
-              className="details-value"
-              value={lectureData.officeName}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">المحافظة:</span>
-            <input
-              className="details-value"
-              value={lectureData.governorateName}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">اسم الشركة:</span>
-            <input
-              className="details-value"
-              value={lectureData.companyName}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">نوع المحضر:</span>
-            <input
-              className="details-value"
-              value={lectureData.lectureTypeNames?.join(", ")}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">الملاحظات:</span>
-            <textarea
-              className="textarea-value"
-              value={lectureData.note || "لا توجد ملاحظات"}
-              disabled
-            />
-          </div>
-        </div>
-        <div className="image-container">
-          {images.length > 0 && (
-            <div className="image-preview-container">
-              <ImagePreviewer
-                uploadedImages={images.map((img) => img.url)}
-                defaultWidth={600}
-                defaultHeight={300}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      <ConfigProvider direction="rtl">
-        <Modal
-          className="model-container"
-          open={editModalVisible}
-          onCancel={() => setEditModalVisible(false)}
-          footer={null}>
-          <h1>تعديل المحضر</h1>
-          <Form
-            form={form}
-            onFinish={handleSaveEdit}
-            layout="vertical"
-            className="dammaged-passport-container-edit-modal"
-            initialValues={{
-              ...lectureData,
-              date: moment(lectureData?.date),
-            }}>
-            <Form.Item
-              name="title"
-              label="عنوان المحضر"
-              rules={[{ required: true, message: "يرجى إدخال عنوان المحضر" }]}>
-              <Input placeholder="عنوان المحضر" />
-            </Form.Item>
-
-            <Form.Item
-              name="date"
-              label="التاريخ"
-              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-              <Input type="date" />
-            </Form.Item>
-
-            <Form.Item
-              name="companyId"
-              label="الشركة"
-              rules={[{ required: true, message: "يرجى اختيار الشركة" }]}>
-              <Select placeholder="اختر الشركة" onChange={handleCompanyChange}>
-                {companies.map((company) => (
-                  <Select.Option key={company.id} value={company.id}>
-                    {company.name}
-                  </Select.Option>
-                ))}
-              </Select>
-            </Form.Item>
-            <Form.Item
-  name="lectureTypeIds"
-  label="نوع المحضر"
-  rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
-  <Select
-    mode="multiple"
-    placeholder="اختر نوع المحضر"
-    disabled={!form.getFieldValue("companyId")} // Disable if companyId is not selected
-    onChange={(value) => form.setFieldsValue({ lectureTypeIds: value })} // Update form values
-    allowClear // Allow clearing the selection
-  >
-    {lectureTypes.map((type) => (
-      <Select.Option key={type.id} value={type.id}>
-        {type.name}
-      </Select.Option>
-    ))}
-  </Select>
-</Form.Item>
-
-
-            <Form.Item name="note" label="الملاحظات">
-              <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />
-            </Form.Item>
-            <Upload
-              beforeUpload={(file) => {
-                handleImageUpload(file);
-                return false;
-              }}>
-              <Button
-                style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
-                type="primary"
-                icon={<UploadOutlined />}>
-                استبدال الصورة
+      dir="rtl"
+    >
+      {/* 2) Conditionally render Skeleton or the main content */}
+      {loading ? (
+        <Skeleton active paragraph={{ rows: 12 }} />
+      ) : lectureData ? (
+        <>
+          <div className="title-container">
+            <h1>تفاصيل المحضر</h1>
+            <div className="edit-button-and-delete">
+              <Button onClick={() => navigate(-1)} className="back-button">
+                <Lele type="back" />
+                الرجوع
               </Button>
-            </Upload>
-            {images.length > 0 && (
-              <>
-                <span className="note-details-label">صور المحضر:</span>
-                <ImagePreviewer
-                  uploadedImages={images.map((img) => img.url)}
-                  onImageSelect={(index) => {
-                    const selectedImage = images[index];
-                    if (selectedImage) {
-                      setImageData({
-                        imageId: selectedImage.id,
-                        entityId: lectureId,
-                        entityType: "Lecture",
-                      });
-                    }
+              {hasDeletePermission && (
+                <Button
+                  onClick={() => setDeleteModalVisible(true)}
+                  className="delete-button-passport"
+                >
+                  حذف <Lele type="delete" />
+                </Button>
+              )}
+              {hasUpdatePermission && (
+                <Button
+                  onClick={() => {
+                    // Reset company and lecture type to their initial values
+                    form.setFieldsValue({
+                      companyId: initialCompanyId,
+                      lectureTypeIds: initialLectureTypeIds,
+                    });
+
+                    // Preload lecture types based on the initial company
+                    const selectedCompany = companies.find(
+                      (c) => c.id === initialCompanyId
+                    );
+                    setLectureTypes(selectedCompany?.lectureTypes || []);
+
+                    // Open the edit modal
+                    setEditModalVisible(true);
                   }}
-                  defaultWidth="100%"
-                  defaultHeight={300}
+                  className="edit-button-passport"
+                >
+                  تعديل <Lele type="edit" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div className="details-container-Lecture">
+            <div className="details-lecture-container">
+              <div className="details-row">
+                <span className="details-label">عنوان المحضر:</span>
+                <input
+                  className="details-value"
+                  value={lectureData.title}
+                  disabled
                 />
-              </>
-            )}
+              </div>
+              <div className="details-row">
+                <span className="details-label">التاريخ:</span>
+                <input
+                  className="details-value"
+                  value={moment(lectureData.date).format("YYYY-MM-DD ")}
+                  disabled
+                />
+              </div>
+              <div className="details-row">
+                <span className="details-label">المكتب:</span>
+                <input
+                  className="details-value"
+                  value={lectureData.officeName}
+                  disabled
+                />
+              </div>
+              <div className="details-row">
+                <span className="details-label">المحافظة:</span>
+                <input
+                  className="details-value"
+                  value={lectureData.governorateName}
+                  disabled
+                />
+              </div>
+              <div className="details-row">
+                <span className="details-label">اسم الشركة:</span>
+                <input
+                  className="details-value"
+                  value={lectureData.companyName}
+                  disabled
+                />
+              </div>
+              <div className="details-row">
+                <span className="details-label">نوع المحضر:</span>
+                <input
+                  className="details-value"
+                  value={lectureData.lectureTypeNames?.join(", ")}
+                  disabled
+                />
+              </div>
+              <div className="details-row">
+                <span className="details-label">الملاحظات:</span>
+                <textarea
+                  className="textarea-value"
+                  value={lectureData.note || "لا توجد ملاحظات"}
+                  disabled
+                />
+              </div>
+            </div>
 
-            <Button
-              type="primary"
-              htmlType="submit"
-              block
-              className="submit-button">
-              حفظ التعديلات
-            </Button>
-          </Form>
-        </Modal>
+            <div className="image-container">
+              {images.length > 0 && (
+                <div className="image-preview-container">
+                  <ImagePreviewer
+                    uploadedImages={images.map((img) => img.url)}
+                    defaultWidth={600}
+                    defaultHeight={300}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
 
-        <Modal
-          title="تأكيد الحذف"
-          open={deleteModalVisible}
-          onOk={handleDelete}
-          onCancel={() => setDeleteModalVisible(false)}
-          okText="حذف"
-          cancelText="إلغاء">
-          <p>هل أنت متأكد أنك تريد حذف هذا المحضر؟</p>
-        </Modal>
-      </ConfigProvider>
+          <ConfigProvider direction="rtl">
+            <Modal
+              className="model-container"
+              open={editModalVisible}
+              onCancel={() => setEditModalVisible(false)}
+              footer={null}
+            >
+              <h1>تعديل المحضر</h1>
+              <Form
+                form={form}
+                onFinish={handleSaveEdit}
+                layout="vertical"
+                className="dammaged-passport-container-edit-modal"
+                initialValues={{
+                  ...lectureData,
+                  date: moment(lectureData?.date),
+                }}
+              >
+                <Form.Item
+                  name="title"
+                  label="عنوان المحضر"
+                  rules={[{ required: true, message: "يرجى إدخال عنوان المحضر" }]}
+                >
+                  <Input placeholder="عنوان المحضر" />
+                </Form.Item>
+
+                <Form.Item
+                  name="date"
+                  label="التاريخ"
+                  rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}
+                >
+                  <Input type="date" />
+                </Form.Item>
+
+                <Form.Item
+                  name="companyId"
+                  label="الشركة"
+                  rules={[{ required: true, message: "يرجى اختيار الشركة" }]}
+                >
+                  <Select placeholder="اختر الشركة" onChange={handleCompanyChange}>
+                    {companies.map((company) => (
+                      <Select.Option key={company.id} value={company.id}>
+                        {company.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  name="lectureTypeIds"
+                  label="نوع المحضر"
+                  rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}
+                >
+                  <Select
+                    mode="multiple"
+                    placeholder="اختر نوع المحضر"
+                    disabled={!form.getFieldValue("companyId")}
+                    onChange={(value) => form.setFieldsValue({ lectureTypeIds: value })}
+                    allowClear
+                  >
+                    {lectureTypes.map((type) => (
+                      <Select.Option key={type.id} value={type.id}>
+                        {type.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item name="note" label="الملاحظات">
+                  <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />
+                </Form.Item>
+
+                <Upload
+                  beforeUpload={(file) => {
+                    handleImageUpload(file);
+                    return false;
+                  }}
+                >
+                  <Button
+                    style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+                    type="primary"
+                    icon={<UploadOutlined />}
+                  >
+                    استبدال الصورة
+                  </Button>
+                </Upload>
+
+                {images.length > 0 && (
+                  <>
+                    <span className="note-details-label">صور المحضر:</span>
+                    <ImagePreviewer
+                      uploadedImages={images.map((img) => img.url)}
+                      onImageSelect={(index) => {
+                        const selectedImage = images[index];
+                        if (selectedImage) {
+                          setImageData({
+                            imageId: selectedImage.id,
+                            entityId: lectureId,
+                            entityType: "Lecture",
+                          });
+                        }
+                      }}
+                      defaultWidth="100%"
+                      defaultHeight={300}
+                    />
+                  </>
+                )}
+
+                <Button type="primary" htmlType="submit" block className="submit-button">
+                  حفظ التعديلات
+                </Button>
+              </Form>
+            </Modal>
+
+            <Modal
+              title="تأكيد الحذف"
+              open={deleteModalVisible}
+              onOk={handleDelete}
+              onCancel={() => setDeleteModalVisible(false)}
+              okText="حذف"
+              cancelText="إلغاء"
+            >
+              <p>هل أنت متأكد أنك تريد حذف هذا المحضر؟</p>
+            </Modal>
+          </ConfigProvider>
+        </>
+      ) : (
+        // 3) Fallback if lectureData is null after loading finishes
+        <div className="loading">جاري التحميل...</div>
+      )}
     </div>
   );
 };
