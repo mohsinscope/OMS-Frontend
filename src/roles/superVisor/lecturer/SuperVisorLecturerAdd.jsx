@@ -34,7 +34,7 @@ const SuperVisorLecturerAdd = () => {
   const [offices, setOffices] = useState([]);
   const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
   const { profileId, governorateId, officeId, officeName } = profile || {};
-  const isSupervisor = roles?.includes("Supervisor");
+  const isSupervisor =  roles.includes("Supervisor") || roles.includes("I.T");
   const [isLoading, setIsLoading] = useState(true); // Loading state for initial data
 
   // Set initial form values for supervisor and fetch data
