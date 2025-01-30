@@ -350,6 +350,8 @@ const EditUserModal = ({
               <Option value={7}>Sr.Controller</Option>
               <Option value={8}>Project Coordinator</Option>
               <Option value={9}>Operation Manager</Option>
+              <Option value={10}>IT</Option>
+
             </Select>
           </Form.Item>
 
