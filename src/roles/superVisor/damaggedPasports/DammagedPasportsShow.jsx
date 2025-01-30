@@ -49,7 +49,11 @@ const DamagedPassportsShow = () => {
         ? new Date(passport.date).toISOString().split("T")[0]
         : "";
       setPassportData({ ...passport, date: formattedDate });
-      form.setFieldsValue({ ...passport, date: formattedDate });
+      form.setFieldsValue({
+        ...passport,
+        date: formattedDate,
+        notes: passport.note || "", // Set notes to the value from the passport data or an empty string
+      });
     } catch (error) {
       message.error("حدث خطأ أثناء جلب تفاصيل الجواز.");
     }
