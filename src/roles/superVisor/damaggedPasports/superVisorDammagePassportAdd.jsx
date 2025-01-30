@@ -40,9 +40,9 @@ const SuperVisorDammagePassportAdd = () => {
   // Auth-related
   const { accessToken, profile, roles, isSidebarCollapsed } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
-  const isSupervisor = roles.includes("Supervisor") || roles.includes("I.T");
 
-  // Selected states (governorate/office)
+  const isSupervisor =  roles.includes("Supervisor") || (roles === "I.T");
+  const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
 
@@ -137,6 +137,7 @@ const SuperVisorDammagePassportAdd = () => {
             label: office.name,
           }))
         );
+
       }
     } catch (error) {
       message.error("فشل تحميل المكاتب");

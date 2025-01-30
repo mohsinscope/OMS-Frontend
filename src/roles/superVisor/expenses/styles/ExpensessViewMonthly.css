@@ -335,3 +335,34 @@
       direction: rtl;
   }
 }
+
+.custom-date-input {
+  width: 100%; /* Make the input take full width */
+  padding: 8px 12px; /* Add padding for better spacing */
+  border: 1px solid #d9d9d9; /* Add a border */
+  border-radius: 4px; /* Rounded corners */
+  font-size: 14px; /* Adjust font size */
+  color: #333; /* Text color */
+  background-color: #fff; /* Background color */
+  transition: border-color 0.3s ease; /* Smooth transition for border color */
+}
+
+.custom-date-input:focus {
+  border-color: #40a9ff; /* Change border color on focus */
+  outline: none; /* Remove default outline */
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2); /* Add a subtle shadow on focus */
+}
+
+.custom-date-input:hover {
+  border-color: #40a9ff; /* Change border color on hover */
+}
+
+/* Optional: Style the calendar icon in date input */
+.custom-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.5); /* Change the color of the calendar icon */
+  cursor: pointer; /* Change cursor to pointer */
+}
+
+.custom-date-input::-webkit-calendar-picker-indicator:hover {
+  filter: invert(0.3); /* Change the color of the calendar icon on hover */
+}

@@ -62,8 +62,13 @@ const ExpensessView = () => {
   const fetchExpenseDetails = async () => {
     try {
       const response = await axiosInstance.get(`/api/Expense/dailyexpenses/${expenseId}`);
-      const expense = response.data;
-      console.log("expense",expense)
+      const expense = response.data; // Ensure this is defined
+      console.log("Expense Data:", expense); // Log the expense data for debugging
+  
+      if (!expense) {
+        throw new Error("No expense data found");
+      }
+  
       setExpenseData(expense);
       form.setFieldsValue({
         ...expense,
@@ -72,9 +77,10 @@ const ExpensessView = () => {
         price: expense.price,
         quantity: expense.quantity,
         amount: expense.amount,
-        notes: expense.notes
+        notes: expense.notes,
       });
     } catch (error) {
+      console.error("Error fetching expense details:", error);
       message.error('حدث خطأ أثناء جلب تفاصيل المصروف');
     }
   };
@@ -162,11 +168,28 @@ const ExpensessView = () => {
     }
   };
   
+  const handleEditClick = () => {
+    // Set the form fields' values with the current expense data
+    form.setFieldsValue({
+      expenseTypeId: expenseData.expenseTypeId,
+      date: moment(expenseData.expenseDate).format("YYYY-MM-DD"), // Format the date correctly
+      price: expenseData.price,
+      quantity: expenseData.quantity,
+      notes: expenseData.notes,
+    });
+    setEditModalVisible(true); // Open the modal
+  };
+  
   const handleSaveEdit = async (values) => {
     try {
+      // Ensure the date is valid
+      const expenseDate = moment(values.date).isValid() 
+        ? moment(values.date).toISOString() 
+        : moment().toISOString(); // Fallback to current date if invalid
+  
       const updatedValues = {
         id: expenseId,
-        expenseDate: values.date.toISOString(),
+        expenseDate: expenseDate, // Use the validated date
         price: values.price,
         quantity: values.quantity,
         amount: values.price * values.quantity,
@@ -174,14 +197,16 @@ const ExpensessView = () => {
         expenseTypeId: values.expenseTypeId,
         officeId: expenseData.officeId,
         governorateId: expenseData.governorateId,
-        profileId: expenseData.profileId
+        profileId: expenseData.profileId,
       };
-
-      await axiosInstance.put(`/api/Expense/${expenseId}`, updatedValues);
+  
+      const response = await axiosInstance.put(`/api/Expense/${expenseId}`, updatedValues);
+      console.log("API Response:", response.data); // Log the response for debugging
       message.success('تم تحديث المصروف بنجاح');
       setEditModalVisible(false);
       await fetchExpenseDetails();
     } catch (error) {
+      console.error("Error updating expense:", error); // Log the error for debugging
       message.error('حدث خطأ أثناء تعديل المصروف');
     }
   };
@@ -227,14 +252,13 @@ console.log("month" ,expenseData.monthlyStatus)
             </Button>
             {canPerformActions() && (
   <>
-    <Button
-      type="primary"
-      style={{ padding: "20px 30px" }}
-      
-      onClick={() => setEditModalVisible(true)}
-    >
-      تعديل
-    </Button>
+<Button
+  type="primary"
+  style={{ padding: "20px 30px" }}
+  onClick={handleEditClick} // Use the new handler
+>
+  تعديل
+</Button>
     <Button
       danger
       type="primary"
@@ -359,11 +383,17 @@ console.log("month" ,expenseData.monthlyStatus)
             </Form.Item>
 
             <Form.Item
-              name="date"
-              label="التاريخ"
-              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-              <DatePicker format="YYYY-MM-DD" style={{ width: '100%' }} />
-            </Form.Item>
+  name="date"
+  label="التاريخ"
+  rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
+  <input
+    className="custom-date-input" // Unique class name
+    placeholder="التاريخ"
+    type="date"
+    value={form.getFieldValue('date')} // Bind the value to the form state
+    onChange={(e) => form.setFieldsValue({ date: e.target.value })} // Update the form state on change
+  />
+</Form.Item>
 
             <Form.Item
               name="price"
