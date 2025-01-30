@@ -272,10 +272,10 @@ const DamagedPassportsShow = () => {
                   >
                     <h1>تعديل بيانات الجواز</h1>
                     <Form
-                      form={form}
-                      onFinish={handleSaveEdit}
-                      layout="vertical"
-                      className="dammaged-passport-container-edit-modal"
+             form={form}
+             onFinish={handleSaveEdit}
+             layout="vertical"
+             className="dammaged-passport-container-edit-modal"
                     >
                       <Form.Item
                         name="passportNumber"
@@ -345,14 +345,13 @@ const DamagedPassportsShow = () => {
                           />
                         </>
                       )}
-                      <Button
-                        onClick={() => window.location.reload()}
-                        type="primary"
-                        htmlType="submit"
-                        block
-                      >
-                        حفظ التعديلات
-                      </Button>
+               <Button
+    type="primary"
+    htmlType="submit"
+    block
+  >
+    حفظ التعديلات
+  </Button>
                     </Form>
                   </Modal>
 
