@@ -33,7 +33,7 @@ const SuperVisorDammagePassportAdd = () => {
   const [offices, setOffices] = useState([]);
   const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
-  const isSupervisor =  roles.includes("Supervisor") || roles.includes("I.T");
+  const isSupervisor =  roles.includes("Supervisor") || (roles === "I.T");
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // Loading state for initial data
@@ -143,6 +143,7 @@ const SuperVisorDammagePassportAdd = () => {
         );
         if (isSupervisor) {
           setSelectedOffice(officeId);
+          
         }
       }
     } catch (error) {
