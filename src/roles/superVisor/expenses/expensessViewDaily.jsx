@@ -418,17 +418,24 @@ console.log("month" ,expenseData.monthlyStatus)
               <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />
             </Form.Item>
             <Upload
-              beforeUpload={(file) => {
-                handleImageUpload(file);
-                return false;
-              }}>
-              <Button
-                style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
-                type="primary"
-                icon={<UploadOutlined />}>
-                استبدال الصورة
-              </Button>
-            </Upload>
+  beforeUpload={(file) => {
+    // Check if the file is a PDF
+    if (file.type === "application/pdf" || file.name?.endsWith(".pdf")) {
+      message.error("تحميل ملفات PDF غير مسموح به. يرجى تحميل صورة بدلاً من ذلك.");
+      return Upload.LIST_IGNORE; // Prevent the file from being added to the upload list
+    }
+    handleImageUpload(file); // Proceed with the upload for non-PDF files
+    return false; // Prevent automatic upload
+  }}
+>
+  <Button
+    style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+    type="primary"
+    icon={<UploadOutlined />}
+  >
+    استبدال الصورة
+  </Button>
+</Upload>
             {images.length > 0 && (
               <>
                 <span className="note-details-label">صور المحضر:</span>

@@ -29,11 +29,15 @@ const DynamicSidebar = ({
   // Function to refresh the token
   const refreshTokenAPI = async () => {
     if (isRefreshing) return null;
+ 
 
     setIsRefreshing(true);
     const refreshToken = localStorage.getItem("refreshToken");
 
     try {
+      console.log("access token in try",localStorage.getItem("accessToken"))
+      console.log("refresh token in try",refreshToken)
+
       const response = await axios.post(
         `${Url}/api/account/refresh-token`,
         {
@@ -53,6 +57,7 @@ const DynamicSidebar = ({
       return null;
     }
   };
+  
 
   // Setup axios interceptor for handling 401 errors
   useEffect(() => {

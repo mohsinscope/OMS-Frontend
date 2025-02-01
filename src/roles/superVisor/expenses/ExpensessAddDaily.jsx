@@ -176,7 +176,15 @@ export default function ExpensessAddDaily() {
   };
 
   const handleFileChange = (info) => {
-    const updatedFiles = info.fileList.filter((file) => true);
+    const updatedFiles = info.fileList.filter((file) => {
+      // Check if the file is a PDF
+      if (file.type === "application/pdf" || file.name?.endsWith(".pdf")) {
+        message.error("تحميل ملفات PDF غير مسموح به. يرجى تحميل صورة بدلاً من ذلك.");
+        return false; // Exclude PDF files
+      }
+      return true; // Include non-PDF files
+    });
+  
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
         !fileList.some(
@@ -185,11 +193,11 @@ export default function ExpensessAddDaily() {
             existingFile.lastModified === newFile.lastModified
         )
     );
-
+  
     const newPreviews = uniqueFiles.map((file) =>
       file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
     );
-
+  
     setPreviewUrls((prev) => [...prev, ...newPreviews]);
     setFileList((prev) => [...prev, ...uniqueFiles]);
   };
