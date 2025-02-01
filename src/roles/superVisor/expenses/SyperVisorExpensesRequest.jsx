@@ -10,7 +10,7 @@ import {
   Input,
   ConfigProvider,
   Collapse,
-  Spin 
+  Spin
 } from "antd";
 import { PlusCircleOutlined, CalendarOutlined } from "@ant-design/icons";
 import useAuthStore from "../../../store/store";
