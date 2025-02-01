@@ -71,7 +71,7 @@ export default function SuperVisorExpensesHistory() {
     useAuthStore();
   const userPosition = profile?.position;
   const isSupervisor = userPosition === "Supervisor";
-  const isAdmin = roles.includes("Admin");
+  const isAdmin = roles.includes("SuperAdmin");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
 
@@ -659,6 +659,11 @@ export default function SuperVisorExpensesHistory() {
                   pageSize: pageSize,
                   total: totalRecords,
                   onChange: handlePageChange,
+                  showTotal: (total, range) => (
+                    <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
+                      اجمالي السجلات: {total}
+                    </span>
+                  ),
                 }}
               />
             </ConfigProvider>

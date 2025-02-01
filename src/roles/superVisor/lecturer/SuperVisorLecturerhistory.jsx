@@ -485,6 +485,11 @@ const SuperVisorLecturerhistory = () => {
                   total: totalLectures,
                   position: ["bottomCenter"],
                   onChange: handlePageChange,
+                  showTotal: (total, range) => (
+                    <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
+                      اجمالي السجلات: {total}
+                    </span>
+                  ),
                 }}
                 locale={{ emptyText: "لا توجد بيانات" }}
                 className="supervisor-Lectur-table"

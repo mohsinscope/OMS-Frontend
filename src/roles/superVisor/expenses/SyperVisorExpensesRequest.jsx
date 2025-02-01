@@ -55,6 +55,7 @@ export default function SuperVisorExpensesRequest() {
   // define a request to get office budget by /api/office/${profile?.officeId} 
   const fetchOfficeBudget = async () => {
     try {
+      console.log("tryyy")
       const response = await axiosInstance.get(`/api/office/${profile?.officeId}`);
       setOfficeBudget(response.data.budget);
     } catch (error) {
@@ -63,9 +64,7 @@ export default function SuperVisorExpensesRequest() {
     }
   };
   // call fetchOfficeBudget function
-  useEffect(() => {
-    fetchOfficeBudget();
-  }, [profile?.officeId]);
+
   console.log("officeBudget", officeBudget);
   const updateOfficeInfo = (expenses) => {
     const totalCount = expenses.length;
@@ -87,7 +86,11 @@ export default function SuperVisorExpensesRequest() {
       setIsLastMonthLoading(true);
       const response = await axiosInstance.post("/api/Expense/search-last-month", {
         officeId: profile?.officeId,
+        
       });
+      console.log("try 3")
+
+
       
       // Extract first item from array since response.data is an array
       if (response.data && response.data.length > 0) {
@@ -123,15 +126,7 @@ export default function SuperVisorExpensesRequest() {
     return statusColors[status] || "#000000";
   };
 
-  const fetchExpenseTypes = async () => {
-    try {
-      const response = await axiosInstance.get("/api/ExpenseType?PageNumber=1&PageSize=10");
-      setExpenseTypes(response.data || []);
-    } catch (error) {
-      console.error("Error fetching expense types:", error);
-      message.error("حدث خطأ في جلب أنواع المصروفات");
-    }
-  };
+
 
   const fetchMonthlyExpense = async () => {
     try {
@@ -149,6 +144,8 @@ export default function SuperVisorExpensesRequest() {
       };
 
       const response = await axiosInstance.post("/api/Expense/search", payload);
+      console.log("try 2")
+
 
       if (response.data && response.data.length > 0) {
         const currentExpense = response.data[0];
@@ -165,6 +162,9 @@ export default function SuperVisorExpensesRequest() {
     } catch (error) {
       console.error("Error fetching monthly expenses:", error);
       message.error("حدث خطأ في جلب المصروفات الشهرية");
+    }finally{
+      fetchOfficeBudget();
+
     }
   };
 
@@ -173,6 +173,8 @@ export default function SuperVisorExpensesRequest() {
 
     try {
       setLoading(true);
+      console.log("try 11")
+
       const response = await axiosInstance.get(
         `/api/Expense/${monthlyExpenseId}/daily-expenses`
       );
