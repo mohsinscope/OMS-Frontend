@@ -34,7 +34,8 @@ const SuperVisorLecturerAdd = () => {
   const [offices, setOffices] = useState([]);
   const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
   const { profileId, governorateId, officeId, officeName } = profile || {};
-  const isSupervisor =  roles.includes("Supervisor")  || (roles == "I.T")||(roles =="MainSupervisor");
+  const isSupervisor =
+    roles.includes("Supervisor") || roles === "I.T" || roles === "MainSupervisor";
   const [isLoading, setIsLoading] = useState(true); // Loading state for initial data
 
   // Set initial form values for supervisor and fetch data
@@ -83,7 +84,10 @@ const SuperVisorLecturerAdd = () => {
             }
           }
         } else {
-          console.error("Unexpected response format for governorates", governorateResponse.data);
+          console.error(
+            "Unexpected response format for governorates",
+            governorateResponse.data
+          );
           message.error("فشل تحميل المحافظات بسبب خطأ في البيانات");
         }
 
@@ -171,16 +175,12 @@ const SuperVisorLecturerAdd = () => {
       formData.append("EntityType", "Lecture");
 
       try {
-        await axiosInstance.post(
-          `${Url}/api/Attachment/add-attachment`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
       } catch (error) {
         throw new Error("فشل في إرفاق الملفات.");
       }
@@ -239,6 +239,9 @@ const SuperVisorLecturerAdd = () => {
   };
 
   const handleFileChange = (info) => {
+    // ------------------------
+    // OLD logic (commented out)
+    /*
     const updatedFiles = info.fileList.filter((file) => true);
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
@@ -255,6 +258,18 @@ const SuperVisorLecturerAdd = () => {
 
     setPreviewUrls((prev) => [...prev, ...newPreviews]);
     setFileList((prev) => [...prev, ...uniqueFiles]);
+    */
+    // ------------------------
+
+    // NEW (fixed) approach:
+    // 1) Directly use info.fileList as the controlled fileList
+    setFileList(info.fileList);
+
+    // 2) Generate preview URLs from the final fileList
+    const newPreviews = info.fileList.map((file) =>
+      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
+    );
+    setPreviewUrls(newPreviews);
   };
 
   const handleDeleteImage = (index) => {
@@ -294,9 +309,7 @@ const SuperVisorLecturerAdd = () => {
         type: "image/jpeg",
       });
 
-      if (
-        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
-      ) {
+      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -308,7 +321,6 @@ const SuperVisorLecturerAdd = () => {
             originFileObj: scannedFile,
           },
         ]);
-
         setPreviewUrls((prev) => [...prev, scannedPreviewUrl]);
         message.success("تم إضافة الصورة الممسوحة بنجاح!");
       } else {
@@ -326,12 +338,14 @@ const SuperVisorLecturerAdd = () => {
               fontWeight: "bold",
               textAlign: "center",
               width: "fit-content",
-            }}>
+            }}
+          >
             <p>يرجى ربط الماسح الضوئي أو تنزيل الخدمة من الرابط التالي:</p>
             <a
               href="https://cdn-oms.scopesky.org/services/ScannerPolaris_WinSetup.msi"
               target="_blank"
-              rel="noopener noreferrer">
+              rel="noopener noreferrer"
+            >
               تنزيل الخدمة
             </a>
           </div>
@@ -348,7 +362,8 @@ const SuperVisorLecturerAdd = () => {
       className={`supervisor-damaged-passport-add-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       <h1 className="SuperVisor-title-container">إضافة محضر جديد</h1>
       {isLoading ? (
         <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
@@ -358,7 +373,8 @@ const SuperVisorLecturerAdd = () => {
             form={form}
             onFinish={handleFormSubmit}
             layout="vertical"
-            style={{ direction: "rtl", display: "flex", gap: "30px" }}>
+            style={{ direction: "rtl", display: "flex", gap: "30px" }}
+          >
             <div className="add-Lecturer-section-container">
               <div className="add-Lecturer-fields-container">
                 <Form.Item
@@ -367,7 +383,8 @@ const SuperVisorLecturerAdd = () => {
                   initialValue={
                     isSupervisor ? governorateId : governate[0]?.value
                   }
-                  rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
+                  rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
+                >
                   <Select
                     placeholder="اختر المحافظة"
                     disabled={isSupervisor}
@@ -397,7 +414,8 @@ const SuperVisorLecturerAdd = () => {
                   name="officeId"
                   label="اسم المكتب"
                   initialValue={isSupervisor ? officeId : undefined}
-                  rules={[{ required: true, message: "يرجى اختيار المكتب" }]}>
+                  rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
+                >
                   <Select
                     placeholder="اختر المكتب"
                     disabled={isSupervisor}
@@ -420,18 +438,21 @@ const SuperVisorLecturerAdd = () => {
                   label="عنوان المحضر"
                   rules={[
                     { required: true, message: "يرجى إدخال عنوان المحضر" },
-                  ]}>
+                  ]}
+                >
                   <Input placeholder="أدخل عنوان المحضر" />
                 </Form.Item>
 
                 <Form.Item
                   name="companyId"
                   label="الشركة"
-                  rules={[{ required: true, message: "يرجى اختيار الشركة" }]}>
+                  rules={[{ required: true, message: "يرجى اختيار الشركة" }]}
+                >
                   <Select
                     placeholder="اختر الشركة"
                     style={{ width: "267px", height: "45px" }}
-                    onChange={handleCompanyChange}>
+                    onChange={handleCompanyChange}
+                  >
                     {companies.map((company) => (
                       <Select.Option key={company.id} value={company.id}>
                         {company.name}
@@ -443,14 +464,14 @@ const SuperVisorLecturerAdd = () => {
                 <Form.Item
                   name="lectureTypeIds"
                   label="نوع المحضر"
-                  rules={[
-                    { required: true, message: "يرجى اختيار نوع المحضر" },
-                  ]}>
+                  rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}
+                >
                   <Select
                     mode="multiple"
                     placeholder="اختر نوع المحضر"
                     style={{ width: "267px", height: "fit-content" }}
-                    disabled={!selectedCompany || lectureTypeNames.length === 0}>
+                    disabled={!selectedCompany || lectureTypeNames.length === 0}
+                  >
                     {lectureTypeNames.map((type) => (
                       <Select.Option key={type.id} value={type.id}>
                         {type.name}
@@ -462,7 +483,8 @@ const SuperVisorLecturerAdd = () => {
                 <Form.Item
                   name="date"
                   label="التاريخ"
-                  rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
+                  rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
+                >
                   <DatePicker style={{ width: "267px", height: "45px" }} />
                 </Form.Item>
 
@@ -470,7 +492,8 @@ const SuperVisorLecturerAdd = () => {
                   name="note"
                   label="ملاحظات"
                   initialValue="لا يوجد"
-                  rules={[{ message: "يرجى إدخال الملاحظات" }]}>
+                  rules={[{ message: "يرجى إدخال الملاحظات" }]}
+                >
                   <Input.TextArea style={{ height: "150px", width: "500px" }} />
                 </Form.Item>
               </div>
@@ -493,14 +516,17 @@ const SuperVisorLecturerAdd = () => {
                                 )
                               ),
                       },
-                    ]}>
+                    ]}
+                  >
                     <Dragger
                       className="upload-dragger"
+                      // Make Dragger a controlled component
                       fileList={fileList}
                       onChange={handleFileChange}
                       beforeUpload={() => false}
                       multiple
-                      showUploadList={false}>
+                      showUploadList={false}
+                    >
                       <p className="ant-upload-drag-icon">📂</p>
                       <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
                     </Dragger>
@@ -513,7 +539,8 @@ const SuperVisorLecturerAdd = () => {
                         height: "45px",
                         marginTop: "10px",
                         marginBottom: "10px",
-                      }}>
+                      }}
+                    >
                       {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
                     </Button>
                   </Form.Item>
@@ -533,14 +560,16 @@ const SuperVisorLecturerAdd = () => {
                   htmlType="submit"
                   className="submit-button"
                   loading={isSubmitting}
-                  disabled={isSubmitting}>
+                  disabled={isSubmitting}
+                >
                   حفظ
                 </Button>
                 <Button
                   danger
                   onClick={handleBack}
                   className="add-back-button"
-                  disabled={isSubmitting}>
+                  disabled={isSubmitting}
+                >
                   رجوع
                 </Button>
               </div>

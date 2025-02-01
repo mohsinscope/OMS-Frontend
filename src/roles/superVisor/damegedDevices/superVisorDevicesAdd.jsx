@@ -34,7 +34,8 @@ const SuperVisorDammageDeviceAdd = () => {
   const { accessToken, profile } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
   const { isSidebarCollapsed, roles } = useAuthStore();
-  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T")||(roles =="MainSupervisor");
+  const isSupervisor =
+    roles.includes("Supervisor") || roles === "I.T" || roles === "MainSupervisor";
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // Loading state for initial data
@@ -49,24 +50,27 @@ const SuperVisorDammageDeviceAdd = () => {
 
     const fetchInitialData = async () => {
       try {
-        const [deviceTypesResponse, damagedTypesResponse, governoratesResponse] =
-          await Promise.all([
-            axiosInstance.get(`${Url}/api/devicetype`, {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }),
-            axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }),
-            axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-            }),
-          ]);
+        const [
+          deviceTypesResponse,
+          damagedTypesResponse,
+          governoratesResponse,
+        ] = await Promise.all([
+          axiosInstance.get(`${Url}/api/devicetype`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
+          axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
+          axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
+        ]);
 
         setDeviceTypes(
           deviceTypesResponse.data.map((deviceType) => ({
@@ -156,16 +160,12 @@ const SuperVisorDammageDeviceAdd = () => {
       formData.append("EntityType", "DamagedDevice");
 
       try {
-        await axiosInstance.post(
-          `${Url}/api/Attachment/add-attachment`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
       } catch (error) {
         throw new Error("فشل في إرفاق الملفات.");
       }
@@ -226,6 +226,9 @@ const SuperVisorDammageDeviceAdd = () => {
   const handleFileChange = (info) => {
     const updatedFiles = info.fileList;
 
+    // ------------------------
+    // OLD logic (commented out)
+    /*
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
         !fileList.some(
@@ -241,6 +244,18 @@ const SuperVisorDammageDeviceAdd = () => {
 
     setPreviewUrls((prev) => [...prev, ...newPreviews]);
     setFileList((prev) => [...prev, ...uniqueFiles]);
+    */
+    // ------------------------
+
+    // NEW (fixed) approach:
+    // 1) Make Dragger a controlled component
+    setFileList(updatedFiles);
+
+    // 2) Generate previews from the final fileList
+    const newPreviews = updatedFiles.map((file) =>
+      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
+    );
+    setPreviewUrls(newPreviews);
   };
 
   const handleDeleteImage = (index) => {
@@ -280,9 +295,7 @@ const SuperVisorDammageDeviceAdd = () => {
         type: "image/jpeg",
       });
 
-      if (
-        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
-      ) {
+      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -391,9 +404,7 @@ const SuperVisorDammageDeviceAdd = () => {
               <Form.Item
                 name="serialNumber"
                 label="الرقم التسلسلي"
-                rules={[
-                  { required: true, message: "يرجى إدخال الرقم التسلسلي" },
-                ]}
+                rules={[{ required: true, message: "يرجى إدخال الرقم التسلسلي" }]}
               >
                 <Input placeholder="أدخل الرقم التسلسلي" />
               </Form.Item>
@@ -463,6 +474,7 @@ const SuperVisorDammageDeviceAdd = () => {
                   ]}
                 >
                   <Dragger
+                    // Make Dragger a controlled component
                     fileList={fileList}
                     onChange={handleFileChange}
                     beforeUpload={() => false}
