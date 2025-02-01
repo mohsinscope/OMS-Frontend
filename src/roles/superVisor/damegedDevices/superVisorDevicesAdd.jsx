@@ -34,7 +34,7 @@ const SuperVisorDammageDeviceAdd = () => {
   const { accessToken, profile } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
   const { isSidebarCollapsed, roles } = useAuthStore();
-  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T");
+  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T")||(roles =="MainSupervisor");
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [isLoading, setIsLoading] = useState(true); // Loading state for initial data

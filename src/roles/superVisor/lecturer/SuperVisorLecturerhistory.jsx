@@ -25,7 +25,7 @@ const SuperVisorLecturerhistory = () => {
     permissions,
   } = useAuthStore();
   const hasCreatePermission = permissions.includes("Lc");
-  const isSupervisor =  roles.includes("Supervisor")  || (roles == "I.T");
+  const isSupervisor =  roles.includes("Supervisor")  || (roles == "I.T")||(roles =="MainSupervisor");
   const [lectures, setLectures] = useState([]);
   const [totalLectures, setTotalLectures] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
