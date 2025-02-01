@@ -32,6 +32,9 @@ export default function SuperVisorExpensesRequest() {
   const [sendLoading, setSendLoading] = useState(false);
   const [lastMonthExpense, setLastMonthExpense] = useState(null);
   const [isLastMonthLoading, setIsLastMonthLoading] = useState(true);
+  const [isEndOfMonth, setIsEndOfMonth] = useState(false);
+  const [canSendRequests, setCanSendRequests] = useState(false);
+
   const [officeInfo, setOfficeInfo] = useState({
     totalCount: 0,
     totalExpenses: 0,
@@ -53,6 +56,19 @@ export default function SuperVisorExpensesRequest() {
   // define state to set office budget
   const [officeBudget, setOfficeBudget] = useState();
   // define a request to get office budget by /api/office/${profile?.officeId} 
+  useEffect(() => {
+    const currentDate = new Date();
+    const currentDay = currentDate.getDate();
+    const daysInMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0
+    ).getDate();
+  
+    setIsEndOfMonth(currentDay >= 25 && currentDay <= daysInMonth);
+    setCanSendRequests(currentDay >= 25 && currentDay <= daysInMonth);
+  }, [officeInfo.date]);
+  
   const fetchOfficeBudget = async () => {
     try {
       console.log("tryyy")
@@ -590,29 +606,20 @@ export default function SuperVisorExpensesRequest() {
                 <strong>{officeInfo.date}</strong>
               </div>
             </div>
-            <Space
-  direction="vertical"
-  style={{ width: "100%", marginTop: "24px" }}
->
+            <Space direction="vertical" style={{ width: "100%", marginTop: "24px" }}>
   <Link
     to="/add-daily-expense"
-    state={{ monthlyExpenseId: currentMonthlyExpenseId , officeBudget: officeBudget , totalMonthlyAmount: officeInfo.totalExpenses}}
-  >
+    state={{ monthlyExpenseId: currentMonthlyExpenseId }}>
     <Button
       type="primary"
       block
       size="large"
-      disabled={officeInfo.totalExpenses >= officeBudget} // Disable button if total expenses exceed budget
-    >
+      disabled={isEndOfMonth}>
       إضافة مصروف يومي
     </Button>
   </Link>
-  {officeInfo.totalExpenses >= officeBudget && (
-    <span style={{ color: "red", textAlign: "center" }}>
-      لقد تجاوزت ميزانية المكتب المحددة لهذا الشهر!
-    </span>
-  )}
 </Space>
+
 
 
 
@@ -634,7 +641,7 @@ export default function SuperVisorExpensesRequest() {
                   </h1>
               <Button
                 type="primary"
-                
+                disabled={!canSendRequests}
                 size="large"
                 onClick={() => setIsSendModalVisible(true)}>
                 ارسال طلبات الشهر الكلية

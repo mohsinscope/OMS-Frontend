@@ -41,7 +41,8 @@ const SuperVisorDammagePassportAdd = () => {
   const { accessToken, profile, roles, isSidebarCollapsed } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
 
-  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T")||(roles =="MainSupervisor");
+  const isSupervisor =
+    roles.includes("Supervisor") || roles == "I.T" || roles == "MainSupervisor";
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
 
@@ -136,12 +137,10 @@ const SuperVisorDammagePassportAdd = () => {
             label: office.name,
           }))
         );
-
       }
-         if (isSupervisor) {
-          setSelectedOffice(officeId);
-          
-        }
+      if (isSupervisor) {
+        setSelectedOffice(officeId);
+      }
     } catch (error) {
       message.error("فشل تحميل المكاتب");
     }
@@ -254,6 +253,9 @@ const SuperVisorDammagePassportAdd = () => {
   const handleFileChange = (info) => {
     const updatedFiles = info.fileList;
 
+    // ------------------------
+    // OLD merging logic (commented out)
+    /*
     // Only keep unique new files
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
@@ -270,6 +272,18 @@ const SuperVisorDammagePassportAdd = () => {
 
     setPreviewUrls((prev) => [...prev, ...newPreviews]);
     setFileList((prev) => [...prev, ...uniqueFiles]);
+    */
+    // ------------------------
+
+    // NEW (fixed) approach:
+    // 1) Directly set the fileList to info.fileList
+    setFileList(updatedFiles);
+
+    // 2) Generate preview URLs from the final fileList
+    const newPreviews = updatedFiles.map((file) =>
+      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
+    );
+    setPreviewUrls(newPreviews);
   };
 
   const handleDeleteImage = (index) => {
@@ -420,9 +434,7 @@ const SuperVisorDammagePassportAdd = () => {
                 <Form.Item
                   name="officeId"
                   label="اسم المكتب"
-                  rules={[
-                    { required: true, message: "يرجى اختيار المكتب" },
-                  ]}
+                  rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
                 >
                   <Select
                     placeholder="اختر المكتب"
@@ -438,9 +450,7 @@ const SuperVisorDammagePassportAdd = () => {
                 <Form.Item
                   name="passportNumber"
                   label="رقم الجواز"
-                  rules={[
-                    { required: true, message: "يرجى إدخال رقم الجواز" },
-                  ]}
+                  rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}
                 >
                   <Input placeholder="أدخل رقم الجواز" />
                 </Form.Item>
@@ -472,11 +482,7 @@ const SuperVisorDammagePassportAdd = () => {
                 </Form.Item>
 
                 {/* Note */}
-                <Form.Item
-                  name="note"
-                  label="ملاحظات"
-                  initialValue=""
-                >
+                <Form.Item name="note" label="ملاحظات" initialValue="">
                   <Input.TextArea
                     placeholder="أدخل الملاحظات"
                     style={{ width: "450px", maxHeight: "650px" }}
@@ -506,6 +512,7 @@ const SuperVisorDammagePassportAdd = () => {
                     ]}
                   >
                     <Dragger
+                      // Make Dragger a controlled component
                       fileList={fileList}
                       onChange={handleFileChange}
                       beforeUpload={() => false}
