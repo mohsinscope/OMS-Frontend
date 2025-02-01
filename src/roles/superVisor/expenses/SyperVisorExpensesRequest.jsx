@@ -10,7 +10,8 @@ import {
   Input,
   ConfigProvider,
   Collapse,
-  Spin
+  Spin,
+  Skeleton,
 } from "antd";
 import { PlusCircleOutlined, CalendarOutlined } from "@ant-design/icons";
 import useAuthStore from "../../../store/store";
@@ -34,6 +35,7 @@ export default function SuperVisorExpensesRequest() {
   const [isLastMonthLoading, setIsLastMonthLoading] = useState(true);
   const [isEndOfMonth, setIsEndOfMonth] = useState(false);
   const [canSendRequests, setCanSendRequests] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Loading state
 
   const [officeInfo, setOfficeInfo] = useState({
     totalCount: 0,
@@ -145,6 +147,8 @@ export default function SuperVisorExpensesRequest() {
 
 
   const fetchMonthlyExpense = async () => {
+    setIsLoading(true); // Start loading
+
     try {
       const payload = {
         officeId: profile?.officeId,
@@ -180,6 +184,7 @@ export default function SuperVisorExpensesRequest() {
       message.error("حدث خطأ في جلب المصروفات الشهرية");
     }finally{
       fetchOfficeBudget();
+      setIsLoading(false); // Stop loading
 
     }
   };
@@ -432,10 +437,14 @@ export default function SuperVisorExpensesRequest() {
       ),
     }
   ];
-
   const EmptyStateCard = () => {
     return (
+      
       <div style={{ width: "100%" }}>
+           {isLoading ? (
+        <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
+      ) : (
+        <>
         <div
           className="empty-state-container"
           style={{
@@ -485,7 +494,8 @@ export default function SuperVisorExpensesRequest() {
             إنشاء مصروف شهري جديد
           </Button>
         </div>
-
+        </>
+      )}
 
       </div>
     );
@@ -708,6 +718,7 @@ export default function SuperVisorExpensesRequest() {
               boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
             }}
           >
+            
             <Collapse.Panel
               key="1"
               header={
