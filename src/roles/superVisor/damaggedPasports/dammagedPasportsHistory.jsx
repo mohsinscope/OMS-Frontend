@@ -92,6 +92,7 @@ export default function SuperVisorPassport() {
       if (response.data) {
         setPassportList(response.data);
         const paginationHeader = response.headers["pagination"];
+        console.log(paginationHeader)
         if (paginationHeader) {
           const paginationInfo = JSON.parse(paginationHeader);
           setTotalPassports(paginationInfo.totalItems);
@@ -233,7 +234,6 @@ export default function SuperVisorPassport() {
           },
         }
       );
-
       const fullPassportList = response.data || [];
 
       if (fullPassportList.length === 0) {
@@ -246,7 +246,7 @@ export default function SuperVisorPassport() {
         properties: { rtl: true },
       });
 
-      const headers = ["رقم الجواز","اسم المستخدم", "المكتب", "المحافظة", "التاريخ", "ت"];
+      const headers = ["نوع التلف","رقم الجواز","اسم المستخدم", "المكتب", "المحافظة", "التاريخ", "ت"];
       const headerRow = worksheet.addRow(headers);
 
       headerRow.eachCell((cell) => {
@@ -267,6 +267,7 @@ export default function SuperVisorPassport() {
 
       fullPassportList.forEach((passport, index) => {
         const row = worksheet.addRow([
+          passport.damagedTypeName,
           passport.passportNumber,
           passport.profileFullName,
           passport.officeName,
@@ -292,6 +293,7 @@ export default function SuperVisorPassport() {
       });
 
       worksheet.columns = [
+        { width: 25 },
         { width: 25 },
         { width: 25 },
         { width: 20 },
