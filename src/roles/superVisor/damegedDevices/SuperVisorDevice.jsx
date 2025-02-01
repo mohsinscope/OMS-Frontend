@@ -406,6 +406,11 @@ const SuperVisorDevices = () => {
                     setCurrentPage(page);
                     handleSearch(page);
                   },
+                  showTotal: (total, range) => (
+                    <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
+                      اجمالي السجلات: {total}
+                    </span>
+                  ),
                 }}
                 locale={{ emptyText: "لا توجد بيانات" }}
                 className="supervisor-devices-dameged-table"

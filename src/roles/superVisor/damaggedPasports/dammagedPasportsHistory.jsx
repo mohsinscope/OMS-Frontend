@@ -626,27 +626,32 @@ export default function SuperVisorPassport() {
           </div>
 
           <div className="supervisor-passport-dameged-table-container">
-            <ConfigProvider direction="rtl">
-              <Table
-                dataSource={passportList}
-                columns={columns}
-                rowKey="id"
-                bordered
-                pagination={{
-                  current: currentPage,
-                  pageSize: pageSize,
-                  total: totalPassports,
-                  showSizeChanger: false,
-                  position: ["bottomCenter"],
-                  onChange: (page) => {
-                    setCurrentPage(page);
-                    handleSearch(page);
-                  },
-                }}
-                locale={{ emptyText: "لا توجد بيانات" }}
-                className="supervisor-passport-dameged-table"
-              />
-            </ConfigProvider>
+<ConfigProvider direction="rtl">
+  <Table
+    dataSource={passportList}
+    columns={columns}
+    rowKey="id"
+    bordered
+    pagination={{
+      current: currentPage,
+      pageSize: pageSize,
+      total: totalPassports,
+      showSizeChanger: false,
+      position: ["bottomCenter"],
+      onChange: (page) => {
+        setCurrentPage(page);
+        handleSearch(page);
+      },
+      showTotal: (total, range) => (
+        <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
+          اجمالي السجلات: {total}
+        </span>
+      ),
+    }}
+    locale={{ emptyText: "لا توجد بيانات" }}
+    className="supervisor-passport-dameged-table"
+  />
+</ConfigProvider>
           </div>
         </>
       )}

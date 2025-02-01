@@ -337,6 +337,11 @@ export default function SupervisorAttendanceHistory() {
                   total: totalRecords,
                   onChange: handlePageChange,
                   showSizeChanger: false,
+                  showTotal: (total, range) => (
+                    <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
+                      اجمالي السجلات: {total}
+                    </span>
+                  ),
                 }}
                 loading={isLoading}
               />
