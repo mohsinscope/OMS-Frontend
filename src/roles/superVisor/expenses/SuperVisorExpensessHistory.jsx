@@ -70,7 +70,7 @@ export default function SuperVisorExpensesHistory() {
   const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } =
     useAuthStore();
   const userPosition = profile?.position;
-  const isSupervisor = userPosition === "Supervisor";
+  const isSupervisor = userPosition === "Supervisor" || userPosition ==="MainSupervisor";
   const isAdmin = roles.includes("SuperAdmin");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;

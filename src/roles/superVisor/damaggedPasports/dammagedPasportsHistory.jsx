@@ -34,7 +34,7 @@ export default function SuperVisorPassport() {
 
   // Check permissions
   const hasCreatePermission = permissions.includes("DPc");
-  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T");
+  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T") ||(roles =="MainSupervisor");
 
 
   // State management
