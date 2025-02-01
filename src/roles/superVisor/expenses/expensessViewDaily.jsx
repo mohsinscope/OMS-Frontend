@@ -285,7 +285,7 @@ console.log("month" ,expenseData.monthlyStatus)
               disabled
             />
           </div>
-          <div className="details-row">
+          {/* <div className="details-row">
             <span className="details-label">المكتب:</span>
             <input
               className="details-value"
@@ -300,7 +300,7 @@ console.log("month" ,expenseData.monthlyStatus)
               value={profile.governorateName}
               disabled
             />
-          </div>
+          </div> */}
           <div className="details-row">
             <span className="details-label">التاريخ:</span>
             <input
