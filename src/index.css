@@ -106,3 +106,6 @@ table {
   }
 }
 
+.menu-item svg {
+  fill: currentColor !important;
+}

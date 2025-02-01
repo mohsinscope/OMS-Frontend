@@ -9,6 +9,7 @@ import {
   Upload,
   Modal,
   Select,
+  Skeleton,
 } from "antd";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
@@ -31,10 +32,12 @@ const SuperVisorLecturerAdd = () => {
   const [lectureTypeNames, setlectureTypeNames] = useState([]);
   const [governate, setGovernate] = useState([]);
   const [offices, setOffices] = useState([]);
-  const { isSidebarCollapsed, accessToken, profile , roles } = useAuthStore();
-  const { profileId , governorateId, officeId,officeName } = profile || {};
-  console.log(profile)
-  const isSupervisor = roles?.includes("Supervisor");
+  const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
+  const { profileId, governorateId, officeId, officeName } = profile || {};
+  const isSupervisor =
+    roles.includes("Supervisor") || roles === "I.T" || roles === "MainSupervisor";
+  const [isLoading, setIsLoading] = useState(true); // Loading state for initial data
+
   // Set initial form values for supervisor and fetch data
   useEffect(() => {
     if (isSupervisor && profile) {
@@ -43,24 +46,32 @@ const SuperVisorLecturerAdd = () => {
         officeId: officeId,
       });
     }
-    const fetchGovernorateData = async () => {
-      try {
-        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
 
-        if (Array.isArray(response.data)) {
+    const fetchInitialData = async () => {
+      try {
+        const [governorateResponse, companiesResponse] = await Promise.all([
+          axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
+          axiosInstance.get(`${Url}/api/Company`, {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }),
+        ]);
+
+        if (Array.isArray(governorateResponse.data)) {
           setGovernate(
-            response.data.map((gov) => ({
+            governorateResponse.data.map((gov) => ({
               value: gov.id,
               label: gov.name,
             }))
           );
 
           if (isSupervisor) {
-            const supervisorGovernorate = response.data.find(
+            const supervisorGovernorate = governorateResponse.data.find(
               (gov) => gov.id === governorateId
             );
             if (supervisorGovernorate) {
@@ -73,30 +84,23 @@ const SuperVisorLecturerAdd = () => {
             }
           }
         } else {
-          console.error("Unexpected response format for governorates", response.data);
+          console.error(
+            "Unexpected response format for governorates",
+            governorateResponse.data
+          );
           message.error("فشل تحميل المحافظات بسبب خطأ في البيانات");
         }
+
+        setCompanies(companiesResponse.data);
       } catch (error) {
-        console.error("Error fetching governorate data:", error);
-        message.error("فشل تحميل المحافظات");
+        console.error("Error fetching initial data:", error);
+        message.error("فشل تحميل البيانات الأولية");
+      } finally {
+        setIsLoading(false); // Stop loading after data is fetched
       }
     };
 
-    const fetchCompanies = async () => {
-      try {
-        const response = await axiosInstance.get(`${Url}/api/Company`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-        setCompanies(response.data);
-      } catch (error) {
-        message.error("فشل في جلب قائمة الشركات");
-      }
-    };
-
-    fetchGovernorateData();
-    fetchCompanies();
+    fetchInitialData();
   }, [accessToken, governorateId, profile, isSupervisor, form, officeId]);
 
   const fetchOffices = async (selectedGovernorateId) => {
@@ -171,16 +175,12 @@ const SuperVisorLecturerAdd = () => {
       formData.append("EntityType", "Lecture");
 
       try {
-        await axiosInstance.post(
-          `${Url}/api/Attachment/add-attachment`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-              Authorization: `Bearer ${accessToken}`,
-            },
-          }
-        );
+        await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
       } catch (error) {
         throw new Error("فشل في إرفاق الملفات.");
       }
@@ -208,7 +208,6 @@ const SuperVisorLecturerAdd = () => {
         lectureTypeIds: values.lectureTypeIds,
         note: values.note || "لا يوجد",
       };
-      console.log(payload)
 
       const entityId = await sendLectureDetails(payload);
 
@@ -240,6 +239,9 @@ const SuperVisorLecturerAdd = () => {
   };
 
   const handleFileChange = (info) => {
+    // ------------------------
+    // OLD logic (commented out)
+    /*
     const updatedFiles = info.fileList.filter((file) => true);
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
@@ -256,6 +258,18 @@ const SuperVisorLecturerAdd = () => {
 
     setPreviewUrls((prev) => [...prev, ...newPreviews]);
     setFileList((prev) => [...prev, ...uniqueFiles]);
+    */
+    // ------------------------
+
+    // NEW (fixed) approach:
+    // 1) Directly use info.fileList as the controlled fileList
+    setFileList(info.fileList);
+
+    // 2) Generate preview URLs from the final fileList
+    const newPreviews = info.fileList.map((file) =>
+      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
+    );
+    setPreviewUrls(newPreviews);
   };
 
   const handleDeleteImage = (index) => {
@@ -295,9 +309,7 @@ const SuperVisorLecturerAdd = () => {
         type: "image/jpeg",
       });
 
-      if (
-        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
-      ) {
+      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -309,7 +321,6 @@ const SuperVisorLecturerAdd = () => {
             originFileObj: scannedFile,
           },
         ]);
-
         setPreviewUrls((prev) => [...prev, scannedPreviewUrl]);
         message.success("تم إضافة الصورة الممسوحة بنجاح!");
       } else {
@@ -327,12 +338,14 @@ const SuperVisorLecturerAdd = () => {
               fontWeight: "bold",
               textAlign: "center",
               width: "fit-content",
-            }}>
+            }}
+          >
             <p>يرجى ربط الماسح الضوئي أو تنزيل الخدمة من الرابط التالي:</p>
             <a
               href="https://cdn-oms.scopesky.org/services/ScannerPolaris_WinSetup.msi"
               target="_blank"
-              rel="noopener noreferrer">
+              rel="noopener noreferrer"
+            >
               تنزيل الخدمة
             </a>
           </div>
@@ -349,202 +362,221 @@ const SuperVisorLecturerAdd = () => {
       className={`supervisor-damaged-passport-add-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       <h1 className="SuperVisor-title-container">إضافة محضر جديد</h1>
-      <div className="add-Lecturer-details-container">
-        <Form
-          form={form}
-          onFinish={handleFormSubmit}
-          layout="vertical"
-          style={{ direction: "rtl", display: "flex", gap: "30px" }}>
-          <div className="add-Lecturer-section-container">
-            <div className="add-Lecturer-fields-container">
-              <Form.Item
-                name="governorateId"
-                label="اسم المحافظة"
-                initialValue={
-                  isSupervisor ? governorateId : governate[0]?.value
-                }
-                rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}>
-                <Select
-                  placeholder="اختر المحافظة"
-                  disabled={isSupervisor}
-                  style={{ width: "267px", height: "45px" }}
-                  options={
-                    isSupervisor
-                      ? [
-                          {
-                            value: governorateId,
-                            label: governate.find(
-                              (g) => g.value === governorateId
-                            )?.label,
-                          },
-                        ]
-                      : governate
-                  }
-                  onChange={(value) => {
-                    if (!isSupervisor) {
-                      fetchOffices(value);
-                      form.setFieldValue("officeId", undefined);
-                    }
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="officeId"
-                label="اسم المكتب"
-                initialValue={isSupervisor ? officeId : undefined}
-                rules={[{ required: true, message: "يرجى اختيار المكتب" }]}>
-                <Select
-                  placeholder="اختر المكتب"
-                  disabled={isSupervisor}
-                  style={{ width: "267px", height: "45px" }}
-                  options={
-                    isSupervisor
-                      ? [
-                          {
-                            value: officeId,
-                            label: officeName
-                          },
-                        ]
-                      : offices
-                  }
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="title"
-                label="عنوان المحضر"
-                rules={[
-                  { required: true, message: "يرجى إدخال عنوان المحضر" },
-                ]}>
-                <Input placeholder="أدخل عنوان المحضر" />
-              </Form.Item>
-
-              <Form.Item
-                name="companyId"
-                label="الشركة"
-                rules={[{ required: true, message: "يرجى اختيار الشركة" }]}>
-                <Select
-                  placeholder="اختر الشركة"
-                  style={{ width: "267px", height: "45px" }}
-                  onChange={handleCompanyChange}>
-                  {companies.map((company) => (
-                    <Select.Option key={company.id} value={company.id}>
-                      {company.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="lectureTypeIds"
-                label="نوع المحضر"
-                rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}>
-                <Select
-                mode="multiple"
-                  placeholder="اختر نوع المحضر"
-                  style={{ width: "267px", height: "fit-content" }}
-                  disabled={!selectedCompany || lectureTypeNames.length === 0}>
-                  {lectureTypeNames.map((type) => (
-                    <Select.Option key={type.id} value={type.id}>
-                      {type.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-
-              <Form.Item
-                name="date"
-                label="التاريخ"
-                rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
-                <DatePicker style={{ width: "267px", height: "45px" }} />
-              </Form.Item>
-
-              <Form.Item
-                name="note"
-                label="ملاحظات"
-                initialValue="لا يوجد"
-                rules={[{ message: "يرجى إدخال الملاحظات" }]}>
-                <Input.TextArea style={{ height: "150px", width: "500px" }} />
-              </Form.Item>
-            </div>
-
-            <h1 className="SuperVisor-Lecturer-title-conatiner">
-              إضافة صورة محضر
-            </h1>
-            <div className="add-image-section">
-              <div className="dragger-container">
+      {isLoading ? (
+        <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
+      ) : (
+        <div className="add-Lecturer-details-container">
+          <Form
+            form={form}
+            onFinish={handleFormSubmit}
+            layout="vertical"
+            style={{ direction: "rtl", display: "flex", gap: "30px" }}
+          >
+            <div className="add-Lecturer-section-container">
+              <div className="add-Lecturer-fields-container">
                 <Form.Item
-                  name="uploadedImages"
-                  rules={[
-                    {
-                      validator: (_, value) =>
-                        fileList.length > 0 || previewUrls.length > 0
-                          ? Promise.resolve()
-                          : Promise.reject(
-                              new Error(
-                                "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
-                              )
-                            ),
-                    },
-                  ]}>
-                  <Dragger
-                    className="upload-dragger"
-                    fileList={fileList}
-                    onChange={handleFileChange}
-                    beforeUpload={() => false}
-                    multiple
-                    showUploadList={false}>
-                    <p className="ant-upload-drag-icon">📂</p>
-                    <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
-                  </Dragger>
-                  <Button
-                    type="primary"
-                    onClick={onScanHandler}
-                    disabled={isScanning}
-                    style={{
-                      width: "100%",
-                      height: "45px",
-                      marginTop: "10px",
-                      marginBottom: "10px",
-                    }}>
-                    {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
-                  </Button>
+                  name="governorateId"
+                  label="اسم المحافظة"
+                  initialValue={
+                    isSupervisor ? governorateId : governate[0]?.value
+                  }
+                  rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
+                >
+                  <Select
+                    placeholder="اختر المحافظة"
+                    disabled={isSupervisor}
+                    style={{ width: "267px", height: "45px" }}
+                    options={
+                      isSupervisor
+                        ? [
+                            {
+                              value: governorateId,
+                              label: governate.find(
+                                (g) => g.value === governorateId
+                              )?.label,
+                            },
+                          ]
+                        : governate
+                    }
+                    onChange={(value) => {
+                      if (!isSupervisor) {
+                        fetchOffices(value);
+                        form.setFieldValue("officeId", undefined);
+                      }
+                    }}
+                  />
                 </Form.Item>
-                  
+
+                <Form.Item
+                  name="officeId"
+                  label="اسم المكتب"
+                  initialValue={isSupervisor ? officeId : undefined}
+                  rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
+                >
+                  <Select
+                    placeholder="اختر المكتب"
+                    disabled={isSupervisor}
+                    style={{ width: "267px", height: "45px" }}
+                    options={
+                      isSupervisor
+                        ? [
+                            {
+                              value: officeId,
+                              label: officeName,
+                            },
+                          ]
+                        : offices
+                    }
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="title"
+                  label="عنوان المحضر"
+                  rules={[
+                    { required: true, message: "يرجى إدخال عنوان المحضر" },
+                  ]}
+                >
+                  <Input placeholder="أدخل عنوان المحضر" />
+                </Form.Item>
+
+                <Form.Item
+                  name="companyId"
+                  label="الشركة"
+                  rules={[{ required: true, message: "يرجى اختيار الشركة" }]}
+                >
+                  <Select
+                    placeholder="اختر الشركة"
+                    style={{ width: "267px", height: "45px" }}
+                    onChange={handleCompanyChange}
+                  >
+                    {companies.map((company) => (
+                      <Select.Option key={company.id} value={company.id}>
+                        {company.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  name="lectureTypeIds"
+                  label="نوع المحضر"
+                  rules={[{ required: true, message: "يرجى اختيار نوع المحضر" }]}
+                >
+                  <Select
+                    mode="multiple"
+                    placeholder="اختر نوع المحضر"
+                    style={{ width: "267px", height: "fit-content" }}
+                    disabled={!selectedCompany || lectureTypeNames.length === 0}
+                  >
+                    {lectureTypeNames.map((type) => (
+                      <Select.Option key={type.id} value={type.id}>
+                        {type.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+
+                <Form.Item
+                  name="date"
+                  label="التاريخ"
+                  rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
+                >
+                  <DatePicker style={{ width: "267px", height: "45px" }} />
+                </Form.Item>
+
+                <Form.Item
+                  name="note"
+                  label="ملاحظات"
+                  initialValue="لا يوجد"
+                  rules={[{ message: "يرجى إدخال الملاحظات" }]}
+                >
+                  <Input.TextArea style={{ height: "150px", width: "500px" }} />
+                </Form.Item>
               </div>
-            <div className="image-previewer-container">
-              <ImagePreviewer
-                uploadedImages={previewUrls}
-                defaultWidth={600}
-                defaultHeight={300}
-                onDe
-                leteImage={handleDeleteImage}
-              />
+
+              <h1 className="SuperVisor-Lecturer-title-conatiner">
+                إضافة صورة محضر
+              </h1>
+              <div className="add-image-section">
+                <div className="dragger-container">
+                  <Form.Item
+                    name="uploadedImages"
+                    rules={[
+                      {
+                        validator: (_, value) =>
+                          fileList.length > 0 || previewUrls.length > 0
+                            ? Promise.resolve()
+                            : Promise.reject(
+                                new Error(
+                                  "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
+                                )
+                              ),
+                      },
+                    ]}
+                  >
+                    <Dragger
+                      className="upload-dragger"
+                      // Make Dragger a controlled component
+                      fileList={fileList}
+                      onChange={handleFileChange}
+                      beforeUpload={() => false}
+                      multiple
+                      showUploadList={false}
+                    >
+                      <p className="ant-upload-drag-icon">📂</p>
+                      <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
+                    </Dragger>
+                    <Button
+                      type="primary"
+                      onClick={onScanHandler}
+                      disabled={isScanning}
+                      style={{
+                        width: "100%",
+                        height: "45px",
+                        marginTop: "10px",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
+                    </Button>
+                  </Form.Item>
+                </div>
+                <div className="image-previewer-container">
+                  <ImagePreviewer
+                    uploadedImages={previewUrls}
+                    defaultWidth={600}
+                    defaultHeight={300}
+                    onDeleteImage={handleDeleteImage}
+                  />
+                </div>
               </div>
+              <div className="image-previewer-section">
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  className="submit-button"
+                  loading={isSubmitting}
+                  disabled={isSubmitting}
+                >
+                  حفظ
+                </Button>
+                <Button
+                  danger
+                  onClick={handleBack}
+                  className="add-back-button"
+                  disabled={isSubmitting}
+                >
+                  رجوع
+                </Button>
               </div>
-            <div className="image-previewer-section">
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="submit-button"
-                loading={isSubmitting}
-                disabled={isSubmitting}>
-                حفظ
-              </Button>
-              <Button
-                danger
-                onClick={handleBack}
-                className="add-back-button"
-                disabled={isSubmitting}>
-                رجوع
-              </Button>
             </div>
-          </div>
-        </Form>
-      </div>
+          </Form>
+        </div>
+      )}
     </div>
   );
 };

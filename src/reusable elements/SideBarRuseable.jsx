@@ -29,11 +29,15 @@ const DynamicSidebar = ({
   // Function to refresh the token
   const refreshTokenAPI = async () => {
     if (isRefreshing) return null;
-    
+ 
+
     setIsRefreshing(true);
     const refreshToken = localStorage.getItem("refreshToken");
-    
+
     try {
+      console.log("access token in try",localStorage.getItem("accessToken"))
+      console.log("refresh token in try",refreshToken)
+
       const response = await axios.post(
         `${Url}/api/account/refresh-token`,
         {
@@ -53,6 +57,7 @@ const DynamicSidebar = ({
       return null;
     }
   };
+  
 
   // Setup axios interceptor for handling 401 errors
   useEffect(() => {
@@ -60,11 +65,11 @@ const DynamicSidebar = ({
       (response) => response,
       async (error) => {
         const originalRequest = error.config;
-        
+
         // If error is 401 and we haven't tried to refresh the token yet
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
-          
+
           const newToken = await refreshTokenAPI();
           if (newToken) {
             // Update the authorization header with the new token
@@ -72,7 +77,7 @@ const DynamicSidebar = ({
             return axiosInstance(originalRequest);
           }
         }
-        
+
         return Promise.reject(error);
       }
     );
@@ -144,6 +149,11 @@ const DynamicSidebar = ({
     } else if (path) {
       navigate(path);
     }
+
+    // Collapse the sidebar on mobile devices when a menu item is clicked
+    if (window.innerWidth <= 768) {
+      toggleSidebar();
+    }
   };
 
   const renderMenuItem = React.useCallback(
@@ -178,6 +188,7 @@ const DynamicSidebar = ({
   if (!isLoggedIn && visibleCommonItems.length === 0) {
     return null;
   }
+
   const handleOverlayClick = () => {
     if (window.innerWidth <= 768) {
       toggleSidebar();
@@ -186,24 +197,26 @@ const DynamicSidebar = ({
 
   return (
     <>
-    <div
-      className={`${sidebarClassName || "sidebar"} ${
-        isSidebarCollapsed ? "collapsed" : ""
-      }`}
-    >
-      {visibleMenuItems.length > 0 && (
-        <div className="sidebar-top">
-          {visibleMenuItems.map(renderMenuItem)}
-        </div>
-      )}
+      <div
+        className={`${sidebarClassName || "sidebar"} ${
+          isSidebarCollapsed ? "collapsed" : ""
+        }`}
+      >
+        {visibleMenuItems.length > 0 && (
+          <div className="sidebar-top">
+            {visibleMenuItems.map(renderMenuItem)}
+          </div>
+        )}
 
-      {visibleCommonItems.length > 0 && (
-        <div className="sidebar-bottom">
-          {visibleCommonItems.map(renderMenuItem)}
-        </div>
+        {visibleCommonItems.length > 0 && (
+          <div className="sidebar-bottom">
+            {visibleCommonItems.map(renderMenuItem)}
+          </div>
+        )}
+      </div>
+      {isSidebarCollapsed && window.innerWidth <= 768 && (
+        <div className="sidebar-overlay" onClick={handleOverlayClick} />
       )}
-    </div>
-    <div className="sidebar-overlay" onClick={handleOverlayClick} />
     </>
   );
 };

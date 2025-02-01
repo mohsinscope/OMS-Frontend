@@ -1,8 +1,9 @@
 import React from 'react';
-import { Building2, Clock, DollarSign, Bell } from 'lucide-react';
+import { Building2, Clock, DollarSign, Bell,FileCheck ,BookX,  // for damaged passport
+  MonitorX  } from 'lucide-react';
 import './landingPage.css';
 import useAuthStore from './../store/store.js';
-
+import {Link} from 'react-router-dom'
 const LandingPage = () => {
   
   const { isSidebarCollapsed} = useAuthStore();
@@ -18,21 +19,28 @@ const LandingPage = () => {
 
         {/* Features List */}
         <div className="features-list">
+         
           <FeatureItem
-            icon={<Building2 className="feature-icon" />}
-            title="ادارة المكاتب"
-          />
+            icon={<DollarSign className="feature-icon" />}
+            title="ادارة المصاريف"
+            />
+           
+                 
+
           <FeatureItem
             icon={<Clock className="feature-icon" />}
             title="ادارة الحضور"
           />
+
+                     
           <FeatureItem
-            icon={<DollarSign className="feature-icon" />}
-            title="ادارة المصاريف"
+            icon={<BookX  className="feature-icon" />}
+            title="الجوازات التالفة"
           />
+
           <FeatureItem
-            icon={<Bell className="feature-icon" />}
-            title="الاشعارات"
+            icon={<MonitorX  className="feature-icon" />}
+            title="الاجهزة التالفة"
           />
         </div>
           <p className="subtitle" style={{textAlign:"center", marginTop:"10px "}}>

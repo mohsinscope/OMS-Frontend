@@ -10,7 +10,8 @@ import {
   Input,
   ConfigProvider,
   Collapse,
-  Spin 
+  Spin,
+  Skeleton,
 } from "antd";
 import { PlusCircleOutlined, CalendarOutlined } from "@ant-design/icons";
 import useAuthStore from "../../../store/store";
@@ -32,6 +33,10 @@ export default function SuperVisorExpensesRequest() {
   const [sendLoading, setSendLoading] = useState(false);
   const [lastMonthExpense, setLastMonthExpense] = useState(null);
   const [isLastMonthLoading, setIsLastMonthLoading] = useState(true);
+  const [isEndOfMonth, setIsEndOfMonth] = useState(false);
+  const [canSendRequests, setCanSendRequests] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Loading state
+
   const [officeInfo, setOfficeInfo] = useState({
     totalCount: 0,
     totalExpenses: 0,
@@ -53,8 +58,22 @@ export default function SuperVisorExpensesRequest() {
   // define state to set office budget
   const [officeBudget, setOfficeBudget] = useState();
   // define a request to get office budget by /api/office/${profile?.officeId} 
+  useEffect(() => {
+    const currentDate = new Date();
+    const currentDay = currentDate.getDate();
+    const daysInMonth = new Date(
+      currentDate.getFullYear(),
+      currentDate.getMonth() + 1,
+      0
+    ).getDate();
+  
+    setIsEndOfMonth(currentDay >= 25 && currentDay <= daysInMonth);
+    setCanSendRequests(currentDay >= 25 && currentDay <= daysInMonth);
+  }, [officeInfo.date]);
+  
   const fetchOfficeBudget = async () => {
     try {
+      console.log("tryyy")
       const response = await axiosInstance.get(`/api/office/${profile?.officeId}`);
       setOfficeBudget(response.data.budget);
     } catch (error) {
@@ -63,9 +82,7 @@ export default function SuperVisorExpensesRequest() {
     }
   };
   // call fetchOfficeBudget function
-  useEffect(() => {
-    fetchOfficeBudget();
-  }, [profile?.officeId]);
+
   console.log("officeBudget", officeBudget);
   const updateOfficeInfo = (expenses) => {
     const totalCount = expenses.length;
@@ -87,7 +104,11 @@ export default function SuperVisorExpensesRequest() {
       setIsLastMonthLoading(true);
       const response = await axiosInstance.post("/api/Expense/search-last-month", {
         officeId: profile?.officeId,
+        
       });
+      console.log("try 3")
+
+
       
       // Extract first item from array since response.data is an array
       if (response.data && response.data.length > 0) {
@@ -123,17 +144,11 @@ export default function SuperVisorExpensesRequest() {
     return statusColors[status] || "#000000";
   };
 
-  const fetchExpenseTypes = async () => {
-    try {
-      const response = await axiosInstance.get("/api/ExpenseType?PageNumber=1&PageSize=10");
-      setExpenseTypes(response.data || []);
-    } catch (error) {
-      console.error("Error fetching expense types:", error);
-      message.error("حدث خطأ في جلب أنواع المصروفات");
-    }
-  };
+
 
   const fetchMonthlyExpense = async () => {
+    setIsLoading(true); // Start loading
+
     try {
       const payload = {
         officeId: profile?.officeId,
@@ -149,6 +164,8 @@ export default function SuperVisorExpensesRequest() {
       };
 
       const response = await axiosInstance.post("/api/Expense/search", payload);
+      console.log("try 2")
+
 
       if (response.data && response.data.length > 0) {
         const currentExpense = response.data[0];
@@ -165,6 +182,10 @@ export default function SuperVisorExpensesRequest() {
     } catch (error) {
       console.error("Error fetching monthly expenses:", error);
       message.error("حدث خطأ في جلب المصروفات الشهرية");
+    }finally{
+      fetchOfficeBudget();
+      setIsLoading(false); // Stop loading
+
     }
   };
 
@@ -173,6 +194,8 @@ export default function SuperVisorExpensesRequest() {
 
     try {
       setLoading(true);
+      console.log("try 11")
+
       const response = await axiosInstance.get(
         `/api/Expense/${monthlyExpenseId}/daily-expenses`
       );
@@ -414,10 +437,14 @@ export default function SuperVisorExpensesRequest() {
       ),
     }
   ];
-
   const EmptyStateCard = () => {
     return (
+      
       <div style={{ width: "100%" }}>
+           {isLoading ? (
+        <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
+      ) : (
+        <>
         <div
           className="empty-state-container"
           style={{
@@ -467,7 +494,8 @@ export default function SuperVisorExpensesRequest() {
             إنشاء مصروف شهري جديد
           </Button>
         </div>
-
+        </>
+      )}
 
       </div>
     );
@@ -588,29 +616,20 @@ export default function SuperVisorExpensesRequest() {
                 <strong>{officeInfo.date}</strong>
               </div>
             </div>
-            <Space
-  direction="vertical"
-  style={{ width: "100%", marginTop: "24px" }}
->
+            <Space direction="vertical" style={{ width: "100%", marginTop: "24px" }}>
   <Link
     to="/add-daily-expense"
-    state={{ monthlyExpenseId: currentMonthlyExpenseId , officeBudget: officeBudget , totalMonthlyAmount: officeInfo.totalExpenses}}
-  >
+    state={{ monthlyExpenseId: currentMonthlyExpenseId }}>
     <Button
       type="primary"
       block
       size="large"
-      disabled={officeInfo.totalExpenses >= officeBudget} // Disable button if total expenses exceed budget
-    >
+      disabled={isEndOfMonth}>
       إضافة مصروف يومي
     </Button>
   </Link>
-  {officeInfo.totalExpenses >= officeBudget && (
-    <span style={{ color: "red", textAlign: "center" }}>
-      لقد تجاوزت ميزانية المكتب المحددة لهذا الشهر!
-    </span>
-  )}
 </Space>
+
 
 
 
@@ -632,7 +651,7 @@ export default function SuperVisorExpensesRequest() {
                   </h1>
               <Button
                 type="primary"
-                
+                disabled={!canSendRequests}
                 size="large"
                 onClick={() => setIsSendModalVisible(true)}>
                 ارسال طلبات الشهر الكلية
@@ -699,6 +718,7 @@ export default function SuperVisorExpensesRequest() {
               boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
             }}
           >
+            
             <Collapse.Panel
               key="1"
               header={

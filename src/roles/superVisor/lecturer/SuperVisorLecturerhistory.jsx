@@ -7,6 +7,7 @@ import {
   DatePicker,
   Select,
   Input,
+  Skeleton,
 } from "antd";
 import { Link } from "react-router-dom";
 import "./SuperVisorLecturerhistory.css";
@@ -24,7 +25,7 @@ const SuperVisorLecturerhistory = () => {
     permissions,
   } = useAuthStore();
   const hasCreatePermission = permissions.includes("Lc");
-  const isSupervisor = roles.includes("Supervisor");
+  const isSupervisor =  roles.includes("Supervisor")  || (roles == "I.T")||(roles =="MainSupervisor");
   const [lectures, setLectures] = useState([]);
   const [totalLectures, setTotalLectures] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,6 +43,7 @@ const SuperVisorLecturerhistory = () => {
     companyId: null,
     lectureTypeIds: [],
   });
+  const [isLoading, setIsLoading] = useState(true); // Loading state
 
   const formatToISO = (date) => {
     if (!date) return null;
@@ -50,6 +52,7 @@ const SuperVisorLecturerhistory = () => {
 
   const fetchLectures = async (payload) => {
     try {
+      setIsLoading(true); // Start loading
       const response = await axiosInstance.post(
         `${Url}/api/Lecture/search`,
         {
@@ -89,6 +92,8 @@ const SuperVisorLecturerhistory = () => {
           error.response?.data?.message || error.message
         }`
       );
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
@@ -339,151 +344,160 @@ const SuperVisorLecturerhistory = () => {
       dir="rtl">
       <h1 className="supervisor-passport-dameged-title">المحاضر</h1>
 
-      <div
-        className={`supervisor-passport-dameged-filters ${
-          searchVisible ? "animate-show" : "animate-hide"
-        }`}>
-        <form onSubmit={handleFormSubmit} className="supervisor-passport-dameged-form">
-          <div className="filter-field">
-            <label htmlFor="governorate" className="supervisor-Lectur-label">
-              المحافظة
-            </label>
-            <Select
-              id="governorate"
-              value={selectedGovernorate || undefined}
-              onChange={handleGovernorateChange}
-              disabled={isSupervisor}
-              className="supervisor-Lectur-select"
-              placeholder="اختر المحافظة">
-              {governorates.map((gov) => (
-                <Select.Option key={gov.id} value={gov.id}>
-                  {gov.name}
-                </Select.Option>
-              ))}
-            </Select>
+      {isLoading ? (
+        <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
+      ) : (
+        <>
+          <div
+            className={`supervisor-passport-dameged-filters ${
+              searchVisible ? "animate-show" : "animate-hide"
+            }`}>
+            <form onSubmit={handleFormSubmit} className="supervisor-passport-dameged-form">
+              <div className="filter-field">
+                <label htmlFor="governorate" className="supervisor-Lectur-label">
+                  المحافظة
+                </label>
+                <Select
+                  id="governorate"
+                  value={selectedGovernorate || undefined}
+                  onChange={handleGovernorateChange}
+                  disabled={isSupervisor}
+                  className="supervisor-Lectur-select"
+                  placeholder="اختر المحافظة">
+                  {governorates.map((gov) => (
+                    <Select.Option key={gov.id} value={gov.id}>
+                      {gov.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="filter-field">
+                <label htmlFor="office" className="supervisor-Lectur-label">
+                  اسم المكتب
+                </label>
+                <Select
+                  id="office"
+                  value={selectedOffice || undefined}
+                  onChange={(value) => setSelectedOffice(value)}
+                  disabled={isSupervisor || !selectedGovernorate}
+                  className="supervisor-Lectur-select">
+                  {offices.map((office) => (
+                    <Select.Option key={office.id} value={office.id}>
+                      {office.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="filter-field">
+                <label htmlFor="company" className="supervisor-Lectur-label">
+                  الشركة
+                </label>
+                <Select
+                  id="company"
+                  value={formData.companyId || undefined}
+                  onChange={handleCompanyChange}
+                  className="supervisor-Lectur-select">
+                  {companies.map((company) => (
+                    <Select.Option key={company.id} value={company.id}>
+                      {company.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="filter-field">
+                <label htmlFor="title" className="supervisor-Lectur-label">
+                  عنوان المحضر
+                </label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  className="supervisor-Lectur-input"
+                />
+              </div>
+
+              <div className="filter-field">
+                <label>نوع المحضر</label>
+                <Select
+                  id="lectureTypeIds"
+                  mode="multiple"
+                  value={formData.lectureTypeIds}
+                  onChange={(value) =>
+                    setFormData((prev) => ({ ...prev, lectureTypeIds: value }))
+                  }
+                  className="filter-dropdown"
+                  style={{ maxHeight: "200px", overflowY: "auto" }}>
+                  {lectureTypeNames.map((type) => (
+                    <Select.Option key={type.id} value={type.id}>
+                      {type.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="supervisor-Lectur-field-wrapper">
+                <label htmlFor="startDate" className="supervisor-Lectur-label">
+                  التاريخ
+                </label>
+                <DatePicker
+                  id="startDate"
+                  placeholder="اختر التاريخ"
+                  onChange={(date) => handleDateChange(date, "startDate")}
+                  value={formData.startDate}
+                  className="supervisor-passport-dameged-input"
+                />
+              </div>
+
+              <div className="supervisor-Lectur-buttons">
+                <Button
+                  htmlType="submit"
+                  className="supervisor-passport-dameged-button">
+                  ابحث
+                </Button>
+                <Button onClick={handleReset} className="supervisor-passport-dameged-button">
+                  إعادة تعيين
+                </Button>
+              </div>
+
+              {hasCreatePermission && (
+                <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
+                  <Button type="primary" className="supervisor-passport-dameged-add-button">
+                    اضافة محضر جديد +
+                  </Button>
+                </Link>
+              )}
+            </form>
           </div>
 
-          <div className="filter-field">
-            <label htmlFor="office" className="supervisor-Lectur-label">
-              اسم المكتب
-            </label>
-            <Select
-              id="office"
-              value={selectedOffice || undefined}
-              onChange={(value) => setSelectedOffice(value)}
-              disabled={isSupervisor || !selectedGovernorate}
-              className="supervisor-Lectur-select">
-              {offices.map((office) => (
-                <Select.Option key={office.id} value={office.id}>
-                  {office.name}
-                </Select.Option>
-              ))}
-            </Select>
+          <div className="supervisor-Lectur-table-container">
+            <ConfigProvider direction="rtl">
+              <Table
+                dataSource={lectures}
+                columns={columns}
+                rowKey="id"
+                bordered
+                pagination={{
+                  current: currentPage,
+                  pageSize: pageSize,
+                  total: totalLectures,
+                  position: ["bottomCenter"],
+                  onChange: handlePageChange,
+                  showTotal: (total, range) => (
+                    <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
+                      اجمالي السجلات: {total}
+                    </span>
+                  ),
+                }}
+                locale={{ emptyText: "لا توجد بيانات" }}
+                className="supervisor-Lectur-table"
+              />
+            </ConfigProvider>
           </div>
-
-          <div className="filter-field">
-            <label htmlFor="company" className="supervisor-Lectur-label">
-              الشركة
-            </label>
-            <Select
-              id="company"
-              value={formData.companyId || undefined}
-              onChange={handleCompanyChange}
-              className="supervisor-Lectur-select">
-              {companies.map((company) => (
-                <Select.Option key={company.id} value={company.id}>
-                  {company.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="filter-field">
-            <label htmlFor="title" className="supervisor-Lectur-label">
-              عنوان المحضر
-            </label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => handleInputChange(e.target.value)}
-              className="supervisor-Lectur-input"
-            />
-          </div>
-
-          <div className="filter-field">
-            <label>
-              نوع المحضر
-            </label>
-            <Select
-              id="lectureTypeIds"
-              mode="multiple"
-              value={formData.lectureTypeIds}
-              onChange={(value) =>
-                setFormData((prev) => ({ ...prev, lectureTypeIds: value }))
-              }
-              className="filter-dropdown"
-              style={{ maxHeight: "200px", overflowY: "auto" }}>
-              {lectureTypeNames.map((type) => (
-                <Select.Option key={type.id} value={type.id}>
-                  {type.name}
-                </Select.Option>
-              ))}
-            </Select>
-          </div>
-
-          <div className="supervisor-Lectur-field-wrapper">
-            <label htmlFor="startDate" className="supervisor-Lectur-label">
-              التاريخ
-            </label>
-            <DatePicker
-              id="startDate"
-              placeholder="اختر التاريخ"
-              onChange={(date) => handleDateChange(date, "startDate")}
-              value={formData.startDate}
-              className="supervisor-passport-dameged-input"
-            />
-          </div>
-
-          <div className="supervisor-Lectur-buttons">
-            <Button
-              htmlType="submit"
-              className="supervisor-passport-dameged-button">
-              ابحث
-            </Button>
-            <Button onClick={handleReset} className="supervisor-passport-dameged-button">
-              إعادة تعيين
-            </Button>
-          </div>
-
-          {hasCreatePermission && (
-            <Link to="/supervisor/lecturerAdd/supervisorlecturerAdd">
-              <Button type="primary" className="supervisor-passport-dameged-add-button">
-                اضافة محضر جديد +
-              </Button>
-            </Link>
-          )}
-        </form>
-      </div>
-
-      <div className="supervisor-Lectur-table-container">
-        <ConfigProvider direction="rtl">
-          <Table
-            dataSource={lectures}
-            columns={columns}
-            rowKey="id"
-            bordered
-            pagination={{
-              current: currentPage,
-              pageSize: pageSize,
-              total: totalLectures,
-              position: ["bottomCenter"],
-              onChange: handlePageChange,
-            }}
-            locale={{ emptyText: "لا توجد بيانات" }}
-            className="supervisor-Lectur-table"
-          />
-        </ConfigProvider>
-      </div>
+        </>
+      )}
     </div>
   );
 };

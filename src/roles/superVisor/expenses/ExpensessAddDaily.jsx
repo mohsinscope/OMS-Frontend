@@ -48,9 +48,11 @@ export default function ExpensessAddDaily() {
     officeName: officeName || "",
     supervisorName: supervisorName || "",
   });
-  // define state to set office budget
+
+  // Office Budget
   const [officeBudget, setOfficeBudget] = useState();
-  // define a request to get office budget by /api/office/${profile?.officeId} 
+
+  // Fetch office budget
   const fetchOfficeBudget = async () => {
     try {
       const response = await axiosInstance.get(`/api/office/${profile?.officeId}`);
@@ -60,11 +62,11 @@ export default function ExpensessAddDaily() {
       message.error("حدث خطأ في جلب ميزانية المكتب");
     }
   };
-  // call fetchOfficeBudget function
   useEffect(() => {
     fetchOfficeBudget();
   }, [profile?.officeId]);
   console.log("officeBudget", officeBudget);
+
   useEffect(() => {
     if (!monthlyExpenseId) {
       message.error("لم يتم العثور على معرف المصروف الشهري");
@@ -137,13 +139,15 @@ export default function ExpensessAddDaily() {
         expenseDate: values.date.format("YYYY-MM-DDTHH:mm:ss"),
         expenseTypeId: values.expenseTypeId,
       };
-      if(values.totalamount + totalMonthlyAmount > officeBudget){
+
+      // Check budget
+      if (values.totalamount + totalMonthlyAmount > officeBudget) {
         message.error("الميزانية غير كافية");
-        // and then print message to use with remaing budget
         message.info(`الميزانية المتبقية ${officeBudget - totalMonthlyAmount}`);
         setIsSubmitting(false);
         return;
       }
+
       const response = await axiosInstance.post(
         `/api/Expense/${monthlyExpenseId}/daily-expenses`,
         payload
@@ -167,16 +171,25 @@ export default function ExpensessAddDaily() {
         throw new Error("فشل في إرفاق الملفات.");
       }
     } catch (error) {
-      message.error(
-        error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات"
-      );
+      message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleFileChange = (info) => {
-    const updatedFiles = info.fileList.filter((file) => true);
+    // Filter out PDF files
+    const updatedFiles = info.fileList.filter((file) => {
+      if (file.type === "application/pdf" || file.name?.endsWith(".pdf")) {
+        message.error("تحميل ملفات PDF غير مسموح به. يرجى تحميل صورة بدلاً من ذلك.");
+        return false;
+      }
+      return true;
+    });
+
+    // ------------------------
+    // OLD (commented out) logic:
+    /*
     const uniqueFiles = updatedFiles.filter(
       (newFile) =>
         !fileList.some(
@@ -185,13 +198,23 @@ export default function ExpensessAddDaily() {
             existingFile.lastModified === newFile.lastModified
         )
     );
-
     const newPreviews = uniqueFiles.map((file) =>
       file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
     );
-
     setPreviewUrls((prev) => [...prev, ...newPreviews]);
     setFileList((prev) => [...prev, ...uniqueFiles]);
+    */
+    // ------------------------
+
+    // NEW (fixed) approach:
+    // Make Dragger a controlled component using updatedFiles
+    setFileList(updatedFiles);
+
+    // Generate new previews directly from updatedFiles
+    const newPreviews = updatedFiles.map((file) =>
+      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
+    );
+    setPreviewUrls(newPreviews);
   };
 
   const handleDeleteImage = (index) => {
@@ -226,13 +249,9 @@ export default function ExpensessAddDaily() {
         (res) => res.blob()
       );
 
-      const scannedFile = new File(
-        [blob],
-        `scanned-expense-${Date.now()}.jpeg`,
-        {
-          type: "image/jpeg",
-        }
-      );
+      const scannedFile = new File([blob], `scanned-expense-${Date.now()}.jpeg`, {
+        type: "image/jpeg",
+      });
 
       if (
         !fileList.some((existingFile) => existingFile.name === scannedFile.name)
@@ -263,7 +282,8 @@ export default function ExpensessAddDaily() {
             <a
               href="https://cdn-oms.scopesky.org/services/ScannerPolaris_WinSetup.msi"
               target="_blank"
-              rel="noopener noreferrer">
+              rel="noopener noreferrer"
+            >
               تنزيل الخدمة
             </a>
           </div>
@@ -280,11 +300,10 @@ export default function ExpensessAddDaily() {
       className={`supervisor-damaged-passport-add-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       <div className="title-container">
-        <h1 >
-          إضافة مصروف يومي جديد
-        </h1>
+        <h1>إضافة مصروف يومي جديد</h1>
         <Form
           form={form}
           onFinish={handleFormSubmit}
@@ -295,158 +314,159 @@ export default function ExpensessAddDaily() {
               const total = price * quantity;
               form.setFieldsValue({ totalamount: total });
             }
-          }}>
+          }}
+        >
           <div className="form-item-damaged-device-container">
-           
-              <Form.Item
-                name="expenseTypeId"
-                label="نوع المصروف"
-                rules={[
-                  { required: true, message: "يرجى اختيار نوع المصروف" },
-                ]}>
-                <Select
-                  placeholder="اختر نوع المصروف"
-                  style={{ width: "267px", height: "45px" }}>
-                  {expenseTypes.map((type) => (
-                    <Select.Option key={type.id} value={type.id}>
-                      {type.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+            <Form.Item
+              name="expenseTypeId"
+              label="نوع المصروف"
+              rules={[{ required: true, message: "يرجى اختيار نوع المصروف" }]}
+            >
+              <Select
+                placeholder="اختر نوع المصروف"
+                style={{ width: "267px", height: "45px" }}
+              >
+                {expenseTypes.map((type) => (
+                  <Select.Option key={type.id} value={type.id}>
+                    {type.name}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
 
-              <Form.Item
-  name="price"
-  label="السعر"
-  rules={[{ required: true, message: "يرجى إدخال السعر" }]}>
-  <InputNumber
-    placeholder="أدخل السعر"
-    min={0}
-    style={{ width: "100%", height: "45px" }}
-    formatter={(value) =>
-      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-    }
-    parser={(value) => value.replace(/,\s?/g, "")}
-  />
-</Form.Item>
+            <Form.Item
+              name="price"
+              label="السعر"
+              rules={[{ required: true, message: "يرجى إدخال السعر" }]}
+            >
+              <InputNumber
+                placeholder="أدخل السعر"
+                min={0}
+                style={{ width: "100%", height: "45px" }}
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                parser={(value) => value.replace(/,\s?/g, "")}
+              />
+            </Form.Item>
 
+            <Form.Item
+              name="quantity"
+              label="الكمية"
+              rules={[{ required: true, message: "يرجى إدخال الكمية" }]}
+            >
+              <InputNumber
+                placeholder="أدخل الكمية"
+                min={1}
+                style={{ width: "100%", height: "45px" }}
+              />
+            </Form.Item>
 
-              <Form.Item
-                name="quantity"
-                label="الكمية"
-                rules={[{ required: true, message: "يرجى إدخال الكمية" }]}>
-                <InputNumber
-                  placeholder="أدخل الكمية"
-                  min={1}
-                  style={{ width: "100%", height: "45px" }}
-                />
-              </Form.Item>
-              <Form.Item name="totalamount" label="المجموع الكلي">
-  <InputNumber
-    readOnly
-    style={{ width: "100%", height: "45px" }}
-    formatter={(value) =>
-      `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-    }
-    parser={(value) => value.replace(/,\s?/g, "")}
-  />
-</Form.Item>
+            <Form.Item name="totalamount" label="المجموع الكلي">
+              <InputNumber
+                readOnly
+                style={{ width: "100%", height: "45px" }}
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                parser={(value) => value.replace(/,\s?/g, "")}
+              />
+            </Form.Item>
 
+            <Form.Item
+              name="date"
+              label="التاريخ"
+              rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
+            >
+              <DatePicker
+                style={{ width: "100%", height: "45px" }}
+                disabledDate={(current) => {
+                  // Disable dates outside the current month
+                  const now = new Date();
+                  return (
+                    current &&
+                    (current.month() !== now.getMonth() ||
+                      current.year() !== now.getFullYear())
+                  );
+                }}
+              />
+            </Form.Item>
 
-              <Form.Item
-  name="date"
-  label="التاريخ"
-  rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}>
-  <DatePicker
-    style={{ width: "100%", height: "45px" }}
-    disabledDate={(current) => {
-      // Disable dates outside the current month
-      const now = new Date();
-      return (
-        current &&
-        (current.month() !== now.getMonth() || current.year() !== now.getFullYear())
-      );
-    }}
-  />
-</Form.Item>
-
-              <Form.Item name="notes" label="ملاحظات" initialValue="لا يوجد">
-                <Input.TextArea
-                  rows={4}
-                  style={{ width: "100%", height: "45px" }}
-                />
-              </Form.Item>
-            </div>
+            <Form.Item name="notes" label="ملاحظات" initialValue="لا يوجد">
+              <Input.TextArea rows={4} style={{ width: "100%", height: "45px" }} />
+            </Form.Item>
+          </div>
 
           <h2 className="SuperVisor-Lecturer-title-conatiner">
             إضافة صورة المصروف
           </h2>
           <div className="add-image-section">
-              <div className="dragger-container">
-                <Form.Item
-                  name="uploadedImages"
-                  rules={[
-                    {
-                      validator: (_, value) =>
-                        fileList.length > 0 || previewUrls.length > 0
-                          ? Promise.resolve()
-                          : Promise.reject(
-                              new Error(
-                                "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
-                              )
-                            ),
-                    },
-                  ]}>
-                  <Dragger
-                    className="upload-dragger"
-                    fileList={fileList}
-                    onChange={handleFileChange}
-                    beforeUpload={() => false}
-                    multiple
-                    showUploadList={false}>
-                    <p className="ant-upload-drag-icon">📂</p>
-                    <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
-                  </Dragger>
-                  <Button
-                    type="primary"
-                    onClick={onScanHandler}
-                    disabled={isScanning}
-                    style={{
-                      width: "100%",
-                      height: "45px",
-                      marginTop: "10px",
-                      marginBottom: "10px",
-                    }}>
-                    {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
-                  </Button>
-                </Form.Item>
-              </div>
-              <div className="image-previewer-container">
-                <ImagePreviewer
-                  uploadedImages={previewUrls}
-                  defaultWidth={600}
-                  defaultHeight={300}
-                  onDeleteImage={handleDeleteImage}
-                />
-              </div>
+            <div className="dragger-container">
+              <Form.Item
+                name="uploadedImages"
+                rules={[
+                  {
+                    validator: (_, value) =>
+                      fileList.length > 0 || previewUrls.length > 0
+                        ? Promise.resolve()
+                        : Promise.reject(
+                            new Error(
+                              "يرجى تحميل صورة واحدة على الأقل أو استخدام المسح الضوئي"
+                            )
+                          ),
+                  },
+                ]}
+              >
+                <Dragger
+                  className="upload-dragger"
+                  fileList={fileList}
+                  onChange={handleFileChange}
+                  beforeUpload={() => false}
+                  multiple
+                  showUploadList={false}
+                >
+                  <p className="ant-upload-drag-icon">📂</p>
+                  <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
+                </Dragger>
+                <Button
+                  type="primary"
+                  onClick={onScanHandler}
+                  disabled={isScanning}
+                  style={{
+                    width: "100%",
+                    height: "45px",
+                    marginTop: "10px",
+                    marginBottom: "10px",
+                  }}
+                >
+                  {isScanning ? "جاري المسح الضوئي..." : "مسح ضوئي"}
+                </Button>
+              </Form.Item>
             </div>
-            <div className="image-previewer-section">
-              <Button
-                type="primary"
-                htmlType="submit"
-                className="submit-button"
-                loading={isSubmitting}
-                disabled={isSubmitting}>
-                حفظ
-              </Button>
-              <Button
-                danger
-                onClick={handleBack}
-                disabled={isSubmitting}
-                className="add-back-button">
-                رجوع
-              </Button>
+            <div className="image-previewer-container">
+              <ImagePreviewer
+                uploadedImages={previewUrls}
+                defaultWidth={600}
+                defaultHeight={300}
+                onDeleteImage={handleDeleteImage}
+              />
             </div>
+          </div>
+          <div className="image-previewer-section">
+            <Button
+              type="primary"
+              htmlType="submit"
+              className="submit-button"
+              loading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              حفظ
+            </Button>
+            <Button
+              danger
+              onClick={handleBack}
+              disabled={isSubmitting}
+              className="add-back-button"
+            >
+              رجوع
+            </Button>
+          </div>
         </Form>
       </div>
     </div>

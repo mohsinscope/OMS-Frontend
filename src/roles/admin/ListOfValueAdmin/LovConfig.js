@@ -34,13 +34,13 @@ export const LOV_MENU_ITEMS = [
   },
   {
     label: "الشركات",
-    icon: "passport",
+    icon: "building",
     path: "/admin/companies",
     permission: "LOVc"
   },
   {
     label: "انواع المحاضر",
-    icon: "passport",
+    icon: "lecturersType",
     path: "/admin/lecture-types",
     permission: "LOVc"
   },

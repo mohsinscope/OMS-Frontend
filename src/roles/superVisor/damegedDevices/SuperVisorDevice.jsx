@@ -7,6 +7,7 @@ import {
   DatePicker,
   Select,
   Input,
+  Skeleton,
 } from "antd";
 import { Link } from "react-router-dom";
 import html2pdf from "html2pdf.js";
@@ -15,6 +16,7 @@ import useAuthStore from "./../../../store/store";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
 import Icons from './../../../reusable elements/icons.jsx';
+
 const SuperVisorDevices = () => {
   const {
     isSidebarCollapsed,
@@ -26,7 +28,7 @@ const SuperVisorDevices = () => {
   } = useAuthStore();
   
   const hasCreatePermission = permissions.includes("DDc");
-  const isSupervisor = roles.includes("Supervisor");
+  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T")||(roles =="MainSupervisor");
 
   const [devices, setDevices] = useState([]);
   const [totalDevices, setTotalDevices] = useState(0);
@@ -41,6 +43,7 @@ const SuperVisorDevices = () => {
     startDate: null,
     endDate: null,
   });
+  const [isLoading, setIsLoading] = useState(true); // Loading state
 
   const formatToISO = (date) => {
     if (!date) return null;
@@ -88,10 +91,13 @@ const SuperVisorDevices = () => {
           error.response?.data?.message || error.message
         }`
       );
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   };
 
   const handleSearch = async (page = 1) => {
+    setIsLoading(true); // Start loading
     const payload = {
       serialNumber: formData.serialNumber || "",
       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
@@ -226,86 +232,6 @@ const SuperVisorDevices = () => {
     fetchDevices(initialPayload);
   }, [isSupervisor, profile.officeId, profile.governorateId]);
 
-  // const handlePrintPDF = async () => {
-  //   try {
-  //     // Fetch all devices for the current filters
-  //     const payload = {
-  //       serialNumber: formData.serialNumber || "",
-  //       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-  //       governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
-  //       startDate: formData.startDate ? formatToISO(formData.startDate) : null,
-  //       endDate: formData.endDate ? formatToISO(formData.endDate) : null,
-  //       PaginationParams: {
-  //         PageNumber: 1,
-  //         PageSize: totalDevices, // Fetch all devices
-  //       },
-  //     };
-  
-  //     const response = await axiosInstance.post(
-  //       `${Url}/api/DamagedDevice/search`,
-  //       payload,
-  //       {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Authorization: `Bearer ${accessToken}`,
-  //         },
-  //       }
-  //     );
-  
-  //     const fullDeviceList = response.data || [];
-  
-  //     // Generate the PDF content
-  //     const element = document.createElement("div");
-  //     element.dir = "rtl";
-  //     element.style.fontFamily = "Arial, sans-serif";
-  //     element.innerHTML = `
-  //       <div style="padding: 20px; font-family: Arial, sans-serif;">
-  //         <h1 style="text-align: center;">تقرير الأجهزة التالفة</h1>
-  //         <table style="width: 100%; border-collapse: collapse;">
-  //           <thead>
-  //             <tr style="background-color: #f2f2f2;">
-  //               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ت</th>
-  //               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">التاريخ</th>
-  //               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المحافظة</th>
-  //               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المكتب</th>
-  //               <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">الرقم التسلسلي</th>
-  //             </tr>
-  //           </thead>
-  //           <tbody>
-  //             ${fullDeviceList
-  //               .map(
-  //                 (device, index) => `
-  //                   <tr>
-  //                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${fullDeviceList.length - index}</td>
-  //                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(device.date).toLocaleDateString("en-CA")}</td>
-  //                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${device.governorateName}</td>
-  //                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${device.officeName}</td>
-  //                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${device.serialNumber}</td>
-  //                   </tr>
-  //                 `
-  //               )
-  //               .join("")}
-  //           </tbody>
-  //         </table>
-  //       </div>
-  //     `;
-  
-  //     const options = {
-  //       margin: 1,
-  //       filename: "تقرير_الأجهزة_التالفة.pdf",
-  //       image: { type: "jpeg", quality: 0.98 },
-  //       html2canvas: { scale: 2 },
-  //       jsPDF: { unit: "cm", format: "a4", orientation: "landscape" },
-  //     };
-  
-  //     html2pdf().from(element).set(options).save();
-  //   } catch (error) {
-  //     console.error("Error generating PDF:", error);
-  //     message.error("حدث خطأ أثناء إنشاء ملف PDF");
-  //   }
-  // };
-  
-
   const columns = [
     {
       title: "التاريخ",
@@ -360,137 +286,139 @@ const SuperVisorDevices = () => {
       dir="rtl">
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
 
-      <div
-        className={`supervisor-passport-dameged-filters ${
-          searchVisible ? "animate-show" : "animate-hide"
-        }`}>
-        <form
-          onSubmit={handleFormSubmit}
-          className="supervisor-passport-dameged-form">
-          <div className="supervisor-devices-dameged-field-wrapper">
-            <label className="supervisor-devices-dameged-label">المحافظة</label>
-            <Select
-              value={selectedGovernorate || undefined}
-              onChange={handleGovernorateChange}
-              disabled={isSupervisor}
-              className="supervisor-devices-dameged-dropdown"
-              placeholder="اختر المحافظة">
-              {governorates.map((gov) => (
-                <Select.Option key={gov.id} value={gov.id}>
-                  {gov.name}
-                </Select.Option>
-              ))}
-            </Select>
+      {isLoading ? (
+        <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
+      ) : (
+        <>
+          <div
+            className={`supervisor-passport-dameged-filters ${
+              searchVisible ? "animate-show" : "animate-hide"
+            }`}>
+            <form
+              onSubmit={handleFormSubmit}
+              className="supervisor-passport-dameged-form">
+              <div className="supervisor-devices-dameged-field-wrapper">
+                <label className="supervisor-devices-dameged-label">المحافظة</label>
+                <Select
+                  value={selectedGovernorate || undefined}
+                  onChange={handleGovernorateChange}
+                  disabled={isSupervisor}
+                  className="supervisor-devices-dameged-dropdown"
+                  placeholder="اختر المحافظة">
+                  {governorates.map((gov) => (
+                    <Select.Option key={gov.id} value={gov.id}>
+                      {gov.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="supervisor-devices-dameged-field-wrapper">
+                <label className="supervisor-devices-dameged-label">
+                  اسم المكتب
+                </label>
+                <Select
+                  value={selectedOffice || undefined}
+                  onChange={(value) => setSelectedOffice(value)}
+                  disabled={isSupervisor || !selectedGovernorate}
+                  className="supervisor-devices-dameged-dropdown"
+                  placeholder="اختر المكتب">
+                  {offices.map((office) => (
+                    <Select.Option key={office.id} value={office.id}>
+                      {office.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+
+              <div className="supervisor-devices-dameged-field-wrapper">
+                <label className="supervisor-devices-dameged-label">
+                  الرقم التسلسلي
+                </label>
+                <Input
+                  value={formData.serialNumber}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  className="supervisor-devices-dameged-input"
+                />
+              </div>
+
+              <div className="supervisor-devices-dameged-field-wrapper">
+                <label className="supervisor-devices-dameged-label">
+                  التاريخ من
+                </label>
+                <DatePicker
+                  placeholder="اختر التاريخ"
+                  onChange={(date) => handleDateChange(date, "startDate")}
+                  value={formData.startDate}
+                  className="supervisor-devices-dameged-input"
+                  style={{ width: "100%" }}
+                />
+              </div>
+
+              <div className="supervisor-devices-dameged-field-wrapper">
+                <label className="supervisor-devices-dameged-label">
+                  التاريخ إلى
+                </label>
+                <DatePicker
+                  placeholder="اختر التاريخ"
+                  onChange={(date) => handleDateChange(date, "endDate")}
+                  value={formData.endDate}
+                  className="supervisor-devices-dameged-input"
+                  style={{ width: "100%" }}
+                />
+              </div>
+
+              <div className="supervisor-device-filter-buttons">
+                <Button
+                  htmlType="submit"
+                  className="supervisor-passport-dameged-button">
+                  ابحث
+                </Button>
+                <Button
+                  onClick={handleReset}
+                  className="supervisor-passport-dameged-button">
+                  إعادة تعيين
+                </Button>
+              </div>
+              {hasCreatePermission && (
+                <Link to="/damegedDevices/add">
+                  <Button type="primary" className="supervisor-passport-dameged-add-button">
+                    اضافة جهاز جديد +
+                  </Button>
+                </Link>
+              )}
+            </form>
           </div>
 
-          <div className="supervisor-devices-dameged-field-wrapper">
-            <label className="supervisor-devices-dameged-label">
-              اسم المكتب
-            </label>
-            <Select
-              value={selectedOffice || undefined}
-              onChange={(value) => setSelectedOffice(value)}
-              disabled={isSupervisor || !selectedGovernorate}
-              className="supervisor-devices-dameged-dropdown"
-              placeholder="اختر المكتب">
-              {offices.map((office) => (
-                <Select.Option key={office.id} value={office.id}>
-                  {office.name}
-                </Select.Option>
-              ))}
-            </Select>
+          <div className="supervisor-devices-dameged-table-container">
+            <ConfigProvider direction="rtl">
+              <Table
+                dataSource={devices}
+                columns={columns}
+                rowKey="id"
+                bordered
+                pagination={{
+                  current: currentPage,
+                  pageSize: pageSize,
+                  total: totalDevices,
+                  position: ["bottomCenter"],
+                  onChange: (page) => {
+                    setCurrentPage(page);
+                    handleSearch(page);
+                  },
+                  showTotal: (total, range) => (
+                    <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
+                      اجمالي السجلات: {total}
+                    </span>
+                  ),
+                }}
+                locale={{ emptyText: "لا توجد بيانات" }}
+                className="supervisor-devices-dameged-table"
+              />
+            </ConfigProvider>
           </div>
-
-          <div className="supervisor-devices-dameged-field-wrapper">
-            <label className="supervisor-devices-dameged-label">
-              الرقم التسلسلي
-            </label>
-            <Input
-              value={formData.serialNumber}
-              onChange={(e) => handleInputChange(e.target.value)}
-              className="supervisor-devices-dameged-input"
-            />
-          </div>
-
-          <div className="supervisor-devices-dameged-field-wrapper">
-            <label className="supervisor-devices-dameged-label">
-              التاريخ من
-            </label>
-            <DatePicker
-              placeholder="اختر التاريخ"
-              onChange={(date) => handleDateChange(date, "startDate")}
-              value={formData.startDate}
-              className="supervisor-devices-dameged-input"
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          <div className="supervisor-devices-dameged-field-wrapper">
-            <label className="supervisor-devices-dameged-label">
-              التاريخ إلى
-            </label>
-            <DatePicker
-              placeholder="اختر التاريخ"
-              onChange={(date) => handleDateChange(date, "endDate")}
-              value={formData.endDate}
-              className="supervisor-devices-dameged-input"
-              style={{ width: "100%" }}
-            />
-          </div>
-
-          <div className="supervisor-device-filter-buttons">
-            <Button
-              htmlType="submit"
-              className="supervisor-passport-dameged-button">
-              ابحث
-            </Button>
-            <Button
-              onClick={handleReset}
-              className="supervisor-passport-dameged-button">
-              إعادة تعيين
-            </Button>
-            {/* <button
-    className="modern-button pdf-button"
-    onClick={handlePrintPDF}
-    style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 24px", borderRadius: "8px" }}
-  >
-    تصدير الى PDF
-    <Icons type="pdf" />
-  </button> */}
-  
-          </div>
-          {hasCreatePermission && (
-            <Link to="/damegedDevices/add">
-              <Button type="primary" className="supervisor-passport-dameged-add-button">
-                اضافة جهاز جديد +
-              </Button>
-            </Link>
-          )}
-        </form>
-      </div>
-
-      <div className="supervisor-devices-dameged-table-container">
-        <ConfigProvider direction="rtl">
-          <Table
-            dataSource={devices}
-            columns={columns}
-            rowKey="id"
-            bordered
-            pagination={{
-              current: currentPage,
-              pageSize: pageSize,
-              total: totalDevices,
-              position: ["bottomCenter"],
-              onChange: (page) => {
-                setCurrentPage(page);
-                handleSearch(page);
-              },
-            }}
-            locale={{ emptyText: "لا توجد بيانات" }}
-            className="supervisor-devices-dameged-table"
-          />
-        </ConfigProvider>
-      </div>
+        </>
+      )}
     </div>
   );
 };

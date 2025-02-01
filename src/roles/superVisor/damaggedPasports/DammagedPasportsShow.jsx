@@ -9,6 +9,7 @@ import {
   ConfigProvider,
   Select,
   Upload,
+  Skeleton,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import { UploadOutlined } from "@ant-design/icons";
@@ -35,22 +36,24 @@ const DamagedPassportsShow = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [form] = Form.useForm();
-  const { isSidebarCollapsed, accessToken, profile, permissions } =
-    useAuthStore();
+  const { isSidebarCollapsed, accessToken, profile, permissions } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
   const hasUpdatePermission = permissions.includes("DPu");
   const hasDeletePermission = permissions.includes("DPd");
+
   const fetchPassportDetails = async () => {
     try {
-      const response = await axiosInstance.get(
-        `${Url}/api/DamagedPassport/${passportId}`
-      );
+      const response = await axiosInstance.get(`${Url}/api/DamagedPassport/${passportId}`);
       const passport = response.data;
       const formattedDate = passport.date
         ? new Date(passport.date).toISOString().split("T")[0]
         : "";
       setPassportData({ ...passport, date: formattedDate });
-      form.setFieldsValue({ ...passport, date: formattedDate });
+      form.setFieldsValue({
+        ...passport,
+        date: formattedDate,
+        notes: passport.note || "", // Set notes to the value from the passport data or an empty string
+      });
     } catch (error) {
       message.error("حدث خطأ أثناء جلب تفاصيل الجواز.");
     }
@@ -100,13 +103,9 @@ const DamagedPassportsShow = () => {
       navigate(-1);
       return;
     }
-
     setLoading(true);
-    Promise.all([
-      fetchPassportDetails(),
-      fetchPassportImages(),
-      fetchDamagedTypes(),
-    ]).finally(() => setLoading(false));
+    Promise.all([fetchPassportDetails(), fetchPassportImages(), fetchDamagedTypes()])
+      .finally(() => setLoading(false));
   }, [passportId, navigate]);
 
   const handleImageUpload = async (file) => {
@@ -116,10 +115,8 @@ const DamagedPassportsShow = () => {
       formData.append("entityType", "DamagedPassport");
       formData.append("file", file);
 
-      console.log("Uploading image with data:", imageData);
-
       await axiosInstance.put(
-        `${Url}/api/attachment/${imageData.imageId}`, // Use updated imageId
+        `${Url}/api/attachment/${imageData.imageId}`, // Use the correct imageId
         formData,
         {
           headers: {
@@ -142,9 +139,7 @@ const DamagedPassportsShow = () => {
       const updatedValues = {
         id: passportId,
         passportNumber: values.passportNumber,
-        date: values.date
-          ? new Date(values.date).toISOString()
-          : passportData.date,
+        date: values.date ? new Date(values.date).toISOString() : passportData.date,
         note: values.notes || "لا يوجد",
         damagedTypeId: values.damagedTypeId,
         governorateId,
@@ -152,15 +147,11 @@ const DamagedPassportsShow = () => {
         profileId,
       };
 
-      await axiosInstance.put(
-        `${Url}/api/DamagedPassport/${passportId}`,
-        updatedValues,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      await axiosInstance.put(`${Url}/api/DamagedPassport/${passportId}`, updatedValues, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       message.success("تم تحديث بيانات الجواز بنجاح");
       setEditModalVisible(false);
@@ -185,195 +176,206 @@ const DamagedPassportsShow = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="loading">
-        <Spin size="large" />
-      </div>
-    );
-  }
-
-  if (!passportData) {
-    return <div className="loading">جاري التحميل...</div>;
-  }
-
   return (
     <div
       className={`supervisor-passport-damage-show-container ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl">
-      <div className="title-container">
-        <h1>تفاصيل الجواز التالف</h1>
-        <div className="edit-button-and-delete">
-          <Button onClick={() => navigate(-1)} className="back-button">
-            <Lele type="back" />
-            الرجوع
-          </Button>
-          {hasDeletePermission && (
-            <Button
-              onClick={() => setDeleteModalVisible(true)}
-              className="delete-button-passport">
-              حذف <Lele type="delete" />
-            </Button>
-          )}
-          {hasUpdatePermission && (
-            <Button
-              onClick={() => setEditModalVisible(true)}
-              className="edit-button-passport">
-              تعديل <Lele type="edit" />
-            </Button>
-          )}
-        </div>
-      </div>
+      dir="rtl"
+    >
+      {/* Conditionally render Skeleton or the actual content */}
+      {loading ? (
+        <Skeleton active paragraph={{ rows: 12 }} />
+      ) : (
+        <>
+          {passportData && (
+            <>
+              <div className="title-container">
+                <h1>تفاصيل الجواز التالف</h1>
+                <div className="edit-button-and-delete">
+                  <Button onClick={() => navigate(-1)} className="back-button">
+                    <Lele type="back" />
+                    الرجوع
+                  </Button>
+                  {hasDeletePermission && (
+                    <Button
+                      onClick={() => setDeleteModalVisible(true)}
+                      className="delete-button-passport"
+                    >
+                      حذف <Lele type="delete" />
+                    </Button>
+                  )}
+                  {hasUpdatePermission && (
+                    <Button
+                      onClick={() => setEditModalVisible(true)}
+                      className="edit-button-passport"
+                    >
+                      تعديل <Lele type="edit" />
+                    </Button>
+                  )}
+                </div>
+              </div>
 
-      <div className="details-container-Lecture">
-        <div className="details-lecture-container">
-          <div className="details-row">
-            <span className="details-label">رقم الجواز:</span>
-            <input
-              className="details-value"
-              value={passportData.passportNumber}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">التاريخ:</span>
-            <input
-              className="details-value"
-              value={new Date(passportData.date).toLocaleDateString("en-CA")}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">سبب التلف:</span>
-            <input
-              className="details-value"
-              value={passportData.damagedTypeName || "غير محدد"}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">الملاحظات:</span>
-            <textarea
-              className="textarea-value"
-              value={passportData.note || "لا توجد ملاحظات"}
-              disabled
-            />
-          </div>
-        </div>
-        <div className="image-container">
-          {images.length > 0 && (
-            <div className="image-preview-container">
-              <ImagePreviewer
-                uploadedImages={images.map((img) => img.url)}
-                defaultWidth={600}
-                defaultHeight={300}
-              />
-            </div>
+              <div className="details-container-Lecture">
+                <div className="details-lecture-container">
+                  <div className="details-row">
+                    <span className="details-label">رقم الجواز:</span>
+                    <input
+                      className="details-value"
+                      value={passportData.passportNumber}
+                      disabled
+                    />
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">التاريخ:</span>
+                    <input
+                      className="details-value"
+                      value={new Date(passportData.date).toLocaleDateString("en-CA")}
+                      disabled
+                    />
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">سبب التلف:</span>
+                    <input
+                      className="details-value"
+                      value={passportData.damagedTypeName || "غير محدد"}
+                      disabled
+                    />
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">الملاحظات:</span>
+                    <textarea
+                      className="textarea-value"
+                      value={passportData.note || "لا توجد ملاحظات"}
+                      disabled
+                    />
+                  </div>
+                </div>
+
+                <div className="image-container">
+                  {images.length > 0 && (
+                    <div className="image-preview-container">
+                      <ImagePreviewer
+                        uploadedImages={images.map((img) => img.url)}
+                        defaultWidth={600}
+                        defaultHeight={300}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Modal for editing passport */}
+              <div className="dammaged-passport-container-edit-modal">
+                <ConfigProvider direction="rtl">
+                  <Modal
+                    className="model-container"
+                    open={editModalVisible}
+                    onCancel={() => setEditModalVisible(false)}
+                    footer={null}
+                  >
+                    <h1>تعديل بيانات الجواز</h1>
+                    <Form
+             form={form}
+             onFinish={handleSaveEdit}
+             layout="vertical"
+             className="dammaged-passport-container-edit-modal"
+                    >
+                      <Form.Item
+                        name="passportNumber"
+                        label="رقم الجواز"
+                        rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}
+                      >
+                        <Input placeholder="رقم الجواز" />
+                      </Form.Item>
+                      <Form.Item
+                        name="damagedTypeId"
+                        label="سبب التلف"
+                        rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}
+                      >
+                        <Select
+                          style={{ height: "45px" }}
+                          options={damagedTypes}
+                          placeholder="اختر سبب التلف"
+                          allowClear
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        name="date"
+                        label="التاريخ"
+                        rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}
+                      >
+                        <input placeholder="التاريخ" type="date" />
+                      </Form.Item>
+                      <Form.Item
+                        name="notes"
+                        label="الملاحظات"
+                        rules={[{ required: false }]}
+                      >
+                        <Input.TextArea placeholder="أدخل الملاحظات" defaultValue="لا يوجد" />
+                      </Form.Item>
+                      <Upload
+                        beforeUpload={(file) => {
+                          handleImageUpload(file);
+                          return false;
+                        }}
+                      >
+                        <Button
+                          style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+                          type="primary"
+                          icon={<UploadOutlined />}
+                        >
+                          استبدال الصورة
+                        </Button>
+                      </Upload>
+                      {images.length > 0 && (
+                        <>
+                          <span className="note-details-label">صور الجواز التالف:</span>
+                          <ImagePreviewer
+                            className="edit-model-container"
+                            uploadedImages={images.map((img) => img.url)}
+                            onImageSelect={(index) => {
+                              const selectedImage = images[index];
+                              if (selectedImage) {
+                                setImageData({
+                                  imageId: selectedImage.id,
+                                  entityId: passportId, // Ensure entityId matches your passportId
+                                  entityType: "DamagedPassport",
+                                });
+                              }
+                            }}
+                            defaultWidth="100%"
+                            defaultHeight={300}
+                          />
+                        </>
+                      )}
+               <Button
+    type="primary"
+    htmlType="submit"
+    block
+  >
+    حفظ التعديلات
+  </Button>
+                    </Form>
+                  </Modal>
+
+                  {/* Modal for deleting passport */}
+                  <Modal
+                    title="تأكيد الحذف"
+                    open={deleteModalVisible}
+                    onOk={handleDelete}
+                    onCancel={() => setDeleteModalVisible(false)}
+                    okText="حذف"
+                    cancelText="إلغاء"
+                  >
+                    <p>هل أنت متأكد أنك تريد حذف هذا الجواز؟</p>
+                  </Modal>
+                </ConfigProvider>
+              </div>
+            </>
           )}
-        </div>
-      </div>
-
-      <div className="dammaged-passport-container-edit-modal">
-        <ConfigProvider direction="rtl">
-          <Modal
-            className="model-container"
-            open={editModalVisible}
-            onCancel={() => setEditModalVisible(false)}
-            footer={null}>
-            <h1>تعديل بيانات الجواز</h1>
-            <Form
-              form={form}
-              onFinish={handleSaveEdit}
-              layout="vertical"
-              className="dammaged-passport-container-edit-modal">
-              <Form.Item
-                name="passportNumber"
-                label="رقم الجواز"
-                rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}>
-                <Input placeholder="رقم الجواز" />
-              </Form.Item>
-              <Form.Item
-                name="damagedTypeId"
-                label="سبب التلف"
-                rules={[{ required: true, message: "يرجى اختيار سبب التلف" }]}>
-                <Select
-                  style={{ height: "45px" }}
-                  options={damagedTypes}
-                  placeholder="اختر سبب التلف"
-                  allowClear
-                />
-              </Form.Item>
-              <Form.Item
-                name="date"
-                label="التاريخ"
-                rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-                <input placeholder="التاريخ" type="date" />
-              </Form.Item>
-              <Form.Item
-                name="notes"
-                label="الملاحظات"
-                rules={[{ required: false }]}>
-                <Input.TextArea
-                  placeholder="أدخل الملاحظات"
-                  defaultValue={"لا يوجد"}
-                />
-              </Form.Item>
-              <Upload
-                beforeUpload={(file) => {
-                  handleImageUpload(file);
-                  return false;
-                }}>
-                <Button
-                  style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
-                  type="primary"
-                  icon={<UploadOutlined />}>
-                  استبدال الصورة
-                </Button>
-              </Upload>
-              {images.length > 0 && (
-                <>
-                  <span className="note-details-label">صور الجواز التالف:</span>
-                  <ImagePreviewer
-                  className="edit-model-container"
-                    uploadedImages={images.map((img) => img.url)}
-                    onImageSelect={(index) => {
-                      const selectedImage = images[index]; // Correctly map selected index to image data
-                      if (selectedImage) {
-                        setImageData({
-                          imageId: selectedImage.id, // Set the correct imageId
-                          entityId: selectedImage.entityId || passportId, // Ensure entityId is set
-                          entityType: "DamagedPassport", // Maintain entityType
-                        });
-                      }
-                    }}
-                    defaultWidth="100%"
-                    defaultHeight={300}
-                  />
-                </>
-              )}
-              <Button
-                onClick={() => window.location.reload()}
-                type="primary"
-                htmlType="submit"
-                block>
-                حفظ التعديلات
-              </Button>
-            </Form>
-          </Modal>
-
-          <Modal
-            title="تأكيد الحذف"
-            open={deleteModalVisible}
-            onOk={handleDelete}
-            onCancel={() => setDeleteModalVisible(false)}
-            okText="حذف"
-            cancelText="إلغاء">
-            <p>هل أنت متأكد أنك تريد حذف هذا الجواز؟</p>
-          </Modal>
-        </ConfigProvider>
-      </div>
+        </>
+      )}
     </div>
   );
 };
