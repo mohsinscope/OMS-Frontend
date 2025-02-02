@@ -623,8 +623,7 @@ export default function SuperVisorExpensesRequest() {
     <Button
       type="primary"
       block
-      size="large"
-      disabled={isEndOfMonth}>
+      size="large">
       إضافة مصروف يومي
     </Button>
   </Link>
