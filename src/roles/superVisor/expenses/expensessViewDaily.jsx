@@ -7,10 +7,10 @@ import {
   Input,
   Button,
   ConfigProvider,
-  DatePicker,
   Select,
   InputNumber,
-  Upload
+  Upload,
+  Skeleton
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -39,7 +39,8 @@ const ExpensessView = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [expenseTypes, setExpenseTypes] = useState([]);
   const [form] = Form.useForm();
-  
+  const [isLoading, setIsLoading] = useState(true); // Loading state
+
   const { isSidebarCollapsed, permissions,profile } = useAuthStore();
    const hasUpdatePermission = permissions.includes("EXu"); 
   const hasDeletePermission = permissions.includes("EXd"); 
@@ -60,7 +61,9 @@ const ExpensessView = () => {
   };
 
   const fetchExpenseDetails = async () => {
+    setIsLoading(true); // Start loading
     try {
+      
       const response = await axiosInstance.get(`/api/Expense/dailyexpenses/${expenseId}`);
       const expense = response.data; // Ensure this is defined
       console.log("Expense Data:", expense); // Log the expense data for debugging
@@ -82,6 +85,9 @@ const ExpensessView = () => {
     } catch (error) {
       console.error("Error fetching expense details:", error);
       message.error('حدث خطأ أثناء جلب تفاصيل المصروف');
+    }finally{
+      setIsLoading(false); // Stop loading
+
     }
   };
   const fetchExpensesImages = async () => {
@@ -224,9 +230,9 @@ const ExpensessView = () => {
 
   if (loading) {
     return (
-      <div className="loading">
-        <Spin size="large" />
-      </div>
+      <div className="loading supervisor-passport-damage-show-container" dir="rtl">
+        <Skeleton active paragraph={{ rows: 10 }} /> 
+        </div>
     );
   }
 
@@ -240,6 +246,10 @@ console.log("month" ,expenseData.monthlyStatus)
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
       dir="rtl">
+        {isLoading ? (
+        <Skeleton active  paragraph={{ rows: 10 }} /> // Skeleton loading effect
+      ) : (
+        <>
       <div className="title-container">
         <h1>تفاصيل المصروف</h1>
         <div style={{display:"flex", justifyContent:"space-between", marginBottom: "20px",gap:"20px"}}>
@@ -269,9 +279,11 @@ console.log("month" ,expenseData.monthlyStatus)
     </Button>
   </>
 )}
+
+
         </div>
         
-  
+   
       </div>
 
       <div className="details-container-Lecture">
@@ -355,7 +367,9 @@ console.log("month" ,expenseData.monthlyStatus)
                       </div>
                     )}
                   </div>
-      </div>
+                  
+      </div>     </>
+      )}
 
       <ConfigProvider direction="rtl">
         <Modal
