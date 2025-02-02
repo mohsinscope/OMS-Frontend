@@ -9,7 +9,7 @@
   margin: auto;
 }
 .delete-button {
-  margin-top: 20px;
+  padding: 20px;
 }
 .pdf-indicator {
   display: flex;

@@ -28,6 +28,7 @@ export default function SupervisorAttendanceHistory() {
   const navigate = useNavigate();
   
   const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T") ||(roles =="MainSupervisor");
+
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
 
