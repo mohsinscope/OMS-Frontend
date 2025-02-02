@@ -1014,7 +1014,7 @@ export default function ExpensesView() {
                 align: "center",
                 render: (text) =>
                   `IQD ${Number(text).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
+                    minimumFractionDigits: 0,
                     maximumFractionDigits: 2,
                   })}`,
               },
@@ -1062,7 +1062,7 @@ export default function ExpensesView() {
                     <Table.Summary.Cell index={1} align="center">
                       IQD{" "}
                       {Number(total).toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
+                        minimumFractionDigits: 0,
                         maximumFractionDigits: 2,
                       })}
                     </Table.Summary.Cell>

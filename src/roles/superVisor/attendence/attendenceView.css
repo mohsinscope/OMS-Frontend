@@ -34,7 +34,8 @@
 }
 .attendence-buttons {
   display: flex;
-  justify-content: space-between;
+  justify-content: start;
+  align-items: center;
   margin-bottom: 10px;
   width: 100%;
 }
