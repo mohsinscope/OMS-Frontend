@@ -29,7 +29,7 @@ const AttendanceStats = () => {
     return yesterday.toISOString().split('T')[0];
   };
 
-  const [selectedDate, setSelectedDate] = useState(getYesterdayDate());
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedGovernorate, setSelectedGovernorate] = useState('');
   const [selectedOffice, setSelectedOffice] = useState('');
   const [governorates, setGovernorates] = useState([]);
