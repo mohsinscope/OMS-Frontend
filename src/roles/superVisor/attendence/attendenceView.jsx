@@ -12,26 +12,45 @@ export default function ViewAttendance() {
   const location = useLocation();
   const navigate = useNavigate();
   const id = location.state?.id;
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const { isSidebarCollapsed, accessToken, permissions, roles } = useAuthStore();
+  const { isSidebarCollapsed, accessToken, permissions ,roles } = useAuthStore();
   const [attendanceData, setAttendanceData] = useState(null);
   const [attendanceData2, setAttendanceData2] = useState(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
-  const [deleteModalVisible, setDeleteModalVisible] = useState(false); // State for delete modal
-  const isSuperAdmin = roles == "SuperAdmin";
+  const isSuperAdmin =  roles == "SuperAdmin" ;
 
   const [form] = Form.useForm();
   const hasUpdatePermission = permissions.includes("Au");
+
+// Handle delete attendance
+const handleDelete = async () => {
+  try {
+    await axiosInstance.delete(`${Url}/api/Attendance/${id}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    message.success("تم حذف بيانات الحضور بنجاح");
+    navigate(-1); // Go back after successful deletion
+  } catch (error) {
+    console.error("Error deleting attendance:", error);
+    message.error("حدث خطأ أثناء حذف بيانات الحضور");
+  }
+};
+
+
 
   // Navigate back handler
   const handleBack = () => {
     navigate(-1);
   };
 
-  // Fetch attendance details
   useEffect(() => {
     const fetchAttendanceDetails = async () => {
       try {
+        // 1) Fetch attendance from /api/Attendance/:id
         const response = await axiosInstance.get(`${Url}/api/Attendance/${id}`, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -39,20 +58,30 @@ export default function ViewAttendance() {
         });
         const data = response.data;
 
-        const response2 = await axiosInstance.get(`${Url}/api/office/${data.officeId}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
+        // 2) Fetch office details from /api/office/:officeId
+        const response2 = await axiosInstance.get(
+          `${Url}/api/office/${data.officeId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
         const attendsdata = response2;
 
+        // Save data in local state
         setAttendanceData(data);
         setAttendanceData2(attendsdata);
 
-        const dateOnly = data.date ? new Date(data.date).toISOString().split("T")[0] : "";
+        // Convert the stored ISO date to "YYYY-MM-DD" so it displays correctly in <Input type="date" />
+        const dateOnly = data.date
+          ? new Date(data.date).toISOString().split("T")[0] // e.g. "2025-01-15"
+          : "";
+
+        // Pre-fill the form fields (including the date)
         form.setFieldsValue({
           ...data,
-          date: dateOnly,
+          date: dateOnly, // sets the Input date field
         });
       } catch (error) {
         console.error("Error fetching attendance details:", error);
@@ -66,7 +95,11 @@ export default function ViewAttendance() {
   // Handle updating attendance
   const handleSaveEdit = async (values) => {
     try {
-      const updatedDate = values.date ? new Date(values.date).toISOString() : attendanceData.date;
+      // If user enters a new date, convert it to full ISO. Otherwise keep the original.
+      const updatedDate = values.date
+        ? new Date(values.date).toISOString()
+        : attendanceData.date; // fallback to the old date if user doesn't change it
+
       const updatedValues = {
         Id: id,
         receivingStaff: values.receivingStaff,
@@ -82,38 +115,32 @@ export default function ViewAttendance() {
         profileId: attendanceData.profileId,
       };
 
-      const response = await axiosInstance.put(`${Url}/api/Attendance/${id}`, updatedValues, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await axiosInstance.put(
+        `${Url}/api/Attendance/${id}`,
+        updatedValues,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       message.success("تم تحديث بيانات الحضور بنجاح");
       setEditModalVisible(false);
-      setAttendanceData(response.data || updatedValues);
+
+      // Update local state with the new data
+      const updatedData = response.data || updatedValues;
+      setAttendanceData(updatedData);
+
+      // Optionally, refresh page or re-fetch data
+      // window.location.reload();
     } catch (error) {
       console.error("Error Updating Attendance Details:", error);
       message.error(`حدث خطأ أثناء تعديل بيانات الحضور: ${error.message}`);
     }
   };
-
-  // Handle deleting attendance
-  const handleDelete = async () => {
-    try {
-      await axiosInstance.delete(`${Url}/api/Attendance/${id}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      message.success("تم حذف بيانات الحضور بنجاح");
-      setDeleteModalVisible(false);
-      navigate(-1); // Navigate back after deletion
-    } catch (error) {
-      console.error("Error deleting attendance:", error);
-      message.error("حدث خطأ أثناء حذف بيانات الحضور.");
-    }
-  };
+  
 
   // Render a single chart
   const renderChart = (title, count, total, numberOfAttendance) => {
@@ -155,6 +182,7 @@ export default function ViewAttendance() {
   const renderTotalChart = () => {
     if (!attendanceData || !attendanceData2) return null;
 
+    // total present in the attendance record
     const totalPresent =
       attendanceData.receivingStaff +
       attendanceData.accountStaff +
@@ -162,6 +190,7 @@ export default function ViewAttendance() {
       attendanceData.qualityStaff +
       attendanceData.deliveryStaff;
 
+    // total capacity from office data
     const totalCapacity =
       attendanceData2?.data?.receivingStaff +
       attendanceData2?.data?.accountStaff +
@@ -241,18 +270,13 @@ export default function ViewAttendance() {
           <Button onClick={() => setEditModalVisible(true)} className="edit-button-lecture">
             تعديل <Lele type="edit" />
           </Button>
-        )}
-        {isSuperAdmin && ( // Only show delete button for SuperAdmin
-          <Button
-            danger
-            type="primary"
-            onClick={() => setDeleteModalVisible(true)}
-            className="delete-button"
           
-          >
-            حذف <Lele type="delete" />
-          </Button>
         )}
+            {isSuperAdmin && (
+     <Button danger className="delete-button" onClick={() => setDeleteModalVisible(true)}>
+     حذف <Lele type="delete" />
+   </Button>
+      )}
       </div>
 
       <div className="display-container-charts">
@@ -302,7 +326,35 @@ export default function ViewAttendance() {
       </div>
 
       <ConfigProvider direction="rtl">
-        {/* Edit Modal */}
+      <Modal
+          className="model-container"
+          open={deleteModalVisible}
+          onCancel={() => setDeleteModalVisible(false)}
+          footer={null}
+        >
+          <div className="delete-modal-content">
+            <h1>حذف بيانات الحضور</h1>
+            <p className="delete-warning">
+              هل أنت متأكد من حذف بيانات الحضور؟ لا يمكن التراجع عن هذا الإجراء.
+            </p>
+            <div className="delete-modal-buttons">
+              <Button 
+                type="primary" 
+                danger
+                onClick={handleDelete}
+                className="confirm-delete-button"
+              >
+                تأكيد الحذف
+              </Button>
+              <Button 
+                onClick={() => setDeleteModalVisible(false)}
+                className="cancel-delete-button"
+              >
+                إلغاء
+              </Button>
+            </div>
+          </div>
+        </Modal>
         <Modal
           className="model-container"
           open={editModalVisible}
@@ -310,22 +362,129 @@ export default function ViewAttendance() {
           footer={null}
         >
           <h1>تعديل بيانات الحضور</h1>
-          <Form form={form} onFinish={handleSaveEdit} layout="vertical">
-            {/* Form fields */}
+
+          <Form
+            form={form}
+            onFinish={handleSaveEdit}
+            layout="vertical"
+            className="dammaged-passport-container-edit-modal"
+          >
+            <Form.Item
+              name="receivingStaff"
+              label={
+                <span>
+                  موظفي الاستلام{" "}
+                  <span style={{ color: "blue", fontSize: "14px" }}>
+                    {`(الحالي: ${attendanceData.receivingStaff} / ${
+                      attendanceData2?.data?.receivingStaff || 0
+                    })`}
+                  </span>
+                </span>
+              }
+              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الاستلام" }]}
+            >
+              <Input placeholder="عدد موظفي الاستلام" type="number" />
+            </Form.Item>
+
+            <Form.Item
+              name="accountStaff"
+              label={
+                <span>
+                  موظفي الحسابات{" "}
+                  <span style={{ color: "blue", fontSize: "14px" }}>
+                    {`(الحالي: ${attendanceData.accountStaff} / ${
+                      attendanceData2?.data?.accountStaff || 0
+                    })`}
+                  </span>
+                </span>
+              }
+              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الحسابات" }]}
+            >
+              <Input placeholder="عدد موظفي الحسابات" type="number" />
+            </Form.Item>
+
+            <Form.Item
+              name="printingStaff"
+              label={
+                <span>
+                  موظفي الطباعة{" "}
+                  <span style={{ color: "blue", fontSize: "14px" }}>
+                    {`(الحالي: ${attendanceData.printingStaff} / ${
+                      attendanceData2?.data?.printingStaff || 0
+                    })`}
+                  </span>
+                </span>
+              }
+              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الطباعة" }]}
+            >
+              <Input placeholder="عدد موظفي الطباعة" type="number" />
+            </Form.Item>
+
+            <Form.Item
+              name="qualityStaff"
+              label={
+                <span>
+                  موظفي الجودة{" "}
+                  <span style={{ color: "blue", fontSize: "14px" }}>
+                    {`(الحالي: ${attendanceData.qualityStaff} / ${
+                      attendanceData2?.data?.qualityStaff || 0
+                    })`}
+                  </span>
+                </span>
+              }
+              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الجودة" }]}
+            >
+              <Input placeholder="عدد موظفي الجودة" type="number" />
+            </Form.Item>
+
+            <Form.Item
+              name="deliveryStaff"
+              label={
+                <span>
+                  موظفي التسليم{" "}
+                  <span style={{ color: "blue", fontSize: "14px" }}>
+                    {`(الحالي: ${attendanceData.deliveryStaff} / ${
+                      attendanceData2?.data?.deliveryStaff || 0
+                    })`}
+                  </span>
+                </span>
+              }
+              rules={[{ required: true, message: "يرجى إدخال عدد موظفي التسليم" }]}
+            >
+              <Input placeholder="عدد موظفي التسليم" type="number" />
+            </Form.Item>
+
+            <Form.Item
+              name="date"
+              label="التاريخ"
+              rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}
+            >
+              {/* Input with "date" type uses YYYY-MM-DD */}
+              <Input placeholder="التاريخ" type="date" />
+            </Form.Item>
+
+            <Form.Item name="note" label="الملاحظات" rules={[{ required: false }]}>
+              <Input.TextArea placeholder="أدخل الملاحظات" defaultValue="لا يوجد" />
+            </Form.Item>
+
+            <Form.Item
+              name="workingHours"
+              label="وقت العمل"
+              rules={[{ required: true, message: "يرجى إدخال وقت العمل" }]}
+            >
+              <Select placeholder="اختر وقت العمل" style={{ width: "100%", height: "45px" }}>
+                <Select.Option value={3}>الكل</Select.Option>
+                <Select.Option value={1}>صباحي</Select.Option>
+                <Select.Option value={2}>مسائي</Select.Option>
+              </Select>
+            </Form.Item>
+
+            <Button type="primary" htmlType="submit" block>
+              حفظ التعديلات
+            </Button>
           </Form>
         </Modal>
-
-        {/* Delete Confirmation Modal */}
-        <Modal
-          title="تأكيد الحذف"
-          open={deleteModalVisible}
-          onOk={handleDelete}
-          onCancel={() => setDeleteModalVisible(false)}
-          okText="حذف"
-          cancelText="إلغاء"
-        >
-          <p>هل أنت متأكد أنك تريد حذف بيانات الحضور هذه؟</p>
-        </Modal>
+        
       </ConfigProvider>
     </div>
   );
