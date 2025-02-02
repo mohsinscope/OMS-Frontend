@@ -454,7 +454,7 @@ const SuperVisorDammageDeviceAdd = () => {
             </div>
 
             <h1 className="SuperVisor-title-container">
-              إضافة صورة الجهاز التالف
+              إضافة صورة محضر الجهاز التالف
             </h1>
             <div className="add-image-section">
               <div className="dragger-container">

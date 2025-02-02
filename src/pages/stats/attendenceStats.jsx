@@ -13,7 +13,7 @@ const AttendanceCard = ({ children, className = '' }) => (
 );
 
 const AttendanceStats = () => {
-  const { profile, accessToken } = useAuthStore();
+  const { accessToken } = useAuthStore();
   
   // Configure axios headers with the token
   const getAuthHeaders = () => ({
