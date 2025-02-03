@@ -9,8 +9,7 @@ import {
   Select,
   DatePicker,
   ConfigProvider,
-  Skeleton,
-  Modal
+  Skeleton
 } from "antd";
 import { Link } from "react-router-dom";
 import html2pdf from "html2pdf.js";
@@ -34,15 +33,13 @@ export default function SuperVisorPassport() {
 
   // Check permissions
   const hasCreatePermission = permissions.includes("DPc");
-  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T") ||(roles =="MainSupervisor");
-
+  const isSupervisor = roles.includes("Supervisor") || roles === "I.T" || roles === "MainSupervisor";
 
   // State management
   const [isLoading, setIsLoading] = useState(true);
   const [passportList, setPassportList] = useState([]);
   const [totalPassports, setTotalPassports] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isModalVisible, setIsModalVisible] = useState(false);
   const pageSize = 10;
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
@@ -92,7 +89,6 @@ export default function SuperVisorPassport() {
       if (response.data) {
         setPassportList(response.data);
         const paginationHeader = response.headers["pagination"];
-        console.log(paginationHeader)
         if (paginationHeader) {
           const paginationInfo = JSON.parse(paginationHeader);
           setTotalPassports(paginationInfo.totalItems);
@@ -101,7 +97,7 @@ export default function SuperVisorPassport() {
         }
 
         if (response.data.length === 0) {
-          setIsModalVisible(true);
+          message.info("لا يوجد تطابق للفلاتر");
         }
       }
     } catch (error) {
@@ -166,24 +162,14 @@ export default function SuperVisorPassport() {
                 .map(
                   (passport, index) => `
                     <tr>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                        index + 1
-                      }</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${index + 1}</td>
                       <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(
                         passport.date
                       ).toLocaleDateString("en-CA")}</td>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                        passport.governorateName
-                      }</td>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                        passport.officeName
-                      }</td>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                        passport.profileFullName
-                      }</td>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                        passport.passportNumber
-                      }</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${passport.governorateName}</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${passport.officeName}</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${passport.profileFullName}</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${passport.passportNumber}</td>
                     </tr>
                   `
                 )
@@ -246,7 +232,7 @@ export default function SuperVisorPassport() {
         properties: { rtl: true },
       });
 
-      const headers = ["نوع التلف","رقم الجواز","اسم المستخدم", "المكتب", "المحافظة", "التاريخ", "ت"];
+      const headers = ["نوع التلف", "رقم الجواز", "اسم المستخدم", "المكتب", "المحافظة", "التاريخ", "ت"];
       const headerRow = worksheet.addRow(headers);
 
       headerRow.eachCell((cell) => {
@@ -367,12 +353,9 @@ export default function SuperVisorPassport() {
 
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       setGovernorates(response.data);
       if (isSupervisor) {
         setSelectedGovernorate(profile.governorateId);
@@ -391,12 +374,9 @@ export default function SuperVisorPassport() {
     }
 
     try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown/${governorateId}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${governorateId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       if (response.data && response.data[0] && response.data[0].offices) {
         setOffices(response.data[0].offices);
         if (isSupervisor) {
@@ -475,7 +455,8 @@ export default function SuperVisorPassport() {
         <Link
           to="DammagedPasportsShow"
           state={{ id: record.id }}
-          className="supervisor-passport-dameged-details-link">
+          className="supervisor-passport-dameged-details-link"
+        >
           عرض
         </Link>
       ),
@@ -484,10 +465,9 @@ export default function SuperVisorPassport() {
 
   return (
     <div
-      className={`supervisor-passport-dameged-page ${
-        isSidebarCollapsed ? "sidebar-collapsed" : ""
-      }`}
-      dir="rtl">
+      className={`supervisor-passport-dameged-page ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}
+      dir="rtl"
+    >
       <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
 
       {isLoading ? (
@@ -495,9 +475,8 @@ export default function SuperVisorPassport() {
       ) : (
         <>
           <div
-            className={`supervisor-passport-dameged-filters ${
-              searchVisible ? "animate-show" : "animate-hide"
-            }`}>
+            className={`supervisor-passport-dameged-filters ${searchVisible ? "animate-show" : "animate-hide"}`}
+          >
             <form className="supervisor-passport-dameged-form">
               <div className="filter-field">
                 <label>المحافظة</label>
@@ -505,7 +484,8 @@ export default function SuperVisorPassport() {
                   className="filter-dropdown"
                   value={selectedGovernorate || undefined}
                   onChange={handleGovernorateChange}
-                  disabled={isSupervisor}>
+                  disabled={isSupervisor}
+                >
                   {governorates.map((gov) => (
                     <Option key={gov.id} value={gov.id}>
                       {gov.name}
@@ -520,7 +500,8 @@ export default function SuperVisorPassport() {
                   className="filter-dropdown"
                   value={selectedOffice || undefined}
                   onChange={(value) => setSelectedOffice(value)}
-                  disabled={isSupervisor || !selectedGovernorate}>
+                  disabled={isSupervisor || !selectedGovernorate}
+                >
                   {offices.map((office) => (
                     <Option key={office.id} value={office.id}>
                       {office.name}
@@ -571,21 +552,21 @@ export default function SuperVisorPassport() {
               <div className="supervisor-device-filter-buttons">
                 <Button
                   onClick={() => handleSearch(1)}
-                  className="supervisor-passport-dameged-button">
+                  className="supervisor-passport-dameged-button"
+                >
                   البحث
                 </Button>
                 <Button
                   onClick={handleReset}
-                  className="supervisor-passport-dameged-button">
+                  className="supervisor-passport-dameged-button"
+                >
                   إعادة تعيين
                 </Button>
               </div>
 
               {hasCreatePermission && (
                 <Link to="/supervisor/damagedpasportshistory/supervisordammagepasportadd">
-                  <Button
-                    type="primary"
-                    className="supervisor-passport-dameged-add-button">
+                  <Button type="primary" className="supervisor-passport-dameged-add-button">
                     اضافة جواز تالف +
                   </Button>
                 </Link>
@@ -603,7 +584,8 @@ export default function SuperVisorPassport() {
                     padding: "6px 12px",
                     borderRadius: "8px",
                     width: "fit-content",
-                  }}>
+                  }}
+                >
                   انشاء ملف PDF
                   <Icons type="pdf" />
                 </button>
@@ -619,7 +601,8 @@ export default function SuperVisorPassport() {
                     padding: "6px 12px",
                     borderRadius: "8px",
                     width: "fit-content",
-                  }}>
+                  }}
+                >
                   انشاء ملف Excel
                   <Icons type="excel" />
                 </button>
@@ -628,45 +611,35 @@ export default function SuperVisorPassport() {
           </div>
 
           <div className="supervisor-passport-dameged-table-container">
-<ConfigProvider direction="rtl">
-  <Table
-    dataSource={passportList}
-    columns={columns}
-    rowKey="id"
-    bordered
-    pagination={{
-      current: currentPage,
-      pageSize: pageSize,
-      total: totalPassports,
-      showSizeChanger: false,
-      position: ["bottomCenter"],
-      onChange: (page) => {
-        setCurrentPage(page);
-        handleSearch(page);
-      },
-      showTotal: (total, range) => (
-        <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
-          اجمالي السجلات: {total}
-        </span>
-      ),
-    }}
-    locale={{ emptyText: "لا توجد بيانات" }}
-    className="supervisor-passport-dameged-table"
-  />
-</ConfigProvider>
+            <ConfigProvider direction="rtl">
+              <Table
+                dataSource={passportList}
+                columns={columns}
+                rowKey="id"
+                bordered
+                pagination={{
+                  current: currentPage,
+                  pageSize: pageSize,
+                  total: totalPassports,
+                  showSizeChanger: false,
+                  position: ["bottomCenter"],
+                  onChange: (page) => {
+                    setCurrentPage(page);
+                    handleSearch(page);
+                  },
+                  showTotal: (total, range) => (
+                    <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
+                      اجمالي السجلات: {total}
+                    </span>
+                  ),
+                }}
+                locale={{ emptyText: "لا توجد بيانات" }}
+                className="supervisor-passport-dameged-table"
+              />
+            </ConfigProvider>
           </div>
         </>
       )}
-
-      <Modal
-        title="تنبيه"
-        open={isModalVisible}
-        onOk={() => setIsModalVisible(false)}
-        onCancel={() => setIsModalVisible(false)}
-        okText="حسناً"
-        cancelText="إغلاق">
-        <p>لا يوجد تطابق للفلاتر</p>
-      </Modal>
     </div>
   );
 }
