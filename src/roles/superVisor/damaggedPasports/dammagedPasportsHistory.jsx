@@ -33,7 +33,9 @@ export default function SuperVisorPassport() {
 
   // Check permissions
   const hasCreatePermission = permissions.includes("DPc");
-  const isSupervisor = roles.includes("Supervisor") || roles === "I.T" || roles === "MainSupervisor";
+  console.log("Role",roles)
+  const isSupervisor = roles.includes("Supervisor") || roles.includes("I.T") || roles.includes("MainSupervisor");
+  console.log("isSupervisor",roles)
 
   // State management
   const [isLoading, setIsLoading] = useState(true);
