@@ -178,10 +178,11 @@ export default function SuperVisorPassport() {
           </table>
         </div>
       `;
-
+      const now = new Date();
+      const formattedDate = now.toISOString().split("T")[0]; // YYYY-MM-DD format
       const options = {
         margin: 3,
-        filename: "تقرير_الجوازات_التالفة.pdf",
+        filename: `تقرير_الجوازات_التالفة_${formattedDate}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: "cm", format: "a4", orientation: "landscape" },
@@ -232,7 +233,7 @@ export default function SuperVisorPassport() {
         properties: { rtl: true },
       });
 
-      const headers = ["نوع التلف", "رقم الجواز", "اسم المستخدم", "المكتب", "المحافظة", "التاريخ", "ت"];
+      const headers = ["الملاحضات","نوع التلف", "رقم الجواز", "اسم المستخدم", "المكتب", "المحافظة", "التاريخ", "ت"];
       const headerRow = worksheet.addRow(headers);
 
       headerRow.eachCell((cell) => {
@@ -253,6 +254,7 @@ export default function SuperVisorPassport() {
 
       fullPassportList.forEach((passport, index) => {
         const row = worksheet.addRow([
+          passport.note,
           passport.damagedTypeName,
           passport.passportNumber,
           passport.profileFullName,
@@ -279,6 +281,7 @@ export default function SuperVisorPassport() {
       });
 
       worksheet.columns = [
+        { width: 40 },
         { width: 25 },
         { width: 25 },
         { width: 25 },
@@ -288,8 +291,12 @@ export default function SuperVisorPassport() {
         { width: 10 },
       ];
 
+      const now = new Date();
+      const formattedDate = now.toISOString().split("T")[0]; // YYYY-MM-DD format
+
       const buffer = await workbook.xlsx.writeBuffer();
-      saveAs(new Blob([buffer]), "تقرير_الجوازات_التالفة.xlsx");
+      saveAs(new Blob([buffer]), `${formattedDate}تقرير_الجوازات_التالفة_.xlsx`);
+
       message.success("تم تصدير التقرير بنجاح");
     } catch (error) {
       console.error("Error exporting to Excel:", error);
