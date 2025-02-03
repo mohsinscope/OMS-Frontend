@@ -4,22 +4,17 @@ import useAuthStore from './../store/store';
 import { notification } from 'antd';
 
 // Create axios instances with shared config
-const createAxiosInstance = () => axios.create({
-  baseURL: BASE_URL,
-  timeout: 15000, // Reduced timeout for faster failure detection
-});
+const createAxiosInstance = () =>
+  axios.create({
+    baseURL: BASE_URL,
+    timeout: 15000, // Reduced timeout for faster failure detection
+  });
 
 const axiosInstance = createAxiosInstance();
 const refreshAxios = createAxiosInstance();
 
 // Optimize token refresh state management
 let isRefreshing = false;
-let failedQueue = [];
-
-const processQueue = (error, token = null) => {
-  failedQueue.forEach(prom => error ? prom.reject(error) : prom.resolve(token));
-  failedQueue = [];
-};
 
 const handleLogout = () => {
   localStorage.removeItem('accessToken');
@@ -27,21 +22,29 @@ const handleLogout = () => {
   useAuthStore.getState().logout();
 };
 
-// Add token refresh logic for every request
+// Add token refresh logic before every request
 axiosInstance.interceptors.request.use(
   async config => {
     const token = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
 
-    // Refresh token before making any request
+    // Attempt to refresh token if both tokens exist and we're not already refreshing
     if (!isRefreshing && token && refreshToken) {
       isRefreshing = true;
       try {
-        const { data: { accessToken: newAccessToken, refreshToken: newRefreshToken } } = 
-          await refreshAxios.post('/api/account/refresh-token', {
-            AccessToken: token,
-            RefreshToken: refreshToken,
-          });
+        // Create a promise that rejects after 7 seconds
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Refresh token attempt timed out')), 7000)
+        );
+
+        // Race the refresh request against the timeout
+        const refreshPromise = refreshAxios.post('/api/account/refresh-token', {
+          AccessToken: token,
+          RefreshToken: refreshToken,
+        });
+
+        const { data } = await Promise.race([refreshPromise, timeoutPromise]);
+        const { accessToken: newAccessToken, refreshToken: newRefreshToken } = data;
 
         if (newAccessToken && newRefreshToken) {
           localStorage.setItem('accessToken', newAccessToken);
@@ -49,17 +52,28 @@ axiosInstance.interceptors.request.use(
           axiosInstance.defaults.headers.Authorization = `Bearer ${newAccessToken}`;
           await useAuthStore.getState().updateTokens(newAccessToken, newRefreshToken);
         } else {
-          handleLogout();
+          // If refresh endpoint doesn't provide new tokens, simulate a 401 error.
+          return Promise.reject({
+            response: {
+              status: 401,
+              data: { message: 'Unauthorized: token refresh failed' },
+            },
+          });
         }
       } catch (err) {
-        handleLogout();
-        return Promise.reject(err);
+        // If refresh fails or times out, simulate a 401 error.
+        return Promise.reject({
+          response: {
+            status: 401,
+            data: { message: 'Unauthorized: token refresh attempt timed out or failed' },
+          },
+        });
       } finally {
         isRefreshing = false;
       }
     }
 
-    // Attach the latest token to the request
+    // Attach the latest token to the request if available
     const updatedToken = localStorage.getItem('accessToken');
     if (updatedToken) {
       config.headers.Authorization = `Bearer ${updatedToken}`;
@@ -69,7 +83,7 @@ axiosInstance.interceptors.request.use(
   error => Promise.reject(error)
 );
 
-// Simplified response interceptor
+// Response interceptor: log out immediately when receiving a 401 response.
 axiosInstance.interceptors.response.use(
   response => response,
   error => {
@@ -79,21 +93,23 @@ axiosInstance.interceptors.response.use(
       navigator?.('/forbidden');
       return Promise.reject(error);
     }
+
     if (status === 409) {
       const message = 'رقم الجواز موجود'; // "Passport number already exists"
       notification.error({
-        message: 'خطأ',  // "Error"
+        message: 'خطأ', // "Error"
         description: message,
         placement: 'top',
-        rtl: true
+        rtl: true,
       });
       return Promise.reject({
         ...error,
-        customMessage: message
+        customMessage: message,
       });
     }
 
     if (status === 401) {
+      // Immediately log out on 401 error.
       handleLogout();
     }
 
