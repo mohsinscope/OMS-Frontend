@@ -12,14 +12,35 @@ export default function ViewAttendance() {
   const location = useLocation();
   const navigate = useNavigate();
   const id = location.state?.id;
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
-  const { isSidebarCollapsed, accessToken, permissions } = useAuthStore();
+  const { isSidebarCollapsed, accessToken, permissions ,roles } = useAuthStore();
   const [attendanceData, setAttendanceData] = useState(null);
   const [attendanceData2, setAttendanceData2] = useState(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const isSuperAdmin =  roles == "SuperAdmin" ;
 
   const [form] = Form.useForm();
   const hasUpdatePermission = permissions.includes("Au");
+
+// Handle delete attendance
+const handleDelete = async () => {
+  try {
+    await axiosInstance.delete(`${Url}/api/Attendance/${id}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    message.success("تم حذف بيانات الحضور بنجاح");
+    navigate(-1); // Go back after successful deletion
+  } catch (error) {
+    console.error("Error deleting attendance:", error);
+    message.error("حدث خطأ أثناء حذف بيانات الحضور");
+  }
+};
+
+
 
   // Navigate back handler
   const handleBack = () => {
@@ -119,6 +140,7 @@ export default function ViewAttendance() {
       message.error(`حدث خطأ أثناء تعديل بيانات الحضور: ${error.message}`);
     }
   };
+  
 
   // Render a single chart
   const renderChart = (title, count, total, numberOfAttendance) => {
@@ -248,7 +270,13 @@ export default function ViewAttendance() {
           <Button onClick={() => setEditModalVisible(true)} className="edit-button-lecture">
             تعديل <Lele type="edit" />
           </Button>
+          
         )}
+            {isSuperAdmin && (
+     <Button danger className="delete-button" onClick={() => setDeleteModalVisible(true)}>
+     حذف <Lele type="delete" />
+   </Button>
+      )}
       </div>
 
       <div className="display-container-charts">
@@ -298,6 +326,35 @@ export default function ViewAttendance() {
       </div>
 
       <ConfigProvider direction="rtl">
+      <Modal
+          className="model-container"
+          open={deleteModalVisible}
+          onCancel={() => setDeleteModalVisible(false)}
+          footer={null}
+        >
+          <div className="delete-modal-content">
+            <h1>حذف بيانات الحضور</h1>
+            <p className="delete-warning">
+              هل أنت متأكد من حذف بيانات الحضور؟ لا يمكن التراجع عن هذا الإجراء.
+            </p>
+            <div className="delete-modal-buttons">
+              <Button 
+                type="primary" 
+                danger
+                onClick={handleDelete}
+                className="confirm-delete-button"
+              >
+                تأكيد الحذف
+              </Button>
+              <Button 
+                onClick={() => setDeleteModalVisible(false)}
+                className="cancel-delete-button"
+              >
+                إلغاء
+              </Button>
+            </div>
+          </div>
+        </Modal>
         <Modal
           className="model-container"
           open={editModalVisible}
@@ -427,6 +484,7 @@ export default function ViewAttendance() {
             </Button>
           </Form>
         </Modal>
+        
       </ConfigProvider>
     </div>
   );

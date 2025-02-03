@@ -277,6 +277,7 @@ const SuperVisorDevices = () => {
       ),
     },
   ];
+  console.log("s")
 
   return (
     <div

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Table, Button, Modal, message, DatePicker, ConfigProvider, Select, Skeleton } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
@@ -8,6 +8,7 @@ import "./superVisorAttendeceHistory.css";
 import Url from "./../../../store/url.js";
 
 export default function SupervisorAttendanceHistory() {
+  // State management
   const [attendanceData, setAttendanceData] = useState([]);
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
@@ -20,25 +21,33 @@ export default function SupervisorAttendanceHistory() {
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  
   const pageSize = 10;
 
+  // Get store values only once
   const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } = useAuthStore();
   const { hasAnyPermission } = usePermissionsStore();
-  const hasCreatePermission = hasAnyPermission("create");
   const navigate = useNavigate();
-  
-  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T") ||(roles =="MainSupervisor");
-  const userGovernorateId = profile?.governorateId;
-  const userOfficeId = profile?.officeId;
 
-  const formatDateForAPI = (date) => {
+  // Memoize static values
+  const hasCreatePermission = useMemo(() => hasAnyPermission("create"), [hasAnyPermission]);
+  const isSupervisor = useMemo(() => 
+    roles.includes("Supervisor") || roles === "I.T" || roles === "MainSupervisor",
+    [roles]
+  );
+  
+  const userGovernorateId = useMemo(() => profile?.governorateId, [profile]);
+  const userOfficeId = useMemo(() => profile?.officeId, [profile]);
+
+  // Memoize helper functions
+  const formatDateForAPI = useCallback((date) => {
     if (!date) return null;
     const formattedDate = new Date(date);
     formattedDate.setUTCHours(14, 0, 0, 0);
     return formattedDate.toISOString();
-  };
+  }, []);
 
-  const fetchOffices = async (governorateId) => {
+  const fetchOffices = useCallback(async (governorateId) => {
     if (!governorateId) {
       setOffices([]);
       setSelectedOffice(null);
@@ -59,25 +68,9 @@ export default function SupervisorAttendanceHistory() {
     } catch (error) {
       message.error("حدث خطأ أثناء جلب بيانات المكاتب");
     }
-  };
+  }, [accessToken, isSupervisor, profile]);
 
-  const fetchGovernorates = async () => {
-    try {
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      setGovernorates(response.data);
-
-      if (isSupervisor && profile?.governorateId) {
-        setSelectedGovernorate(profile.governorateId);
-        await fetchOffices(profile.governorateId);
-      }
-    } catch (error) {
-      message.error("حدث خطأ أثناء جلب بيانات المحافظات");
-    }
-  };
-
-  const fetchAttendanceData = async (pageNumber = 1) => {
+  const fetchAttendanceData = useCallback(async (pageNumber = 1) => {
     try {
       setIsLoading(true);
       const searchBody = {
@@ -137,19 +130,31 @@ export default function SupervisorAttendanceHistory() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [
+    accessToken,
+    endDate,
+    formatDateForAPI,
+    isSupervisor,
+    selectedGovernorate,
+    selectedOffice,
+    startDate,
+    userGovernorateId,
+    userOfficeId,
+    workingHours
+  ]);
 
-  const handleGovernorateChange = (value) => {
+  // Memoize event handlers
+  const handleGovernorateChange = useCallback((value) => {
     setSelectedGovernorate(value);
     fetchOffices(value);
-  };
+  }, [fetchOffices]);
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     setCurrentPage(1);
     fetchAttendanceData(1);
-  };
+  }, [fetchAttendanceData]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setStartDate(null);
     setEndDate(null);
     setWorkingHours(3);
@@ -160,27 +165,19 @@ export default function SupervisorAttendanceHistory() {
     setCurrentPage(1);
     fetchAttendanceData(1);
     message.success("تمت إعادة التعيين بنجاح");
-  };
+  }, [fetchAttendanceData, isSupervisor]);
 
-  const handlePageChange = (page) => {
+  const handlePageChange = useCallback((page) => {
     setCurrentPage(page);
     fetchAttendanceData(page);
-  };
+  }, [fetchAttendanceData]);
 
-  const handleView = (record) => {
+  const handleView = useCallback((record) => {
     navigate("/attendance/view", { state: { id: record.id } });
-  };
+  }, [navigate]);
 
-  useEffect(() => {
-    const initData = async () => {
-      await fetchGovernorates();
-      await fetchAttendanceData(1);
-    };
-
-    initData();
-  }, []);
-
-  const columns = [
+  // Memoize columns configuration
+  const columns = useMemo(() => [
     {
       title: "التاريخ",
       dataIndex: "date",
@@ -215,15 +212,50 @@ export default function SupervisorAttendanceHistory() {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
-        <Button type="primary" style={{height:"40px",width:"fit-content"}} onClick={() => handleView(record)}>
+        <Button 
+          type="primary" 
+          style={{height:"40px",width:"fit-content"}} 
+          onClick={() => handleView(record)}
+        >
           عرض
         </Button>
       ),
     },
-  ];
+  ], [handleView]);
+
+  // Fetch initial data
+  useEffect(() => {
+    const fetchGovernorates = async () => {
+      try {
+        const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        setGovernorates(response.data);
+
+        if (isSupervisor && profile?.governorateId) {
+          setSelectedGovernorate(profile.governorateId);
+          await fetchOffices(profile.governorateId);
+        }
+      } catch (error) {
+        message.error("حدث خطأ أثناء جلب بيانات المحافظات");
+      }
+    };
+
+    const initData = async () => {
+      await fetchGovernorates();
+      await fetchAttendanceData(1);
+    };
+
+    initData();
+  }, [accessToken, fetchAttendanceData, fetchOffices, isSupervisor, profile]);
 
   return (
-    <div className={`supervisor-attendance-history-main-container ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`} dir="rtl">
+    <div 
+      className={`supervisor-attendance-history-main-container ${
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
+      }`} 
+      dir="rtl"
+    >
       <div className="supervisor-attendance-history-title">
         <h1>الحضور</h1>
       </div>
@@ -232,7 +264,9 @@ export default function SupervisorAttendanceHistory() {
         <Skeleton active paragraph={{ rows: 10 }} />
       ) : (
         <>
-          <div className={`supervisor-attendance-history-fields ${searchVisible ? "animate-show" : "animate-hide"}`}>
+          <div className={`supervisor-attendance-history-fields ${
+            searchVisible ? "animate-show" : "animate-hide"
+          }`}>
             <div className="filter-row">
               <label>المحافظة</label>
               <Select
@@ -337,7 +371,7 @@ export default function SupervisorAttendanceHistory() {
                   total: totalRecords,
                   onChange: handlePageChange,
                   showSizeChanger: false,
-                  showTotal: (total, range) => (
+                  showTotal: (total) => (
                     <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
                       اجمالي السجلات: {total}
                     </span>

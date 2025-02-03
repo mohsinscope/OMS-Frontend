@@ -8,6 +8,8 @@ import useAuthStore from "../../store/store.js";
 import AttendanceStats from './attendenceStats.jsx';
 import ExpensesStats  from './expensessStats.jsx';
 import AttendanceUnavailable from './attendenceUnavailable.jsx';
+import CabinetAttendence from './CabinetAttendence.jsx';
+
 import './stats.css';
 const COLORS = [
   "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0",
@@ -328,6 +330,12 @@ export default function Stats() {
             >
               المكاتب الغائبة
             </li>
+            <li
+              className={`stats-navbar-item ${selectedTab === "cabinet-attendence" ? "active" : ""}`}
+              onClick={() => handleTabChange("cabinet-attendence")}
+            >
+              حضور الكابينات
+            </li>
             </>
             
             }
@@ -349,7 +357,12 @@ export default function Stats() {
   
       {selectedTab === "expenses" ? (
         <ExpensesStats />
-      ) : selectedTab === "attendance" ? (
+      ) : 
+      selectedTab === "cabinet-attendence" ? (
+        <CabinetAttendence />
+      ) :
+      
+      selectedTab === "attendance" ? (
         <AttendanceStats data={attendanceData} />
       ) : selectedTab === "attendanceUnavailable" ? (
         <AttendanceUnavailable />
