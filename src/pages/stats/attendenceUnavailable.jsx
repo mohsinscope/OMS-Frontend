@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { DatePicker, Select, Button, Card, Alert, Row } from 'antd';
 import axiosInstance from '../../intercepters/axiosInstance.js';
 import Url from './../../store/url.js';
@@ -34,7 +34,6 @@ const selectStyle = {
 };
 
 const buttonStyle = {
-  
   height:"45px",
   width:"100px"
 };
@@ -92,7 +91,7 @@ export default function AttendanceUnavailable() {
     fetchGovernorates();
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (!selectedDate) {
       setError('الرجاء اختيار التاريخ');
@@ -116,8 +115,51 @@ export default function AttendanceUnavailable() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedDate, workingHours, selectedGovernorate]);
 
+  const workingHoursOptions = useMemo(() => (
+    <>
+      <Option value="1">صباحي</Option>
+      <Option value="2">مسائي</Option>
+      <Option value="3">الكل</Option>
+    </>
+  ), []);
+
+  const governorateOptions = useMemo(() => (
+    governorates.map((gov) => (
+      <Option key={gov.id} value={gov.id}>
+        {gov.name}
+      </Option>
+    ))
+  ), [governorates]);
+
+  const unavailableOfficesContent = useMemo(() => {
+    if (unavailableOffices.length === 0) return null;
+    
+    return (
+      <div style={cardsContainerStyle}>
+        {unavailableOffices.map((office, index) => (
+          <div key={index} style={cardStyle}>
+            <div style={cardTextStyle}>
+              {office}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }, [unavailableOffices]);
+
+  const emptyStateContent = useMemo(() => {
+    if (loading || error || unavailableOffices.length > 0) return null;
+    
+    return (
+      <div style={emptyStateStyle}>
+        لا توجد بيانات للعرض
+      </div>
+    );
+  }, [loading, error, unavailableOffices.length]);
+
+  console.log("s")
   return (
     <div dir="rtl" style={containerStyle}>
       <Card title="مكاتب الغياب" bordered={false}>
@@ -140,9 +182,7 @@ export default function AttendanceUnavailable() {
                 onChange={setWorkingHours}
                 style={selectStyle}
               >
-                <Option value="1">صباحي</Option>
-                <Option value="2">مسائي</Option>
-                <Option value="3">الكل</Option>
+                {workingHoursOptions}
               </Select>
             </div>
 
@@ -154,11 +194,7 @@ export default function AttendanceUnavailable() {
                 style={selectStyle}
                 placeholder="اختر المحافظة"
               >
-                {governorates.map((gov) => (
-                  <Option key={gov.id} value={gov.id}>
-                    {gov.name}
-                  </Option>
-                ))}
+                {governorateOptions}
               </Select>
             </div>
 
@@ -181,21 +217,8 @@ export default function AttendanceUnavailable() {
             />
           )}
 
-          {unavailableOffices.length > 0 ? (
-            <div style={cardsContainerStyle}>
-              {unavailableOffices.map((office, index) => (
-                <div key={index} style={cardStyle}>
-                  <div style={cardTextStyle}>
-                    {office}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : !loading && !error && (
-            <div style={emptyStateStyle}>
-              لا توجد بيانات للعرض
-            </div>
-          )}
+          {unavailableOfficesContent}
+          {emptyStateContent}
         </form>
       </Card>
     </div>

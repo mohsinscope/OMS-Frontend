@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { DatePicker } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import axiosInstance from '../../intercepters/axiosInstance';
@@ -115,7 +115,7 @@ export default function ExpensessStats() {
     fetchOffices(governorateId);
   }, [fetchOffices]);
 
-  const fetchExpensesData = async () => {
+  const fetchExpensesData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -142,9 +142,8 @@ export default function ExpensessStats() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [accessToken, selectedOffice, selectedGovernorate, selectedThreshold, startDate, endDate]);
 
-  // Component initialization log
   useEffect(() => {
     console.log('Component initialized');
     const initializeData = async () => {
@@ -159,9 +158,7 @@ export default function ExpensessStats() {
     initializeData();
   }, [fetchGovernorates, fetchThresholds]);
 
-  // Remove automatic last month data fetching
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     console.log('Search button clicked - Starting data fetch');
     setLoading(true);
@@ -178,27 +175,111 @@ export default function ExpensessStats() {
       setLoading(false);
       console.log('Search completed - Loading state reset');
     }
-  };
+  }, [fetchExpensesData, fetchLastMonthData]);
 
-  const formatCurrency = (value) => {
+  const formatCurrency = useCallback((value) => {
     const safeValue = typeof value === 'number' ? value : 0;
     return `د.ع ${safeValue.toLocaleString()}`;
-  };
+  }, []);
 
-  const CustomTooltip = ({ active, payload }) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="exp-tooltip">
-          <p>{payload[0].payload.name}</p>
-          <p>{formatCurrency(payload[0].value)}</p>
-          {payload[0].payload.percentage && (
-            <p>النسبة: {payload[0].payload.percentage}%</p>
-          )}
-        </div>
-      );
-    }
-    return null;
-  };
+  const CustomTooltip = useMemo(() => {
+    return ({ active, payload }) => {
+      if (active && payload && payload.length) {
+        return (
+          <div className="exp-tooltip">
+            <p>{payload[0].payload.name}</p>
+            <p>{formatCurrency(payload[0].value)}</p>
+            {payload[0].payload.percentage && (
+              <p>النسبة: {payload[0].payload.percentage}%</p>
+            )}
+          </div>
+        );
+      }
+      return null;
+    };
+  }, [formatCurrency]);
+
+  const governorateOptions = useMemo(() => (
+    governorates.map((gov) => (
+      <option key={gov.id} value={gov.id}>{gov.name}</option>
+    ))
+  ), [governorates]);
+
+  const officeOptions = useMemo(() => (
+    availableOffices.map((office) => (
+      <option key={office.id} value={office.id}>{office.name}</option>
+    ))
+  ), [availableOffices]);
+
+  const thresholdOptions = useMemo(() => (
+    thresholds.map((threshold) => (
+      <option key={threshold.id} value={threshold.id}>
+        {threshold.name} ({threshold.minValue.toLocaleString()} - {threshold.maxValue.toLocaleString()})
+      </option>
+    ))
+  ), [thresholds]);
+
+  const barChartContent = useMemo(() => {
+    if (loading || expensesData.length === 0) return null;
+    
+    return (
+      <ResponsiveContainer width="100%" height={500}>
+        <BarChart
+          data={expensesData}
+          layout="vertical"
+          margin={{ top: 20, right: 30, left: 120, bottom: 5 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+          <XAxis 
+            type="number" 
+            tickFormatter={(value) => value.toLocaleString()}
+            axisLine={{ stroke: '#E0E0E0' }}
+            tickLine={{ stroke: '#E0E0E0' }}
+          />
+          <YAxis 
+            dataKey="name" 
+            type="category" 
+            width={110}
+            axisLine={{ stroke: '#E0E0E0' }}
+            tickLine={{ stroke: '#E0E0E0' }}
+          />
+          <Tooltip content={<CustomTooltip />} />
+          <Bar 
+            dataKey="value" 
+            fill="#36B37E"
+            barSize={30}
+            radius={[0, 4, 4, 0]}
+          >
+            {expensesData.map((entry, index) => (
+              <Cell 
+                key={`cell-${index}`}
+                fill={`rgba(54, 179, 126, ${0.7 + (index * 0.3 / expensesData.length)})`}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  }, [loading, expensesData, CustomTooltip]);
+
+  const lastMonthContent = useMemo(() => {
+    if (!lastMonthData) return null;
+
+    return (
+      <div className="exp-last-month-data">
+        <h3>بيانات الشهر الماضي</h3>
+        {lastMonthData.officeName && <p>المكتب: {lastMonthData.officeName}</p>}
+        {lastMonthData.governorateName && <p>المحافظة: {lastMonthData.governorateName}</p>}
+        {lastMonthData.thresholdName && <p>مستوى المصاريف: {lastMonthData.thresholdName}</p>}
+        <p>إجمالي المبلغ: {formatCurrency(lastMonthData.totalAmount)}</p>
+        {lastMonthData.status && <p>الحالة: {lastMonthData.status}</p>}
+        {lastMonthData.profileFullName && <p>اسم المستخدم: {lastMonthData.profileFullName}</p>}
+        {lastMonthData.dateCreated && (
+          <p>تاريخ الإنشاء: {new Date(lastMonthData.dateCreated).toLocaleDateString('ar-IQ')}</p>
+        )}
+      </div>
+    );
+  }, [lastMonthData, formatCurrency]);
 
   return (
     <div className="exp-container" dir="rtl">
@@ -211,9 +292,7 @@ export default function ExpensessStats() {
             className="exp-form-control"
           >
             <option value="">كل المحافظات</option>
-            {governorates.map((gov) => (
-              <option key={gov.id} value={gov.id}>{gov.name}</option>
-            ))}
+            {governorateOptions}
           </select>
         </div>
 
@@ -226,9 +305,7 @@ export default function ExpensessStats() {
             disabled={!selectedGovernorate}
           >
             <option value="">كل المكاتب</option>
-            {availableOffices.map((office) => (
-              <option key={office.id} value={office.id}>{office.name}</option>
-            ))}
+            {officeOptions}
           </select>
         </div>
 
@@ -240,11 +317,7 @@ export default function ExpensessStats() {
             className="exp-form-control"
           >
             <option value="">كل المستويات</option>
-            {thresholds.map((threshold) => (
-              <option key={threshold.id} value={threshold.id}>
-                {threshold.name} ({threshold.minValue.toLocaleString()} - {threshold.maxValue.toLocaleString()})
-              </option>
-            ))}
+            {thresholdOptions}
           </select>
         </div>
 
@@ -280,64 +353,14 @@ export default function ExpensessStats() {
       <div className="exp-charts-wrapper">
         <div className="exp-bar-chart-section" style={{ width: '100%', minHeight: '500px' }}>
           <div className="exp-chart-container" style={{ width: '100%', height: '100%' }}>
-            {!loading && expensesData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={500}>
-                <BarChart
-                  data={expensesData}
-                  layout="vertical"
-                  margin={{ top: 20, right: 30, left: 120, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
-                  <XAxis 
-                    type="number" 
-                    tickFormatter={(value) => value.toLocaleString()}
-                    axisLine={{ stroke: '#E0E0E0' }}
-                    tickLine={{ stroke: '#E0E0E0' }}
-                  />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
-                    width={110}
-                    axisLine={{ stroke: '#E0E0E0' }}
-                    tickLine={{ stroke: '#E0E0E0' }}
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Bar 
-                    dataKey="value" 
-                    fill="#36B37E"
-                    barSize={30}
-                    radius={[0, 4, 4, 0]}
-                  >
-                    {expensesData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`}
-                        fill={`rgba(54, 179, 126, ${0.7 + (index * 0.3 / expensesData.length)})`}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : !loading ? (
-              <div className="exp-no-data">لا توجد بيانات للعرض</div>
-            ) : null}
+            {barChartContent || (!loading && <div className="exp-no-data">لا توجد بيانات للعرض</div>)}
           </div>
         </div>
 
         {lastMonthData && (
           <div className="exp-pie-chart-section">
             <div className="exp-chart-container">
-              <div className="exp-last-month-data">
-                <h3>بيانات الشهر الماضي</h3>
-                {lastMonthData.officeName && <p>المكتب: {lastMonthData.officeName}</p>}
-                {lastMonthData.governorateName && <p>المحافظة: {lastMonthData.governorateName}</p>}
-                {lastMonthData.thresholdName && <p>مستوى المصاريف: {lastMonthData.thresholdName}</p>}
-                <p>إجمالي المبلغ: {formatCurrency(lastMonthData.totalAmount)}</p>
-                {lastMonthData.status && <p>الحالة: {lastMonthData.status}</p>}
-                {lastMonthData.profileFullName && <p>اسم المستخدم: {lastMonthData.profileFullName}</p>}
-                {lastMonthData.dateCreated && (
-                  <p>تاريخ الإنشاء: {new Date(lastMonthData.dateCreated).toLocaleDateString('ar-IQ')}</p>
-                )}
-              </div>
+              {lastMonthContent}
             </div>
           </div>
         )}
