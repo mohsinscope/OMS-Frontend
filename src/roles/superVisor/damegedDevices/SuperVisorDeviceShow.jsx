@@ -9,7 +9,7 @@ import {
   ConfigProvider,
   Select,
   Upload,
-  Skeleton, // Import Skeleton
+  Skeleton,
 } from "antd";
 import { useLocation, useNavigate } from "react-router-dom";
 import { UploadOutlined } from "@ant-design/icons";
@@ -38,13 +38,51 @@ const SuperVisorDeviceShow = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [deviceTypes, setDeviceTypes] = useState([]);
+  const [governorates, setGovernorates] = useState([]);
+  const [offices, setOffices] = useState([]);
   const [form] = Form.useForm();
 
   const { isSidebarCollapsed, accessToken, profile, permissions } = useAuthStore();
-  const { profileId, governorateId, officeId } = profile || {};
+  const { profileId } = profile || {};
 
   const hasUpdatePermission = permissions.includes("DDu");
   const hasDeletePermission = permissions.includes("DDd");
+
+  // Fetch the dropdown options for governorates
+  const fetchGovernorates = async () => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`);
+      // Map the response to { value, label } format
+      const govOptions = response.data.map((gov) => ({
+        value: gov.id,
+        label: gov.name,
+      }));
+      setGovernorates(govOptions);
+    } catch (error) {
+      console.error("Error fetching governorates:", error);
+      message.error("حدث خطأ أثناء تحميل المحافظات");
+    }
+  };
+
+  // Fetch the offices for a selected governorate
+  const fetchOffices = async (governorateId) => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${governorateId}`);
+      // The API returns an array containing one governorate object with an "offices" property
+      if (response.data && response.data.length > 0) {
+        const officesOptions = response.data[0].offices.map((office) => ({
+          value: office.id,
+          label: office.name,
+        }));
+        setOffices(officesOptions);
+      } else {
+        setOffices([]);
+      }
+    } catch (error) {
+      console.error("Error fetching offices:", error);
+      message.error("حدث خطأ أثناء تحميل المكاتب");
+    }
+  };
 
   const fetchData = async () => {
     if (!deviceId || !accessToken) return;
@@ -69,8 +107,19 @@ const SuperVisorDeviceShow = () => {
         ? new Date(device.date).toISOString().split("T")[0]
         : "";
 
+      // Set device data and update form fields (including governorate and office if available)
       setDeviceData({ ...device, date: formattedDate });
-      form.setFieldsValue({ ...device, date: formattedDate });
+      form.setFieldsValue({ 
+        ...device, 
+        date: formattedDate,
+        governorateId: device.governorateId,
+        officeId: device.officeId,
+      });
+
+      // If the device has a governorate, load the offices for that governorate
+      if (device.governorateId) {
+        await fetchOffices(device.governorateId);
+      }
 
       const fetchedImages = imagesResponse.data;
       setImagesData(fetchedImages);
@@ -107,6 +156,7 @@ const SuperVisorDeviceShow = () => {
   };
 
   useEffect(() => {
+    fetchGovernorates();
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId]);
@@ -147,8 +197,8 @@ const SuperVisorDeviceShow = () => {
         damagedDeviceTypeId: values.damagedDeviceTypeId,
         deviceTypeId: values.deviceTypeId,
         note: values.note || "",
-        officeId,
-        governorateId,
+        governorateId: values.governorateId,
+        officeId: values.officeId,
         profileId,
       };
 
@@ -173,6 +223,12 @@ const SuperVisorDeviceShow = () => {
       console.error("Error deleting device:", error);
       message.error("حدث خطأ أثناء حذف الجهاز");
     }
+  };
+
+  // When the governorate changes, update the form and fetch the offices for that governorate
+  const handleGovernorateChange = async (value) => {
+    form.setFieldsValue({ governorateId: value, officeId: undefined });
+    await fetchOffices(value);
   };
 
   return (
@@ -243,6 +299,14 @@ const SuperVisorDeviceShow = () => {
                     damagedTypes.find((type) => type.value === deviceData.damagedDeviceTypeId)
                       ?.label || "غير معروف"
                   }
+                  readOnly
+                />
+              </div>
+              <div className="details-row">
+                <span className="details-label">المحافظة:</span>
+                <input
+                  className="details-value"
+                  value={deviceData.governorateName}
                   readOnly
                 />
               </div>
@@ -337,6 +401,28 @@ const SuperVisorDeviceShow = () => {
 
                 <Form.Item name="note" label="الملاحظات">
                   <Input.TextArea />
+                </Form.Item>
+
+                {/* New Form Item for Governorate */}
+                <Form.Item
+                  name="governorateId"
+                  label="المحافظة"
+                  rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
+                >
+                  <Select
+                    placeholder="اختر المحافظة"
+                    options={governorates}
+                    onChange={handleGovernorateChange}
+                  />
+                </Form.Item>
+
+                {/* New Form Item for Office */}
+                <Form.Item
+                  name="officeId"
+                  label="المكتب"
+                  rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
+                >
+                  <Select placeholder="اختر المكتب" options={offices} />
                 </Form.Item>
 
                 <Upload
