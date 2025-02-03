@@ -450,10 +450,23 @@ const SuperVisorDammagePassportAdd = () => {
                 <Form.Item
                   name="passportNumber"
                   label="رقم الجواز"
-                  rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}
+                  rules={[
+                    { required: true, message: "يرجى إدخال رقم الجواز" },
+                    { pattern: /^[A-Z][0-9]{8}$/, message: "يجب أن يبدأ بحرف كبير ويتبعه 8 أرقام" }
+                  ]}
                 >
-                  <Input placeholder="أدخل رقم الجواز" />
+                  <Input
+                    placeholder="أدخل رقم الجواز"
+                    maxLength={9}
+                    minLength={9}
+                    onChange={(e) => {
+                      const cleanedValue = e.target.value.replace(/[^A-Z0-9]/g, "");
+                      e.target.value = cleanedValue;
+                    }}
+                  />
                 </Form.Item>
+
+
 
                 {/* Damaged Type */}
                 <Form.Item
