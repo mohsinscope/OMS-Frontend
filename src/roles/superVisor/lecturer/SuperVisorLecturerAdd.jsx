@@ -239,6 +239,14 @@ const SuperVisorLecturerAdd = () => {
   };
 
   const handleFileChange = (info) => {
+    const updatedFiles = info.fileList.filter((file) => {
+      if (file.type !== "application/pdf" || !file.name?.endsWith(".pdf")) {
+        message.error("PDF يرجى ارفاق الملف بصيغة ");
+        return false;
+      }
+      return true;
+      
+    });
     // ------------------------
     // OLD logic (commented out)
     /*
@@ -263,10 +271,10 @@ const SuperVisorLecturerAdd = () => {
 
     // NEW (fixed) approach:
     // 1) Directly use info.fileList as the controlled fileList
-    setFileList(info.fileList);
+    setFileList(updatedFiles);
 
     // 2) Generate preview URLs from the final fileList
-    const newPreviews = info.fileList.map((file) =>
+    const newPreviews = updatedFiles.map((file) =>
       file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
     );
     setPreviewUrls(newPreviews);
