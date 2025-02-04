@@ -34,7 +34,7 @@ axiosInstance.interceptors.request.use(
       try {
         // Create a promise that rejects after 7 seconds
         const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Refresh token attempt timed out')), 7000)
+          setTimeout(() => reject(new Error('Refresh token attempt timed out')), 30000)
         );
 
         // Race the refresh request against the timeout
