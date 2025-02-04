@@ -37,7 +37,7 @@ const DamagedPassportsShow = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [form] = Form.useForm();
-  const { isSidebarCollapsed, accessToken, profile, permissions } = useAuthStore();
+  const { isSidebarCollapsed, accessToken, profile, permissions,roles } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
   const hasUpdatePermission = permissions.includes("DPu");
   const hasDeletePermission = permissions.includes("DPd");
@@ -218,6 +218,7 @@ const DamagedPassportsShow = () => {
       message.error("حدث خطأ أثناء حذف الجواز.");
     }
   };
+  const isOwnerOrSuperAdmin = (passportData?.profileId === profileId) || roles.includes("SuperAdmin");
 
   return (
     <div
@@ -238,22 +239,26 @@ const DamagedPassportsShow = () => {
                   <Lele type="back" />
                   الرجوع
                 </Button>
-                {hasDeletePermission && (
-                  <Button
-                    onClick={() => setDeleteModalVisible(true)}
-                    className="delete-button-passport"
-                  >
-                    حذف <Lele type="delete" />
-                  </Button>
-                )}
-                {hasUpdatePermission && (
-                  <Button
-                    onClick={() => setEditModalVisible(true)}
-                    className="edit-button-passport"
-                  >
-                    تعديل <Lele type="edit" />
-                  </Button>
-                )}
+                {isOwnerOrSuperAdmin && (
+  <>
+    {hasDeletePermission && (
+      <Button
+        onClick={() => setDeleteModalVisible(true)}
+        className="delete-button-passport"
+      >
+        حذف <Lele type="delete" />
+      </Button>
+    )}
+    {hasUpdatePermission && (
+      <Button
+        onClick={() => setEditModalVisible(true)}
+        className="edit-button-passport"
+      >
+        تعديل <Lele type="edit" />
+      </Button>
+    )}
+  </>
+)}
               </div>
             </div>
 
