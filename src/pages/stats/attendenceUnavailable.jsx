@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { DatePicker, Select, Button, Card, Alert, Row } from 'antd';
+import { DatePicker, Select, Button, Card, Alert } from 'antd';
 import axiosInstance from '../../intercepters/axiosInstance.js';
 import Url from './../../store/url.js';
+import dayjs from 'dayjs'; // Import dayjs
 
 const { Option } = Select;
 
@@ -70,7 +71,8 @@ const emptyStateStyle = {
 };
 
 export default function AttendanceUnavailable() {
-  const [selectedDate, setSelectedDate] = useState(null);
+  // Initialize selectedDate with today's date using dayjs
+  const [selectedDate, setSelectedDate] = useState(dayjs());
   const [workingHours, setWorkingHours] = useState('3');
   const [governorates, setGovernorates] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
@@ -104,11 +106,14 @@ export default function AttendanceUnavailable() {
 
     try {
       const response = await axiosInstance.post(`${Url}/api/Attendance/statistics/unavailable`, {
+        // Use dayjs formatting (same as moment)
         date: `${selectedDate.format('YYYY-MM-DD')}T00:00:00Z`,
         workingHours: parseInt(workingHours),
         governorateId: selectedGovernorate
       });
 
+      // Assuming a status 200 means a successful call.
+      // If the returned data is an empty array, the empty state message will show.
       setUnavailableOffices(response.data);
     } catch (err) {
       setError('حدث خطأ اثناء جلب البيانات');
@@ -149,17 +154,18 @@ export default function AttendanceUnavailable() {
     );
   }, [unavailableOffices]);
 
+  // When not loading, no error and no offices are returned (i.e. an empty array),
+  // display "جميع المكاتب حاضرة".
   const emptyStateContent = useMemo(() => {
     if (loading || error || unavailableOffices.length > 0) return null;
     
     return (
       <div style={emptyStateStyle}>
-        لا توجد بيانات للعرض
+        جميع المكاتب حاضرة
       </div>
     );
   }, [loading, error, unavailableOffices.length]);
 
-  console.log("s")
   return (
     <div dir="rtl" style={containerStyle}>
       <Card title="مكاتب الغياب" bordered={false}>

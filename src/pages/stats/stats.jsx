@@ -211,16 +211,34 @@ export default function Stats() {
 
   const handleTabChange = useCallback((tab) => {
     if (tab === selectedTab) return;
-    
+
+    // Clear any previous data and errors
     setChartData([]);
     setTotalItems(0);
     setError(null);
     setSelectedTab(tab);
+
+    // Reset filter states to null for a fresh search
     setStartDate(null);
     setEndDate(null);
     setSelectedDate(null);
+    setSelectedGovernorate(null);
+    setSelectedOffice(null);
     setOfficeAttendanceData(null);
   }, [selectedTab]);
+ // Automatically call the API with null payload when the damaged devices/passports tab is active
+ useEffect(() => {
+  // Check if the current tab is one of the two
+  if (selectedTab === "damagedDevices" || selectedTab === "damagedPassports") {
+    // If you want to make sure the states are null, you can reset them here as well:
+    setSelectedGovernorate(null);
+    setSelectedOffice(null);
+    setStartDate(null);
+    setEndDate(null);
+    // Now call fetchStatisticsData to post the default payload
+    fetchStatisticsData();
+  }
+}, [selectedTab]);
   useEffect(() => {
     const initializeData = async () => {
       try {
