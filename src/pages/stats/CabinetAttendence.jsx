@@ -149,8 +149,8 @@ export default function CabinetAttendance() {
       const transformedData =
         response.data?.map((office) => ({
           name: office.officeName,
+          totalStaff: office.totalStaff,
           availableStaff: office.availableStaff,
-          totalStaff: office.totalStaff - office.availableStaff,
         })) || [];
 
       setChartData(transformedData);
@@ -188,16 +188,16 @@ export default function CabinetAttendance() {
           <Tooltip />
           <Legend />
           <Bar
+            dataKey="totalStaff"
+            stackId="b"
+            fill="#F44336"
+            name="عدد الكابينات"
+          />
+          <Bar
             dataKey="availableStaff"
             stackId="a"
             fill="#4CAF50"
             name="عدد الحضور"
-          />
-          <Bar
-            dataKey="totalStaff"
-            stackId="a"
-            fill="#F44336"
-            name="عدد الكابينات"
           />
         </BarChart>
       </ResponsiveContainer>
@@ -274,7 +274,7 @@ export default function CabinetAttendance() {
             <option value="AccountStaff">موظفو الحسابات</option>
             <option value="PrintingStaff">موظفو الطباعة</option>
             <option value="QualityStaff">موظفو الجودة</option>
-            <option value="ReceivingStaff">موظفوا الاستلام</option>
+            <option value="ReceivingStaff">موظفو الاستلام</option>
           </select>
         </div>
 

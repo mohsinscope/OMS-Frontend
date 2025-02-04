@@ -33,9 +33,7 @@ export default function SuperVisorPassport() {
 
   // Check permissions
   const hasCreatePermission = permissions.includes("DPc");
-  console.log("Role",roles)
-  const isSupervisor = roles.includes("Supervisor") || roles.includes("I.T") || roles.includes("MainSupervisor");
-  console.log("isSupervisor",roles)
+  const isSupervisor = roles.includes("Supervisor") ||  roles.includes("I.T") ||  roles.includes("MainSupervisor");
 
   // State management
   const [isLoading, setIsLoading] = useState(true);
@@ -69,6 +67,8 @@ export default function SuperVisorPassport() {
       const response = await axiosInstance.post(
         `${Url}/api/DamagedPassport/search`,
         {
+          ProfileId: isSupervisor ? profile.profileId:null ,
+
           passportNumber: payload.passportNumber || "",
           officeId: payload.officeId || null,
           governorateId: payload.governorateId || null,
@@ -152,7 +152,7 @@ export default function SuperVisorPassport() {
             <thead>
               <tr style="background-color: #f2f2f2;">
                 <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">ت</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">التاريخ</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">تاريخ التلف</th>
                 <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المحافظة</th>
                 <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">المكتب</th>
                 <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">اسم المستخدم</th>
@@ -180,11 +180,10 @@ export default function SuperVisorPassport() {
           </table>
         </div>
       `;
-      const now = new Date();
-      const formattedDate = now.toISOString().split("T")[0]; // YYYY-MM-DD format
+
       const options = {
         margin: 3,
-        filename: `تقرير_الجوازات_التالفة_${formattedDate}.pdf`,
+        filename: "تقرير_الجوازات_التالفة.pdf",
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2 },
         jsPDF: { unit: "cm", format: "a4", orientation: "landscape" },
@@ -235,7 +234,7 @@ export default function SuperVisorPassport() {
         properties: { rtl: true },
       });
 
-      const headers = ["الملاحضات","نوع التلف", "رقم الجواز", "اسم المستخدم", "المكتب", "المحافظة", "التاريخ", "ت"];
+      const headers = ["نوع التلف", "رقم الجواز", "اسم المستخدم", "المكتب", "المحافظة", "تاريخ التلف", "ت"];
       const headerRow = worksheet.addRow(headers);
 
       headerRow.eachCell((cell) => {
@@ -256,7 +255,6 @@ export default function SuperVisorPassport() {
 
       fullPassportList.forEach((passport, index) => {
         const row = worksheet.addRow([
-          passport.note,
           passport.damagedTypeName,
           passport.passportNumber,
           passport.profileFullName,
@@ -283,7 +281,6 @@ export default function SuperVisorPassport() {
       });
 
       worksheet.columns = [
-        { width: 40 },
         { width: 25 },
         { width: 25 },
         { width: 25 },
@@ -293,12 +290,8 @@ export default function SuperVisorPassport() {
         { width: 10 },
       ];
 
-      const now = new Date();
-      const formattedDate = now.toISOString().split("T")[0]; // YYYY-MM-DD format
-
       const buffer = await workbook.xlsx.writeBuffer();
-      saveAs(new Blob([buffer]), `${formattedDate}تقرير_الجوازات_التالفة_.xlsx`);
-
+      saveAs(new Blob([buffer]), "تقرير_الجوازات_التالفة.xlsx");
       message.success("تم تصدير التقرير بنجاح");
     } catch (error) {
       console.error("Error exporting to Excel:", error);
@@ -309,6 +302,7 @@ export default function SuperVisorPassport() {
   const handleSearch = async (page = 1) => {
     const payload = {
       passportNumber: formData.passportNumber || "",
+      ProfileId: isSupervisor ? profile.profileId:null ,
       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
       governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
       damagedTypeId: formData.damagedTypeId || null,
@@ -339,6 +333,7 @@ export default function SuperVisorPassport() {
 
     const payload = {
       passportNumber: "",
+      ProfileId: isSupervisor ? profile.profileId:null ,
       officeId: isSupervisor ? profile.officeId : null,
       governorateId: isSupervisor ? profile.governorateId : null,
       damagedTypeId: null,
@@ -400,10 +395,10 @@ export default function SuperVisorPassport() {
   useEffect(() => {
     fetchGovernorates();
   }, [fetchGovernorates]);
-
-  useEffect(() => {
+    useEffect(() => {
     const initialPayload = {
       passportNumber: "",
+      ProfileId: isSupervisor ? profile.profileId:null ,
       officeId: isSupervisor ? profile.officeId : null,
       governorateId: isSupervisor ? profile.governorateId : null,
       damagedTypeId: null,
@@ -421,7 +416,19 @@ export default function SuperVisorPassport() {
   // Table columns
   const columns = [
     {
-      title: "التاريخ",
+      title: "تاريخ الانشاء",
+      dataIndex: "datecreated",
+      key: "datecreated",
+      className: "table-column-date",
+      render: (text) => {
+        const date = new Date(text);
+        return isNaN(date.getTime())
+          ? "تاريخ غير صالح"
+          : date.toLocaleDateString("en-CA");
+      },
+    },
+    {
+      title: "تاريخ التلف",
       dataIndex: "date",
       key: "date",
       className: "table-column-date",
@@ -432,6 +439,7 @@ export default function SuperVisorPassport() {
           : date.toLocaleDateString("en-CA");
       },
     },
+
     {
       title: "المحافظة",
       dataIndex: "governorateName",

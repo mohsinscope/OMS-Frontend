@@ -251,7 +251,7 @@ const DamagedPassportsShow = () => {
                   />
                 </div>
                 <div className="details-row">
-                  <span className="details-label">التاريخ:</span>
+                  <span className="details-label">تاريخ التلف:</span>
                   <input
                     className="details-value"
                     value={new Date(passportData.date).toLocaleDateString("en-CA")}
@@ -350,10 +350,10 @@ const DamagedPassportsShow = () => {
                     </Form.Item>
                     <Form.Item
                       name="date"
-                      label="التاريخ"
+                      label="تاريخ التلف"
                       rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}
                     >
-                      <input placeholder="التاريخ" type="date" />
+                      <input placeholder="تاريخ التلف" type="date" />
                     </Form.Item>
                     <Form.Item
                       name="notes"
