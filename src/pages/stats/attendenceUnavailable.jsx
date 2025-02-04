@@ -126,7 +126,6 @@ export default function AttendanceUnavailable() {
     <>
       <Option value="1">صباحي</Option>
       <Option value="2">مسائي</Option>
-      <Option value="3">الكل</Option>
     </>
   ), []);
 
