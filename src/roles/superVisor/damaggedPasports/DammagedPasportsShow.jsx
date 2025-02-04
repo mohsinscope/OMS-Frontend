@@ -72,15 +72,24 @@ const DamagedPassportsShow = () => {
           },
         }
       );
-      const imageUrls = response.data.map((image) => ({
-        url: image.filePath,
-        id: image.id,
-      }));
-      setImages(imageUrls);
+      if (response.data && response.data.length > 0) {
+        const imageUrls = response.data.map((image) => ({
+          url: image.filePath,
+          id: image.id,
+        }));
+        setImages(imageUrls);
+      } else {
+        // No images returned; set images to empty array.
+        setImages([]);
+      }
       return true;
     } catch (error) {
-      message.error("حدث خطأ أثناء جلب صور الجواز.");
-      return false;
+      // Log the error and set images to empty array.
+      console.error("Error fetching passport images:", error);
+      setImages([]);
+      // Optionally, you can display a less intrusive message or no message at all:
+      // message.info("لا توجد صورة");
+      return true;
     }
   };
 
@@ -132,25 +141,33 @@ const DamagedPassportsShow = () => {
 
     fetchAllData();
   }, [passportId, navigate]);
-
   const handleImageUpload = async (file) => {
     try {
       const formData = new FormData();
-      formData.append("entityId", imageData.entityId);
+      // Use passportId as the entity id for new attachments.
+      formData.append("entityId", passportId);
       formData.append("entityType", "DamagedPassport");
       formData.append("file", file);
-
-      await axiosInstance.put(
-        `${Url}/api/attachment/${imageData.imageId}`,
-        formData,
-        {
+  
+      if (images.length === 0) {
+        // No image attached yet: Add a new attachment
+        await axiosInstance.post(`${Url}/api/attachment/add-attachment`, formData, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "multipart/form-data",
           },
-        }
-      );
-
+        });
+      } else {
+        // An image exists: Update the current attachment.
+        // imageData.imageId should be set when an image is selected via ImagePreviewer.
+        await axiosInstance.put(`${Url}/api/attachment/${imageData.imageId}`, formData, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      }
+  
       message.success("تم تحديث الصورة بنجاح");
       await fetchPassportImages();
     } catch (error) {
@@ -363,25 +380,25 @@ const DamagedPassportsShow = () => {
                       <Input.TextArea placeholder="أدخل الملاحظات" defaultValue="لا يوجد" />
                     </Form.Item>
                     <Upload
-                 beforeUpload={(file) => {
-    // Check if the file is a PDF
+  beforeUpload={(file) => {
+    // Reject PDF files.
     if (file.type === "application/pdf") {
       message.error("لا يمكن تحميل ملفات PDF.");
       return Upload.LIST_IGNORE;
     }
-    // Proceed with the image upload
+    // Proceed with image upload.
     handleImageUpload(file);
-    return false; // Prevent automatic upload
+    return false; // Prevent automatic upload.
   }}
-                    >
-                      <Button
-                        style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
-                        type="primary"
-                        icon={<UploadOutlined />}
-                      >
-                        استبدال الصورة
-                      </Button>
-                    </Upload>
+>
+  <Button
+    style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+    type="primary"
+    icon={<UploadOutlined />}
+  >
+    {images.length > 0 ? "استبدال الصورة" : "إضافة مرفق"}
+  </Button>
+</Upload>
                     {images.length > 0 && (
                       <>
                         <span className="note-details-label">صور الجواز التالف:</span>
