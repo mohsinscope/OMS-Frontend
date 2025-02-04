@@ -536,9 +536,18 @@ const SuperVisorDammagePassportAdd = () => {
                       // Make Dragger a controlled component
                       fileList={fileList}
                       onChange={handleFileChange}
-                      beforeUpload={() => false}
+                      beforeUpload={(file) => {
+                        if (file.type === "application/pdf") {
+                          message.error("لا يمكن تحميل ملفات PDF.");
+                          // Prevent file from being added to the list
+                          return Upload.LIST_IGNORE;
+                        }
+                        // Return false to prevent auto upload but allow the file
+                        return false;
+                      }}
                       multiple
                       showUploadList={false}
+                      
                     >
                       <p className="ant-upload-drag-icon">📂</p>
                       <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>

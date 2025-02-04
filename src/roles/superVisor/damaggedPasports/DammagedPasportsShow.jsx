@@ -363,10 +363,16 @@ const DamagedPassportsShow = () => {
                       <Input.TextArea placeholder="أدخل الملاحظات" defaultValue="لا يوجد" />
                     </Form.Item>
                     <Upload
-                      beforeUpload={(file) => {
-                        handleImageUpload(file);
-                        return false;
-                      }}
+                 beforeUpload={(file) => {
+    // Check if the file is a PDF
+    if (file.type === "application/pdf") {
+      message.error("لا يمكن تحميل ملفات PDF.");
+      return Upload.LIST_IGNORE;
+    }
+    // Proceed with the image upload
+    handleImageUpload(file);
+    return false; // Prevent automatic upload
+  }}
                     >
                       <Button
                         style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
