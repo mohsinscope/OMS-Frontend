@@ -234,7 +234,7 @@ export default function SuperVisorPassport() {
         properties: { rtl: true },
       });
 
-      const headers = ["نوع التلف", "رقم الجواز", "اسم المستخدم", "المكتب", "المحافظة", "تاريخ التلف", "ت"];
+      const headers = ["نوع التلف", "رقم الجواز", "اسم المستخدم", "المكتب", "المحافظة", "تاريخ التلف","تاريخ الانشاء", "ت"];
       const headerRow = worksheet.addRow(headers);
 
       headerRow.eachCell((cell) => {
@@ -261,6 +261,7 @@ export default function SuperVisorPassport() {
           passport.officeName,
           passport.governorateName,
           new Date(passport.date).toLocaleDateString("en-CA"),
+          new Date(passport.datecreated).toLocaleDateString("en-CA"),
           index + 1,
         ]);
 
@@ -287,11 +288,14 @@ export default function SuperVisorPassport() {
         { width: 20 },
         { width: 20 },
         { width: 15 },
+        { width: 15 },
         { width: 10 },
       ];
 
       const buffer = await workbook.xlsx.writeBuffer();
-      saveAs(new Blob([buffer]), "تقرير_الجوازات_التالفة.xlsx");
+      const now = new Date();
+      const formattedDate = now.toISOString().split("T")[0]; // YYYY-MM-DD format
+      saveAs(new Blob([buffer]), `${formattedDate}_تقرير_الجوازات_التالفة.xlsx`);
       message.success("تم تصدير التقرير بنجاح");
     } catch (error) {
       console.error("Error exporting to Excel:", error);
