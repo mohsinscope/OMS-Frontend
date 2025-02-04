@@ -67,7 +67,6 @@ export default function SuperVisorPassport() {
       const response = await axiosInstance.post(
         `${Url}/api/DamagedPassport/search`,
         {
-          ProfileId: isSupervisor ? profile.profileId:null ,
 
           passportNumber: payload.passportNumber || "",
           officeId: payload.officeId || null,
@@ -302,7 +301,6 @@ export default function SuperVisorPassport() {
   const handleSearch = async (page = 1) => {
     const payload = {
       passportNumber: formData.passportNumber || "",
-      ProfileId: isSupervisor ? profile.profileId:null ,
       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
       governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
       damagedTypeId: formData.damagedTypeId || null,
@@ -333,7 +331,6 @@ export default function SuperVisorPassport() {
 
     const payload = {
       passportNumber: "",
-      ProfileId: isSupervisor ? profile.profileId:null ,
       officeId: isSupervisor ? profile.officeId : null,
       governorateId: isSupervisor ? profile.governorateId : null,
       damagedTypeId: null,
@@ -398,7 +395,6 @@ export default function SuperVisorPassport() {
     useEffect(() => {
     const initialPayload = {
       passportNumber: "",
-      ProfileId: isSupervisor ? profile.profileId:null ,
       officeId: isSupervisor ? profile.officeId : null,
       governorateId: isSupervisor ? profile.governorateId : null,
       damagedTypeId: null,
