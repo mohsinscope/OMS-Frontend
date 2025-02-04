@@ -95,16 +95,26 @@ axiosInstance.interceptors.response.use(
     }
 
     if (status === 409) {
-      const message = 'رقم الجواز موجود'; // "Passport number already exists"
+      let messageText = 'حدث خطأ'; // default error message
+
+      // Check the request URL to differentiate the source
+      if (error.config?.url?.includes('/api/DamagedPassport')) {
+        // This error is from the damaged passports endpoint
+        messageText = 'رقم الجواز موجود'; // For example
+      } else if (error.config?.url?.includes('/api/Attendance')) {
+        // This error is from the attendance endpoint
+        messageText = 'لقد تم انشاء الحضور مسبقا'; // For example
+      }
+
       notification.error({
         message: 'خطأ', // "Error"
-        description: message,
+        description: messageText,
         placement: 'top',
         rtl: true,
       });
       return Promise.reject({
         ...error,
-        customMessage: message,
+        customMessage: messageText,
       });
     }
 

@@ -8,6 +8,7 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LabelList 
 } from "recharts";
 import dayjs from "dayjs";
 import axiosInstance from "../../intercepters/axiosInstance.js";
@@ -44,8 +45,8 @@ export default function CabinetAttendance() {
 
   // Memoized chart height calculation
   const chartHeight = useMemo(() => {
-    const baseHeightPerBar = 40;
-    const minHeight = 200;
+    const baseHeightPerBar = 60;
+    const minHeight = 300;
     const maxHeight = 2500;
     const padding = 100;
 
@@ -178,29 +179,44 @@ export default function CabinetAttendance() {
     }
     return (
       <ResponsiveContainer width="100%" height={chartHeight}>
-        <BarChart
-          data={chartData}
-          layout="vertical"
-          margin={{ top: 20, right: 30, left: 40, bottom: 5 }}
+      <BarChart
+        data={chartData}
+        layout="vertical"
+        margin={{ top: 20, right: 30, left: 40, bottom: 5 }}
+      >
+        <XAxis type="number" />
+        <YAxis dataKey="name" type="category" width={150} />
+        <Tooltip />
+        <Legend />
+        <Bar
+          dataKey="totalStaff"
+          stackId="b"
+          fill="#F44336"
+          name="عدد الكابينات"
         >
-          <XAxis type="number" />
-          <YAxis dataKey="name" type="category" width={150} />
-          <Tooltip />
-          <Legend />
-          <Bar
+             <LabelList
             dataKey="totalStaff"
-            stackId="b"
-            fill="#F44336"
-            name="عدد الكابينات"
+            position="insideRight"
+            fill="#fff"
+            formatter={(value) => `عدد الكابينات: ${value}`} // Custom text for totalStaff
           />
-          <Bar
+        </Bar>
+        <Bar
+          dataKey="availableStaff"
+          stackId="a"
+          fill="#4CAF50"
+          name="عدد الحضور"
+        >
+               <LabelList
+               dir="rtl"
             dataKey="availableStaff"
-            stackId="a"
-            fill="#4CAF50"
-            name="عدد الحضور"
+            position="insideRight"
+            fill="#fff"
+            formatter={(value) => `عدد الحضور: ${value}`} // Custom text for availableStaff
           />
-        </BarChart>
-      </ResponsiveContainer>
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
     );
   }, [chartData, chartHeight, loading]);
 
