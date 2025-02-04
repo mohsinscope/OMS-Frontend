@@ -448,23 +448,31 @@ const SuperVisorDammagePassportAdd = () => {
 
                 {/* Passport Number */}
                 <Form.Item
-                  name="passportNumber"
-                  label="رقم الجواز"
-                  rules={[
-                    { required: true, message: "يرجى إدخال رقم الجواز" },
-                    { pattern: /^[A-Z][0-9]{8}$/, message: "يجب أن يبدأ بحرف كبير ويتبعه 8 أرقام" }
-                  ]}
-                >
-                  <Input
-                    placeholder="أدخل رقم الجواز"
-                    maxLength={9}
-                    minLength={9}
-                    onChange={(e) => {
-                      const cleanedValue = e.target.value.replace(/[^A-Z0-9]/g, "");
-                      e.target.value = cleanedValue;
-                    }}
-                  />
-                </Form.Item>
+                name="passportNumber"
+                label="رقم الجواز"
+                rules={[
+                  { required: true, message: "يرجى إدخال رقم الجواز" },
+                  { pattern: /^[B][0-9]{8}$/, message: "يجب أن يبدأ بحرف B ويتبعه 8 أرقام" }
+                ]}
+                initialValue="B" // Ensure input starts with "B"
+              >
+                <Input
+                dir="ltr"
+                  placeholder="أدخل رقم الجواز"
+                  maxLength={9}
+                  minLength={9}
+                  onChange={(e) => {
+                    let value = e.target.value.toUpperCase(); // Convert input to uppercase
+                    if (!value.startsWith("B")) {
+                      value = "B" + value.replace(/[^0-9]/g, ""); // Ensure "B" is the first character
+                    } else {
+                      value = "B" + value.slice(1).replace(/[^0-9]/g, ""); // Keep only numbers after "B"
+                    }
+                    e.target.value = value; // Update the field value
+                  }}
+                />
+              </Form.Item>
+
 
 
 
@@ -485,11 +493,11 @@ const SuperVisorDammagePassportAdd = () => {
                 {/* Date */}
                 <Form.Item
                   name="date"
-                  label="التاريخ"
-                  rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
+                  label="تاريخ التلف"
+                  rules={[{ required: true, message: "يرجى اختيار تاريخ التلف" }]}
                 >
                   <DatePicker
-                    placeholder="اختر التاريخ"
+                    placeholder="اختر تاريخ التلف"
                     style={{ width: "267px", height: "45px" }}
                   />
                 </Form.Item>

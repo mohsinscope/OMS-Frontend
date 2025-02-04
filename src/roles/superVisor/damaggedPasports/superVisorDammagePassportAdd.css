@@ -210,7 +210,8 @@
   }
 
   .add-damagedpassport-section-container {
-    width: 110%;
+    width: 100%;
+    padding: 10px;
   }
 
   .ant-image {
