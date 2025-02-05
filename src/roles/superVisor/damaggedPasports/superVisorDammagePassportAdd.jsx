@@ -448,30 +448,52 @@ const SuperVisorDammagePassportAdd = () => {
 
                 {/* Passport Number */}
                 <Form.Item
-                name="passportNumber"
-                label="رقم الجواز"
-                rules={[
-                  { required: true, message: "يرجى إدخال رقم الجواز" },
-                  { pattern: /^[B][0-9]{8}$/, message: "يجب أن يبدأ بحرف B ويتبعه 8 أرقام" }
-                ]}
-                initialValue="B" // Ensure input starts with "B"
-              >
-                <Input
-                dir="ltr"
-                  placeholder="أدخل رقم الجواز"
-                  maxLength={9}
-                  minLength={9}
-                  onChange={(e) => {
-                    let value = e.target.value.toUpperCase(); // Convert input to uppercase
-                    if (!value.startsWith("B")) {
-                      value = "B" + value.replace(/[^0-9]/g, ""); // Ensure "B" is the first character
-                    } else {
-                      value = "B" + value.slice(1).replace(/[^0-9]/g, ""); // Keep only numbers after "B"
-                    }
-                    e.target.value = value; // Update the field value
-                  }}
-                />
-              </Form.Item>
+  name="passportNumber"
+  label="رقم الجواز"
+  rules={[
+    { required: true, message: "يرجى إدخال رقم الجواز" },
+    {
+      pattern:
+        profile.officeName === "الكرادة"
+          ? /^[BRVK][0-9]{8}$/
+          : /^[B][0-9]{8}$/,
+      message:
+        profile.officeName === "الكرادة"
+          ? "يجب أن يبدأ بحرف B أو R أو V أو K ويتبعه 8 أرقام"
+          : "يجب أن يبدأ بحرف B ويتبعه 8 أرقام",
+    },
+  ]}
+  initialValue="B" // Ensure input starts with "B"
+>
+  <Input
+    dir="ltr"
+    placeholder="أدخل رقم الجواز"
+    maxLength={9}
+    minLength={9}
+    onChange={(e) => {
+      let value = e.target.value.toUpperCase(); // Convert input to uppercase
+      if (profile.officeName === "الكرادة") {
+        // Allow any of the allowed letters (B, R, V, K) as first character:
+        if (!/^[BRVK]/.test(value)) {
+          // If it doesn't start with one of these letters, force B
+          value = "B" + value.replace(/[^0-9]/g, "");
+        } else {
+          // Otherwise, keep the allowed letter then filter only numbers after it
+          value = value[0] + value.slice(1).replace(/[^0-9]/g, "");
+        }
+      } else {
+        // Default: only allow B as the first letter
+        if (!value.startsWith("B")) {
+          value = "B" + value.replace(/[^0-9]/g, "");
+        } else {
+          value = "B" + value.slice(1).replace(/[^0-9]/g, "");
+        }
+      }
+      e.target.value = value; // Update the field value
+    }}
+  />
+</Form.Item>
+
 
 
 
