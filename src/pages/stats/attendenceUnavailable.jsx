@@ -73,7 +73,7 @@ const emptyStateStyle = {
 export default function AttendanceUnavailable() {
   // Initialize selectedDate with today's date using dayjs
   const [selectedDate, setSelectedDate] = useState(dayjs());
-  const [workingHours, setWorkingHours] = useState('3');
+  const [workingHours, setWorkingHours] = useState("1");
   const [governorates, setGovernorates] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [unavailableOffices, setUnavailableOffices] = useState([]);
@@ -99,22 +99,20 @@ export default function AttendanceUnavailable() {
       setError('الرجاء اختيار التاريخ');
       return;
     }
-
+  
     setLoading(true);
     setError(null);
     setUnavailableOffices([]);
-
+  
     try {
       const response = await axiosInstance.post(`${Url}/api/Attendance/statistics/unavailable`, {
-        // Use dayjs formatting (same as moment)
         date: `${selectedDate.format('YYYY-MM-DD')}T00:00:00Z`,
         workingHours: parseInt(workingHours),
         governorateId: selectedGovernorate
       });
-
-      // Assuming a status 200 means a successful call.
-      // If the returned data is an empty array, the empty state message will show.
-      setUnavailableOffices(response.data);
+  
+      // Extract the unavailableOffices array from the response data
+      setUnavailableOffices(response.data.unavailableOffices);
     } catch (err) {
       setError('حدث خطأ اثناء جلب البيانات');
     } finally {
@@ -137,21 +135,21 @@ export default function AttendanceUnavailable() {
     ))
   ), [governorates]);
 
-  const unavailableOfficesContent = useMemo(() => {
-    if (unavailableOffices.length === 0) return null;
-    
-    return (
-      <div style={cardsContainerStyle}>
-        {unavailableOffices.map((office, index) => (
-          <div key={index} style={cardStyle}>
-            <div style={cardTextStyle}>
-              {office}
-            </div>
+const unavailableOfficesContent = useMemo(() => {
+  if (!Array.isArray(unavailableOffices) || unavailableOffices.length === 0) return null;
+  
+  return (
+    <div style={cardsContainerStyle}>
+      {unavailableOffices.map((office, index) => (
+        <div key={index} style={cardStyle}>
+          <div style={cardTextStyle}>
+            {office}
           </div>
-        ))}
-      </div>
-    );
-  }, [unavailableOffices]);
+        </div>
+      ))}
+    </div>
+  );
+}, [unavailableOffices]);
 
   // When not loading, no error and no offices are returned (i.e. an empty array),
   // display "جميع المكاتب حاضرة".
