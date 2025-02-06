@@ -46,7 +46,8 @@ const DamagedPassportsShow = () => {
   const { profileId, governorateId, officeId } = profile || {};
 
   // Determine if the current user is a supervisor.
-  const isSupervisor = roles.includes("Supervisor") ||  roles.includes("I.T") ||  roles.includes("MainSupervisor");
+  const isSupervisor =
+    roles.includes("Supervisor") || roles.includes("I.T") || roles.includes("MainSupervisor");
 
   const hasUpdatePermission = permissions.includes("DPu");
   const hasDeletePermission = permissions.includes("DPd");
@@ -59,7 +60,7 @@ const DamagedPassportsShow = () => {
       const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
-      const options = response.data.map(item => ({
+      const options = response.data.map((item) => ({
         value: item.id,
         label: item.name,
       }));
@@ -80,7 +81,7 @@ const DamagedPassportsShow = () => {
       if (response.data && response.data.length > 0) {
         // Assuming the API returns an array with one object having an "offices" array.
         const offices = response.data[0].offices || [];
-        const options = offices.map(office => ({
+        const options = offices.map((office) => ({
           value: office.id,
           label: office.name,
         }));
@@ -103,10 +104,12 @@ const DamagedPassportsShow = () => {
       const formattedDate = passport.date
         ? new Date(passport.date).toISOString().split("T")[0]
         : "";
-      // Save the passport details and set the initial values for the form.
+
+      // Save the passport details
       setPassportData({ ...passport, date: formattedDate });
-      
-      // If the user is not a supervisor, set governorate/office values as objects.
+
+      // If user is NOT a supervisor, set governorate/office as label-value objects;
+      // otherwise, just store the IDs directly.
       form.setFieldsValue({
         ...passport,
         date: formattedDate,
@@ -118,7 +121,7 @@ const DamagedPassportsShow = () => {
           ? { value: passport.officeId, label: passport.officeName }
           : passport.officeId,
       });
-      
+
       // If not a supervisor and a governorate exists, fetch its offices.
       if (!isSupervisor && passport.governorateId) {
         await fetchOffices(passport.governorateId);
@@ -139,7 +142,7 @@ const DamagedPassportsShow = () => {
         }
       );
       if (response.data && response.data.length > 0) {
-        const imageUrls = response.data.map(image => ({
+        const imageUrls = response.data.map((image) => ({
           url: image.filePath,
           id: image.id,
         }));
@@ -161,7 +164,7 @@ const DamagedPassportsShow = () => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setDamagedTypes(
-        response.data.map(type => ({
+        response.data.map((type) => ({
           value: type.id,
           label: type.name,
         }))
@@ -182,7 +185,7 @@ const DamagedPassportsShow = () => {
       }
       setLoading(true);
       try {
-        // If the user is not a supervisor, fetch governorates.
+        // If the user is not a supervisor, fetch governorates first.
         if (!isSupervisor) {
           await fetchGovernorates();
         }
@@ -252,8 +255,17 @@ const DamagedPassportsShow = () => {
       });
       message.success("تم تحديث بيانات الجواز بنجاح");
       setEditModalVisible(false);
-      await fetchPassportDetails();
-      setDataFetched(true);
+
+      // ----------------------------------------------------------------
+      //  After a successful edit, refresh the page by reloading the window.
+      // ----------------------------------------------------------------
+      window.location.reload();
+
+      // If you'd rather just refetch data without a full page reload, comment out the line above
+      // and uncomment the lines below:
+      //
+      // await fetchPassportDetails();
+      // setDataFetched(true);
     } catch (error) {
       message.error("حدث خطأ أثناء تعديل بيانات الجواز.");
     }
@@ -331,64 +343,68 @@ const DamagedPassportsShow = () => {
             </div>
 
             <div className="details-container-Lecture">
-              <div className="details-lecture-container">
+              <Form
+                layout="vertical"
+                className="details-lecture-container"
+                initialValues={{
+                  passportNumberDisplay: passportData.passportNumber,
+                  dateOfDamage: new Date(passportData.date).toLocaleDateString("en-CA"),
+                  damagedTypeNameDisplay: passportData.damagedTypeName || "غير محدد",
+                  governorateNameDisplay: passportData.governorateName || "غير محدد",
+                  officeNameDisplay: passportData.officeName || "غير محدد",
+                  profileFullNameDisplay: passportData.profileFullName || "غير محدد",
+                  notesDisplay: passportData.note || "لا توجد ملاحظات",
+                }}
+              >
                 <div className="details-row">
                   <span className="details-label">رقم الجواز:</span>
-                  <input
-                    className="details-value"
-                    value={passportData.passportNumber}
-                    disabled
-                  />
+                  <Form.Item name="passportNumberDisplay" style={{ marginBottom: 0 }}>
+                    <Input className="details-value" disabled />
+                  </Form.Item>
                 </div>
+
                 <div className="details-row">
                   <span className="details-label">تاريخ التلف:</span>
-                  <input
-                    className="details-value"
-                    value={new Date(passportData.date).toLocaleDateString("en-CA")}
-                    disabled
-                  />
+                  <Form.Item name="dateOfDamage" style={{ marginBottom: 0 }}>
+                    <Input className="details-value" disabled />
+                  </Form.Item>
                 </div>
+
                 <div className="details-row">
                   <span className="details-label">سبب التلف:</span>
-                  <input
-                    className="details-value"
-                    value={passportData.damagedTypeName || "غير محدد"}
-                    disabled
-                  />
+                  <Form.Item name="damagedTypeNameDisplay" style={{ marginBottom: 0 }}>
+                    <Input className="details-value" disabled />
+                  </Form.Item>
                 </div>
+
                 <div className="details-row">
                   <span className="details-label">اسم المحافظة:</span>
-                  <input
-                    className="details-value"
-                    value={passportData.governorateName || "غير محدد"}
-                    disabled
-                  />
+                  <Form.Item name="governorateNameDisplay" style={{ marginBottom: 0 }}>
+                    <Input className="details-value" disabled />
+                  </Form.Item>
                 </div>
+
                 <div className="details-row">
                   <span className="details-label">اسم المكتب:</span>
-                  <input
-                    className="details-value"
-                    value={passportData.officeName || "غير محدد"}
-                    disabled
-                  />
+                  <Form.Item name="officeNameDisplay" style={{ marginBottom: 0 }}>
+                    <Input className="details-value" disabled />
+                  </Form.Item>
                 </div>
+
                 <div className="details-row">
                   <span className="details-label">اسم المستخدم:</span>
-                  <input
-                    className="details-value"
-                    value={passportData.profileFullName || "غير محدد"}
-                    disabled
-                  />
+                  <Form.Item name="profileFullNameDisplay" style={{ marginBottom: 0 }}>
+                    <Input className="details-value" disabled />
+                  </Form.Item>
                 </div>
+
                 <div className="details-row">
                   <span className="details-label">الملاحظات:</span>
-                  <textarea
-                    className="textarea-value"
-                    value={passportData.note || "لا توجد ملاحظات"}
-                    disabled
-                  />
+                  <Form.Item name="notesDisplay" style={{ marginBottom: 0 }}>
+                    <Input.TextArea className="textarea-value" rows={3} disabled />
+                  </Form.Item>
                 </div>
-              </div>
+              </Form>
 
               <div className="image-container">
                 {images.length > 0 && (
@@ -419,13 +435,58 @@ const DamagedPassportsShow = () => {
                     layout="vertical"
                     className="dammaged-passport-container-edit-modal"
                   >
-                    <Form.Item
-                      name="passportNumber"
-                      label="رقم الجواز"
-                      rules={[{ required: true, message: "يرجى إدخال رقم الجواز" }]}
-                    >
-                      <Input placeholder="رقم الجواز" />
-                    </Form.Item>
+                  <Form.Item
+                    name="passportNumber"
+                    label="رقم الجواز"
+                    initialValue="B" // Optional: ensure it starts with "B" if you want
+                    rules={[
+                      { required: true, message: "يرجى إدخال رقم الجواز" },
+                      {
+                        pattern:
+                          profile.officeName === "الكرادة"
+                            ? /^[BRVK][0-9]{8}$/
+                            : /^[B][0-9]{8}$/,
+                        message:
+                          profile.officeName === "الكرادة"
+                            ? "يجب أن يبدأ بحرف B أو R أو V أو K ويتبعه 8 أرقام"
+                            : "يجب أن يبدأ بحرف B ويتبعه 8 أرقام",
+                      },
+                    ]}
+                  >
+                    <Input
+                      dir="ltr"
+                      placeholder="أدخل رقم الجواز"
+                      maxLength={9} // 1 letter + 8 digits
+                      minLength={9}
+                      onChange={(e) => {
+                        let value = e.target.value.toUpperCase(); // Convert input to uppercase
+                      
+                        if (profile.officeName === "الكرادة") {
+                          // Allow B, R, V, or K as first character, then digits
+                          if (!/^[BRVK]/.test(value)) {
+                            // If not starting with BRVK, force B
+                            value = "B" + value.replace(/[^0-9]/g, "");
+                          } else {
+                            // Keep the first letter, remove non-digits after it
+                            value = value[0] + value.slice(1).replace(/[^0-9]/g, "");
+                          }
+                        } else {
+                          // Default: Only allow B as first letter
+                          if (!value.startsWith("B")) {
+                            // If not starting with B, force B
+                            value = "B" + value.replace(/[^0-9]/g, "");
+                          } else {
+                            // Keep B, remove non-digits
+                            value = "B" + value.slice(1).replace(/[^0-9]/g, "");
+                          }
+                        }
+                      
+                        // This updates the raw input text:
+                        e.target.value = value;
+                      }}
+                    />
+                  </Form.Item>
+
                     <Form.Item
                       name="damagedTypeId"
                       label="سبب التلف"
@@ -459,11 +520,7 @@ const DamagedPassportsShow = () => {
                           label="المكتب"
                           rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
                         >
-                          <Select
-                            placeholder="اختر المكتب"
-                            options={officeOptions}
-                            labelInValue
-                          />
+                          <Select placeholder="اختر المكتب" options={officeOptions} labelInValue />
                         </Form.Item>
                       </>
                     )}

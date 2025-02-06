@@ -45,6 +45,8 @@ export default function SuperVisorPassport() {
   const [offices, setOffices] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
+  const [damageTypes, setDamageTypes] = useState([]);
+
   const [formData, setFormData] = useState({
     passportNumber: "",
     damagedTypeId: null,
@@ -112,7 +114,21 @@ export default function SuperVisorPassport() {
       setIsLoading(false);
     }
   };
-
+  const fetchDamageTypes = async () => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/damagedtype/all`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      console.log(response)
+      setDamageTypes(response.data);
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات نوع التلف");
+    }
+  };
+  useEffect(() => {
+    fetchDamageTypes();
+  }, []);
+  
   const handlePrintPDF = async () => {
     try {
       const payload = {
@@ -307,7 +323,7 @@ export default function SuperVisorPassport() {
       passportNumber: formData.passportNumber || "",
       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
       governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
-      damagedTypeId: formData.damagedTypeId || null,
+      damagedTypeId: formData.damagedTypeId || null, // <--- Make sure this is included
       startDate: formData.startDate ? formatToISO(formData.startDate) : null,
       endDate: formData.endDate ? formatToISO(formData.endDate) : null,
       PaginationParams: {
@@ -315,9 +331,10 @@ export default function SuperVisorPassport() {
         PageSize: pageSize,
       },
     };
-
+  
     await fetchPassports(payload);
   };
+  
 
   const handleReset = async () => {
     setFormData({
@@ -465,6 +482,11 @@ export default function SuperVisorPassport() {
       className: "table-column-serial-number",
     },
     {
+      title: "نوع التلف",
+      dataIndex: "damagedTypeName",  // <-- Make sure this matches the field from your API response
+      key: "damagedTypeName",
+    },
+    {
       title: "التفاصيل",
       key: "details",
       className: "table-column-details",
@@ -539,6 +561,27 @@ export default function SuperVisorPassport() {
                   }
                 />
               </div>
+              <div className="filter-field">
+              <label>نوع التلف</label>
+              <Select
+                className="filter-dropdown"
+                placeholder="اختر نوع التلف"
+                value={formData.damagedTypeId || undefined}
+                onChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    damagedTypeId: value,
+                  }))
+                }
+              >
+                {damageTypes.map((damageType) => (
+                  <Option key={damageType.id} value={damageType.id}>
+                    {damageType.name}
+                  </Option>
+                ))}
+              </Select>
+            </div>
+
 
               <div className="filter-field">
                 <label>التاريخ من</label>
