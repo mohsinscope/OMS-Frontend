@@ -21,8 +21,8 @@ export default function NavBar({ onSidebarToggle }) {
           className={`notification ${isNotificationsActive ? "active" : ""}`}
           onClick={handleNotificationClick}>
           <Icons type="notification" width={38} height={20} color="black" />
-          <span className="notification-badge"></span>
-        </div>
+{/*           <span className="notification-badge"></span>
+ */}        </div>
         {/* Notification Dropdown */}
         {isNotificationsActive && (
           <div className="notification-content">
