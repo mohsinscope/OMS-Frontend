@@ -37,11 +37,65 @@ const DamagedPassportsShow = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [form] = Form.useForm();
-  const { isSidebarCollapsed, accessToken, profile, permissions,roles } = useAuthStore();
+
+  // New state variables for governorates and offices
+  const [governorateOptions, setGovernorateOptions] = useState([]);
+  const [officeOptions, setOfficeOptions] = useState([]);
+
+  const { isSidebarCollapsed, accessToken, profile, permissions, roles } = useAuthStore();
   const { profileId, governorateId, officeId } = profile || {};
+
+  // Determine if the current user is a supervisor.
+  const isSupervisor = roles.includes("Supervisor") ||  roles.includes("I.T") ||  roles.includes("MainSupervisor");
+
   const hasUpdatePermission = permissions.includes("DPu");
   const hasDeletePermission = permissions.includes("DPd");
 
+  // -----------------------------
+  // Fetch governorate dropdown options
+  // -----------------------------
+  const fetchGovernorates = async () => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const options = response.data.map(item => ({
+        value: item.id,
+        label: item.name,
+      }));
+      setGovernorateOptions(options);
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب المحافظات.");
+    }
+  };
+
+  // -----------------------------
+  // Fetch offices for a given governorate
+  // -----------------------------
+  const fetchOffices = async (govId) => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${govId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (response.data && response.data.length > 0) {
+        // Assuming the API returns an array with one object having an "offices" array.
+        const offices = response.data[0].offices || [];
+        const options = offices.map(office => ({
+          value: office.id,
+          label: office.name,
+        }));
+        setOfficeOptions(options);
+      } else {
+        setOfficeOptions([]);
+      }
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب المكاتب.");
+    }
+  };
+
+  // -----------------------------
+  // Fetch passport details and set initial form values.
+  // -----------------------------
   const fetchPassportDetails = async () => {
     try {
       const response = await axiosInstance.get(`${Url}/api/DamagedPassport/${passportId}`);
@@ -49,12 +103,26 @@ const DamagedPassportsShow = () => {
       const formattedDate = passport.date
         ? new Date(passport.date).toISOString().split("T")[0]
         : "";
+      // Save the passport details and set the initial values for the form.
       setPassportData({ ...passport, date: formattedDate });
+      
+      // If the user is not a supervisor, set governorate/office values as objects.
       form.setFieldsValue({
         ...passport,
         date: formattedDate,
         notes: passport.note || "",
+        governorateId: !isSupervisor
+          ? { value: passport.governorateId, label: passport.governorateName }
+          : passport.governorateId,
+        officeId: !isSupervisor
+          ? { value: passport.officeId, label: passport.officeName }
+          : passport.officeId,
       });
+      
+      // If not a supervisor and a governorate exists, fetch its offices.
+      if (!isSupervisor && passport.governorateId) {
+        await fetchOffices(passport.governorateId);
+      }
       return true;
     } catch (error) {
       message.error("حدث خطأ أثناء جلب تفاصيل الجواز.");
@@ -67,28 +135,22 @@ const DamagedPassportsShow = () => {
       const response = await axiosInstance.get(
         `${Url}/api/Attachment/DamagedPassport/${passportId}`,
         {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
       if (response.data && response.data.length > 0) {
-        const imageUrls = response.data.map((image) => ({
+        const imageUrls = response.data.map(image => ({
           url: image.filePath,
           id: image.id,
         }));
         setImages(imageUrls);
       } else {
-        // No images returned; set images to empty array.
         setImages([]);
       }
       return true;
     } catch (error) {
-      // Log the error and set images to empty array.
       console.error("Error fetching passport images:", error);
       setImages([]);
-      // Optionally, you can display a less intrusive message or no message at all:
-      // message.info("لا توجد صورة");
       return true;
     }
   };
@@ -96,12 +158,10 @@ const DamagedPassportsShow = () => {
   const fetchDamagedTypes = async () => {
     try {
       const response = await axiosInstance.get(`${Url}/api/damagedtype/all`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       setDamagedTypes(
-        response.data.map((type) => ({
+        response.data.map(type => ({
           value: type.id,
           label: type.name,
         }))
@@ -120,15 +180,17 @@ const DamagedPassportsShow = () => {
         navigate(-1);
         return;
       }
-
       setLoading(true);
       try {
+        // If the user is not a supervisor, fetch governorates.
+        if (!isSupervisor) {
+          await fetchGovernorates();
+        }
         const [detailsSuccess, imagesSuccess, typesSuccess] = await Promise.all([
           fetchPassportDetails(),
           fetchPassportImages(),
           fetchDamagedTypes(),
         ]);
-
         if (detailsSuccess && imagesSuccess && typesSuccess) {
           setDataFetched(true);
         }
@@ -138,19 +200,17 @@ const DamagedPassportsShow = () => {
         setLoading(false);
       }
     };
-
     fetchAllData();
-  }, [passportId, navigate]);
+  }, [passportId, navigate, isSupervisor]);
+
   const handleImageUpload = async (file) => {
     try {
       const formData = new FormData();
-      // Use passportId as the entity id for new attachments.
       formData.append("entityId", passportId);
       formData.append("entityType", "DamagedPassport");
       formData.append("file", file);
-  
+
       if (images.length === 0) {
-        // No image attached yet: Add a new attachment
         await axiosInstance.post(`${Url}/api/attachment/add-attachment`, formData, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -158,8 +218,6 @@ const DamagedPassportsShow = () => {
           },
         });
       } else {
-        // An image exists: Update the current attachment.
-        // imageData.imageId should be set when an image is selected via ImagePreviewer.
         await axiosInstance.put(`${Url}/api/attachment/${imageData.imageId}`, formData, {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -167,7 +225,6 @@ const DamagedPassportsShow = () => {
           },
         });
       }
-  
       message.success("تم تحديث الصورة بنجاح");
       await fetchPassportImages();
     } catch (error) {
@@ -184,21 +241,19 @@ const DamagedPassportsShow = () => {
         date: values.date ? new Date(values.date).toISOString() : passportData.date,
         note: values.notes || "لا يوجد",
         damagedTypeId: values.damagedTypeId,
-        governorateId,
-        officeId,
+        // For non-supervisors, extract the GUID from the object.
+        governorateId: !isSupervisor ? values.governorateId.value : governorateId,
+        officeId: !isSupervisor ? values.officeId.value : officeId,
         profileId,
       };
 
       await axiosInstance.put(`${Url}/api/DamagedPassport/${passportId}`, updatedValues, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
-
       message.success("تم تحديث بيانات الجواز بنجاح");
       setEditModalVisible(false);
       await fetchPassportDetails();
-      setDataFetched(true); // Reset dataFetched after updating
+      setDataFetched(true);
     } catch (error) {
       message.error("حدث خطأ أثناء تعديل بيانات الجواز.");
     }
@@ -207,9 +262,7 @@ const DamagedPassportsShow = () => {
   const handleDelete = async () => {
     try {
       await axiosInstance.delete(`${Url}/api/DamagedPassport/${passportId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
+        headers: { Authorization: `Bearer ${accessToken}` },
       });
       message.success("تم حذف الجواز بنجاح");
       setDeleteModalVisible(false);
@@ -218,7 +271,21 @@ const DamagedPassportsShow = () => {
       message.error("حدث خطأ أثناء حذف الجواز.");
     }
   };
-  const isOwnerOrSuperAdmin = (passportData?.profileId === profileId) || roles.includes("SuperAdmin");
+
+  // When the user selects a different governorate, fetch the corresponding offices.
+  const handleGovernorateChange = (selected) => {
+    if (selected && selected.value) {
+      fetchOffices(selected.value);
+      // Reset the office field if the governorate changes.
+      form.setFieldsValue({ officeId: null });
+    } else {
+      setOfficeOptions([]);
+      form.setFieldsValue({ officeId: null });
+    }
+  };
+
+  const isOwnerOrSuperAdmin =
+    passportData?.profileId === profileId || roles.includes("SuperAdmin");
 
   return (
     <div
@@ -230,7 +297,8 @@ const DamagedPassportsShow = () => {
       {loading ? (
         <Skeleton active paragraph={{ rows: 12 }} />
       ) : (
-        dataFetched && passportData && (
+        dataFetched &&
+        passportData && (
           <>
             <div className="title-container">
               <h1>تفاصيل الجواز التالف</h1>
@@ -240,25 +308,25 @@ const DamagedPassportsShow = () => {
                   الرجوع
                 </Button>
                 {isOwnerOrSuperAdmin && (
-  <>
-    {hasDeletePermission && (
-      <Button
-        onClick={() => setDeleteModalVisible(true)}
-        className="delete-button-passport"
-      >
-        حذف <Lele type="delete" />
-      </Button>
-    )}
-    {hasUpdatePermission && (
-      <Button
-        onClick={() => setEditModalVisible(true)}
-        className="edit-button-passport"
-      >
-        تعديل <Lele type="edit" />
-      </Button>
-    )}
-  </>
-)}
+                  <>
+                    {hasDeletePermission && (
+                      <Button
+                        onClick={() => setDeleteModalVisible(true)}
+                        className="delete-button-passport"
+                      >
+                        حذف <Lele type="delete" />
+                      </Button>
+                    )}
+                    {hasUpdatePermission && (
+                      <Button
+                        onClick={() => setEditModalVisible(true)}
+                        className="edit-button-passport"
+                      >
+                        تعديل <Lele type="edit" />
+                      </Button>
+                    )}
+                  </>
+                )}
               </div>
             </div>
 
@@ -287,7 +355,7 @@ const DamagedPassportsShow = () => {
                     value={passportData.damagedTypeName || "غير محدد"}
                     disabled
                   />
-                </div>    
+                </div>
                 <div className="details-row">
                   <span className="details-label">اسم المحافظة:</span>
                   <input
@@ -295,7 +363,7 @@ const DamagedPassportsShow = () => {
                     value={passportData.governorateName || "غير محدد"}
                     disabled
                   />
-                </div>   
+                </div>
                 <div className="details-row">
                   <span className="details-label">اسم المكتب:</span>
                   <input
@@ -335,7 +403,7 @@ const DamagedPassportsShow = () => {
               </div>
             </div>
 
-            {/* Modal for editing passport */}
+            {/* Edit Modal */}
             <div className="dammaged-passport-container-edit-modal">
               <ConfigProvider direction="rtl">
                 <Modal
@@ -370,6 +438,36 @@ const DamagedPassportsShow = () => {
                         allowClear
                       />
                     </Form.Item>
+
+                    {/* Only show these two fields if the user is NOT a supervisor */}
+                    {!isSupervisor && (
+                      <>
+                        <Form.Item
+                          name="governorateId"
+                          label="المحافظة"
+                          rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
+                        >
+                          <Select
+                            placeholder="اختر المحافظة"
+                            options={governorateOptions}
+                            labelInValue
+                            onChange={handleGovernorateChange}
+                          />
+                        </Form.Item>
+                        <Form.Item
+                          name="officeId"
+                          label="المكتب"
+                          rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
+                        >
+                          <Select
+                            placeholder="اختر المكتب"
+                            options={officeOptions}
+                            labelInValue
+                          />
+                        </Form.Item>
+                      </>
+                    )}
+
                     <Form.Item
                       name="date"
                       label="تاريخ التلف"
@@ -377,33 +475,29 @@ const DamagedPassportsShow = () => {
                     >
                       <input placeholder="تاريخ التلف" type="date" />
                     </Form.Item>
-                    <Form.Item
-                      name="notes"
-                      label="الملاحظات"
-                      rules={[{ required: false }]}
-                    >
+                    <Form.Item name="notes" label="الملاحظات">
                       <Input.TextArea placeholder="أدخل الملاحظات" defaultValue="لا يوجد" />
                     </Form.Item>
                     <Upload
-  beforeUpload={(file) => {
-    // Reject PDF files.
-    if (file.type === "application/pdf") {
-      message.error("لا يمكن تحميل ملفات PDF.");
-      return Upload.LIST_IGNORE;
-    }
-    // Proceed with image upload.
-    handleImageUpload(file);
-    return false; // Prevent automatic upload.
-  }}
->
-  <Button
-    style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
-    type="primary"
-    icon={<UploadOutlined />}
-  >
-    {images.length > 0 ? "استبدال الصورة" : "إضافة مرفق"}
-  </Button>
-</Upload>
+                      beforeUpload={(file) => {
+                        // Reject PDF files.
+                        if (file.type === "application/pdf") {
+                          message.error("لا يمكن تحميل ملفات PDF.");
+                          return Upload.LIST_IGNORE;
+                        }
+                        // Proceed with image upload.
+                        handleImageUpload(file);
+                        return false; // Prevent automatic upload.
+                      }}
+                    >
+                      <Button
+                        style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+                        type="primary"
+                        icon={<UploadOutlined />}
+                      >
+                        {images.length > 0 ? "استبدال الصورة" : "إضافة مرفق"}
+                      </Button>
+                    </Upload>
                     {images.length > 0 && (
                       <>
                         <span className="note-details-label">صور الجواز التالف:</span>
@@ -425,17 +519,13 @@ const DamagedPassportsShow = () => {
                         />
                       </>
                     )}
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      block
-                    >
+                    <Button type="primary" htmlType="submit" block>
                       حفظ التعديلات
                     </Button>
                   </Form>
                 </Modal>
 
-                {/* Modal for deleting passport */}
+                {/* Delete Modal */}
                 <Modal
                   title="تأكيد الحذف"
                   open={deleteModalVisible}
