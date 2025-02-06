@@ -38,14 +38,18 @@ const DamagedPassportsShow = () => {
   const [damagedTypes, setDamagedTypes] = useState([]);
   const [form] = Form.useForm();
 
-  // New state variables for governorates and offices
+  // New state variables for governorates, offices, and profile search options.
   const [governorateOptions, setGovernorateOptions] = useState([]);
   const [officeOptions, setOfficeOptions] = useState([]);
+  const [profileOptions, setProfileOptions] = useState([]);
+  const [profileSearchValue, setProfileSearchValue] = useState("");
 
   const { isSidebarCollapsed, accessToken, profile, permissions, roles } = useAuthStore();
-  const { profileId, governorateId, officeId } = profile || {};
+  // Destructure the current user's details from the profile
+  const { profileId: currentProfileId, governorateId: currentGovId, officeId: currentOfficeId } = profile || {};
 
   // Determine if the current user is a supervisor.
+  // Also, if the user is SuperAdmin (or one of the other roles), then they can edit the uploader.
   const isSupervisor =
     roles.includes("Supervisor") || roles.includes("I.T") || roles.includes("MainSupervisor");
 
@@ -108,22 +112,21 @@ const DamagedPassportsShow = () => {
       // Save the passport details
       setPassportData({ ...passport, date: formattedDate });
 
-      // If user is NOT a supervisor, set governorate/office as label-value objects;
-      // otherwise, just store the IDs directly.
+      // Always set dropdown fields as objects with "value" and "label".
+      // For the profile field, use fullName as the label.
       form.setFieldsValue({
         ...passport,
         date: formattedDate,
         notes: passport.note || "",
-        governorateId: !isSupervisor
-          ? { value: passport.governorateId, label: passport.governorateName }
-          : passport.governorateId,
-        officeId: !isSupervisor
-          ? { value: passport.officeId, label: passport.officeName }
-          : passport.officeId,
+        governorateId: { value: passport.governorateId, label: passport.governorateName },
+        officeId: { value: passport.officeId, label: passport.officeName },
+        ...(roles.includes("SuperAdmin") && {
+          profileId: { value: passport.profileId, label: passport.profileFullName || passport.fullName || "غير محدد" },
+        }),
       });
 
-      // If not a supervisor and a governorate exists, fetch its offices.
-      if (!isSupervisor && passport.governorateId) {
+      // If a governorate exists, fetch its offices.
+      if (passport.governorateId) {
         await fetchOffices(passport.governorateId);
       }
       return true;
@@ -176,6 +179,38 @@ const DamagedPassportsShow = () => {
     }
   };
 
+  // -----------------------------
+  // Search Profiles by Full Name (triggered on button click)
+  // -----------------------------
+  const searchProfiles = async (searchValue) => {
+    try {
+      const payload = {
+        fullName: searchValue,
+        officeId: null,
+        governorateId: null,
+        roles: [],
+        paginationParams: {
+          pageNumber: 1,
+          pageSize: 10,
+        },
+      };
+      const response = await axiosInstance.post(`${Url}/api/profile/search`, payload, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      // Map options so that the label is the fullName.
+      const options = response.data.map((profile) => ({
+        value: profile.id,
+        label: profile.fullName,
+      }));
+      setProfileOptions(options);
+    } catch (error) {
+      message.error("خطأ في جلب المستخدمين.");
+    }
+  };
+
+  // -----------------------------
+  // useEffect to fetch initial data
+  // -----------------------------
   useEffect(() => {
     const fetchAllData = async () => {
       if (!passportId) {
@@ -244,10 +279,10 @@ const DamagedPassportsShow = () => {
         date: values.date ? new Date(values.date).toISOString() : passportData.date,
         note: values.notes || "لا يوجد",
         damagedTypeId: values.damagedTypeId,
-        // For non-supervisors, extract the GUID from the object.
-        governorateId: !isSupervisor ? values.governorateId.value : governorateId,
-        officeId: !isSupervisor ? values.officeId.value : officeId,
-        profileId,
+        // If the user is SuperAdmin, use form values; otherwise use the user's own details.
+        governorateId: roles.includes("SuperAdmin") ? values.governorateId.value : currentGovId,
+        officeId: roles.includes("SuperAdmin") ? values.officeId.value : currentOfficeId,
+        profileId: roles.includes("SuperAdmin") ? values.profileId.value : currentProfileId,
       };
 
       await axiosInstance.put(`${Url}/api/DamagedPassport/${passportId}`, updatedValues, {
@@ -255,17 +290,7 @@ const DamagedPassportsShow = () => {
       });
       message.success("تم تحديث بيانات الجواز بنجاح");
       setEditModalVisible(false);
-
-      // ----------------------------------------------------------------
-      //  After a successful edit, refresh the page by reloading the window.
-      // ----------------------------------------------------------------
       window.location.reload();
-
-      // If you'd rather just refetch data without a full page reload, comment out the line above
-      // and uncomment the lines below:
-      //
-      // await fetchPassportDetails();
-      // setDataFetched(true);
     } catch (error) {
       message.error("حدث خطأ أثناء تعديل بيانات الجواز.");
     }
@@ -288,7 +313,6 @@ const DamagedPassportsShow = () => {
   const handleGovernorateChange = (selected) => {
     if (selected && selected.value) {
       fetchOffices(selected.value);
-      // Reset the office field if the governorate changes.
       form.setFieldsValue({ officeId: null });
     } else {
       setOfficeOptions([]);
@@ -297,7 +321,7 @@ const DamagedPassportsShow = () => {
   };
 
   const isOwnerOrSuperAdmin =
-    passportData?.profileId === profileId || roles.includes("SuperAdmin");
+    passportData?.profileId === currentProfileId || roles.includes("SuperAdmin");
 
   return (
     <div
@@ -435,57 +459,48 @@ const DamagedPassportsShow = () => {
                     layout="vertical"
                     className="dammaged-passport-container-edit-modal"
                   >
-                  <Form.Item
-                    name="passportNumber"
-                    label="رقم الجواز"
-                    initialValue="B" // Optional: ensure it starts with "B" if you want
-                    rules={[
-                      { required: true, message: "يرجى إدخال رقم الجواز" },
-                      {
-                        pattern:
-                          profile.officeName === "الكرادة"
-                            ? /^[BRVK][0-9]{8}$/
-                            : /^[B][0-9]{8}$/,
-                        message:
-                          profile.officeName === "الكرادة"
-                            ? "يجب أن يبدأ بحرف B أو R أو V أو K ويتبعه 8 أرقام"
-                            : "يجب أن يبدأ بحرف B ويتبعه 8 أرقام",
-                      },
-                    ]}
-                  >
-                    <Input
-                      dir="ltr"
-                      placeholder="أدخل رقم الجواز"
-                      maxLength={9} // 1 letter + 8 digits
-                      minLength={9}
-                      onChange={(e) => {
-                        let value = e.target.value.toUpperCase(); // Convert input to uppercase
-                      
-                        if (profile.officeName === "الكرادة") {
-                          // Allow B, R, V, or K as first character, then digits
-                          if (!/^[BRVK]/.test(value)) {
-                            // If not starting with BRVK, force B
-                            value = "B" + value.replace(/[^0-9]/g, "");
+                    <Form.Item
+                      name="passportNumber"
+                      label="رقم الجواز"
+                      initialValue="B"
+                      rules={[
+                        { required: true, message: "يرجى إدخال رقم الجواز" },
+                        {
+                          pattern:
+                            profile.officeName === "الكرادة"
+                              ? /^[BRVK][0-9]{8}$/
+                              : /^[B][0-9]{8}$/,
+                          message:
+                            profile.officeName === "الكرادة"
+                              ? "يجب أن يبدأ بحرف B أو R أو V أو K ويتبعه 8 أرقام"
+                              : "يجب أن يبدأ بحرف B ويتبعه 8 أرقام",
+                        },
+                      ]}
+                    >
+                      <Input
+                        dir="ltr"
+                        placeholder="أدخل رقم الجواز"
+                        maxLength={9}
+                        minLength={9}
+                        onChange={(e) => {
+                          let value = e.target.value.toUpperCase();
+                          if (profile.officeName === "الكرادة") {
+                            if (!/^[BRVK]/.test(value)) {
+                              value = "B" + value.replace(/[^0-9]/g, "");
+                            } else {
+                              value = value[0] + value.slice(1).replace(/[^0-9]/g, "");
+                            }
                           } else {
-                            // Keep the first letter, remove non-digits after it
-                            value = value[0] + value.slice(1).replace(/[^0-9]/g, "");
+                            if (!value.startsWith("B")) {
+                              value = "B" + value.replace(/[^0-9]/g, "");
+                            } else {
+                              value = "B" + value.slice(1).replace(/[^0-9]/g, "");
+                            }
                           }
-                        } else {
-                          // Default: Only allow B as first letter
-                          if (!value.startsWith("B")) {
-                            // If not starting with B, force B
-                            value = "B" + value.replace(/[^0-9]/g, "");
-                          } else {
-                            // Keep B, remove non-digits
-                            value = "B" + value.slice(1).replace(/[^0-9]/g, "");
-                          }
-                        }
-                      
-                        // This updates the raw input text:
-                        e.target.value = value;
-                      }}
-                    />
-                  </Form.Item>
+                          e.target.value = value;
+                        }}
+                      />
+                    </Form.Item>
 
                     <Form.Item
                       name="damagedTypeId"
@@ -500,7 +515,6 @@ const DamagedPassportsShow = () => {
                       />
                     </Form.Item>
 
-                    {/* Only show these two fields if the user is NOT a supervisor */}
                     {!isSupervisor && (
                       <>
                         <Form.Item
@@ -520,7 +534,39 @@ const DamagedPassportsShow = () => {
                           label="المكتب"
                           rules={[{ required: true, message: "يرجى اختيار المكتب" }]}
                         >
-                          <Select placeholder="اختر المكتب" options={officeOptions} labelInValue />
+                          <Select
+                            placeholder="اختر المكتب"
+                            options={officeOptions}
+                            labelInValue
+                          />
+                        </Form.Item>
+                      </>
+                    )}
+
+                    {roles.includes("SuperAdmin") && (
+                      <>
+                        <Form.Item label="البحث عن المستخدم" required>
+                          <div style={{ display: "flex", gap: "8px" }}>
+                            <Input
+                              placeholder="أدخل اسم المستخدم"
+                              value={profileSearchValue}
+                              onChange={(e) => setProfileSearchValue(e.target.value)}
+                            />
+                            <Button onClick={() => searchProfiles(profileSearchValue)}>
+                              بحث
+                            </Button>
+                          </div>
+                        </Form.Item>
+                        <Form.Item
+                          name="profileId"
+                          label="المستخدم"
+                          rules={[{ required: true, message: "يرجى اختيار المستخدم" }]}
+                        >
+                          <Select
+                            placeholder="اختر المستخدم"
+                            options={profileOptions}
+                            labelInValue
+                          />
                         </Form.Item>
                       </>
                     )}
@@ -537,14 +583,12 @@ const DamagedPassportsShow = () => {
                     </Form.Item>
                     <Upload
                       beforeUpload={(file) => {
-                        // Reject PDF files.
                         if (file.type === "application/pdf") {
                           message.error("لا يمكن تحميل ملفات PDF.");
                           return Upload.LIST_IGNORE;
                         }
-                        // Proceed with image upload.
                         handleImageUpload(file);
-                        return false; // Prevent automatic upload.
+                        return false;
                       }}
                     >
                       <Button
@@ -582,7 +626,6 @@ const DamagedPassportsShow = () => {
                   </Form>
                 </Modal>
 
-                {/* Delete Modal */}
                 <Modal
                   title="تأكيد الحذف"
                   open={deleteModalVisible}
