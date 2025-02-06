@@ -42,14 +42,15 @@ const DamagedPassportsShow = () => {
   const [governorateOptions, setGovernorateOptions] = useState([]);
   const [officeOptions, setOfficeOptions] = useState([]);
   const [profileOptions, setProfileOptions] = useState([]);
+  // We'll use profileSearchValue to drive the search in our custom dropdown.
   const [profileSearchValue, setProfileSearchValue] = useState("");
 
   const { isSidebarCollapsed, accessToken, profile, permissions, roles } = useAuthStore();
-  // Destructure the current user's details from the profile
+  // Destructure the current user's details from the profile.
   const { profileId: currentProfileId, governorateId: currentGovId, officeId: currentOfficeId } = profile || {};
 
   // Determine if the current user is a supervisor.
-  // Also, if the user is SuperAdmin (or one of the other roles), then they can edit the uploader.
+  // (For our purposes, if the user is not SuperAdmin, they will use their own details.)
   const isSupervisor =
     roles.includes("Supervisor") || roles.includes("I.T") || roles.includes("MainSupervisor");
 
@@ -83,7 +84,6 @@ const DamagedPassportsShow = () => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (response.data && response.data.length > 0) {
-        // Assuming the API returns an array with one object having an "offices" array.
         const offices = response.data[0].offices || [];
         const options = offices.map((office) => ({
           value: office.id,
@@ -113,7 +113,7 @@ const DamagedPassportsShow = () => {
       setPassportData({ ...passport, date: formattedDate });
 
       // Always set dropdown fields as objects with "value" and "label".
-      // For the profile field, use fullName as the label.
+      // For the profile field, we use the fullName as the label.
       form.setFieldsValue({
         ...passport,
         date: formattedDate,
@@ -220,7 +220,6 @@ const DamagedPassportsShow = () => {
       }
       setLoading(true);
       try {
-        // If the user is not a supervisor, fetch governorates first.
         if (!isSupervisor) {
           await fetchGovernorates();
         }
@@ -279,7 +278,7 @@ const DamagedPassportsShow = () => {
         date: values.date ? new Date(values.date).toISOString() : passportData.date,
         note: values.notes || "لا يوجد",
         damagedTypeId: values.damagedTypeId,
-        // If the user is SuperAdmin, use form values; otherwise use the user's own details.
+        // For SuperAdmin, use the form values; otherwise, use the current user's own details.
         governorateId: roles.includes("SuperAdmin") ? values.governorateId.value : currentGovId,
         officeId: roles.includes("SuperAdmin") ? values.officeId.value : currentOfficeId,
         profileId: roles.includes("SuperAdmin") ? values.profileId.value : currentProfileId,
@@ -544,31 +543,33 @@ const DamagedPassportsShow = () => {
                     )}
 
                     {roles.includes("SuperAdmin") && (
-                      <>
-                        <Form.Item label="البحث عن المستخدم" required>
-                          <div style={{ display: "flex", gap: "8px" }}>
-                            <Input
-                              placeholder="أدخل اسم المستخدم"
-                              value={profileSearchValue}
-                              onChange={(e) => setProfileSearchValue(e.target.value)}
-                            />
-                            <Button onClick={() => searchProfiles(profileSearchValue)}>
-                              بحث
-                            </Button>
-                          </div>
-                        </Form.Item>
-                        <Form.Item
-                          name="profileId"
-                          label="المستخدم"
-                          rules={[{ required: true, message: "يرجى اختيار المستخدم" }]}
-                        >
-                          <Select
-                            placeholder="اختر المستخدم"
-                            options={profileOptions}
-                            labelInValue
-                          />
-                        </Form.Item>
-                      </>
+                      <Form.Item
+                        name="profileId"
+                        label="المستخدم"
+                        rules={[{ required: true, message: "يرجى اختيار المستخدم" }]}
+                      >
+                        <Select
+                          showSearch
+                          placeholder="ابحث عن المستخدم"
+                          filterOption={false}
+                          labelInValue
+                          // Use dropdownRender to combine search input and results in one field.
+                          dropdownRender={(menu) => (
+                            <>
+                              <div style={{ display: "flex", padding: "8px", gap: "8px" }}>
+                                <Input
+                                  placeholder="أدخل اسم المستخدم"
+                                  value={profileSearchValue}
+                                  onChange={(e) => setProfileSearchValue(e.target.value)}
+                                />
+                                <Button onClick={() => searchProfiles(profileSearchValue)}>بحث</Button>
+                              </div>
+                              {menu}
+                            </>
+                          )}
+                          options={profileOptions}
+                        />
+                      </Form.Item>
                     )}
 
                     <Form.Item

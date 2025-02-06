@@ -55,13 +55,16 @@ export default function SuperVisorPassport() {
   });
 
   // Formatting dates to ISO
-  const formatToISO = (date) => {
+  const formatToISO = (date, isEndDate = false) => {
     if (!date) return null;
-    const formattedDate = new Date(date);
-    formattedDate.setUTCHours(14, 0, 0, 0);
-    return formattedDate.toISOString();
+    const d = new Date(date);
+    if (isEndDate) {
+      d.setHours(23, 59, 59, 999);
+    } else {
+      d.setHours(0, 0, 0, 0);
+    }
+    return d.toISOString();
   };
-
   // Fetch damaged passports
   const fetchPassports = async (payload) => {
     try {
@@ -324,8 +327,8 @@ export default function SuperVisorPassport() {
       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
       governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
       damagedTypeId: formData.damagedTypeId || null, // <--- Make sure this is included
-      startDate: formData.startDate ? formatToISO(formData.startDate) : null,
-      endDate: formData.endDate ? formatToISO(formData.endDate) : null,
+      startDate: formData.startDate ? formatToISO(formData.startDate, false) : null,
+      endDate: formData.endDate ? formatToISO(formData.endDate, true) : null,
       PaginationParams: {
         PageNumber: page,
         PageSize: pageSize,
@@ -501,7 +504,6 @@ export default function SuperVisorPassport() {
       ),
     },
   ];
-
   return (
     <div
       className={`supervisor-passport-dameged-page ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}
