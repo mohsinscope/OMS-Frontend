@@ -10,7 +10,7 @@ import {
   Select,
   InputNumber,
   Upload,
-  Skeleton
+  Skeleton,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -19,59 +19,58 @@ import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import moment from "moment";
+
 const ExpensessView = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // Retrieve IDs and status from location state or URL query params
   const dailyExpenseId = location.state?.dailyExpenseId;
+  const subExpenseId = location.state?.subExpenseId;
+  const expenseId = dailyExpenseId || new URLSearchParams(location.search).get("id");
+  const status = location.state?.status;
+
+  // Local state declarations
   const [imageData, setImageData] = useState({
     imageId: "",
     entityId: "",
     entityType: "Expense",
   });
-  // If dailyExpenseId is not available in state, try to get it from the URL params
-  const expenseId = dailyExpenseId || new URLSearchParams(location.search).get('id');
-  const status = location.state?.status; // Access the passed status
-
   const [images, setImages] = useState([]);
   const [expenseData, setExpenseData] = useState(null);
+  const [expenseTypes, setExpenseTypes] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Loading state for details
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [expenseTypes, setExpenseTypes] = useState([]);
   const [form] = Form.useForm();
-  const [isLoading, setIsLoading] = useState(true); // Loading state
 
-  const { isSidebarCollapsed, permissions,profile } = useAuthStore();
-   const hasUpdatePermission = permissions.includes("EXu"); 
-  const hasDeletePermission = permissions.includes("EXd"); 
-  const canPerformActions = () => {
-    return (
-      hasUpdatePermission &&
-      hasDeletePermission &&
-      ["New", "ReturnedToSupervisor"].includes(status) // Check the passed status
-    );
-  };
+  const { isSidebarCollapsed, permissions, profile } = useAuthStore();
+  const hasUpdatePermission = permissions.includes("EXu");
+  const hasDeletePermission = permissions.includes("EXd");
+  const canPerformActions = () =>
+    hasUpdatePermission &&
+    hasDeletePermission &&
+    ["New", "ReturnedToSupervisor"].includes(status);
+
+  // Fetch expense types
   const fetchExpenseTypes = async () => {
     try {
-      const response = await axiosInstance.get('/api/ExpenseType');
+      const response = await axiosInstance.get("/api/ExpenseType");
       setExpenseTypes(response.data || []);
     } catch (error) {
-      message.error('فشل في جلب أنواع المصروفات');
+      message.error("فشل في جلب أنواع المصروفات");
     }
   };
 
+  // Fetch expense details
   const fetchExpenseDetails = async () => {
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
     try {
-      
       const response = await axiosInstance.get(`/api/Expense/dailyexpenses/${expenseId}`);
-      const expense = response.data; // Ensure this is defined
-      console.log("Expense Data:", expense); // Log the expense data for debugging
-  
-      if (!expense) {
-        throw new Error("No expense data found");
-      }
-  
+      const expense = response.data;
+      if (!expense) throw new Error("No expense data found");
+
       setExpenseData(expense);
       form.setFieldsValue({
         ...expense,
@@ -84,52 +83,61 @@ const ExpensessView = () => {
       });
     } catch (error) {
       console.error("Error fetching expense details:", error);
-      message.error('حدث خطأ أثناء جلب تفاصيل المصروف');
-    }finally{
-      setIsLoading(false); // Stop loading
-
+      message.error("حدث خطأ أثناء جلب تفاصيل المصروف");
+    } finally {
+      setIsLoading(false);
     }
   };
-  const fetchExpensesImages = async () => {
+
+  // Fetch images using the provided ID (parent or expense ID)
+  const fetchExpensesImages = async (idToUse) => {
+    if (!idToUse) {
+      console.error("No ID provided for fetching images.");
+      return;
+    }
     try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Attachment/Expense/${expenseId}`
-      );
-      console.log("Image API Response:", response.data);
-  
+      const response = await axiosInstance.get(`${Url}/api/Attachment/Expense/${idToUse}`);
       const imageUrls = response.data.map((image) => ({
-        url: image.filePath, // Ensure this matches the backend response
+        url: image.filePath,
         id: image.id,
       }));
-  
-      setImages(imageUrls); // Update state with new images
-      console.log("Updated Images State:", imageUrls);
+      setImages(imageUrls);
     } catch (error) {
       console.error("Error fetching images:", error);
       message.error("حدث خطأ أثناء جلب صور المصروف");
     }
   };
-  useEffect(() => {
-    console.log("Monthly Status:", expenseData?.monthlyStatus);
-    console.log("Has Update Permission:", hasUpdatePermission);
-    console.log("Has Delete Permission:", hasDeletePermission);
-    console.log("Can Perform Actions:", canPerformActions());
-  }, [expenseData, hasUpdatePermission, hasDeletePermission]);
-  
 
+  // Combined effect: Log debug info and fetch images when expenseData is available.
+  useEffect(() => {
+    if (expenseData) {
+      console.log("Monthly Status:", expenseData.monthlyStatus);
+      console.log("Has Update Permission:", hasUpdatePermission);
+      console.log("Has Delete Permission:", hasDeletePermission);
+      console.log("Can Perform Actions:", canPerformActions());
+      
+      // Use parentExpenseId if available; otherwise, fall back to expenseData.id or expenseId
+      const idForImages = expenseData.parentExpenseId || expenseData.id || expenseId;
+      if (idForImages) {
+        fetchExpensesImages(idForImages);
+      } else {
+        console.error("No valid ID found for fetching images");
+      }
+    }
+  }, [expenseData, expenseId, hasUpdatePermission, hasDeletePermission]);
+
+  // Initialization effect: Check for expenseId and fetch types & details
   useEffect(() => {
     if (!expenseId) {
-      message.error('معرف المصروف غير موجود');
+      message.error("معرف المصروف غير موجود");
       setTimeout(() => {
-        navigate('/Expensess', { replace: true });
+        navigate("/Expensess", { replace: true });
       }, 1500);
       return;
     }
-
     const initializeData = async () => {
       setLoading(true);
       try {
-        await fetchExpensesImages();
         await fetchExpenseTypes();
         await fetchExpenseDetails();
       } catch (error) {
@@ -138,64 +146,54 @@ const ExpensessView = () => {
         setLoading(false);
       }
     };
-
     initializeData();
   }, [expenseId, navigate]);
+
+  // Handle image upload (use parentExpenseId if available)
   const handleImageUpload = async (file) => {
     if (!imageData.imageId) {
       message.error("لم يتم تحديد الصورة");
       return;
     }
-  
     try {
+      const idForUpload = expenseData.parentExpenseId || expenseId;
       const formData = new FormData();
-      formData.append("entityId", expenseId);
+      formData.append("entityId", idForUpload);
       formData.append("entityType", "Expense");
       formData.append("file", file);
-  
+
       const response = await axiosInstance.put(
         `${Url}/api/attachment/${imageData.imageId}`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
-  
-      console.log("Upload Response:", response.data); // Log backend response
       message.success("تم تحديث الصورة بنجاح");
-  
-      // Refetch images to update the state with the latest data
-      await fetchExpensesImages();
+      fetchExpensesImages(idForUpload);
     } catch (error) {
       console.error("Error during image upload:", error);
       message.error("حدث خطأ أثناء تعديل الصورة");
     }
   };
-  
+
   const handleEditClick = () => {
-    // Set the form fields' values with the current expense data
     form.setFieldsValue({
       expenseTypeId: expenseData.expenseTypeId,
-      date: moment(expenseData.expenseDate).format("YYYY-MM-DD"), // Format the date correctly
+      date: moment(expenseData.expenseDate).format("YYYY-MM-DD"),
       price: expenseData.price,
       quantity: expenseData.quantity,
       notes: expenseData.notes,
     });
-    setEditModalVisible(true); // Open the modal
+    setEditModalVisible(true);
   };
-  
+
   const handleSaveEdit = async (values) => {
     try {
-      // Ensure the date is valid
-      const expenseDate = moment(values.date).isValid() 
-        ? moment(values.date).toISOString() 
-        : moment().toISOString(); // Fallback to current date if invalid
-  
+      const expenseDate = moment(values.date).isValid()
+      ? moment(values.date).startOf('day').toISOString()
+      : moment().startOf('day').toISOString();
       const updatedValues = {
         id: expenseId,
-        expenseDate: expenseDate, // Use the validated date
+        expenseDate,
         price: values.price,
         quantity: values.quantity,
         amount: values.price * values.quantity,
@@ -205,170 +203,118 @@ const ExpensessView = () => {
         governorateId: expenseData.governorateId,
         profileId: expenseData.profileId,
       };
-  
       const response = await axiosInstance.put(`/api/Expense/${expenseId}`, updatedValues);
-      console.log("API Response:", response.data); // Log the response for debugging
-      message.success('تم تحديث المصروف بنجاح');
+      console.log("API Response:", response.data);
+      message.success("تم تحديث المصروف بنجاح");
       setEditModalVisible(false);
       await fetchExpenseDetails();
     } catch (error) {
-      console.error("Error updating expense:", error); // Log the error for debugging
-      message.error('حدث خطأ أثناء تعديل المصروف');
+      console.error("Error updating expense:", error);
+      message.error("حدث خطأ أثناء تعديل المصروف");
     }
   };
 
   const handleDelete = async () => {
     try {
       await axiosInstance.delete(`/api/Expense/${expenseId}`);
-      message.success('تم حذف المصروف بنجاح');
+      message.success("تم حذف المصروف بنجاح");
       setDeleteModalVisible(false);
       navigate(-1);
     } catch (error) {
-      message.error('حدث خطأ أثناء حذف المصروف');
+      message.error("حدث خطأ أثناء حذف المصروف");
     }
   };
 
   if (loading) {
     return (
       <div className="loading supervisor-passport-damage-show-container" dir="rtl">
-        <Skeleton active paragraph={{ rows: 10 }} /> 
-        </div>
+        <Skeleton active paragraph={{ rows: 10 }} />
+      </div>
     );
   }
 
   if (!expenseData) {
     return <div className="loading">جاري التحميل...</div>;
   }
-console.log("month" ,expenseData.monthlyStatus)
+
   return (
     <div
-      className={`supervisor-passport-damage-show-container ${
-        isSidebarCollapsed ? "sidebar-collapsed" : ""
-      }`}
-      dir="rtl">
-        {isLoading ? (
-        <Skeleton active  paragraph={{ rows: 10 }} /> // Skeleton loading effect
+      className={`supervisor-passport-damage-show-container ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}
+      dir="rtl"
+    >
+      {isLoading ? (
+        <Skeleton active paragraph={{ rows: 10 }} />
       ) : (
         <>
-      <div className="title-container">
-        <h1>تفاصيل المصروف</h1>
-        <div style={{display:"flex", justifyContent:"space-between", marginBottom: "20px",gap:"20px"}}>
-        <Button 
-              type="primary" 
-              style={{padding:"20px 30px",backgroundColor:"#efb034"}} 
-              onClick={() => navigate(-1)}
-            >
-              الرجوع
-            </Button>
-            {canPerformActions() && (
-  <>
-<Button
-  type="primary"
-  style={{ padding: "20px 30px" }}
-  onClick={handleEditClick} // Use the new handler
->
-  تعديل
-</Button>
-    <Button
-      danger
-      type="primary"
-      style={{ padding: "20px 40px" }}
-      onClick={() => handleDelete()}
-    >
-      حذف
-    </Button>
-  </>
-)}
+          <div className="title-container">
+            <h1>تفاصيل المصروف</h1>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px", gap: "20px" }}>
+              <Button
+                type="primary"
+                style={{ padding: "20px 30px", backgroundColor: "#efb034" }}
+                onClick={() => navigate(-1)}
+              >
+                الرجوع
+              </Button>
+              {canPerformActions() && (
+                <>
+                  <Button type="primary" style={{ padding: "20px 30px" }} onClick={handleEditClick}>
+                    تعديل
+                  </Button>
+                  <Button danger type="primary" style={{ padding: "20px 40px" }} onClick={handleDelete}>
+                    حذف
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
 
+          <div className="details-container-Lecture">
+            <div className="details-lecture-container">
+              <div className="details-row">
+                <span className="details-label">نوع المصروف:</span>
+                <input className="details-value" value={expenseData.expenseTypeName} disabled />
+              </div>
+              <div className="details-row">
+                <span className="details-label">السعر:</span>
+                <input className="details-value" value={`${expenseData.price.toLocaleString()} د.ع`} disabled />
+              </div>
+              <div className="details-row">
+                <span className="details-label">الكمية:</span>
+                <input className="details-value" value={expenseData.quantity} disabled />
+              </div>
+              <div className="details-row">
+                <span className="details-label">المبلغ الإجمالي:</span>
+                <input className="details-value" value={`${expenseData.amount.toLocaleString()} د.ع`} disabled />
+              </div>
+              <div className="details-row">
+                <span className="details-label">التاريخ:</span>
+                <input
+                  className="details-value"
+                  value={moment(expenseData.expenseDate).format("YYYY-MM-DD")}
+                  disabled
+                />
+              </div>
+              <div className="details-row">
+                <span className="details-label">الملاحظات:</span>
+                <textarea className="textarea-value" value={expenseData.notes || "لا توجد ملاحظات"} disabled />
+              </div>
+            </div>
 
-        </div>
-        
-   
-      </div>
-
-      <div className="details-container-Lecture">
-        <div className="details-lecture-container">
-          <div className="details-row">
-            <span className="details-label">نوع المصروف:</span>
-            <input
-              className="details-value"
-              value={expenseData.expenseTypeName}
-              disabled
-            />
+            <div className="image-container">
+              {images.length > 0 && (
+                <div className="image-preview-container">
+                  <span className="note-details-label">صورة المصروف:</span>
+                  <ImagePreviewer
+                    uploadedImages={images.map((img) => img.url)}
+                    defaultWidth={600}
+                    defaultHeight={"fit-content"}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-          
-          <div className="details-row">
-            <span className="details-label">السعر:</span>
-            <input
-              className="details-value"
-              value={`${expenseData.price.toLocaleString()} د.ع`}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">الكمية:</span>
-            <input
-              className="details-value"
-              value={expenseData.quantity}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">المبلغ الإجمالي:</span>
-            <input
-              className="details-value"
-              value={`${expenseData.amount.toLocaleString()} د.ع`}
-              disabled
-            />
-          </div>
-          {/* <div className="details-row">
-            <span className="details-label">المكتب:</span>
-            <input
-              className="details-value"
-              value={profile.officeName}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">المحافظة:</span>
-            <input
-              className="details-value"
-              value={profile.governorateName}
-              disabled
-            />
-          </div> */}
-          <div className="details-row">
-            <span className="details-label">التاريخ:</span>
-            <input
-              className="details-value"
-              value={moment(expenseData.expenseDate).format("YYYY-MM-DD")}
-              disabled
-            />
-          </div>
-          <div className="details-row">
-            <span className="details-label">الملاحظات:</span>
-            <textarea
-              className="textarea-value"
-              value={expenseData.notes || "لا توجد ملاحظات"}
-              disabled
-            />
-          </div>
-          
-        </div>
-        <div className="image-container">
-                    {images.length > 0 && (
-                      <div className="image-preview-container">
-                        <span className="note-details-label">صورة المصروف:</span>
-                        <ImagePreviewer
-                          uploadedImages={images.map((img) => img.url)}
-                          defaultWidth={600}
-                          defaultHeight={"fit-content"}
-                        />
-                      </div>
-                    )}
-                  </div>
-                  
-      </div>     </>
+        </>
       )}
 
       <ConfigProvider direction="rtl">
@@ -376,17 +322,20 @@ console.log("month" ,expenseData.monthlyStatus)
           className="model-container"
           open={editModalVisible}
           onCancel={() => setEditModalVisible(false)}
-          footer={null}>
+          footer={null}
+        >
           <h1>تعديل المصروف</h1>
           <Form
             form={form}
             onFinish={handleSaveEdit}
             layout="vertical"
-            className="dammaged-passport-container-edit-modal">
+            className="dammaged-passport-container-edit-modal"
+          >
             <Form.Item
               name="expenseTypeId"
               label="نوع المصروف"
-              rules={[{ required: true, message: "يرجى اختيار نوع المصروف" }]}>
+              rules={[{ required: true, message: "يرجى اختيار نوع المصروف" }]}
+            >
               <Select placeholder="اختر نوع المصروف">
                 {expenseTypes.map((type) => (
                   <Select.Option key={type.id} value={type.id}>
@@ -395,61 +344,43 @@ console.log("month" ,expenseData.monthlyStatus)
                 ))}
               </Select>
             </Form.Item>
-
-            <Form.Item
-  name="date"
-  label="التاريخ"
-  rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
-  <input
-    className="custom-date-input" // Unique class name
-    placeholder="التاريخ"
-    type="date"
-    value={form.getFieldValue('date')} // Bind the value to the form state
-    onChange={(e) => form.setFieldsValue({ date: e.target.value })} // Update the form state on change
-  />
-</Form.Item>
-
-            <Form.Item
-              name="price"
-              label="السعر"
-              rules={[{ required: true, message: "يرجى إدخال السعر" }]}>
-              <InputNumber
-                min={0}
-                style={{ width: '100%' }}
-                formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={value => value.replace(/\$\s?|(,*)/g, '')}
+            <Form.Item name="date" label="التاريخ" rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}>
+              <input
+                className="custom-date-input"
+                placeholder="التاريخ"
+                type="date"
+                value={form.getFieldValue("date")}
+                onChange={(e) => form.setFieldsValue({ date: e.target.value })}
               />
             </Form.Item>
-
-            <Form.Item
-              name="quantity"
-              label="الكمية"
-              rules={[{ required: true, message: "يرجى إدخال الكمية" }]}>
-              <InputNumber min={1} style={{ width: '100%' }} />
+            <Form.Item name="price" label="السعر" rules={[{ required: true, message: "يرجى إدخال السعر" }]}>
+              <InputNumber
+                min={0}
+                style={{ width: "100%" }}
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+              />
             </Form.Item>
-
+            <Form.Item name="quantity" label="الكمية" rules={[{ required: true, message: "يرجى إدخال الكمية" }]}>
+              <InputNumber min={1} style={{ width: "100%" }} />
+            </Form.Item>
             <Form.Item name="notes" label="الملاحظات">
               <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />
             </Form.Item>
             <Upload
-  beforeUpload={(file) => {
-    // Check if the file is a PDF
-    if (file.type === "application/pdf" || file.name?.endsWith(".pdf")) {
-      message.error("تحميل ملفات PDF غير مسموح به. يرجى تحميل صورة بدلاً من ذلك.");
-      return Upload.LIST_IGNORE; // Prevent the file from being added to the upload list
-    }
-    handleImageUpload(file); // Proceed with the upload for non-PDF files
-    return false; // Prevent automatic upload
-  }}
->
-  <Button
-    style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
-    type="primary"
-    icon={<UploadOutlined />}
-  >
-    استبدال الصورة
-  </Button>
-</Upload>
+              beforeUpload={(file) => {
+                if (file.type === "application/pdf" || file.name?.endsWith(".pdf")) {
+                  message.error("تحميل ملفات PDF غير مسموح به. يرجى تحميل صورة بدلاً من ذلك.");
+                  return Upload.LIST_IGNORE;
+                }
+                handleImageUpload(file);
+                return false;
+              }}
+            >
+              <Button style={{ margin: "20px 0px", backgroundColor: "#efb034" }} type="primary" icon={<UploadOutlined />}>
+                استبدال الصورة
+              </Button>
+            </Upload>
             {images.length > 0 && (
               <>
                 <span className="note-details-label">صور المحضر:</span>
@@ -470,11 +401,7 @@ console.log("month" ,expenseData.monthlyStatus)
                 />
               </>
             )}
-            <Button
-              type="primary"
-              htmlType="submit"
-              block
-              className="submit-button">
+            <Button type="primary" htmlType="submit" block className="submit-button">
               حفظ التعديلات
             </Button>
           </Form>
@@ -486,7 +413,8 @@ console.log("month" ,expenseData.monthlyStatus)
           onOk={handleDelete}
           onCancel={() => setDeleteModalVisible(false)}
           okText="حذف"
-          cancelText="إلغاء">
+          cancelText="إلغاء"
+        >
           <p>هل أنت متأكد أنك تريد حذف هذا المصروف؟</p>
         </Modal>
       </ConfigProvider>
