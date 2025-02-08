@@ -18,6 +18,7 @@ import { PlusCircleOutlined, CalendarOutlined } from "@ant-design/icons";
 import useAuthStore from "../../../store/store";
 import axiosInstance from "../../../intercepters/axiosInstance.js";
 import { Link } from "react-router-dom";
+import moment from "moment";
 import "./styles/SuperVisorExpinsesRequest.css";
 
 export default function SuperVisorExpensesRequest() {
@@ -38,10 +39,11 @@ export default function SuperVisorExpensesRequest() {
   const [canSendRequests, setCanSendRequests] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Loading state
 
+  // Initialize officeInfo with the date set to 00:00:00 but only display the date portion ("YYYY-MM-DD")
   const [officeInfo, setOfficeInfo] = useState({
     totalCount: 0,
     totalExpenses: 0,
-    date: new Date().toISOString().split("T")[0],
+    date: moment(new Date()).startOf("day").format("YYYY-MM-DD"),
     governorate: profile?.governorateName || "",
     officeName: profile?.officeName || "",
     supervisorName: profile?.fullName || "",
@@ -87,9 +89,7 @@ export default function SuperVisorExpensesRequest() {
   // Fetch office budget
   const fetchOfficeBudget = async () => {
     try {
-      const response = await axiosInstance.get(
-        `/api/office/${profile?.officeId}`
-      );
+      const response = await axiosInstance.get(`/api/office/${profile?.officeId}`);
       setOfficeBudget(response.data.budget);
     } catch (error) {
       console.error("Error fetching office budget:", error);
@@ -141,12 +141,9 @@ export default function SuperVisorExpensesRequest() {
     }
   };
 
+  // Format date for display without the hours
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("ar-IQ", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return moment(dateString).startOf("day").format("YYYY-MM-DD");
   };
 
   const getStatusColor = (status) => {
@@ -181,10 +178,10 @@ export default function SuperVisorExpensesRequest() {
 
       if (response.data && response.data.length > 0) {
         const currentExpense = response.data[0];
-        // set dateCreated
-        const dateCreated = new Date(currentExpense.dateCreated)
-          .toISOString()
-          .split("T")[0];
+        // Set dateCreated with hours removed
+        const dateCreated = moment(currentExpense.dateCreated)
+          .startOf("day")
+          .format("YYYY-MM-DD");
 
         setOfficeInfo((prev) => ({ ...prev, date: dateCreated }));
         setCurrentMonthlyExpenseId(currentExpense.id);
@@ -206,25 +203,49 @@ export default function SuperVisorExpensesRequest() {
 
   const fetchDailyExpenses = async (monthlyExpenseId) => {
     if (!monthlyExpenseId) return;
-
+  
     try {
       setLoading(true);
-      const response = await axiosInstance.get(
-        `/api/Expense/${monthlyExpenseId}/daily-expenses`
-      );
-
+      const response = await axiosInstance.get(`/api/Expense/${monthlyExpenseId}/daily-expenses`);
+  
       if (response.data && response.data.length > 0) {
-        const formattedDailyExpenses = response.data.map((expense) => ({
-          key: expense.id,
-          id: expense.id,
-          date: new Date(expense.expenseDate).toISOString().split("T")[0],
-          price: expense.price,
-          quantity: expense.quantity,
-          totalAmount: expense.amount,
-          notes: expense.notes,
-          expenseTypeName: expense.expenseTypeName,
-        }));
-
+        const formattedDailyExpenses = response.data.map((expense) => {
+          // Format main expense with date (without hours)
+          const mainExpense = {
+            key: expense.id,
+            id: expense.id,
+            date: moment(expense.expenseDate)
+              .startOf("day")
+              .format("YYYY-MM-DD"),
+            price: expense.price,
+            quantity: expense.quantity,
+            totalAmount: expense.totalAmount,
+            notes: expense.notes,
+            expenseTypeName: expense.expenseTypeName,
+            isSubExpense: false,
+          };
+  
+          // Format sub-expenses if they exist
+          if (expense.subExpenses && expense.subExpenses.length > 0) {
+            mainExpense.children = expense.subExpenses.map((sub) => ({
+              key: sub.id,
+              id: sub.id,
+              date: moment(sub.expenseDate)
+                .startOf("day")
+                .format("YYYY-MM-DD"),
+              price: sub.price,
+              quantity: sub.quantity,
+              totalAmount: sub.amount,
+              notes: sub.notes,
+              expenseTypeName: sub.expenseTypeName,
+              isSubExpense: true,
+              parentId: expense.id,
+            }));
+          }
+  
+          return mainExpense;
+        });
+  
         setCurrentMonthDailyExpenses(formattedDailyExpenses);
         updateOfficeInfo(formattedDailyExpenses);
       }
@@ -247,10 +268,7 @@ export default function SuperVisorExpensesRequest() {
         profileId: profile?.profileId,
       };
 
-      const response = await axiosInstance.post(
-        "/api/Expense/MonthlyExpenses",
-        payload
-      );
+      const response = await axiosInstance.post("/api/Expense/MonthlyExpenses", payload);
 
       if (response.data) {
         const monthlyExpensesId = response.data.id;
@@ -283,9 +301,7 @@ export default function SuperVisorExpensesRequest() {
       setSendLoading(true);
 
       const actionPayload = {
-        actionType: `تم ارسال الصرفيات من قبل ${profile.position || ""} ${
-          profile.fullName || ""
-        }`,
+        actionType: `تم ارسال الصرفيات من قبل ${profile.position || ""} ${profile.fullName || ""}`,
         notes: values.notes || "",
         monthlyExpensesId: currentMonthlyExpenseId,
       };
@@ -297,10 +313,7 @@ export default function SuperVisorExpensesRequest() {
         newStatus: 1,
       };
 
-      await axiosInstance.post(
-        `/api/Expense/${currentMonthlyExpenseId}/status`,
-        statusPayload
-      );
+      await axiosInstance.post(`/api/Expense/${currentMonthlyExpenseId}/status`, statusPayload);
 
       message.success("تم إرسال المصروف الشهرية بنجاح");
       setIsSendModalVisible(false);
@@ -334,12 +347,26 @@ export default function SuperVisorExpensesRequest() {
     Completed: "مكتمل",
   };
 
+  // Modify the currentMonthColumns to handle sub-expenses
   const currentMonthColumns = [
     {
       title: "نوع المصروف",
       dataIndex: "expenseTypeName",
       key: "expenseTypeName",
       className: "supervisor-expenses-history-table-column",
+      render: (text, record) => (
+        <span
+          style={{
+            paddingRight: record.isSubExpense ? "20px" : "0",
+            color: record.isSubExpense ? "#1890ff" : "inherit",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          {record.isSubExpense && <span style={{ marginLeft: "8px" }}>↳</span>}
+          {text}
+        </span>
+      ),
     },
     {
       title: "التاريخ",
@@ -385,21 +412,18 @@ export default function SuperVisorExpensesRequest() {
           to="/Expensess-view-daily"
           state={{
             dailyExpenseId: record.id,
-            status: "New", // Set status as "New" for current month expenses
+            parentExpenseId: record.parentExpenseId, // Parent ID if available
+            isSubExpense: record.parentExpenseId ? true : false,
+            status: "New",
           }}
         >
-          <Button
-            type="primary"
-            size="large"
-            className="supervisor-expenses-history-details-link"
-          >
+          <Button type="primary" size="large">
             عرض
           </Button>
         </Link>
       ),
     },
   ];
-
   const lastMonthColumns = [
     {
       title: "المبلغ الإجمالي",
@@ -537,23 +561,17 @@ export default function SuperVisorExpensesRequest() {
 
   return (
     <div
-      className={`supervisor-expenses-request-page ${
-        isSidebarCollapsed ? "sidebar-collapsed" : ""
-      }`}
+      className={`supervisor-expenses-request-page ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}
       dir="rtl"
       style={{ padding: "24px" }}
     >
       <div className="this-month-container">
         {!canCreateMonthly ? (
           <Card className="office-info-card" style={{ width: "25%", flexShrink: 0 }}>
-            <h1 style={{ marginBottom: "24px", textAlign: "center" }}>
-              معلومات المكتب
-            </h1>
+            <h1 style={{ marginBottom: "24px", textAlign: "center" }}>معلومات المكتب</h1>
             <h3 style={{ marginBottom: "24px", textAlign: "center" }}>
               صرفيات شهر :{" "}
-              <span style={{ color: "#DAA520", fontWeight: "bold" }}>
-                {displayMonthYear}
-              </span>
+              <span style={{ color: "#DAA520", fontWeight: "bold" }}>{displayMonthYear}</span>
             </h3>
 
             <hr
@@ -574,9 +592,7 @@ export default function SuperVisorExpensesRequest() {
                 }}
               >
                 <span>المحافظة:</span>
-                <strong style={{ color: "#4096ff" }}>
-                  {officeInfo.governorate}
-                </strong>
+                <strong style={{ color: "#4096ff" }}>{officeInfo.governorate}</strong>
               </div>
               <div
                 style={{
@@ -586,9 +602,7 @@ export default function SuperVisorExpensesRequest() {
                 }}
               >
                 <span>اسم المكتب:</span>
-                <strong style={{ color: "#4096ff" }}>
-                  {officeInfo.officeName}
-                </strong>
+                <strong style={{ color: "#4096ff" }}>{officeInfo.officeName}</strong>
               </div>
               <div
                 style={{
@@ -598,9 +612,7 @@ export default function SuperVisorExpensesRequest() {
                 }}
               >
                 <span>اسم المشرف:</span>
-                <strong style={{ color: "#4096ff" }}>
-                  {officeInfo.supervisorName}
-                </strong>
+                <strong style={{ color: "#4096ff" }}>{officeInfo.supervisorName}</strong>
               </div>
               <div
                 style={{
@@ -633,9 +645,7 @@ export default function SuperVisorExpensesRequest() {
                 }}
               >
                 <span>النثرية:</span>
-                <strong style={{ color: "#02aa0a" }}>
-                  {officeBudget?.toLocaleString()} د.ع
-                </strong>
+                <strong style={{ color: "#02aa0a" }}>{officeBudget?.toLocaleString()} د.ع</strong>
               </div>
               <div
                 style={{
@@ -648,13 +658,10 @@ export default function SuperVisorExpensesRequest() {
                 }}
               >
                 <span>إجمالي الصرفيات:</span>
-                <strong style={{ color: "#02aa0a" }}>
-                  {officeInfo.totalExpenses.toLocaleString()} د.ع
-                </strong>
+                <strong style={{ color: "#02aa0a" }}>{officeInfo.totalExpenses.toLocaleString()} د.ع</strong>
               </div>
 
               {officeInfo.totalExpenses === 0 ? (
-                // If total expenses is 0, display 0
                 <div
                   style={{
                     backgroundColor: "rgba(230, 227, 227, 0.5)",
@@ -669,7 +676,6 @@ export default function SuperVisorExpensesRequest() {
                   <strong style={{ color: "#DAA520" }}>0 د.ع</strong>
                 </div>
               ) : (
-                // Otherwise, use remainColor logic
                 <div
                   style={{
                     backgroundColor: "rgba(230, 227, 227, 0.5)",
@@ -681,9 +687,7 @@ export default function SuperVisorExpensesRequest() {
                   }}
                 >
                   <span>المتبقي:</span>
-                  <strong style={{ color: remainColor }}>
-                    {totalremaining.toLocaleString()} د.ع
-                  </strong>
+                  <strong style={{ color: remainColor }}>{totalremaining.toLocaleString()} د.ع</strong>
                 </div>
               )}
 
@@ -699,7 +703,6 @@ export default function SuperVisorExpensesRequest() {
               </div>
             </div>
 
-            {/* Disable "إضافة مصروف يومي" if totalExpenses >= officeBudget */}
             <Tooltip
               title={
                 officeInfo.totalExpenses >= officeBudget
@@ -710,7 +713,6 @@ export default function SuperVisorExpensesRequest() {
               <span>
                 <Link
                   to="/add-daily-expense"
-                  // Pass any needed state to the route
                   state={{
                     monthlyExpenseId: currentMonthlyExpenseId,
                     officeBudget: officeBudget,
@@ -740,14 +742,9 @@ export default function SuperVisorExpensesRequest() {
             <EmptyStateCard />
           ) : (
             <>
-              <Card
-                className="expenses-table-card"
-                style={{ marginBottom: "24px" }}
-              >
+              <Card className="expenses-table-card" style={{ marginBottom: "24px" }}>
                 <div className="this-month-daily-container">
-                  <h1 style={{ marginBottom: "5px" }}>
-                    المصروفات اليومية للشهر الحالي
-                  </h1>
+                  <h1 style={{ marginBottom: "5px" }}>المصروفات اليومية للشهر الحالي</h1>
                   <Button
                     type="primary"
                     disabled={!canSendRequests}
@@ -768,6 +765,10 @@ export default function SuperVisorExpensesRequest() {
                       pageSize: 5,
                       position: ["bottomCenter"],
                       showSizeChanger: false,
+                    }}
+                    expandable={{
+                      defaultExpandAllRows: true,
+                      expandRowByClick: true,
                     }}
                     style={{ marginTop: "5px" }}
                   />
@@ -872,19 +873,9 @@ export default function SuperVisorExpensesRequest() {
           className="new-expensess-monthly"
           style={{ marginTop: "10px" }}
         >
-          <Form.Item
-            name="notes"
-            label="هل انت متأكد من انشاء مصروف لهذا الشهر"
-            style={{ width: "100%" }}
-          />
+          <Form.Item name="notes" label="هل انت متأكد من انشاء مصروف لهذا الشهر" style={{ width: "100%" }} />
           <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              block
-              size="large"
-            >
+            <Button type="primary" htmlType="submit" loading={loading} block size="large">
               إنشاء
             </Button>
           </Form.Item>
@@ -902,32 +893,15 @@ export default function SuperVisorExpensesRequest() {
         footer={null}
         style={{ direction: "rtl" }}
       >
-        <Form
-          form={sendForm}
-          onFinish={handleSendMonthlyExpense}
-          layout="vertical"
-          style={{ marginTop: "10px" }}
-        >
+        <Form form={sendForm} onFinish={handleSendMonthlyExpense} layout="vertical" style={{ marginTop: "10px" }}>
           <span style={{ color: "red" }}>
-            * يرجى التاكد من ادخال جميع المصاريف اليومية الخاصة بهذا الشهر قبل
-            الارسال
+            * يرجى التاكد من ادخال جميع المصاريف اليومية الخاصة بهذا الشهر قبل الارسال
           </span>
           <Form.Item name="notes" label="ملاحظات" style={{ width: "100%" }}>
-            <Input.TextArea
-              rows={4}
-              placeholder="أدخل الملاحظات"
-              style={{ resize: "none", marginBottom: "20px" }}
-              required
-            />
+            <Input.TextArea rows={4} placeholder="أدخل الملاحظات" style={{ resize: "none", marginBottom: "20px" }} required />
           </Form.Item>
           <Form.Item>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={sendLoading}
-              block
-              size="large"
-            >
+            <Button type="primary" htmlType="submit" loading={sendLoading} block size="large">
               إرسال
             </Button>
           </Form.Item>

@@ -10,7 +10,10 @@ import {
   Modal,
   InputNumber,
   Select,
+  Card,
+  Space,
 } from "antd";
+import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import useAuthStore from "../../../store/store";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
@@ -30,6 +33,7 @@ export default function ExpensessAddDaily() {
   const [isScanning, setIsScanning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expenseTypes, setExpenseTypes] = useState([]);
+  const [hasSubExpenses, setHasSubExpenses] = useState(false);
   const { profile, isSidebarCollapsed } = useAuthStore();
   const {
     profileId,
@@ -62,10 +66,10 @@ export default function ExpensessAddDaily() {
       message.error("حدث خطأ في جلب ميزانية المكتب");
     }
   };
+
   useEffect(() => {
     fetchOfficeBudget();
   }, [profile?.officeId]);
-  console.log("officeBudget", officeBudget);
 
   useEffect(() => {
     if (!monthlyExpenseId) {
@@ -138,10 +142,27 @@ export default function ExpensessAddDaily() {
         notes: values.notes || "لا يوجد",
         expenseDate: values.date.format("YYYY-MM-DDTHH:mm:ss"),
         expenseTypeId: values.expenseTypeId,
+        monthlyExpensesId: monthlyExpenseId
       };
 
+      // Add sub-expenses if they exist
+      if (hasSubExpenses && values.subExpenses) {
+        payload.subExpenses = values.subExpenses.map(sub => ({
+          price: sub.price,
+          quantity: sub.quantity,
+          notes: sub.notes || "لا يوجد",
+          expenseTypeId: sub.expenseTypeId
+        }));
+      }
+
+      // Calculate total amount including sub-expenses
+      const mainTotal = values.price * values.quantity;
+      const subTotal = hasSubExpenses ? 
+        values.subExpenses?.reduce((sum, sub) => sum + (sub.price * sub.quantity), 0) || 0 : 0;
+      const totalAmount = mainTotal + subTotal;
+
       // Check budget
-      if (values.totalamount + totalMonthlyAmount > officeBudget) {
+      if (totalAmount + totalMonthlyAmount > officeBudget) {
         message.error("الميزانية غير كافية");
         message.info(`الميزانية المتبقية ${officeBudget - totalMonthlyAmount}`);
         setIsSubmitting(false);
@@ -187,27 +208,6 @@ export default function ExpensessAddDaily() {
       return true;
     });
 
-    // ------------------------
-    // OLD (commented out) logic:
-    /*
-    const uniqueFiles = updatedFiles.filter(
-      (newFile) =>
-        !fileList.some(
-          (existingFile) =>
-            existingFile.name === newFile.name &&
-            existingFile.lastModified === newFile.lastModified
-        )
-    );
-    const newPreviews = uniqueFiles.map((file) =>
-      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
-    );
-    setPreviewUrls((prev) => [...prev, ...newPreviews]);
-    setFileList((prev) => [...prev, ...uniqueFiles]);
-    */
-    // ------------------------
-
-    // NEW (fixed) approach:
-    // Make Dragger a controlled component using updatedFiles
     setFileList(updatedFiles);
 
     // Generate new previews directly from updatedFiles
@@ -253,9 +253,7 @@ export default function ExpensessAddDaily() {
         type: "image/jpeg",
       });
 
-      if (
-        !fileList.some((existingFile) => existingFile.name === scannedFile.name)
-      ) {
+      if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
 
         setFileList((prev) => [
@@ -295,6 +293,15 @@ export default function ExpensessAddDaily() {
     }
   };
 
+  const toggleSubExpenses = () => {
+    setHasSubExpenses(!hasSubExpenses);
+    if (!hasSubExpenses) {
+      form.setFieldsValue({ subExpenses: [{}] });
+    } else {
+      form.setFieldsValue({ subExpenses: undefined });
+    }
+  };
+
   return (
     <div
       className={`supervisor-damaged-passport-add-container ${
@@ -309,11 +316,24 @@ export default function ExpensessAddDaily() {
           onFinish={handleFormSubmit}
           layout="vertical"
           onValuesChange={(changedValues, allValues) => {
-            const { price, quantity } = allValues;
+            const { price, quantity, subExpenses } = allValues;
+            let total = 0;
+            
             if (price !== undefined && quantity !== undefined) {
-              const total = price * quantity;
-              form.setFieldsValue({ totalamount: total });
+              total += price * quantity;
             }
+
+            if (hasSubExpenses && subExpenses) {
+              const subTotal = subExpenses.reduce((sum, sub) => {
+                if (sub?.price && sub?.quantity) {
+                  return sum + (sub.price * sub.quantity);
+                }
+                return sum;
+              }, 0);
+              total += subTotal;
+            }
+
+            form.setFieldsValue({ totalamount: total });
           }}
         >
           <div className="form-item-damaged-device-container">
@@ -377,7 +397,6 @@ export default function ExpensessAddDaily() {
               <DatePicker
                 style={{ width: "100%", height: "45px" }}
                 disabledDate={(current) => {
-                  // Disable dates outside the current month
                   const now = new Date();
                   return (
                     current &&
@@ -391,6 +410,101 @@ export default function ExpensessAddDaily() {
             <Form.Item name="notes" label="ملاحظات" initialValue="لا يوجد">
               <Input.TextArea rows={4} style={{ width: "100%", height: "45px" }} />
             </Form.Item>
+          </div>
+
+          {/* Sub-expenses section */}
+          <div style={{ marginTop: "20px" }}>
+            <Button 
+              type="dashed"
+              onClick={toggleSubExpenses}
+              icon={<PlusOutlined />}
+              style={{ marginBottom: "16px" }}
+            >
+              {hasSubExpenses ? "إلغاء المصاريف الفرعية" : "إضافة مصاريف فرعية"}
+            </Button>
+
+            {hasSubExpenses && (
+              <Form.List name="subExpenses">
+                {(fields, { add, remove }) => (
+                  <div style={{ marginBottom: "20px" }}>
+                    {fields.map((field, index) => (
+                      <Card 
+                        key={field.key} 
+                        title={`مصروف فرعي ${index + 1}`}
+                        extra={
+                          <MinusCircleOutlined 
+                            onClick={() => remove(field.name)}
+                            style={{ color: '#ff4d4f' }}
+                          />
+                        }
+                        style={{ marginBottom: "16px" }}
+                      >
+                        <Space direction="vertical" style={{ width: '100%' }}>
+                          <Form.Item
+                            {...field}
+                            name={[field.name, 'expenseTypeId']}
+                            label="نوع المصروف"
+                            rules={[{ required: true, message: 'يرجى اختيار نوع المصروف' }]}
+                          >
+                            <Select placeholder="اختر نوع المصروف">
+                              {expenseTypes.map((type) => (
+                                <Select.Option key={type.id} value={type.id}>
+                                  {type.name}
+                                </Select.Option>
+                              ))}
+                            </Select>
+                          </Form.Item>
+                          
+                          <Form.Item
+                            {...field}
+                            name={[field.name, 'price']}
+                            label="السعر"
+                            rules={[{ required: true, message: 'يرجى إدخال السعر' }]}
+                          >
+                            <InputNumber
+                              placeholder="أدخل السعر"
+                              style={{ width: '100%' }}
+                              min={0}
+                              formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                              parser={value => value.replace(/,\s?/g, '')}
+                            />
+                          </Form.Item>
+
+                          <Form.Item
+                            {...field}
+                            name={[field.name, 'quantity']}
+                            label="الكمية"
+                            rules={[{ required: true, message: 'يرجى إدخال الكمية' }]}
+                          >
+                            <InputNumber
+                              placeholder="أدخل الكمية"
+                              style={{ width: '100%' }}
+                              min={1}
+                            />
+                          </Form.Item>
+
+                          <Form.Item
+                            {...field}
+                            name={[field.name, 'notes']}
+                            label="ملاحظات"
+                          >
+                            <Input.TextArea rows={2} />
+                          </Form.Item>
+                        </Space>
+                      </Card>
+                    ))}
+                    <Button 
+                      type="dashed" 
+                      onClick={() => add()} 
+                      block 
+                      icon={<PlusOutlined />}
+                    >
+                      إضافة مصروف فرعي آخر
+                    </Button>
+                  </div>
+                )}
+              </Form.List>
+            )}
           </div>
 
           <h2 className="SuperVisor-Lecturer-title-conatiner">
