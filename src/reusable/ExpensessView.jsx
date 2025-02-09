@@ -72,7 +72,21 @@ export default function ExpensesView() {
   const [isPrinting, setIsPrinting] = useState(false);
   // Check if user is accountant
   const isAccountant = profile?.position?.toLowerCase()?.includes("accontnt");
-
+// Flattens top-level items + their children
+function flattenItems(items) {
+  const result = [];
+  items.forEach((item) => {
+    // Push the main item
+    result.push(item);
+    // If it has children (subExpenses), push them too
+    if (item.children && item.children.length > 0) {
+      item.children.forEach((subItem) => {
+        result.push(subItem);
+      });
+    }
+  });
+  return result;
+}
   // Helper functions for status transitions
   const getNextStatus = (currentStatus, position) => {
     position = position?.toLowerCase();
@@ -241,37 +255,46 @@ export default function ExpensesView() {
   // Fetch all expense data and process items—including sub-expenses
   useEffect(() => {
     let isMounted = true;
-
+  
     const fetchAllExpenseData = async () => {
       if (!expenseId) {
         message.error("لم يتم العثور على معرف المصروف");
         navigate("/expenses-history");
         return;
       }
+  
       try {
         setIsLoading(true);
-        // Two parallel API calls: one for general expense info and one for daily expenses
+  
+        // 1) Fetch monthly expense info
         const expensePromise = axiosInstance.get(`${Url}/api/Expense/${expenseId}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
+  
+        // 2) Fetch daily expenses
         const dailyExpensesPromise = axiosInstance.get(
           `${Url}/api/Expense/${expenseId}/daily-expenses`,
           { headers: { Authorization: `Bearer ${accessToken}` } }
         );
+  
         const [expenseResponse, dailyExpensesResponse] = await Promise.all([
           expensePromise,
           dailyExpensesPromise,
         ]);
+  
         if (!isMounted) return;
-        // Fetch office budget using officeId from expenseResponse
+  
+        // 3) Fetch office budget
         const officeId = expenseResponse.data.officeId;
         const officeResponse = await axiosInstance.get(`${Url}/api/office/${officeId}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         const officeBudget = officeResponse.data.budget;
-        // Process regular expense items (if any)
+  
+        // 4) Process regular expense items
         const regularItems =
           expenseResponse.data.expenseItems?.map((item, index) => ({
+            key: `regular-${item.id ?? index}`,
             تسلسل: index + 1,
             التاريخ: new Date(item.date).toLocaleDateString(),
             "نوع المصروف": item.description,
@@ -281,10 +304,13 @@ export default function ExpensesView() {
             ملاحظات: item.notes,
             image: item.receiptImage,
             type: "regular",
+            isSubExpense: false,
           })) || [];
-        // Process daily expense items and include sub-expenses (if available)
+  
+        // 5) Process daily expense items (some may have subExpenses)
         const dailyItems = dailyExpensesResponse.data.map((item, index) => {
           const mainItem = {
+            key: `daily-${item.id}`,
             تسلسل: regularItems.length + index + 1,
             التاريخ: new Date(item.expenseDate).toLocaleDateString(),
             "نوع المصروف": item.expenseTypeName,
@@ -294,9 +320,12 @@ export default function ExpensesView() {
             ملاحظات: item.notes,
             id: item.id,
             type: "daily",
+            isSubExpense: false,
           };
+  
           if (item.subExpenses && item.subExpenses.length > 0) {
             mainItem.children = item.subExpenses.map((sub, subIndex) => ({
+              key: `subexpense-${sub.id}`,
               تسلسل: `${regularItems.length + index + 1}.${subIndex + 1}`,
               التاريخ: new Date(sub.expenseDate).toLocaleDateString(),
               "نوع المصروف": sub.expenseTypeName,
@@ -307,18 +336,29 @@ export default function ExpensesView() {
               id: sub.id,
               type: "sub-daily",
               isSubExpense: true,
-              parentId: item.id,
             }));
           }
+  
           return mainItem;
         });
-        // Combine and sort all items by date (descending)
+  
+        // 6) Combine the two sets & sort by date desc
         const allItems = [...regularItems, ...dailyItems].sort(
           (a, b) => new Date(b.التاريخ) - new Date(a.التاريخ)
         );
-        // Calculate remaining amount
-        const remainingAmount = officeBudget - expenseResponse.data.totalAmount;
+  
+        // 7) Flatten them all to compute final totals
+        const flattenedAllItems = flattenItems(allItems);
+  
+        // 8) Sum all .المجموع
+        const finalTotal = flattenedAllItems.reduce((sum, item) => sum + (item.المجموع || 0), 0);
+  
+        // 9) Remaining
+        const remainingAmount = officeBudget - finalTotal;
+  
+        // 10) Store in state
         if (!isMounted) return;
+  
         setExpense({
           generalInfo: {
             "الرقم التسلسلي": expenseResponse.data.id,
@@ -326,12 +366,15 @@ export default function ExpensesView() {
             المحافظة: expenseResponse.data.governorateName,
             المكتب: expenseResponse.data.officeName,
             "مبلغ النثرية": officeBudget,
-            "مجموع الصرفيات": expenseResponse.data.totalAmount,
+            // Use our computed finalTotal
+            "مجموع الصرفيات": finalTotal,
+            // Use our computed remaining
             المتبقي: remainingAmount,
             التاريخ: new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
             الحالة: expenseResponse.data.status,
           },
-          items: allItems,
+          items: allItems, // keep hierarchical for the table
+          flattenedItems: flattenedAllItems, // for PDF/Excel usage
         });
       } catch (error) {
         if (isMounted) {
@@ -345,7 +388,9 @@ export default function ExpensesView() {
         }
       }
     };
+  
     fetchAllExpenseData();
+  
     return () => {
       isMounted = false;
     };
@@ -354,222 +399,246 @@ export default function ExpensesView() {
   // ================= Export Functions =================
 
   // Function to export to Excel using ExcelJS and file-saver
-  const handleExportToExcel = async () => {
-    try {
-      if (!expense) {
-        message.error("لا توجد بيانات لتصديرها");
-        return;
-      }
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("تقرير المصاريف", {
-        properties: { rtl: true },
-      });
-      // Add Supervisor Info Row
-      const supervisorRow = worksheet.addRow([
-        "الحالة",
-        "المتبقي",
-        "مجموع الصرفيات",
-        "مبلغ النثرية",
-        "المكتب",
-        "المحافظة",
-        "اسم المشرف",
-      ]);
-      supervisorRow.eachCell((cell) => {
-        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-        cell.alignment = { horizontal: "center", vertical: "middle" };
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FF4CAF50" },
-        };
-        cell.border = {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" },
-        };
-      });
-      const supervisorDataRow = worksheet.addRow([
-        statusMap[expense?.generalInfo?.["الحالة"]] || "N/A",
-        `IQD ${Number(expense?.generalInfo?.["المتبقي"] || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
-        `IQD ${Number(expense?.generalInfo?.["مجموع الصرفيات"] || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
-        `IQD ${Number(expense?.generalInfo?.["مبلغ النثرية"] || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
-        expense?.generalInfo?.["المكتب"] || "N/A",
-        expense?.generalInfo?.["المحافظة"] || "N/A",
-        expense?.generalInfo?.["اسم المشرف"] || "N/A",
-      ]);
-      supervisorDataRow.eachCell((cell) => {
-        cell.alignment = { horizontal: "center", vertical: "middle" };
-        cell.border = {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" },
-        };
-      });
-      worksheet.addRow([]);
-      // Add Header Row for expense items
-      const headers = [
-        "ملاحظات",
-        "المجموع",
-        "سعر المفرد",
-        "العدد",
-        "البند",
-        "التاريخ",
-        "ت",
-      ];
-      const headerRow = worksheet.addRow(headers);
-      headerRow.eachCell((cell) => {
-        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-        cell.alignment = { horizontal: "center", vertical: "middle" };
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FF9C27B0" },
-        };
-        cell.border = {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" },
-        };
-      });
-      // Add Data Rows
-      expense?.items?.forEach((item, index) => {
-        const row = worksheet.addRow([
-          item["ملاحظات"] || "",
-          `IQD ${Number(item["المجموع"] || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
-          `IQD ${Number(item["السعر"] || 0).toLocaleString(undefined, { minimumFractionDigits: 0 })}`,
-          item["الكمية"] || "",
-          item["نوع المصروف"] || "",
-          item["التاريخ"] || "",
-          index + 1,
-        ]);
-        row.eachCell((cell) => {
-          cell.alignment = { horizontal: "center", vertical: "middle" };
-          cell.border = {
-            top: { style: "thin" },
-            bottom: { style: "thin" },
-            left: { style: "thin" },
-            right: { style: "thin" },
-          };
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" },
-          };
-        });
-      });
-      // Set Column Widths
-      worksheet.columns = [
-        { width: 30 }, // ملاحظات
-        { width: 30 }, // المجموع
-        { width: 30 }, // سعر المفرد
-        { width: 30 }, // العدد
-        { width: 30 }, // البند
-        { width: 25 }, // التاريخ
-        { width: 20 }, // تسلسل
-      ];
-      const buffer = await workbook.xlsx.writeBuffer();
-      saveAs(new Blob([buffer]), "تقرير_المصروفات.xlsx");
-      message.success("تم تصدير التقرير بنجاح");
-    } catch (error) {
-      console.error("Error exporting to Excel:", error);
-      message.error("حدث خطأ أثناء تصدير التقرير");
+ const handleExportToExcel = async () => {
+  try {
+    if (!expense) {
+      message.error("لا توجد بيانات لتصديرها");
+      return;
     }
-  };
 
-  // Function to generate and download a PDF file using html2pdf.js
-  const handlePrint = async () => {
-    setIsPrinting(true);
-    try {
-      const element = document.createElement("div");
-      element.dir = "rtl";
-      element.style.fontFamily = "Arial, sans-serif";
-      // (For brevity, the HTML content below is a sample.
-      // You can modify it to include your complete report content.)
-      element.innerHTML = `
-        <div style="padding: 20px; text-align: center;">
-          <h1>تقرير المصاريف</h1>
-          <p>التاريخ: ${expense?.generalInfo?.["التاريخ"] || ""}</p>
-          <table border="1" style="width:100%; border-collapse: collapse;">
-            <thead>
-              <tr>
-                <th>اسم المشرف</th>
-                <th>المحافظة</th>
-                <th>المكتب</th>
-                <th>مبلغ النثرية</th>
-                <th>مجموع الصرفيات</th>
-                <th>المتبقي</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>${expense?.generalInfo?.["اسم المشرف"] || ""}</td>
-                <td>${expense?.generalInfo?.["المحافظة"] || ""}</td>
-                <td>${expense?.generalInfo?.["المكتب"] || ""}</td>
-                <td>${expense?.generalInfo?.["مبلغ النثرية"] || ""}</td>
-                <td>${expense?.generalInfo?.["مجموع الصرفيات"] || ""}</td>
-                <td>${expense?.generalInfo?.["المتبقي"] || ""}</td>
-              </tr>
-            </tbody>
-          </table>
-          <br/>
-          <h2>العناصر</h2>
-          <table border="1" style="width:100%; border-collapse: collapse;">
-            <thead>
-              <tr>
-                <th>ت</th>
-                <th>تاريخ</th>
-                <th>البند</th>
-                <th>العدد</th>
-                <th>سعر المفرد</th>
-                <th>المجموع</th>
-                <th>ملاحظات</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${expense?.items
-                ?.map(
-                  (item, index) => `
-                <tr>
-                  <td>${item.تسلسل}</td>
-                  <td>${item.التاريخ}</td>
-                  <td>${item.isSubExpense ? "↳ " : ""}${item["نوع المصروف"]}</td>
-                  <td>${item["الكمية"]}</td>
-                  <td>${item["السعر"]}</td>
-                  <td>${item["المجموع"]}</td>
-                  <td>${item["ملاحظات"]}</td>
-                </tr>
-              `
-                )
-                .join("")}
-            </tbody>
-          </table>
-        </div>
-      `;
-      const opt = {
-        margin: 2,
-        filename: "تقرير_المصاريف.pdf",
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          letterRendering: true,
-        },
-        jsPDF: { unit: "cm", format: "a4", orientation: "portrait" },
+    const flattened = expense?.flattenedItems || [];
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("تقرير المصاريف", {
+      properties: { rtl: true },
+    });
+
+    // 1) Add supervisor info row
+    const supervisorRow = worksheet.addRow([
+      "الحالة",
+      "المتبقي",
+      "مجموع الصرفيات",
+      "مبلغ النثرية",
+      "المكتب",
+      "المحافظة",
+      "اسم المشرف",
+    ]);
+    supervisorRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF4CAF50" },
       };
-      html2pdf().from(element).set(opt).save();
-    } catch (error) {
-      console.error("Error generating PDF:", error);
-      message.error("حدث خطأ أثناء إنشاء ملف PDF");
-    } finally {
-      setIsPrinting(false);
-    }
-  };
+      cell.border = {
+        top: { style: "thin" },
+        bottom: { style: "thin" },
+        left: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    const supervisorDataRow = worksheet.addRow([
+      statusMap[expense?.generalInfo?.["الحالة"]] || "N/A",
+      `IQD ${Number(expense?.generalInfo?.["المتبقي"] ?? 0).toLocaleString()}`,
+      `IQD ${Number(expense?.generalInfo?.["مجموع الصرفيات"] ?? 0).toLocaleString()}`,
+      `IQD ${Number(expense?.generalInfo?.["مبلغ النثرية"] ?? 0).toLocaleString()}`,
+      expense?.generalInfo?.["المكتب"] || "N/A",
+      expense?.generalInfo?.["المحافظة"] || "N/A",
+      expense?.generalInfo?.["اسم المشرف"] || "N/A",
+    ]);
+    supervisorDataRow.eachCell((cell) => {
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.border = {
+        top: { style: "thin" },
+        bottom: { style: "thin" },
+        left: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    worksheet.addRow([]); // empty row
+
+    // 2) Add header row for the items
+    const headers = ["ملاحظات", "المجموع", "سعر المفرد", "العدد", "البند", "التاريخ", "ت"];
+    const headerRow = worksheet.addRow(headers);
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF9C27B0" },
+      };
+      cell.border = {
+        top: { style: "thin" },
+        bottom: { style: "thin" },
+        left: { style: "thin" },
+        right: { style: "thin" },
+      };
+    });
+
+    // 3) Insert each flattened item as a row
+    flattened.forEach((item, index) => {
+      const row = worksheet.addRow([
+        item["ملاحظات"] || "",
+        `IQD ${Number(item["المجموع"] || 0).toLocaleString()}`,
+        `IQD ${Number(item["السعر"] || 0).toLocaleString()}`,
+        item["الكمية"] || "",
+        (item.isSubExpense ? "↳ " : "") + (item["نوع المصروف"] || ""),
+        item["التاريخ"] || "",
+        index + 1, // or item.تسلسل if you prefer
+      ]);
+
+      row.eachCell((cell) => {
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+        // Alternate row color
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" },
+        };
+      });
+    });
+
+    // 4) Set column widths
+    worksheet.columns = [
+      { width: 30 }, // ملاحظات
+      { width: 30 }, // المجموع
+      { width: 30 }, // سعر المفرد
+      { width: 30 }, // العدد
+      { width: 30 }, // البند
+      { width: 25 }, // التاريخ
+      { width: 20 }, // ت
+    ];
+
+    // 5) Output the file
+    const buffer = await workbook.xlsx.writeBuffer();
+    saveAs(new Blob([buffer]), "تقرير_المصاريف.xlsx");
+    message.success("تم تصدير التقرير بنجاح");
+  } catch (error) {
+    console.error("Error exporting to Excel:", error);
+    message.error("حدث خطأ أثناء تصدير التقرير");
+  }
+};
+
+ // Function to generate and download a PDF
+const handlePrint = async () => {
+  setIsPrinting(true);
+  try {
+    const flattened = expense?.flattenedItems || [];
+
+    const element = document.createElement("div");
+    element.dir = "rtl";
+    element.style.fontFamily = "Arial, sans-serif";
+
+    element.innerHTML = `
+      <div style="padding: 20px; text-align: center;">
+        <h1>تقرير المصاريف</h1>
+        <p>التاريخ: ${expense?.generalInfo?.["التاريخ"] || ""}</p>
+        <table border="1" style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th>اسم المشرف</th>
+              <th>المحافظة</th>
+              <th>المكتب</th>
+              <th>مبلغ النثرية</th>
+              <th>مجموع الصرفيات</th>
+              <th>المتبقي</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${expense?.generalInfo?.["اسم المشرف"] || ""}</td>
+              <td>${expense?.generalInfo?.["المحافظة"] || ""}</td>
+              <td>${expense?.generalInfo?.["المكتب"] || ""}</td>
+              <td>${expense?.generalInfo?.["مبلغ النثرية"] || 0}</td>
+              <td>${expense?.generalInfo?.["مجموع الصرفيات"] || 0}</td>
+              <td>${expense?.generalInfo?.["المتبقي"] || 0}</td>
+            </tr>
+          </tbody>
+        </table>
+        <br/>
+        <h2>العناصر</h2>
+        <table border="1" style="width:100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th>ت</th>
+              <th>تاريخ</th>
+              <th>البند</th>
+              <th>العدد</th>
+              <th>سعر المفرد</th>
+              <th>المجموع</th>
+              <th>ملاحظات</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${flattened
+              .map((item, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${item.التاريخ}</td>
+                  <td>${item.isSubExpense ? "↳ " : ""}${item["نوع المصروف"] ?? ""}</td>
+                  <td>${item["الكمية"] ?? ""}</td>
+                  <td>${item["السعر"] ?? 0}</td>
+                  <td>${item["المجموع"] ?? 0}</td>
+                  <td>${item["ملاحظات"] ?? ""}</td>
+                </tr>
+              `)
+              .join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    const opt = {
+      margin: 2,
+      filename: "تقرير_المصاريف.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+      },
+      jsPDF: { unit: "cm", format: "a4", orientation: "portrait" },
+    };
+
+    await html2pdf().from(element).set(opt).save();
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    message.error("حدث خطأ أثناء إنشاء ملف PDF");
+  } finally {
+    setIsPrinting(false);
+  }
+};
 
   // Define columns for the expense items table with expandable rows for sub-expenses
   const expenseItemsColumns = [
+    {
+      title: "",
+      key: "expand",
+      width: '50px',
+      align: "center",
+      render: (_, record) => {
+        return record.children ? (
+          <div style={{ 
+            cursor: 'pointer', 
+            color: '#1890ff',
+            fontSize: '12px',
+            width: '20px',
+            margin: '0 auto'
+          }}>
+           
+          </div>
+        ) : null;
+      }
+    },
     {
       title: "ت",
       dataIndex: "تسلسل",
@@ -806,37 +875,48 @@ export default function ExpensesView() {
 
         {/* Combined Expense Items Table with expandable rows for sub-expenses */}
         <ConfigProvider direction="rtl">
-          <Table
-            className="expense-items-table"
-            loading={isLoading}
-            columns={expenseItemsColumns}
-            dataSource={expense?.items}
-            bordered
-            pagination={{ pageSize: 5, position: ["bottomCenter"] }}
-            locale={{ emptyText: "لا توجد عناصر للصرف." }}
-            expandable={{ defaultExpandAllRows: true, expandRowByClick: true }}
-            summary={(pageData) => {
-              const total = pageData.reduce((sum, item) => sum + item.المجموع, 0);
-              return (
-                <Table.Summary fixed>
-                  <Table.Summary.Row>
-                    <Table.Summary.Cell index={0} colSpan={5} align="center">
-                      المجموع الكلي
-                    </Table.Summary.Cell>
-                    <Table.Summary.Cell index={1} align="center">
-                      IQD{" "}
-                      {Number(total).toLocaleString(undefined, {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2,
-                      })}
-                    </Table.Summary.Cell>
-                    <Table.Summary.Cell index={2} colSpan={2} />
-                  </Table.Summary.Row>
-                </Table.Summary>
-              );
-            }}
-          />
-        </ConfigProvider>
+  <Table
+    rowKey="key"
+    className="expense-items-table"
+    loading={isLoading}
+    columns={expenseItemsColumns}
+    dataSource={expense?.items}
+    bordered
+    pagination={{ pageSize: 5, position: ["bottomCenter"] }}
+    locale={{ emptyText: "لا توجد عناصر للصرف." }}
+    expandable={{ defaultExpandAllRows: true, expandRowByClick: true }}
+    summary={(pageData) => {
+      // Manually sum top-level AND sub-level
+      let total = 0;
+      pageData.forEach((item) => {
+        total += (item.المجموع || 0);
+        if (item.children && item.children.length > 0) {
+          item.children.forEach((subItem) => {
+            total += (subItem.المجموع || 0);
+          });
+        }
+      });
+
+      return (
+        <Table.Summary fixed>
+          <Table.Summary.Row>
+            <Table.Summary.Cell index={0} colSpan={5} align="center">
+              المجموع الكلي
+            </Table.Summary.Cell>
+            <Table.Summary.Cell index={1} align="center">
+              IQD{" "}
+              {Number(total).toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              })}
+            </Table.Summary.Cell>
+            <Table.Summary.Cell index={2} colSpan={2} />
+          </Table.Summary.Row>
+        </Table.Summary>
+      );
+    }}
+  />
+</ConfigProvider>
 
         {/* Details Modal */}
         <Modal
