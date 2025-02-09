@@ -13,11 +13,12 @@ import {
   Card,
   Space,
 } from "antd";
-import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, MinusCircleOutlined, MinusOutlined, DeleteOutlined } from '@ant-design/icons';
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import useAuthStore from "../../../store/store";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./../lecturer/SuperVisorLecturerAdd.css";
+import { MinusCircleIcon, MinusIcon, RecycleIcon, RemoveFormatting } from "lucide-react";
 
 const { Dragger } = Upload;
 
@@ -294,12 +295,24 @@ export default function ExpensessAddDaily() {
   };
 
   const toggleSubExpenses = () => {
-    setHasSubExpenses(!hasSubExpenses);
-    if (!hasSubExpenses) {
-      form.setFieldsValue({ subExpenses: [{}] });
-    } else {
-      form.setFieldsValue({ subExpenses: undefined });
-    }
+    Modal.confirm({
+      title: "تأكيد",
+      content: hasSubExpenses
+        ? "هل أنت متأكد أنك تريد إلغاء المصاريف الفرعية؟"
+        : "هل تريد إضافة المصاريف الفرعية؟",
+      okText: "نعم",
+      cancelText: "إلغاء",
+      onOk: () => {
+        const newState = !hasSubExpenses;
+        setHasSubExpenses(newState);
+        
+        if (newState) {
+          form.setFieldsValue({ subExpenses: [{}] });
+        } else {
+          form.setFieldsValue({ subExpenses: undefined });
+        }
+      },
+    });
   };
 
   return (
@@ -417,93 +430,147 @@ export default function ExpensessAddDaily() {
             <Button 
               type="dashed"
               onClick={toggleSubExpenses}
-              icon={<PlusOutlined />}
-              style={{ marginBottom: "16px" }}
+              icon={hasSubExpenses? <DeleteOutlined style={{color:"red"}}/>:<PlusOutlined />}
+              style={hasSubExpenses?{ marginBottom: "16px" ,color:"red"}:{marginBottom:"16" , color:"green"}}
             >
-              {hasSubExpenses ? "إلغاء المصاريف الفرعية" : "إضافة مصاريف فرعية"}
+              {hasSubExpenses ? "حذف جميع المصاريف الفرعية" : "إضافة مصاريف فرعية"}
             </Button>
 
             {hasSubExpenses && (
               <Form.List name="subExpenses">
-                {(fields, { add, remove }) => (
-                  <div style={{ marginBottom: "20px" }}>
-                    {fields.map((field, index) => (
-                      <Card 
-                        key={field.key} 
-                        title={`مصروف فرعي ${index + 1}`}
-                        extra={
-                          <MinusCircleOutlined 
-                            onClick={() => remove(field.name)}
-                            style={{ color: '#ff4d4f' }}
-                          />
-                        }
-                        style={{ marginBottom: "16px" }}
-                      >
-                        <Space direction="vertical" style={{ width: '100%' }}>
-                          <Form.Item
-                            {...field}
-                            name={[field.name, 'expenseTypeId']}
-                            label="نوع المصروف"
-                            rules={[{ required: true, message: 'يرجى اختيار نوع المصروف' }]}
-                          >
-                            <Select placeholder="اختر نوع المصروف">
-                              {expenseTypes.map((type) => (
-                                <Select.Option key={type.id} value={type.id}>
-                                  {type.name}
-                                </Select.Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
-                          
-                          <Form.Item
-                            {...field}
-                            name={[field.name, 'price']}
-                            label="السعر"
-                            rules={[{ required: true, message: 'يرجى إدخال السعر' }]}
-                          >
-                            <InputNumber
-                              placeholder="أدخل السعر"
-                              style={{ width: '100%' }}
-                              min={0}
-                              formatter={value => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                              parser={value => value.replace(/,\s?/g, '')}
-                            />
-                          </Form.Item>
-
-                          <Form.Item
-                            {...field}
-                            name={[field.name, 'quantity']}
-                            label="الكمية"
-                            rules={[{ required: true, message: 'يرجى إدخال الكمية' }]}
-                          >
-                            <InputNumber
-                              placeholder="أدخل الكمية"
-                              style={{ width: '100%' }}
-                              min={1}
-                            />
-                          </Form.Item>
-
-                          <Form.Item
-                            {...field}
-                            name={[field.name, 'notes']}
-                            label="ملاحظات"
-                          >
-                            <Input.TextArea rows={2} />
-                          </Form.Item>
-                        </Space>
-                      </Card>
-                    ))}
-                    <Button 
-                      type="dashed" 
-                      onClick={() => add()} 
-                      block 
-                      icon={<PlusOutlined />}
+              {(fields, { add, remove }) => (
+                <div className="form-item-damaged-device-container" >
+                  {fields.map((field, index) => (
+                    <Card
+                      key={field.key}
+                      title={`مصروف فرعي ${index + 1}`}
+                      extra={
+                        <MinusCircleOutlined 
+              onClick={() => {
+                Modal.confirm({
+                  title: "تأكيد",
+                  content: fields.length === 1
+                    ? "هل أنت متأكد أنك تريد إلغاء جميع المصاريف الفرعية؟"
+                    : "هل أنت متأكد أنك تريد حذف هذا المصروف الفرعي؟",
+                  okText: "نعم",
+                  cancelText: "إلغاء",
+                  onOk: () => {
+                    if (fields.length === 1) {
+                      setHasSubExpenses(false);
+                      form.setFieldsValue({ subExpenses: undefined });
+                    } else {
+                      remove(field.name);
+                    }
+                  },
+                });
+              }}
+              style={{ color: '#ff4d4f' }}
+            />
+                      }
+                      style={{ marginBottom: "16px" ,boxShadow:" rgba(0, 0, 0, 0.08) 0px 4px 12px"}}
                     >
-                      إضافة مصروف فرعي آخر
-                    </Button>
-                  </div>
-                )}
-              </Form.List>
+                      <Space direction="vertical" style={{ width: '100%' }}>
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'expenseTypeId']}
+                          label="نوع المصروف"
+                          rules={[{ required: true, message: 'يرجى اختيار نوع المصروف' }]}
+                        >
+                          <Select placeholder="اختر نوع المصروف">
+                            {expenseTypes.map((type) => (
+                              <Select.Option key={type.id} value={type.id}>
+                                {type.name}
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                        
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'price']}
+                          label="السعر"
+                          rules={[{ required: true, message: 'يرجى إدخال السعر' }]}
+                        >
+                          <InputNumber
+                            placeholder="أدخل السعر"
+                            style={{ width: '100%' }}
+                            min={0}
+                            formatter={(value) =>
+                              `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                            }
+                            parser={(value) => value.replace(/,\s?/g, '')}
+                          />
+                        </Form.Item>
+            
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'quantity']}
+                          label="الكمية"
+                          min={1}
+                          rules={[{ required: true, message: 'يرجى إدخال الكمية' }]}
+                        >
+                          <InputNumber
+                            placeholder="أدخل الكمية"
+                            style={{ width: '100%' }}
+                            min={1}
+                          />
+                        </Form.Item>
+            
+                        {/* -- Display the computed total for this sub-expense -- */}
+                        <Form.Item
+                          label="المجموع الفرعي"
+                          // We re-render this Form.Item whenever these fields change:
+                          dependencies={[
+                            ['subExpenses', field.name, 'price'],
+                            ['subExpenses', field.name, 'quantity'],
+                          ]}
+                          // The render prop receives form methods (like getFieldValue)
+                        >
+                          {({ getFieldValue }) => {
+                            const price =
+                              getFieldValue(['subExpenses', field.name, 'price']) || 0;
+                            const quantity =
+                              getFieldValue(['subExpenses', field.name, 'quantity']) || 0;
+                            const subtotal = price * quantity;
+            
+                            return (
+                              <InputNumber
+                                readOnly
+                                style={{ width: '100%' }}
+                                value={subtotal}
+                                formatter={(value) =>
+                                  `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                                }
+                                parser={(value) => value.replace(/,\s?/g, '')}
+                              />
+                            );
+                          }}
+                        </Form.Item>
+            
+                        <Form.Item
+                          {...field}
+                          name={[field.name, 'notes']}
+                          label="ملاحظات"
+                        >
+                          <Input.TextArea rows={2} />
+                        </Form.Item>
+                      </Space>
+                    </Card>
+                  ))}
+                  
+                  <Button
+                  style={hasSubExpenses?{width:"fit-content",borderRadius:"10px"}:{}}
+                  className="back-button"
+                    onClick={() => add()}
+                    block
+                    icon={<PlusOutlined />}
+                  >
+                    إضافة مصروف فرعي آخر
+                  </Button>
+                </div>
+              )}
+            </Form.List>
+            
             )}
           </div>
 

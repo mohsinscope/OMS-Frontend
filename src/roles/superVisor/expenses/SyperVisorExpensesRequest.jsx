@@ -767,7 +767,7 @@ export default function SuperVisorExpensesRequest() {
                       showSizeChanger: false,
                     }}
                     expandable={{
-                      defaultExpandAllRows: true,
+                      defaultExpandAllRows: false,
                       expandRowByClick: true,
                     }}
                     style={{ marginTop: "5px" }}
