@@ -32,7 +32,7 @@ export default function CabinetAttendance() {
 
   const [formState, setFormState] = useState({
     selectedDate: null,
-    selectedStaffType: "DeliveryStaff",
+    selectedStaffType: "ReceivingStaff",
     selectedGovernorate: "",
     selectedOffice: "",
     selectedWorkingHours: 0,
@@ -190,11 +190,11 @@ export default function CabinetAttendance() {
   
     // Translation mapping for staff types
     const staffTypeTranslations = {
+      ReceivingStaff: "موظفو الاستلام",
       DeliveryStaff: "موظفو التسليم",
       AccountStaff: "موظفو الحسابات",
       PrintingStaff: "موظفو الطباعة",
       QualityStaff: "موظفو الجودة",
-      ReceivingStaff: "موظفو الاستلام",
     };
   
     try {
@@ -413,7 +413,6 @@ export default function CabinetAttendance() {
           >
             <option value={1}>صباحي</option>
             <option value={2}>مسائي</option>
-            <option value={0}>الكل</option>
           </select>
         </div>
 
@@ -436,11 +435,11 @@ export default function CabinetAttendance() {
             }
             className="form-control"
           >
+            <option value="ReceivingStaff">موظفو الاستلام</option>
             <option value="DeliveryStaff">موظفو التسليم</option>
             <option value="AccountStaff">موظفو الحسابات</option>
             <option value="PrintingStaff">موظفو الطباعة</option>
             <option value="QualityStaff">موظفو الجودة</option>
-            <option value="ReceivingStaff">موظفو الاستلام</option>
           </select>
         </div>
 
