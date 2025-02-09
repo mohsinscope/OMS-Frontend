@@ -25,6 +25,7 @@ import Icons from "./../reusable elements/icons.jsx";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import ExpensessViewActionsTable from "./ExpensessViewActionsTable";
+import { PlusOutlined } from "@ant-design/icons";
 
 // Status Enum matching backend exactly
 const Status = {
@@ -92,13 +93,23 @@ function flattenItems(items) {
     position = position?.toLowerCase();
     if (currentStatus === "SentFromDirector") {
       return Status.RecievedBySupervisor;
-    } else if (currentStatus === "SentToProjectCoordinator") {
+    }
+    
+    else if (currentStatus === "SentToProjectCoordinator") {
+      return Status.SentToManager;
+    }
+    else if (currentStatus === "ReturnedToProjectCoordinator") {
       return Status.SentToManager;
     } else if (currentStatus === "SentToManager") {
       return Status.SentToDirector;
-    } else if (currentStatus === "SentToDirector") {
+    } 
+    else if (currentStatus === "ReturnedToManager") {
+      return Status.SentToDirector;
+    }
+    else if (currentStatus === "SentToDirector") {
       return Status.SentFromDirector;
-    } else if (currentStatus === "RecievedBySupervisor") {
+    }
+     else if (currentStatus === "RecievedBySupervisor") {
       return Status.Completed;
     }
     console.warn(`Unexpected position: ${position} or status: ${currentStatus}`);
@@ -882,9 +893,26 @@ const handlePrint = async () => {
     columns={expenseItemsColumns}
     dataSource={expense?.items}
     bordered
+    expandable={{
+      defaultExpandAllRows: false,
+      expandRowByClick: false,
+      expandIcon: ({ expanded, onExpand, record }) =>
+        record.children ? (
+          <PlusOutlined
+            style={{
+              cursor: "pointer",
+              color: "#1890ff",
+              fontSize: "22px",
+              transform: expanded ? "rotate(45deg)" : "rotate(0deg)",
+              transition: "transform 0.2s",
+              margin: "0 auto",
+            }}
+            onClick={(e) => onExpand(record, e)}
+          />
+        ) : null,
+    }}
     pagination={{ pageSize: 5, position: ["bottomCenter"] }}
     locale={{ emptyText: "لا توجد عناصر للصرف." }}
-    expandable={{ defaultExpandAllRows: true, expandRowByClick: true }}
     summary={(pageData) => {
       // Manually sum top-level AND sub-level
       let total = 0;
