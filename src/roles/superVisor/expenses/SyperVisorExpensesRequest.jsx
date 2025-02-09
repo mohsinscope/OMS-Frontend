@@ -14,7 +14,7 @@ import {
   Skeleton,
   Tooltip,
 } from "antd";
-import { PlusCircleOutlined, CalendarOutlined } from "@ant-design/icons";
+import { PlusCircleOutlined, CalendarOutlined, PlusOutlined  } from "@ant-design/icons";
 import useAuthStore from "../../../store/store";
 import axiosInstance from "../../../intercepters/axiosInstance.js";
 import { Link } from "react-router-dom";
@@ -349,6 +349,25 @@ export default function SuperVisorExpensesRequest() {
 
   // Modify the currentMonthColumns to handle sub-expenses
   const currentMonthColumns = [
+    {
+      title: "",
+      key: "expand",
+      width: '50px',
+      align: "center",
+      render: (_, record) => {
+        return record.children ? (
+          <div style={{ 
+            cursor: 'pointer', 
+            color: '#1890ff',
+            fontSize: '12px',
+            width: '20px',
+            margin: '0 auto'
+          }}>
+           
+          </div>
+        ) : null;
+      }
+    },
     {
       title: "نوع المصروف",
       dataIndex: "expenseTypeName",
@@ -766,9 +785,23 @@ export default function SuperVisorExpensesRequest() {
                       position: ["bottomCenter"],
                       showSizeChanger: false,
                     }}
-                    expandable={{
+               expandable={{
                       defaultExpandAllRows: false,
-                      expandRowByClick: true,
+                      expandRowByClick: false,
+                      expandIcon: ({ expanded, onExpand, record }) =>
+                        record.children ? (
+                          <PlusOutlined
+                            style={{
+                              cursor: "pointer",
+                              color: "#1890ff",
+                              fontSize: "22px",
+                              transform: expanded ? "rotate(45deg)" : "rotate(0deg)",
+                              transition: "transform 0.2s",
+                              margin: "0 auto",
+                            }}
+                            onClick={(e) => onExpand(record, e)}
+                          />
+                        ) : null,
                     }}
                     style={{ marginTop: "5px" }}
                   />
