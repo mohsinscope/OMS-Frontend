@@ -103,7 +103,6 @@ export default function ExpensessViewMonthly() {
     const [dailyExpenses, setDailyExpenses] = useState([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isCompletionModalVisible, setIsCompletionModalVisible] = useState(false);
-    const [notes, setNotes] = useState('');
     const [completingLoading, setCompletingLoading] = useState(false);
     const [form] = Form.useForm();
     const [completionForm] = Form.useForm();
@@ -158,20 +157,17 @@ export default function ExpensessViewMonthly() {
         }
     };
 
-    const handleSendToCoordinator = async () => {
+    const handleSendToCoordinator = async (values) => {
         try {
-            // Validate form before proceeding
-            await form.validateFields();
-            
             setSendingLoading(true);
 
             let actionType = "Approval";
-            let actionNotes = notes;
+            let actionNotes = values.notes;
 
             // Determine action type and notes based on current status
             if (monthlyExpense?.status === 'ReturnedToSupervisor') {
                 actionType = `تم التعديل من قبل المشرف ${profile?.name || ''} `;
-                actionNotes = notes;
+                actionNotes = values.notes;
             }
 
             // First update the status
@@ -191,7 +187,6 @@ export default function ExpensessViewMonthly() {
             message.success('تم إرسال المصروف بنجاح إلى منسق المشروع');
             setIsModalVisible(false);
             form.resetFields();
-            setNotes('');
             navigate(-1);
             
         } catch (error) {
@@ -206,10 +201,8 @@ export default function ExpensessViewMonthly() {
         }
     };
 
-    const handleCompleteMonthlyExpense = async () => {
+    const handleCompleteMonthlyExpense = async (values) => {
         try {
-            await completionForm.validateFields();
-            
             setCompletingLoading(true);
             
             // Update status to Completed (9)
@@ -220,7 +213,7 @@ export default function ExpensessViewMonthly() {
 
             // Create action with supervisor completion note
             const actionType = `تم اتمام مصروف الشهر من قبل المشرف ${profile?.name || ''}`;
-            const actionNotes = notes;
+            const actionNotes = values.notes;
 
             await axiosInstance.post('/api/Actions', {
                 actionType: actionType,
@@ -232,7 +225,6 @@ export default function ExpensessViewMonthly() {
             message.success('تم اتمام عملية مصاريف الشهر بنجاح');
             setIsCompletionModalVisible(false);
             completionForm.resetFields();
-            setNotes('');
             navigate(-1);
             
         } catch (error) {
@@ -501,7 +493,6 @@ export default function ExpensessViewMonthly() {
                 onCancel={() => {
                     setIsModalVisible(false);
                     form.resetFields();
-                    setNotes('');
                 }}
                 confirmLoading={sendingLoading}
                 okText="إرسال"
@@ -526,7 +517,6 @@ export default function ExpensessViewMonthly() {
                         <TextArea
                             rows={4}
                             placeholder="أدخل الملاحظات..."
-                            onChange={(e) => setNotes(e.target.value)}
                         />
                     </Form.Item>
                 </Form>
@@ -540,7 +530,6 @@ export default function ExpensessViewMonthly() {
                 onCancel={() => {
                     setIsCompletionModalVisible(false);
                     completionForm.resetFields();
-                    setNotes('');
                 }}
                 confirmLoading={completingLoading}
                 okText="تأكيد"
@@ -565,7 +554,6 @@ export default function ExpensessViewMonthly() {
                         <TextArea
                             rows={4}
                             placeholder="أدخل الملاحظات..."
-                            onChange={(e) => setNotes(e.target.value)}
                         />
                     </Form.Item>
                 </Form>
