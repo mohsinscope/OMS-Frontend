@@ -371,7 +371,7 @@ const fetchGovernorateStats = async () => {
         <AttendanceCard className='card-attendence-stats-container'>
           <h3 className="attendance-summary-title text-lg mb-2">عدد الحضور الكلي</h3>
           <p className="attendance-summary-value text-3xl font-bold">{attendanceStats.availableStaff}</p>
-          <p className="attendance-percentage text-lg mt-2 text-gray-500">{attendanceStats.availableStaffPercentage}%</p>
+          <p className="attendance-percentage text-lg mt-2 text-gray-500">{attendanceStats.availableStaffPercentage / 2}%</p>
         </AttendanceCard>
         
         <AttendanceCard className='card-attendence-stats-container'>
