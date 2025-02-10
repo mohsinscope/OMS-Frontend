@@ -382,49 +382,49 @@ const DamagedPassportsShow = () => {
                 <div className="details-row">
                   <span className="details-label">رقم الجواز:</span>
                   <Form.Item name="passportNumberDisplay" style={{ marginBottom: 0 }}>
-                    <Input className="details-value" disabled />
+                    <input className="details-value" disabled />
                   </Form.Item>
                 </div>
 
                 <div className="details-row">
                   <span className="details-label">تاريخ التلف:</span>
                   <Form.Item name="dateOfDamage" style={{ marginBottom: 0 }}>
-                    <Input className="details-value" disabled />
+                    <input className="details-value" disabled />
                   </Form.Item>
                 </div>
 
                 <div className="details-row">
                   <span className="details-label">سبب التلف:</span>
                   <Form.Item name="damagedTypeNameDisplay" style={{ marginBottom: 0 }}>
-                    <Input className="details-value" disabled />
+                    <input className="details-value" disabled />
                   </Form.Item>
                 </div>
 
                 <div className="details-row">
                   <span className="details-label">اسم المحافظة:</span>
                   <Form.Item name="governorateNameDisplay" style={{ marginBottom: 0 }}>
-                    <Input className="details-value" disabled />
+                    <input className="details-value" disabled />
                   </Form.Item>
                 </div>
 
                 <div className="details-row">
                   <span className="details-label">اسم المكتب:</span>
                   <Form.Item name="officeNameDisplay" style={{ marginBottom: 0 }}>
-                    <Input className="details-value" disabled />
+                    <input className="details-value" disabled />
                   </Form.Item>
                 </div>
 
                 <div className="details-row">
                   <span className="details-label">اسم المستخدم:</span>
                   <Form.Item name="profileFullNameDisplay" style={{ marginBottom: 0 }}>
-                    <Input className="details-value" disabled />
+                    <input className="details-value" disabled />
                   </Form.Item>
                 </div>
 
                 <div className="details-row">
                   <span className="details-label">الملاحظات:</span>
                   <Form.Item name="notesDisplay" style={{ marginBottom: 0 }}>
-                    <Input.TextArea className="textarea-value" rows={3} disabled />
+                    <textarea className="textarea-value" rows={3} disabled />
                   </Form.Item>
                 </div>
               </Form>

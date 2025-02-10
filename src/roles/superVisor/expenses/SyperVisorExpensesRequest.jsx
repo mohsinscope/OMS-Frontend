@@ -382,7 +382,7 @@ export default function SuperVisorExpensesRequest() {
             alignItems: "center",
           }}
         >
-          {record.isSubExpense && <span style={{ marginLeft: "8px" }}>↳</span>}
+          {record.isSubExpense && <span style={{ marginLeft: "8px" }}>↲</span>}
           {text}
         </span>
       ),
