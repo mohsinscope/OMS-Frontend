@@ -735,22 +735,24 @@ export default function SuperVisorPassport() {
                   <Icons type="excel" />
                 </button>
 
-                <button
-                  type="button"
-                  className="modern-button excel-button"
-                  onClick={() => setIsEmailModalVisible(true)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "12px",
-                    padding: "6px 12px",
-                    borderRadius: "8px",
-                    width: "fit-content",
-                  }}
-                >
-                  ارسال ايميل 
-                  <Icons type="email" />
-                </button>
+                {roles.includes("SuperAdmin") && (
+                    <button
+                      type="button"
+                      className="modern-button excel-button"
+                      onClick={() => setIsEmailModalVisible(true)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "6px 12px",
+                        borderRadius: "8px",
+                        width: "fit-content",
+                      }}
+                    >
+                      ارسال ايميل 
+                      <Icons type="email" />
+                    </button>
+                  )}
               </div>
             </form>
           </div>

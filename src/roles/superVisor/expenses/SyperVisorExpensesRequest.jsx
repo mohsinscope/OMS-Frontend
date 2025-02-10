@@ -766,7 +766,7 @@ export default function SuperVisorExpensesRequest() {
                   <h1 style={{ marginBottom: "5px" }}>المصروفات اليومية للشهر الحالي</h1>
                   <Button
                     type="primary"
-                    // disabled={!canSendRequests}
+                    disabled={!canSendRequests}
                     size="large"
                     onClick={() => setIsSendModalVisible(true)}
                   >
