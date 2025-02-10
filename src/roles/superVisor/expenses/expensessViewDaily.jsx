@@ -11,6 +11,7 @@ import {
   InputNumber,
   Upload,
   Skeleton,
+  Table, // Import Table from antd
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -189,8 +190,8 @@ const ExpensessView = () => {
   const handleSaveEdit = async (values) => {
     try {
       const expenseDate = moment(values.date).isValid()
-      ? moment(values.date).startOf('day').toISOString()
-      : moment().startOf('day').toISOString();
+        ? moment(values.date).startOf("day").toISOString()
+        : moment().startOf("day").toISOString();
       const updatedValues = {
         id: expenseId,
         expenseDate,
@@ -225,6 +226,55 @@ const ExpensessView = () => {
     }
   };
 
+  // Define columns for the subexpenses table
+  const subExpensesColumns = [
+    {
+      title: "رقم",
+      key: "index",
+      render: (text, record, index) => index + 1,
+      width: 50,
+    },
+    {
+      title: "نوع المصروف الفرعي",
+      dataIndex: "expenseTypeName",
+      key: "expenseTypeName",
+      width: 150,
+    },
+    {
+      title: "السعر",
+      dataIndex: "price",
+      key: "price",
+      width: 100,
+      render: (price) => (price ? price.toLocaleString() + " د.ع" : ""),
+    },
+    {
+      title: "الكمية",
+      dataIndex: "quantity",
+      key: "quantity",
+      width: 80,
+    },
+    {
+      title: "المبلغ الإجمالي",
+      dataIndex: "amount",
+      key: "amount",
+      width: 120,
+      render: (amount) => (amount ? amount.toLocaleString() + " د.ع" : ""),
+    },
+    {
+      title: "الملاحظات",
+      dataIndex: "notes",
+      key: "notes",
+      width: 200,
+    },
+    {
+      title: "التاريخ",
+      dataIndex: "expenseDate",
+      key: "expenseDate",
+      width: 120,
+      render: (date) => moment(date).format("YYYY-MM-DD"),
+    },
+  ];
+
   if (loading) {
     return (
       <div className="loading supervisor-passport-damage-show-container" dir="rtl">
@@ -247,7 +297,15 @@ const ExpensessView = () => {
       ) : (
         <>
           <div className="title-container">
-            <h1>تفاصيل المصروف</h1>
+          <h1 style={{ color: "#000", fontSize: "24px" }}>
+            تفاصيل المصروف
+            {expenseData.subExpenses && expenseData.subExpenses.length > 0 && (
+              <>
+              
+             - <span style={{ color: "blue", marginLeft: "8px" }}>  مصروف متعدد </span>
+              </>
+            )}
+          </h1>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px", gap: "20px" }}>
               <Button
                 type="primary"
@@ -314,6 +372,30 @@ const ExpensessView = () => {
               )}
             </div>
           </div>
+
+          {/* Conditionally render the subexpenses table if there are subexpenses */}
+          {expenseData.subExpenses && expenseData.subExpenses.length > 0 && (
+            <div
+              className="subexpenses-table-container"
+              style={{
+                width:"100%",
+                marginTop: "20px",
+                backgroundColor: "#fff",
+                padding: "20px",
+                borderRadius: "8px",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+              }}
+            >
+              <h2 style={{ textAlign: "center", marginBottom: "20px" }}>تفاصيل المصروفات الفرعية</h2>
+              <Table
+                dataSource={expenseData.subExpenses}
+                columns={subExpensesColumns}
+                rowKey="id"
+                pagination={false}
+                bordered
+              />
+            </div>
+          )}
         </>
       )}
 
