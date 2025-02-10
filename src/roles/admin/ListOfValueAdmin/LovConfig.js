@@ -56,6 +56,19 @@ export const LOV_MENU_ITEMS = [
     path: "/admin/expensess-types",
     permission: "LOVe"
   }
+  ,
+  {
+    label: "انواع التبليغات",
+    icon: "report",
+    path: "/admin/report-type",
+    permission: "LOVo"
+  },
+  {
+    label: "تقارير البريد الإلكتروني",
+    icon: "email", // Ensure you have an icon for email reports
+    path: "/admin/email-report",
+    permission: "LOVo" // Use an appropriate permission code
+  }
 ];
 
 export const hasLOVPermission = (permissions = []) => {

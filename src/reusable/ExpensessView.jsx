@@ -90,32 +90,28 @@ function flattenItems(items) {
 }
   // Helper functions for status transitions
   const getNextStatus = (currentStatus, position) => {
+    // Convert the position string to lowercase for case-insensitive matching.
     position = position?.toLowerCase();
-    if (currentStatus === "SentFromDirector") {
+  
+    if (currentStatus === "SentFromDirector" && position?.includes("projectcoordinator")) {
       return Status.RecievedBySupervisor;
-    }
-    
-    else if (currentStatus === "SentToProjectCoordinator") {
+    } else if (currentStatus === "SentToProjectCoordinator" && position?.includes("projectcoordinator")) {
       return Status.SentToManager;
-    }
-    else if (currentStatus === "ReturnedToProjectCoordinator") {
+    } else if (currentStatus === "ReturnedToProjectCoordinator" && position?.includes("projectcoordinator")) {
       return Status.SentToManager;
-    } else if (currentStatus === "SentToManager") {
+    } else if (currentStatus === "SentToManager" && position?.includes("manager")) {
       return Status.SentToDirector;
-    } 
-    else if (currentStatus === "ReturnedToManager") {
+    } else if (currentStatus === "ReturnedToManager" && position?.includes("manager")) {
       return Status.SentToDirector;
-    }
-    else if (currentStatus === "SentToDirector") {
+    } else if (currentStatus === "SentToDirector" && position?.includes("director")) {
       return Status.SentFromDirector;
-    }
-     else if (currentStatus === "RecievedBySupervisor") {
+    } else if (currentStatus === "RecievedBySupervisor") {
       return Status.Completed;
     }
+  
     console.warn(`Unexpected position: ${position} or status: ${currentStatus}`);
     return currentStatus;
   };
-
   const getRejectionStatus = (currentStatus, position) => {
     position = position?.toLowerCase();
     if (position?.includes("coordinator")) {
