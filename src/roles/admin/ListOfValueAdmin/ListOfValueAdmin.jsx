@@ -1,3 +1,4 @@
+// ListOfValueAdmin.jsx
 import React, { useState, useEffect } from "react";
 import "./ListOfValueAdmin.css";
 import Icons from "./../../../reusable elements/icons.jsx";
@@ -12,8 +13,8 @@ import {
   Select,
   Space,
 } from "antd";
-import axiosInstance from './../../../intercepters/axiosInstance.js';
-import {  getAuthorizedLOVRoutes, LOVConfig } from './LovConfig.js';
+import axiosInstance from "./../../../intercepters/axiosInstance.js";
+import { getAuthorizedLOVRoutes, LOVConfig } from "./LovConfig.js";
 import useAuthStore from "./../../../store/store.js";
 
 export default function ListOfValueAdmin() {
@@ -37,16 +38,17 @@ export default function ListOfValueAdmin() {
     total: 0,
   });
 
+  // Set authorized menu items based on the permissions from the auth store
   useEffect(() => {
-    console.log('Current permissions:', permissions);
+    console.log("Current permissions:", permissions);
     if (Array.isArray(permissions)) {
       const authorizedRoutes = getAuthorizedLOVRoutes(permissions);
-      console.log('Authorized routes:', authorizedRoutes);
+      console.log("Authorized routes:", authorizedRoutes);
       setAuthorizedMenuItems(authorizedRoutes);
     }
   }, [permissions]);
 
- 
+  // Transform the fetched data based on the current path
   const transformData = (data) => {
     if (currentPath === "/admin/lecture-types") {
       return data.map((item) => ({
@@ -54,31 +56,29 @@ export default function ListOfValueAdmin() {
         key: item.id,
         id: item.id,
         name: item.name,
-        companyName: item.companyName
+        companyName: item.companyName,
       }));
     }
-    
     if (currentPath === "/admin/add-office") {
       return data.map((item) => ({
         ...item,
         key: item.officeId || item.id,
-        id: item.officeId || item.id
+        id: item.officeId || item.id,
       }));
     }
-    
     return data.map((item) => ({
       ...item,
       key: item.id?.toString() || Math.random().toString(),
     }));
   };
 
+  // Fetch data from the API based on the current configuration endpoint
   const fetchData = async (endpoint, page = 1, pageSize = 10) => {
     setLoading(true);
     try {
       const response = await axiosInstance.get(
         `${endpoint}?PageNumber=${page}&PageSize=${pageSize}`
       );
-
       let formattedData = transformData(response.data);
       setSelectedData(formattedData);
 
@@ -100,6 +100,7 @@ export default function ListOfValueAdmin() {
     }
   };
 
+  // Setup columns and form fields (including fetching dropdown options if needed)
   const setupColumnsAndFormFields = async () => {
     if (!selectedConfig) return;
 
@@ -109,8 +110,10 @@ export default function ListOfValueAdmin() {
           try {
             const response = await axiosInstance.get(field.optionsEndpoint);
             let options;
-
-            if (currentPath === "/admin/lecture-types" && field.name === "companyId") {
+            if (
+              currentPath === "/admin/lecture-types" &&
+              field.name === "companyId"
+            ) {
               options = response.data.map((company) => ({
                 label: company.name,
                 value: company.id,
@@ -121,7 +124,6 @@ export default function ListOfValueAdmin() {
                 value: item.id,
               }));
             }
-
             setDropdownOptions((prev) => ({
               ...prev,
               [field.name]: options,
@@ -167,20 +169,25 @@ export default function ListOfValueAdmin() {
     setFormFields(updatedFormFields);
   };
 
+  // When a menu item is selected, fetch its configuration and data
   useEffect(() => {
     if (currentPath && selectedConfig) {
-      fetchData(selectedConfig.getEndpoint, pagination.current, pagination.pageSize);
+      fetchData(
+        selectedConfig.getEndpoint,
+        pagination.current,
+        pagination.pageSize
+      );
       setupColumnsAndFormFields();
     }
-  }, [currentPath]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPath, selectedConfig]);
 
+  // Handle clicking a menu item from the sidebar
   const handleItemClick = (item) => {
-    // Now check if the permission exists in the array
     if (!Array.isArray(permissions) || !permissions.includes(item.permission)) {
       message.error("ليس لديك صلاحية للوصول إلى هذا القسم");
       return;
     }
-
     const selected = LOVConfig[item.path];
     if (!selected) {
       message.error("لم يتم العثور على التكوين المطلوب");
@@ -191,6 +198,7 @@ export default function ListOfValueAdmin() {
     setCurrentLabel(item.label);
   };
 
+  // Create the payload for POST/PUT requests based on the current path
   const createPayload = (values) => {
     switch (currentPath) {
       case "/admin/lecture-types":
@@ -198,7 +206,6 @@ export default function ListOfValueAdmin() {
           name: values.name,
           companyId: values.companyId,
         };
-        
       case "/admin/add-office":
         return {
           officeId: editingId || undefined,
@@ -210,57 +217,64 @@ export default function ListOfValueAdmin() {
           qualityStaff: Number(values.qualityStaff),
           deliveryStaff: Number(values.deliveryStaff),
           governorateId: values.governorateId,
-          budget: values.budget ? Number(values.budget) : null
+          budget: values.budget ? Number(values.budget) : null,
         };
-        
       case "/admin/device-types":
         return {
           id: editingId,
           name: values.name,
-          description: values.description
+          description: values.description,
         };
-        
+        case "/admin/report-type":
+      return {
+        id: editingId, // Ensure the id is included in the payload
+        name: values.name,
+        description: values.description,
+      };
       case "/admin/add-governorate":
         return {
           id: editingId,
           name: values.name,
-          code: values.code
+          code: values.code,
         };
-        
       case "/admin/damage-types":
       case "/admin/passport-dammage-types":
         return {
           id: editingId,
           name: values.name,
-          description: values.description
+          description: values.description,
         };
-        
       case "/admin/companies":
       case "/admin/expensess-types":
         return {
           id: editingId,
-          name: values.name
+          name: values.name,
         };
-        
       case "/admin/thrshhold":
         return {
           id: editingId,
           name: values.name,
           minValue: Number(values.minValue),
-          maxValue: Number(values.maxValue)
+          maxValue: Number(values.maxValue),
         };
-        
+        case "/admin/email-report":
+          return {
+            id: editingId, // Include the id here
+            fullName: values.fullName,
+            email: values.email,
+            reportTypeIds: values.reportTypeIds,
+          };
       default:
         return values;
     }
   };
 
+  // Handle adding a new record
   const handleAdd = async (values) => {
     if (!selectedConfig) {
       message.error("الرجاء اختيار نوع البيانات أولاً");
       return;
     }
-
     setLoading(true);
     try {
       const payload = createPayload(values);
@@ -268,7 +282,11 @@ export default function ListOfValueAdmin() {
       message.success("تمت إضافة البيانات بنجاح");
       setIsModalOpen(false);
       form.resetFields();
-      await fetchData(selectedConfig.getEndpoint, pagination.current, pagination.pageSize);
+      await fetchData(
+        selectedConfig.getEndpoint,
+        pagination.current,
+        pagination.pageSize
+      );
     } catch (error) {
       console.error("Error adding record:", error);
       message.error("حدث خطأ أثناء الإضافة");
@@ -277,25 +295,28 @@ export default function ListOfValueAdmin() {
     }
   };
 
+  // Handle updating an existing record
   const handleUpdate = async (values) => {
     if (!selectedConfig || !editingId) {
       message.error("بيانات التحديث غير مكتملة");
       return;
     }
-
     setLoading(true);
     try {
       const endpoint = selectedConfig.putEndpoint?.(editingId);
       if (!endpoint) {
         throw new Error("Update endpoint not configured");
       }
-
       const payload = createPayload(values);
       await axiosInstance.put(endpoint, payload);
       message.success("تم تحديث البيانات بنجاح");
       setIsModalOpen(false);
       form.resetFields();
-      await fetchData(selectedConfig.getEndpoint, pagination.current, pagination.pageSize);
+      await fetchData(
+        selectedConfig.getEndpoint,
+        pagination.current,
+        pagination.pageSize
+      );
       setIsEditMode(false);
       setEditingId(null);
     } catch (error) {
@@ -306,12 +327,12 @@ export default function ListOfValueAdmin() {
     }
   };
 
+  // Handle record deletion with a confirmation modal
   const handleDelete = async (id) => {
     if (!id || !selectedConfig) {
       message.error("معرف السجل غير متوفر");
       return;
     }
-
     Modal.confirm({
       title: "تأكيد الحذف",
       content: "هل أنت متأكد من حذف هذا السجل؟",
@@ -324,14 +345,17 @@ export default function ListOfValueAdmin() {
           if (!endpoint) {
             throw new Error("Delete endpoint not configured");
           }
-
-          const config = {
-            data: currentPath === "/admin/add-office" ? { officeId: id } : undefined,
-          };
-
+          const config =
+            currentPath === "/admin/add-office"
+              ? { data: { officeId: id } }
+              : undefined;
           await axiosInstance.delete(endpoint, config);
           message.success("تم حذف السجل بنجاح");
-          await fetchData(selectedConfig.getEndpoint, pagination.current, pagination.pageSize);
+          await fetchData(
+            selectedConfig.getEndpoint,
+            pagination.current,
+            pagination.pageSize
+          );
         } catch (error) {
           console.error("Error deleting record:", error);
           message.error("فشل حذف السجل");
@@ -342,14 +366,13 @@ export default function ListOfValueAdmin() {
     });
   };
 
+  // Populate the form with the selected record’s data for editing
   const handleEdit = (record) => {
     if (!record.id) {
       message.error("معرف السجل غير متوفر");
       return;
     }
-  
     let formData;
-  
     switch (currentPath) {
       case "/admin/add-office":
         formData = {
@@ -361,32 +384,41 @@ export default function ListOfValueAdmin() {
           qualityStaff: record.qualityStaff,
           deliveryStaff: record.deliveryStaff,
           governorateId: record.governorateId,
-          budget: record.budget
+          budget: record.budget,
         };
         break;
-  
       case "/admin/add-governorate":
         formData = {
           name: record.name,
-          code: record.code
+          code: record.code,
         };
         break;
-
       case "/admin/lecture-types":
         formData = {
           name: record.name,
-          companyId: record.companyId
+          companyId: record.companyId,
         };
         break;
-
       case "/admin/thrshhold":
         formData = {
           name: record.name,
           minValue: record.minValue,
-          maxValue: record.maxValue
+          maxValue: record.maxValue,
         };
         break;
-
+      case "/admin/report-type":
+        formData = {
+          name: record.name,
+          description: record.description,
+        };
+        break;
+        case "/admin/email-report":
+          formData = {
+            fullName: record.fullName,
+            email: record.email,
+            reportTypeIds: record.reportTypes ? record.reportTypes.map((rt) => rt.id) : [],
+          };
+          break;
       default:
         formData = {
           name: record.name,
@@ -394,35 +426,41 @@ export default function ListOfValueAdmin() {
         };
         break;
     }
-  
     setIsEditMode(true);
     setEditingId(record.id);
     setIsModalOpen(true);
     form.setFieldsValue(formData);
   };
 
+  // Open the modal for adding a new record
   const handleAddNew = () => {
     if (!selectedConfig) {
       message.error("الرجاء اختيار نوع البيانات أولاً");
       return;
     }
-
     setIsEditMode(false);
     setEditingId(null);
     form.resetFields();
     setIsModalOpen(true);
   };
 
+  // Render the correct form field based on its type.
+  // Note: For dropdown fields, we now support an optional "mode" property.
   const renderFormField = (field) => {
     switch (field.type) {
       case "dropdown":
+        // Use field.options if available (already fetched) or fallback to dropdownOptions
+        const mode = field.mode || undefined;
         if (field.options) {
           return (
             <Select
+              mode={mode}
               showSearch
               optionFilterProp="children"
               filterOption={(input, option) =>
-                (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                (option?.label ?? "")
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
               }
               placeholder={`اختر ${field.label}`}
             >
@@ -434,14 +472,16 @@ export default function ListOfValueAdmin() {
             </Select>
           );
         }
-        
         const options = dropdownOptions[field.name] || [];
         return (
           <Select
+            mode={mode}
             showSearch
             optionFilterProp="children"
             filterOption={(input, option) =>
-              (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+              (option?.label ?? "")
+                .toLowerCase()
+                .includes(input.toLowerCase())
             }
             placeholder={`اختر ${field.label}`}
             notFoundContent={options.length === 0 ? "لا توجد خيارات" : null}
@@ -453,18 +493,16 @@ export default function ListOfValueAdmin() {
             ))}
           </Select>
         );
-
       case "date":
         return (
-          <Input 
-            type="date" 
+          <Input
+            type="date"
             placeholder={field.placeholder || `اختر ${field.label}`}
           />
         );
-
       case "number":
         return (
-          <Input 
+          <Input
             type="number"
             min={field.min}
             max={field.max}
@@ -472,11 +510,10 @@ export default function ListOfValueAdmin() {
             placeholder={field.placeholder || `ادخل ${field.label}`}
           />
         );
-
       default:
         return (
-          <Input 
-            type={field.type || "text"} 
+          <Input
+            type={field.type || "text"}
             placeholder={field.placeholder || `ادخل ${field.label}`}
             maxLength={field.maxLength}
           />
@@ -517,7 +554,6 @@ export default function ListOfValueAdmin() {
             إضافة <Icons type="add" />
           </Button>
         </div>
-
         <ConfigProvider direction="rtl">
           <Table
             columns={columns}
@@ -566,22 +602,27 @@ export default function ListOfValueAdmin() {
                 key={field.name}
                 name={field.name}
                 label={field.label}
-                style={{marginTop:"20px"}}
+                style={{ marginTop: "20px" }}
                 rules={[
-                  { required: true, message: `الرجاء إدخال ${field.label}` },
+                  {
+                    required: true,
+                    message: `الرجاء إدخال ${field.label}`,
+                  },
                 ]}
               >
                 {renderFormField(field)}
               </Form.Item>
             ))}
-            <Form.Item style={{marginTop:"20px"}}>
+            <Form.Item style={{ marginTop: "20px" }}>
               <Space style={{ justifyContent: "flex-end", width: "100%" }}>
-                <Button onClick={() => {
-                  setIsModalOpen(false);
-                  setEditingId(null);
-                  setIsEditMode(false);
-                  form.resetFields();
-                }}>
+                <Button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setEditingId(null);
+                    setIsEditMode(false);
+                    form.resetFields();
+                  }}
+                >
                   إلغاء
                 </Button>
                 <Button type="primary" htmlType="submit" loading={loading}>

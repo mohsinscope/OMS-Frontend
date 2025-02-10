@@ -181,6 +181,50 @@
         { name: "name", label: "نوع الصرفية", type: "text" }
       ]
     },
+    "/admin/report-type": {
+  getEndpoint: "/api/EmailReport/ReportTypes",
+  postEndpoint: "/api/EmailReport/report-type",
+  putEndpoint: (id) => `/api/EmailReport/ReportType/${id}`,
+  columns: [
+    { title: "اسم التبليغ", dataIndex: "name", key: "name" },
+    { title: "التفاصيل", dataIndex: "description", key: "description" },
+  ],
+  formFields: [
+    { name: "name", label: "اسم التبليغ", type: "text" },
+    { name: "description", label: "التفاصيل", type: "text" },
+  ],
+},
+    "/admin/email-report": {
+      getEndpoint: "/api/EmailReport",
+      postEndpoint: "/api/EmailReport/email-report",
+      putEndpoint: (id) => `/api/EmailReport/${id}`,
+      deleteEndpoint: (id) => `/api/EmailReport/${id}`,
+      columns: [
+        { title: "الاسم الكامل", dataIndex: "fullName", key: "fullName" },
+        { title: "البريد الإلكتروني", dataIndex: "email", key: "email" },
+        {
+          title: "أنواع التبليغ",
+          dataIndex: "reportTypes",
+          key: "reportTypes",
+          render: (reportTypes) =>
+            Array.isArray(reportTypes)
+              ? reportTypes.map((rt) => rt.name).join(", ")
+              : "",
+        },
+      ],
+      formFields: [
+        { name: "fullName", label: "الاسم الكامل", type: "text" },
+        { name: "email", label: "البريد الإلكتروني", type: "text" },
+        {
+          name: "reportTypeIds",
+          label: "أنواع التبليغ",
+          type: "dropdown",
+          mode: "multiple", // allow selecting multiple report types
+          optionsEndpoint: "/api/EmailReport/ReportTypes",
+        },
+      ],
+    },
+    
   
   };
 
