@@ -406,98 +406,55 @@ function flattenItems(items) {
   // ================= Export Functions =================
 
   // Function to export to Excel using ExcelJS and file-saver
- const handleExportToExcel = async () => {
-  try {
-    if (!expense) {
-      message.error("لا توجد بيانات لتصديرها");
-      return;
-    }
-
-    const flattened = expense?.flattenedItems || [];
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet("تقرير المصاريف", {
-      properties: { rtl: true },
-    });
-
-    // 1) Add supervisor info row
-    const supervisorRow = worksheet.addRow([
-      "الحالة",
-      "المتبقي",
-      "مجموع الصرفيات",
-      "مبلغ النثرية",
-      "المكتب",
-      "المحافظة",
-      "اسم المشرف",
-    ]);
-    supervisorRow.eachCell((cell) => {
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      cell.alignment = { horizontal: "center", vertical: "middle" };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF4CAF50" },
-      };
-      cell.border = {
-        top: { style: "thin" },
-        bottom: { style: "thin" },
-        left: { style: "thin" },
-        right: { style: "thin" },
-      };
-    });
-
-    const supervisorDataRow = worksheet.addRow([
-      statusMap[expense?.generalInfo?.["الحالة"]] || "N/A",
-      `IQD ${Number(expense?.generalInfo?.["المتبقي"] ?? 0).toLocaleString()}`,
-      `IQD ${Number(expense?.generalInfo?.["مجموع الصرفيات"] ?? 0).toLocaleString()}`,
-      `IQD ${Number(expense?.generalInfo?.["مبلغ النثرية"] ?? 0).toLocaleString()}`,
-      expense?.generalInfo?.["المكتب"] || "N/A",
-      expense?.generalInfo?.["المحافظة"] || "N/A",
-      expense?.generalInfo?.["اسم المشرف"] || "N/A",
-    ]);
-    supervisorDataRow.eachCell((cell) => {
-      cell.alignment = { horizontal: "center", vertical: "middle" };
-      cell.border = {
-        top: { style: "thin" },
-        bottom: { style: "thin" },
-        left: { style: "thin" },
-        right: { style: "thin" },
-      };
-    });
-
-    worksheet.addRow([]); // empty row
-
-    // 2) Add header row for the items
-    const headers = ["ملاحظات", "المجموع", "سعر المفرد", "العدد", "البند", "التاريخ", "ت"];
-    const headerRow = worksheet.addRow(headers);
-    headerRow.eachCell((cell) => {
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      cell.alignment = { horizontal: "center", vertical: "middle" };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF9C27B0" },
-      };
-      cell.border = {
-        top: { style: "thin" },
-        bottom: { style: "thin" },
-        left: { style: "thin" },
-        right: { style: "thin" },
-      };
-    });
-
-    // 3) Insert each flattened item as a row
-    flattened.forEach((item, index) => {
-      const row = worksheet.addRow([
-        item["ملاحظات"] || "",
-        `IQD ${Number(item["المجموع"] || 0).toLocaleString()}`,
-        `IQD ${Number(item["السعر"] || 0).toLocaleString()}`,
-        item["الكمية"] || "",
-        (item.isSubExpense ? "↳ " : "") + (item["نوع المصروف"] || ""),
-        item["التاريخ"] || "",
-        index + 1, // or item.تسلسل if you prefer
+  const handleExportToExcel = async () => {
+    try {
+      if (!expense) {
+        message.error("لا توجد بيانات لتصديرها");
+        return;
+      }
+  
+      const flattened = expense?.flattenedItems || [];
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("تقرير المصاريف", {
+        properties: { rtl: true },
+      });
+  
+      // 1) Add supervisor info row
+      const supervisorRow = worksheet.addRow([
+        "الحالة",
+        "المتبقي",
+        "مجموع الصرفيات",
+        "مبلغ النثرية",
+        "المكتب",
+        "المحافظة",
+        "اسم المشرف",
       ]);
-
-      row.eachCell((cell) => {
+      supervisorRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FF4CAF50" },
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+  
+      const supervisorDataRow = worksheet.addRow([
+        statusMap[expense?.generalInfo?.["الحالة"]] || "N/A",
+        `IQD ${Number(expense?.generalInfo?.["المتبقي"] ?? 0).toLocaleString()}`,
+        `IQD ${Number(expense?.generalInfo?.["مجموع الصرفيات"] ?? 0).toLocaleString()}`,
+        `IQD ${Number(expense?.generalInfo?.["مبلغ النثرية"] ?? 0).toLocaleString()}`,
+        expense?.generalInfo?.["المكتب"] || "N/A",
+        expense?.generalInfo?.["المحافظة"] || "N/A",
+        expense?.generalInfo?.["اسم المشرف"] || "N/A",
+      ]);
+      supervisorDataRow.eachCell((cell) => {
         cell.alignment = { horizontal: "center", vertical: "middle" };
         cell.border = {
           top: { style: "thin" },
@@ -505,38 +462,104 @@ function flattenItems(items) {
           left: { style: "thin" },
           right: { style: "thin" },
         };
-        // Alternate row color
+      });
+  
+      worksheet.addRow([]); // empty row
+  
+      // 2) Add header row for the items
+      const headers = ["ملاحظات", "المجموع", "سعر المفرد", "العدد", "البند", "التاريخ", "ت"];
+      const headerRow = worksheet.addRow(headers);
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
         cell.fill = {
           type: "pattern",
           pattern: "solid",
-          fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" },
+          fgColor: { argb: "FF9C27B0" },
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
         };
       });
-    });
-
-    // 4) Set column widths
-    worksheet.columns = [
-      { width: 30 }, // ملاحظات
-      { width: 30 }, // المجموع
-      { width: 30 }, // سعر المفرد
-      { width: 30 }, // العدد
-      { width: 30 }, // البند
-      { width: 25 }, // التاريخ
-      { width: 20 }, // ت
-    ];
-
-    // 5) Output the file
-    const buffer = await workbook.xlsx.writeBuffer();
-    saveAs(new Blob([buffer]), "تقرير_المصاريف.xlsx");
-    message.success("تم تصدير التقرير بنجاح");
-  } catch (error) {
-    console.error("Error exporting to Excel:", error);
-    message.error("حدث خطأ أثناء تصدير التقرير");
-  }
-};
+  
+      // 3) Insert each flattened item as a row with correct numbering
+      let mainIndex = 0;
+      let subIndex = 0;
+      let lastMainIndex = 0;
+  
+      flattened.forEach((item, index) => {
+        if (!item.isSubExpense) {
+          // It's a main expense
+          mainIndex++;
+          subIndex = 0;
+          lastMainIndex = mainIndex;
+        } else {
+          // It's a sub-expense
+          subIndex++;
+        }
+        //if you need 1 and 1.1 indexing use this
+        // const rowIndex = item.isSubExpense ? `${lastMainIndex}.${subIndex}` : mainIndex;
+  
+        const row = worksheet.addRow([
+          item["ملاحظات"] || "",
+          `IQD ${Number(item["المجموع"] || 0).toLocaleString()}`,
+          `IQD ${Number(item["السعر"] || 0).toLocaleString()}`,
+          item["الكمية"] || "",
+          (item.isSubExpense ? "↲ " : "") + (item["نوع المصروف"] || ""),
+          item["التاريخ"] || "",
+          // rowIndex,
+          index + 1,
+        ]);
+  
+        row.eachCell((cell) => {
+          cell.alignment = { horizontal: "center", vertical: "middle" };
+          cell.border = {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          };
+          // Alternate row color
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" },
+          };
+        });
+      });
+  
+      // 4) Set column widths
+      worksheet.columns = [
+        { width: 30 }, // ملاحظات
+        { width: 30 }, // المجموع
+        { width: 30 }, // سعر المفرد
+        { width: 30 }, // العدد
+        { width: 30 }, // البند
+        { width: 25 }, // التاريخ
+        { width: 20 }, // ت
+      ];
+      const now = new Date();
+      const formattedDate = now.toLocaleDateString("en-GB", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).replace(/\//g, "-"); // Format: YYYY-MM-DD
+      const fileName = `تقرير_المصاريف_${formattedDate}.xlsx`;
+      // 5) Output the file
+      const buffer = await workbook.xlsx.writeBuffer();
+      saveAs(new Blob([buffer]), fileName);
+      message.success(`تم تصدير التقرير بنجاح: ${fileName}`);
+    } catch (error) {
+      console.error("Error exporting to Excel:", error);
+      message.error("حدث خطأ أثناء تصدير التقرير");
+    }
+  };
 
  // Function to generate and download a PDF
-const handlePrint = async () => {
+ const handlePrint = async () => {
   setIsPrinting(true);
   try {
     const flattened = expense?.flattenedItems || [];
@@ -544,6 +567,92 @@ const handlePrint = async () => {
     const element = document.createElement("div");
     element.dir = "rtl";
     element.style.fontFamily = "Arial, sans-serif";
+    // List of CORS proxies to try
+    const proxyUrls = [
+      (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+      (url) =>
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      (url) => `https://proxy.cors.sh/${url}`,
+      (url) => `https://cors-anywhere.herokuapp.com/${url}`,
+    ];
+    // Try each proxy until one works
+    const fetchImageWithProxy = async (url, proxyIndex = 0) => {
+      if (proxyIndex >= proxyUrls.length) {
+        throw new Error("All proxies failed");
+      }
+      try {
+        const proxyUrl = proxyUrls[proxyIndex](url);
+        const img = document.createElement("img");
+        img.crossOrigin = "anonymous";
+        return new Promise((resolve, reject) => {
+          img.onload = () => {
+            try {
+              const canvas = document.createElement("canvas");
+              canvas.width = img.width;
+              canvas.height = img.height;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(img, 0, 0);
+              const base64String = canvas.toDataURL("image/jpeg", 0.8); // Reduced quality for better performance
+              resolve(base64String);
+            } catch (error) {
+              console.warn(`Proxy ${proxyIndex + 1} failed, trying next...`);
+              resolve(fetchImageWithProxy(url, proxyIndex + 1));
+            }
+          };
+          img.onerror = () => {
+            console.warn(`Proxy ${proxyIndex + 1} failed, trying next...`);
+            resolve(fetchImageWithProxy(url, proxyIndex + 1));
+          };
+          img.src = proxyUrl;
+        });
+      } catch (error) {
+        console.warn(`Proxy ${proxyIndex + 1} failed, trying next...`);
+        return fetchImageWithProxy(url, proxyIndex + 1);
+      }
+    };
+    // Fetch images for daily expenses
+    const fetchImages = async (items) => {
+      const imagePromises = items
+        .filter((item) => item.type === "daily")
+        .map(async (item) => {
+          try {
+            const response = await axiosInstance.get(
+              `/api/Attachment/Expense/${item.id}`,
+              {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              }
+            );
+            const imageUrls =
+              response.data?.map(
+                (attachment) =>
+                  `https://cdn-oms.scopesky.org${attachment.filePath}`
+              ) || [];
+            // Fetch and convert images to Base64 with proxy
+            const imagesWithBase64 = await Promise.all(
+              imageUrls.map(async (url) => {
+                try {
+                  return await fetchImageWithProxy(url);
+                } catch (error) {
+                  console.error(
+                    `Failed to fetch image after all proxies: ${url}`
+                  );
+                  return null;
+                }
+              })
+            );
+            return { ...item, images: imagesWithBase64.filter(Boolean) };
+          } catch (error) {
+            console.error(
+              `Error fetching images for daily expense ${item.id}:`,
+              error
+            );
+            return { ...item, images: [] };
+          }
+        });
+      return Promise.all(imagePromises);
+    };
+    // Get items with images
+    const itemsWithImages = await fetchImages(expense?.items || []);
 
     element.innerHTML = `
       <div style="padding: 20px; text-align: center;">
@@ -602,6 +711,23 @@ const handlePrint = async () => {
           </tbody>
         </table>
       </div>
+      <!-- Images Section -->
+    <div style="margin-top: 40px; text-align: center; page-break-before: always;">
+  <h2 style="font-size: 20px; color: #000; margin-bottom: 20px;">صور المصروفات</h2>
+  ${itemsWithImages
+    .filter((item) => item.images && item.images.length > 0)
+    .map((item) =>
+      item.images
+        .map(
+          (base64) =>
+            `<div style="page-break-before: always; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center;">
+              <img src="${base64}" alt="Expense Image" style="max-width: 100%; max-height: 100%; object-fit: contain; margin-bottom: 20px;" />
+            </div>`
+        )
+        .join("")
+    )
+    .join("")}
+</div>
     `;
 
     const opt = {
@@ -624,7 +750,6 @@ const handlePrint = async () => {
     setIsPrinting(false);
   }
 };
-
   // Define columns for the expense items table with expandable rows for sub-expenses
   const expenseItemsColumns = [
     {
@@ -909,18 +1034,9 @@ const handlePrint = async () => {
     }}
     pagination={{ pageSize: 5, position: ["bottomCenter"] }}
     locale={{ emptyText: "لا توجد عناصر للصرف." }}
-    summary={(pageData) => {
-      // Manually sum top-level AND sub-level
-      let total = 0;
-      pageData.forEach((item) => {
-        total += (item.المجموع || 0);
-        if (item.children && item.children.length > 0) {
-          item.children.forEach((subItem) => {
-            total += (subItem.المجموع || 0);
-          });
-        }
-      });
-
+    summary={() => {
+      const totalExpenses = expense?.generalInfo?.["مجموع الصرفيات"] || 0;
+    
       return (
         <Table.Summary fixed>
           <Table.Summary.Row>
@@ -929,7 +1045,7 @@ const handlePrint = async () => {
             </Table.Summary.Cell>
             <Table.Summary.Cell index={1} align="center">
               IQD{" "}
-              {Number(total).toLocaleString(undefined, {
+              {Number(totalExpenses).toLocaleString(undefined, {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2,
               })}
