@@ -133,7 +133,7 @@
 /* Dashboard Styles */
 .db_stats_container {
   padding: 20px;
-  background-color: #f8fafc;
+  /* background-color: #f8fafc; */
   min-height: 100vh;
   font-family: 'Tajawal', sans-serif;
 }
@@ -173,7 +173,15 @@
 
 .db_stat_icon {
   background-color: rgba(37, 99, 235, 0.1);
-  padding: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  color: #2563eb;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+.db_stat_icon_Buildings{
+  background-color: rgba(37, 99, 235, 0.1);
+  padding: 10px;
   border-radius: 10px;
   color: #2563eb;
   margin-bottom: 12px;
@@ -190,7 +198,7 @@
 
 .db_stat_label {
   color: #64748b;
-  font-size: 16px;
+  font-size: 18px;
   text-align: center;
   font-weight: 500;
 }
@@ -378,7 +386,7 @@
 
 .db_stats_container {
   padding: 24px;
-  background-color: #f8fafc;
+  /* background-color: #f8fafc; */
   min-height: 100vh;
   font-family: 'Tajawal', sans-serif;
 }
@@ -423,6 +431,7 @@
 
 .db_main_stat {
   display: flex;
+  flex-direction: column;
   align-items: center;
   margin-bottom: 16px;
   gap: 16px;
@@ -471,9 +480,10 @@
 }
 
 .db_stat_label {
-  font-size: 14px;
+  font-size: 18px;
   color: #64748b;
   margin-top: 4px;
+  margin-bottom: 8px;
 }
 
 .db_divider {
@@ -728,3 +738,9 @@
     transform: translateZ(5px);
   }
 }
+
+
+
+
+
+/* section for animation icon */
