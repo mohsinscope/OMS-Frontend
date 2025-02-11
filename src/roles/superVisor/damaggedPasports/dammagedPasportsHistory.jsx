@@ -10,7 +10,7 @@ import {
   DatePicker,
   ConfigProvider,
   Skeleton,
-  Modal
+  Modal,
 } from "antd";
 import { Link } from "react-router-dom";
 import html2pdf from "html2pdf.js";
@@ -58,9 +58,10 @@ export default function SuperVisorPassport() {
     endDate: null,
   });
 
-  // New states for the email modal
+  // New states for the email modal and its loading indicator
   const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
   const [emailReportDate, setEmailReportDate] = useState(null);
+  const [isEmailLoading, setIsEmailLoading] = useState(false);
 
   // Formatting dates to ISO
   const formatToISO = (date, isEndDate = false) => {
@@ -76,7 +77,6 @@ export default function SuperVisorPassport() {
 
   // Fetch damaged passports
   const fetchPassports = async (payload) => {
-    
     try {
       setIsLoading(true);
       const response = await axiosInstance.post(
@@ -128,7 +128,6 @@ export default function SuperVisorPassport() {
   };
 
   const fetchDamageTypes = async () => {
-    
     try {
       const response = await axiosInstance.get(`${Url}/api/damagedtype/all`, {
         headers: { Authorization: `Bearer ${accessToken}` },
@@ -144,18 +143,21 @@ export default function SuperVisorPassport() {
     fetchDamageTypes();
   }, []);
 
-  // New handler functions for email modal
+  // New handler functions for email modal (download ZIP file)
   const handleEmailReportOk = async () => {
-    
     if (!emailReportDate) {
       message.error("الرجاء اختيار تاريخ التقرير");
       return;
     }
+    setIsEmailLoading(true);
+
     const payload = {
       ReportDate: formatToISO(emailReportDate),
     };
+    console.log(payload)
     try {
-      await axiosInstance.post(
+      // Configure axios to return a blob with a 3-minute timeout.
+      const response = await axiosInstance.post(
         `${Url}/api/DamagedPassportsReport/zip`,
         payload,
         {
@@ -163,15 +165,34 @@ export default function SuperVisorPassport() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
+          timeout: 180000, // 3 minutes timeout
+          responseType: "blob", // ensure the response is a blob
         }
       );
-      message.success("تم ارسال التقرير بالبريد الالكتروني بنجاح");
+
+      // Create a blob from the response data and trigger a download.
+      const blob = new Blob([response.data], { type: "application/zip" });
+
+      // Optionally, extract the filename from the response headers.
+      const contentDisposition = response.headers["content-disposition"];
+      let filename = "DamagedPassportsReport.zip";
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch && filenameMatch.length > 1) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      saveAs(blob, filename);
+      message.success("تم تحميل التقرير بنجاح");
     } catch (error) {
-      console.error("Error sending email report:", error);
-      message.error("حدث خطأ أثناء ارسال التقرير بالبريد الالكتروني");
+      console.error("Error downloading email report:", error);
+      message.error("حدث خطأ أثناء تحميل التقرير");
+    } finally {
+      setIsEmailLoading(false);
+      setIsEmailModalVisible(false);
+      setEmailReportDate(null);
     }
-    setIsEmailModalVisible(false);
-    setEmailReportDate(null);
   };
 
   const handleEmailModalCancel = () => {
@@ -261,7 +282,6 @@ export default function SuperVisorPassport() {
 
   const handleExportToExcel = async () => {
     try {
-
       const payload = {
         passportNumber: formData.passportNumber || "",
         profileFullName: formData.profileFullName || "",
@@ -327,7 +347,6 @@ export default function SuperVisorPassport() {
       });
 
       fullPassportList.forEach((passport, index) => {
-
         const row = worksheet.addRow([
           passport.damagedTypeName,
           passport.passportNumber,
@@ -370,7 +389,7 @@ export default function SuperVisorPassport() {
       const now = new Date();
       const formattedDate = now.toISOString().split("T")[0]; // YYYY-MM-DD format
       saveAs(
-        new Blob([buffer]),
+        new Blob([buffer]), 
         `${formattedDate}_تقرير_الجوازات_التالفة.xlsx`
       );
       message.success("تم تصدير التقرير بنجاح");
@@ -381,8 +400,6 @@ export default function SuperVisorPassport() {
   };
 
   const handleSearch = async (page = 1) => {
-   
-
     const payload = {
       passportNumber: formData.passportNumber || "",
       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
@@ -400,7 +417,6 @@ export default function SuperVisorPassport() {
   };
 
   const handleReset = async () => {
-
     setFormData({
       passportNumber: "",
       damagedTypeId: null,
@@ -438,12 +454,13 @@ export default function SuperVisorPassport() {
   };
 
   const fetchGovernorates = useCallback(async () => {
-    
-
     try {
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
       setGovernorates(response.data);
       if (isSupervisor) {
         setSelectedGovernorate(profile.governorateId);
@@ -455,7 +472,6 @@ export default function SuperVisorPassport() {
   }, [accessToken, isSupervisor, profile]);
 
   const fetchOffices = async (governorateId) => {
-
     if (!governorateId) {
       setOffices([]);
       setSelectedOffice(null);
@@ -463,9 +479,12 @@ export default function SuperVisorPassport() {
     }
 
     try {
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown/${governorateId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown/${governorateId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
       if (response.data && response.data[0] && response.data[0].offices) {
         setOffices(response.data[0].offices);
         if (isSupervisor) {
@@ -482,7 +501,6 @@ export default function SuperVisorPassport() {
   }, [fetchGovernorates]);
 
   useEffect(() => {
-
     const initialPayload = {
       passportNumber: "",
       officeId: isSupervisor ? profile.officeId : null,
@@ -569,7 +587,7 @@ export default function SuperVisorPassport() {
       ),
     },
   ];
-  
+
   return (
     <div
       className={`supervisor-passport-dameged-page ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}
@@ -582,7 +600,9 @@ export default function SuperVisorPassport() {
       ) : (
         <>
           <div
-            className={`supervisor-passport-dameged-filters ${searchVisible ? "animate-show" : "animate-hide"}`}
+            className={`supervisor-passport-dameged-filters ${
+              searchVisible ? "animate-show" : "animate-hide"
+            }`}
           >
             <form className="supervisor-passport-dameged-form">
               <div className="filter-field">
@@ -736,23 +756,23 @@ export default function SuperVisorPassport() {
                 </button>
 
                 {roles.includes("SuperAdmin") && (
-                    <button
-                      type="button"
-                      className="modern-button excel-button"
-                      onClick={() => setIsEmailModalVisible(true)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        padding: "6px 12px",
-                        borderRadius: "8px",
-                        width: "fit-content",
-                      }}
-                    >
-                      ارسال ايميل 
-                      <Icons type="email" />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className="modern-button excel-button"
+                    onClick={() => setIsEmailModalVisible(true)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      width: "fit-content",
+                    }}
+                  >
+                    ارسال ايميل 
+                    <Icons type="email" />
+                  </button>
+                )}
               </div>
             </form>
           </div>
@@ -795,6 +815,7 @@ export default function SuperVisorPassport() {
         onCancel={handleEmailModalCancel}
         okText="ارسال"
         cancelText="إلغاء"
+        confirmLoading={isEmailLoading} // Displays loading spinner on the OK button
       >
         <DatePicker
           placeholder="اختر تاريخ التقرير"
