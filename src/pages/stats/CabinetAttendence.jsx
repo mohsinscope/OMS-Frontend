@@ -35,7 +35,7 @@ export default function CabinetAttendance() {
     selectedStaffType: "ReceivingStaff",
     selectedGovernorate: "",
     selectedOffice: "",
-    selectedWorkingHours: 0,
+    selectedWorkingHours: 1,
   });
 
   // Memoized headers
