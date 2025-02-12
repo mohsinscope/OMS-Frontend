@@ -15,7 +15,7 @@ import "./SuperVisorDevice.css";
 import useAuthStore from "./../../../store/store";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
-import Icons from './../../../reusable elements/icons.jsx';
+import Icons from "./../../../reusable elements/icons.jsx";
 
 const SuperVisorDevices = () => {
   const {
@@ -28,7 +28,8 @@ const SuperVisorDevices = () => {
   } = useAuthStore();
   
   const hasCreatePermission = permissions.includes("DDc");
-  const isSupervisor =  roles.includes("Supervisor") || (roles == "I.T")||(roles =="MainSupervisor");
+  const isSupervisor =
+    roles.includes("Supervisor") || (roles == "I.T") || (roles == "MainSupervisor");
 
   const [devices, setDevices] = useState([]);
   const [totalDevices, setTotalDevices] = useState(0);
@@ -112,6 +113,17 @@ const SuperVisorDevices = () => {
       },
     };
 
+    // Save search filters in local storage
+    localStorage.setItem(
+      "damagedDeviceSearchFilters",
+      JSON.stringify({
+        formData,
+        selectedGovernorate,
+        selectedOffice,
+        currentPage: page,
+      })
+    );
+
     await fetchDevices(payload);
   };
 
@@ -143,6 +155,8 @@ const SuperVisorDevices = () => {
       setSelectedOffice(null);
       setOffices([]);
     }
+
+    localStorage.removeItem("damagedDeviceSearchFilters");
 
     const payload = {
       serialNumber: "",
@@ -217,19 +231,47 @@ const SuperVisorDevices = () => {
   }, [fetchGovernorates]);
 
   useEffect(() => {
-    const initialPayload = {
-      serialNumber: "",
-      officeId: isSupervisor ? profile.officeId : null,
-      governorateId: isSupervisor ? profile.governorateId : null,
-      startDate: null,
-      endDate: null,
-      PaginationParams: {
-        PageNumber: 1,
-        PageSize: pageSize,
-      },
-    };
+    const savedFilters = localStorage.getItem("damagedDeviceSearchFilters");
+    if (savedFilters) {
+      const {
+        formData: savedFormData,
+        selectedGovernorate: savedGov,
+        selectedOffice: savedOffice,
+        currentPage: savedPage,
+      } = JSON.parse(savedFilters);
+      setFormData(savedFormData);
+      setSelectedGovernorate(savedGov);
+      setSelectedOffice(savedOffice);
+      setCurrentPage(savedPage || 1);
 
-    fetchDevices(initialPayload);
+      const payload = {
+        serialNumber: savedFormData.serialNumber || "",
+        officeId: isSupervisor ? profile.officeId : savedOffice || null,
+        governorateId: isSupervisor ? profile.governorateId : savedGov || null,
+        startDate: savedFormData.startDate ? formatToISO(savedFormData.startDate) : null,
+        endDate: savedFormData.endDate ? formatToISO(savedFormData.endDate) : null,
+        PaginationParams: {
+          PageNumber: savedPage || 1,
+          PageSize: pageSize,
+        },
+      };
+
+      fetchDevices(payload);
+    } else {
+      const initialPayload = {
+        serialNumber: "",
+        officeId: isSupervisor ? profile.officeId : null,
+        governorateId: isSupervisor ? profile.governorateId : null,
+        startDate: null,
+        endDate: null,
+        PaginationParams: {
+          PageNumber: 1,
+          PageSize: pageSize,
+        },
+      };
+
+      fetchDevices(initialPayload);
+    }
   }, [isSupervisor, profile.officeId, profile.governorateId]);
 
   const columns = [
@@ -271,20 +313,22 @@ const SuperVisorDevices = () => {
         <Link
           to="/damegedDevices/show"
           state={{ id: record.id }}
-          className="supervisor-devices-dameged-details-link">
+          className="supervisor-devices-dameged-details-link"
+        >
           عرض
         </Link>
       ),
     },
   ];
-  console.log("s")
+  console.log("s");
 
   return (
     <div
       className={`supervisor-passport-dameged-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
 
       {isLoading ? (
@@ -294,18 +338,23 @@ const SuperVisorDevices = () => {
           <div
             className={`supervisor-passport-dameged-filters ${
               searchVisible ? "animate-show" : "animate-hide"
-            }`}>
+            }`}
+          >
             <form
               onSubmit={handleFormSubmit}
-              className="supervisor-passport-dameged-form">
+              className="supervisor-passport-dameged-form"
+            >
               <div className="supervisor-devices-dameged-field-wrapper">
-                <label className="supervisor-devices-dameged-label">المحافظة</label>
+                <label className="supervisor-devices-dameged-label">
+                  المحافظة
+                </label>
                 <Select
                   value={selectedGovernorate || undefined}
                   onChange={handleGovernorateChange}
                   disabled={isSupervisor}
                   className="supervisor-devices-dameged-dropdown"
-                  placeholder="اختر المحافظة">
+                  placeholder="اختر المحافظة"
+                >
                   {governorates.map((gov) => (
                     <Select.Option key={gov.id} value={gov.id}>
                       {gov.name}
@@ -323,7 +372,8 @@ const SuperVisorDevices = () => {
                   onChange={(value) => setSelectedOffice(value)}
                   disabled={isSupervisor || !selectedGovernorate}
                   className="supervisor-devices-dameged-dropdown"
-                  placeholder="اختر المكتب">
+                  placeholder="اختر المكتب"
+                >
                   {offices.map((office) => (
                     <Select.Option key={office.id} value={office.id}>
                       {office.name}
@@ -372,18 +422,23 @@ const SuperVisorDevices = () => {
               <div className="supervisor-device-filter-buttons">
                 <Button
                   htmlType="submit"
-                  className="supervisor-passport-dameged-button">
+                  className="supervisor-passport-dameged-button"
+                >
                   ابحث
                 </Button>
                 <Button
                   onClick={handleReset}
-                  className="supervisor-passport-dameged-button">
+                  className="supervisor-passport-dameged-button"
+                >
                   إعادة تعيين
                 </Button>
               </div>
               {hasCreatePermission && (
                 <Link to="/damegedDevices/add">
-                  <Button type="primary" className="supervisor-passport-dameged-add-button">
+                  <Button
+                    type="primary"
+                    className="supervisor-passport-dameged-add-button"
+                  >
                     اضافة جهاز جديد +
                   </Button>
                 </Link>
