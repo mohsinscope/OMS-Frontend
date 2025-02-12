@@ -327,7 +327,7 @@ export default function LandingPage() {
                     <YAxis
                       stroke="#64748b"
                       // Adjust the domain if needed; here we assume percentages might exceed 100.
-                      domain={[0, 150]}
+                      domain={[0, 100]}
                       tickFormatter={(value) => `${value}%`}
                     />
                     <Tooltip
