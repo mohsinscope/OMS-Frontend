@@ -127,7 +127,6 @@ export default function SuperVisorPassport() {
     }
   };
 
-  // Fetch damage types for the dropdown
   const fetchDamageTypes = async () => {
     try {
       const response = await axiosInstance.get(`${Url}/api/damagedtype/all`, {
@@ -144,7 +143,7 @@ export default function SuperVisorPassport() {
     fetchDamageTypes();
   }, []);
 
-  // Handler for email report (downloads a ZIP file)
+  // New handler functions for email modal (download ZIP file)
   const handleEmailReportOk = async () => {
     if (!emailReportDate) {
       message.error("الرجاء اختيار تاريخ التقرير");
@@ -155,8 +154,9 @@ export default function SuperVisorPassport() {
     const payload = {
       ReportDate: formatToISO(emailReportDate),
     };
-    console.log(payload);
+    console.log(payload)
     try {
+      // Configure axios to return a blob with a 3-minute timeout.
       const response = await axiosInstance.post(
         `${Url}/api/DamagedPassportsReport/zip`,
         payload,
@@ -166,12 +166,14 @@ export default function SuperVisorPassport() {
             Authorization: `Bearer ${accessToken}`,
           },
           timeout: 180000, // 3 minutes timeout
-          responseType: "blob",
+          responseType: "blob", // ensure the response is a blob
         }
       );
 
+      // Create a blob from the response data and trigger a download.
       const blob = new Blob([response.data], { type: "application/zip" });
 
+      // Optionally, extract the filename from the response headers.
       const contentDisposition = response.headers["content-disposition"];
       let filename = "DamagedPassportsReport.zip";
       if (contentDisposition) {
@@ -198,7 +200,6 @@ export default function SuperVisorPassport() {
     setEmailReportDate(null);
   };
 
-  // Print PDF handler
   const handlePrintPDF = async () => {
     try {
       const payload = {
@@ -250,21 +251,11 @@ export default function SuperVisorPassport() {
                   (passport, index) => `
                     <tr>
                       <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${index + 1}</td>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(
-                        passport.date
-                      ).toLocaleDateString("en-CA")}</td>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                        passport.governorateName
-                      }</td>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                        passport.officeName
-                      }</td>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                        passport.profileFullName
-                      }</td>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                        passport.passportNumber
-                      }</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(passport.date).toLocaleDateString("en-CA")}</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${passport.governorateName}</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${passport.officeName}</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${passport.profileFullName}</td>
+                      <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${passport.passportNumber}</td>
                     </tr>
                   `
                 )
@@ -289,7 +280,6 @@ export default function SuperVisorPassport() {
     }
   };
 
-  // Export to Excel handler
   const handleExportToExcel = async () => {
     try {
       const payload = {
@@ -379,9 +369,7 @@ export default function SuperVisorPassport() {
           cell.fill = {
             type: "pattern",
             pattern: "solid",
-            fgColor: {
-              argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF",
-            },
+            fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" },
           };
         });
       });
@@ -399,9 +387,9 @@ export default function SuperVisorPassport() {
 
       const buffer = await workbook.xlsx.writeBuffer();
       const now = new Date();
-      const formattedDate = now.toISOString().split("T")[0];
+      const formattedDate = now.toISOString().split("T")[0]; // YYYY-MM-DD format
       saveAs(
-        new Blob([buffer]),
+        new Blob([buffer]), 
         `${formattedDate}_تقرير_الجوازات_التالفة.xlsx`
       );
       message.success("تم تصدير التقرير بنجاح");
@@ -411,7 +399,6 @@ export default function SuperVisorPassport() {
     }
   };
 
-  // Save the current filters to local storage and fetch data
   const handleSearch = async (page = 1) => {
     const payload = {
       passportNumber: formData.passportNumber || "",
@@ -426,21 +413,9 @@ export default function SuperVisorPassport() {
       },
     };
 
-    // Persist the search filters in local storage
-    localStorage.setItem(
-      "damagedPassportSearchFilters",
-      JSON.stringify({
-        formData,
-        selectedGovernorate,
-        selectedOffice,
-        currentPage: page,
-      })
-    );
-
     await fetchPassports(payload);
   };
 
-  // Reset the filters and clear the saved local storage
   const handleReset = async () => {
     setFormData({
       passportNumber: "",
@@ -454,8 +429,6 @@ export default function SuperVisorPassport() {
       setSelectedOffice(null);
       setOffices([]);
     }
-
-    localStorage.removeItem("damagedPassportSearchFilters");
 
     const payload = {
       passportNumber: "",
@@ -474,7 +447,6 @@ export default function SuperVisorPassport() {
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
-  // When a governorate is selected, update the state and fetch the corresponding offices
   const handleGovernorateChange = async (value) => {
     setSelectedGovernorate(value);
     setSelectedOffice(null);
@@ -483,9 +455,12 @@ export default function SuperVisorPassport() {
 
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
       setGovernorates(response.data);
       if (isSupervisor) {
         setSelectedGovernorate(profile.governorateId);
@@ -524,61 +499,26 @@ export default function SuperVisorPassport() {
   useEffect(() => {
     fetchGovernorates();
   }, [fetchGovernorates]);
+  
 
-  // On component mount, check if any filters were saved in local storage and restore them
   useEffect(() => {
-    const savedFilters = localStorage.getItem("damagedPassportSearchFilters");
-    if (savedFilters) {
-      const {
-        formData: savedFormData,
-        selectedGovernorate: savedGov,
-        selectedOffice: savedOffice,
-        currentPage: savedPage,
-      } = JSON.parse(savedFilters);
-      setFormData(savedFormData);
-      setSelectedGovernorate(savedGov);
-      setSelectedOffice(savedOffice);
-      setCurrentPage(savedPage || 1);
+    const initialPayload = {
+      passportNumber: "",
+      officeId: isSupervisor ? profile.officeId : null,
+      governorateId: isSupervisor ? profile.governorateId : null,
+      damagedTypeId: null,
+      startDate: null,
+      endDate: null,
+      PaginationParams: {
+        PageNumber: 1,
+        PageSize: pageSize,
+      },
+    };
 
-      // If the user is not a supervisor, load the offices for the saved governorate
-      if (!isSupervisor && savedGov) {
-        fetchOffices(savedGov);
-      }
+    fetchPassports(initialPayload);
+  }, [isSupervisor, profile.officeId, profile.governorateId]);
 
-      const payload = {
-        passportNumber: savedFormData.passportNumber || "",
-        officeId: isSupervisor ? profile.officeId : savedOffice || null,
-        governorateId: isSupervisor ? profile.governorateId : savedGov || null,
-        damagedTypeId: savedFormData.damagedTypeId || null,
-        startDate: savedFormData.startDate ? formatToISO(savedFormData.startDate, false) : null,
-        endDate: savedFormData.endDate ? formatToISO(savedFormData.endDate, true) : null,
-        PaginationParams: {
-          PageNumber: savedPage || 1,
-          PageSize: pageSize,
-        },
-      };
-
-      fetchPassports(payload);
-    } else {
-      // No saved filters: use default payload.
-      const initialPayload = {
-        passportNumber: "",
-        officeId: isSupervisor ? profile.officeId : null,
-        governorateId: isSupervisor ? profile.governorateId : null,
-        damagedTypeId: null,
-        startDate: null,
-        endDate: null,
-        PaginationParams: {
-          PageNumber: 1,
-          PageSize: pageSize,
-        },
-      };
-      fetchPassports(initialPayload);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Table columns configuration
+  // Table columns
   const columns = [
     {
       title: "تاريخ الانشاء",
@@ -651,9 +591,7 @@ export default function SuperVisorPassport() {
 
   return (
     <div
-      className={`supervisor-passport-dameged-page ${
-        isSidebarCollapsed ? "sidebar-collapsed" : ""
-      }`}
+      className={`supervisor-passport-dameged-page ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}
       dir="rtl"
     >
       <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
@@ -878,7 +816,7 @@ export default function SuperVisorPassport() {
         onCancel={handleEmailModalCancel}
         okText="ارسال"
         cancelText="إلغاء"
-        confirmLoading={isEmailLoading}
+        confirmLoading={isEmailLoading} // Displays loading spinner on the OK button
       >
         <DatePicker
           placeholder="اختر تاريخ التقرير"

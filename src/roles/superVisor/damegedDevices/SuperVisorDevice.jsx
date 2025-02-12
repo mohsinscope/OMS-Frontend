@@ -26,31 +26,79 @@ const SuperVisorDevices = () => {
     permissions,
     roles,
   } = useAuthStore();
-  
+
+  // Permissions/roles
   const hasCreatePermission = permissions.includes("DDc");
   const isSupervisor =
-    roles.includes("Supervisor") || (roles == "I.T") || (roles == "MainSupervisor");
+    roles.includes("Supervisor") || roles === "I.T" || roles === "MainSupervisor";
 
+  // Device list & pagination
   const [devices, setDevices] = useState([]);
   const [totalDevices, setTotalDevices] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+
+  // Governorates/offices
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
+
+  // Selected filters
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
+
+  // Other filter data
   const [formData, setFormData] = useState({
     serialNumber: "",
     startDate: null,
     endDate: null,
   });
-  const [isLoading, setIsLoading] = useState(true); // Loading state
 
+  // Loading state
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Utility to format a JS date to ISO string
   const formatToISO = (date) => {
     if (!date) return null;
     return date.toISOString();
   };
 
+  // 1) Fetch only governorates (no side-effects like setting selectedGovernorate).
+  const fetchGovernorates = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setGovernorates(response.data || []);
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المحافظات");
+    }
+  }, [accessToken]);
+
+  // 2) Fetch offices for a particular governorate
+  const fetchOffices = async (governorateId) => {
+    if (!governorateId) {
+      setOffices([]);
+      setSelectedOffice(null);
+      return;
+    }
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown/${governorateId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      if (response.data && response.data[0] && response.data[0].offices) {
+        setOffices(response.data[0].offices);
+      } else {
+        setOffices([]);
+      }
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المكاتب");
+    }
+  };
+
+  // 3) Main API call for searching devices
   const fetchDevices = async (payload) => {
     try {
       const response = await axiosInstance.post(
@@ -77,6 +125,7 @@ const SuperVisorDevices = () => {
       if (response.data) {
         setDevices(response.data);
 
+        // If there's a pagination header, parse it; otherwise fallback to data length
         const paginationHeader = response.headers["pagination"];
         if (paginationHeader) {
           const paginationInfo = JSON.parse(paginationHeader);
@@ -93,18 +142,21 @@ const SuperVisorDevices = () => {
         }`
       );
     } finally {
-      setIsLoading(false); // Stop loading
+      setIsLoading(false);
     }
   };
 
+  // 4) Searching with the current filter state
   const handleSearch = async (page = 1) => {
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
+
+    const finalGovernorate = isSupervisor ? profile.governorateId : selectedGovernorate;
+    const finalOffice = isSupervisor ? profile.officeId : selectedOffice;
+
     const payload = {
       serialNumber: formData.serialNumber || "",
-      officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-      governorateId: isSupervisor
-        ? profile.governorateId
-        : selectedGovernorate || null,
+      officeId: finalOffice || null,
+      governorateId: finalGovernorate || null,
       startDate: formData.startDate ? formatToISO(formData.startDate) : null,
       endDate: formData.endDate ? formatToISO(formData.endDate) : null,
       PaginationParams: {
@@ -118,20 +170,23 @@ const SuperVisorDevices = () => {
       "damagedDeviceSearchFilters",
       JSON.stringify({
         formData,
-        selectedGovernorate,
-        selectedOffice,
+        selectedGovernorate: finalGovernorate,
+        selectedOffice: finalOffice,
         currentPage: page,
       })
     );
 
     await fetchDevices(payload);
+    setCurrentPage(page);
   };
 
+  // 5) "البحث" button triggers form submit
   const handleFormSubmit = (e) => {
     e.preventDefault();
     handleSearch();
   };
 
+  // 6) Helpers to track filter changes
   const handleInputChange = (value) => {
     setFormData((prev) => ({
       ...prev,
@@ -146,6 +201,7 @@ const SuperVisorDevices = () => {
     }));
   };
 
+  // 7) "إعادة تعيين" 
   const handleReset = async () => {
     setFormData({ serialNumber: "", startDate: null, endDate: null });
     setCurrentPage(1);
@@ -158,6 +214,7 @@ const SuperVisorDevices = () => {
 
     localStorage.removeItem("damagedDeviceSearchFilters");
 
+    setIsLoading(true);
     const payload = {
       serialNumber: "",
       officeId: isSupervisor ? profile.officeId : null,
@@ -169,111 +226,85 @@ const SuperVisorDevices = () => {
         PageSize: pageSize,
       },
     };
-
     await fetchDevices(payload);
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
+  // 8) When user changes governorate from the Select
   const handleGovernorateChange = async (value) => {
     setSelectedGovernorate(value);
     setSelectedOffice(null);
     await fetchOffices(value);
   };
 
-  const fetchGovernorates = useCallback(async () => {
-    try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-      setGovernorates(response.data);
+  // 9) On component mount, do everything in the right order
+  useEffect(() => {
+    const initData = async () => {
+      // 1) Fetch all governorates
+      setIsLoading(true);
+      await fetchGovernorates();
 
+      // 2) Check local storage
+      const savedFilters = localStorage.getItem("damagedDeviceSearchFilters");
+      let loadedFormData = { serialNumber: "", startDate: null, endDate: null };
+      let loadedGov = null;
+      let loadedOffice = null;
+      let loadedPage = 1;
+
+      if (savedFilters) {
+        const parsed = JSON.parse(savedFilters);
+        loadedFormData = parsed.formData || loadedFormData;
+        loadedGov = parsed.selectedGovernorate || null;
+        loadedOffice = parsed.selectedOffice || null;
+        loadedPage = parsed.currentPage || 1;
+      }
+
+      // If user is supervisor, override with their own gov/office
       if (isSupervisor) {
-        setSelectedGovernorate(profile.governorateId);
-        await fetchOffices(profile.governorateId);
+        loadedGov = profile.governorateId;
+        loadedOffice = profile.officeId;
       }
-    } catch (error) {
-      message.error("حدث خطأ أثناء جلب بيانات المحافظات");
-    }
-  }, [accessToken, isSupervisor, profile]);
 
-  const fetchOffices = async (governorateId) => {
-    if (!governorateId) {
-      setOffices([]);
-      setSelectedOffice(null);
-      return;
-    }
-
-    try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown/${governorateId}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-
-      if (response.data && response.data[0] && response.data[0].offices) {
-        setOffices(response.data[0].offices);
-
-        if (isSupervisor) {
-          setSelectedOffice(profile.officeId);
-        }
+      // 3) If we do have a governorate, fetch its offices *before* setting office
+      if (loadedGov) {
+        await fetchOffices(loadedGov);
       }
-    } catch (error) {
-      message.error("حدث خطأ أثناء جلب بيانات المكاتب");
-    }
-  };
 
-  useEffect(() => {
-    fetchGovernorates();
-  }, [fetchGovernorates]);
+      // 4) Now update state
+      setFormData({
+        ...loadedFormData,
+        // If saved start/end date were strings, turn them into Date objects
+        startDate: loadedFormData.startDate ? new Date(loadedFormData.startDate) : null,
+        endDate: loadedFormData.endDate ? new Date(loadedFormData.endDate) : null,
+      });
+      setSelectedGovernorate(loadedGov);
+      setSelectedOffice(loadedOffice);
+      setCurrentPage(loadedPage);
 
-  useEffect(() => {
-    const savedFilters = localStorage.getItem("damagedDeviceSearchFilters");
-    if (savedFilters) {
-      const {
-        formData: savedFormData,
-        selectedGovernorate: savedGov,
-        selectedOffice: savedOffice,
-        currentPage: savedPage,
-      } = JSON.parse(savedFilters);
-      setFormData(savedFormData);
-      setSelectedGovernorate(savedGov);
-      setSelectedOffice(savedOffice);
-      setCurrentPage(savedPage || 1);
-
-      const payload = {
-        serialNumber: savedFormData.serialNumber || "",
-        officeId: isSupervisor ? profile.officeId : savedOffice || null,
-        governorateId: isSupervisor ? profile.governorateId : savedGov || null,
-        startDate: savedFormData.startDate ? formatToISO(savedFormData.startDate) : null,
-        endDate: savedFormData.endDate ? formatToISO(savedFormData.endDate) : null,
+      // 5) Build final payload and fetch devices
+      const finalPayload = {
+        serialNumber: loadedFormData.serialNumber || "",
+        officeId: loadedOffice || null,
+        governorateId: loadedGov || null,
+        startDate: loadedFormData.startDate
+          ? formatToISO(new Date(loadedFormData.startDate))
+          : null,
+        endDate: loadedFormData.endDate
+          ? formatToISO(new Date(loadedFormData.endDate))
+          : null,
         PaginationParams: {
-          PageNumber: savedPage || 1,
+          PageNumber: loadedPage,
           PageSize: pageSize,
         },
       };
+      await fetchDevices(finalPayload);
+    };
 
-      fetchDevices(payload);
-    } else {
-      const initialPayload = {
-        serialNumber: "",
-        officeId: isSupervisor ? profile.officeId : null,
-        governorateId: isSupervisor ? profile.governorateId : null,
-        startDate: null,
-        endDate: null,
-        PaginationParams: {
-          PageNumber: 1,
-          PageSize: pageSize,
-        },
-      };
+    initData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-      fetchDevices(initialPayload);
-    }
-  }, [isSupervisor, profile.officeId, profile.governorateId]);
-
+  // 10) Table columns
   const columns = [
     {
       title: "التاريخ",
@@ -320,7 +351,6 @@ const SuperVisorDevices = () => {
       ),
     },
   ];
-  console.log("s");
 
   return (
     <div
@@ -332,7 +362,7 @@ const SuperVisorDevices = () => {
       <h1 className="supervisor-devices-dameged-title">الأجهزة التالفة</h1>
 
       {isLoading ? (
-        <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
+        <Skeleton active paragraph={{ rows: 10 }} />
       ) : (
         <>
           <div
@@ -344,6 +374,7 @@ const SuperVisorDevices = () => {
               onSubmit={handleFormSubmit}
               className="supervisor-passport-dameged-form"
             >
+              {/* Governorate */}
               <div className="supervisor-devices-dameged-field-wrapper">
                 <label className="supervisor-devices-dameged-label">
                   المحافظة
@@ -355,6 +386,7 @@ const SuperVisorDevices = () => {
                   className="supervisor-devices-dameged-dropdown"
                   placeholder="اختر المحافظة"
                 >
+                  <Select.Option value="">اختر المحافظة</Select.Option>
                   {governorates.map((gov) => (
                     <Select.Option key={gov.id} value={gov.id}>
                       {gov.name}
@@ -363,6 +395,7 @@ const SuperVisorDevices = () => {
                 </Select>
               </div>
 
+              {/* Office */}
               <div className="supervisor-devices-dameged-field-wrapper">
                 <label className="supervisor-devices-dameged-label">
                   اسم المكتب
@@ -374,6 +407,7 @@ const SuperVisorDevices = () => {
                   className="supervisor-devices-dameged-dropdown"
                   placeholder="اختر المكتب"
                 >
+                  <Select.Option value="">اختر المكتب</Select.Option>
                   {offices.map((office) => (
                     <Select.Option key={office.id} value={office.id}>
                       {office.name}
@@ -382,6 +416,7 @@ const SuperVisorDevices = () => {
                 </Select>
               </div>
 
+              {/* Serial Number */}
               <div className="supervisor-devices-dameged-field-wrapper">
                 <label className="supervisor-devices-dameged-label">
                   الرقم التسلسلي
@@ -393,6 +428,7 @@ const SuperVisorDevices = () => {
                 />
               </div>
 
+              {/* Date Range */}
               <div className="supervisor-devices-dameged-field-wrapper">
                 <label className="supervisor-devices-dameged-label">
                   التاريخ من
@@ -419,6 +455,7 @@ const SuperVisorDevices = () => {
                 />
               </div>
 
+              {/* Buttons */}
               <div className="supervisor-device-filter-buttons">
                 <Button
                   htmlType="submit"
@@ -433,6 +470,8 @@ const SuperVisorDevices = () => {
                   إعادة تعيين
                 </Button>
               </div>
+
+              {/* Add new device (permission‐based) */}
               {hasCreatePermission && (
                 <Link to="/damegedDevices/add">
                   <Button
@@ -446,6 +485,7 @@ const SuperVisorDevices = () => {
             </form>
           </div>
 
+          {/* Table */}
           <div className="supervisor-devices-dameged-table-container">
             <ConfigProvider direction="rtl">
               <Table
@@ -459,7 +499,6 @@ const SuperVisorDevices = () => {
                   total: totalDevices,
                   position: ["bottomCenter"],
                   onChange: (page) => {
-                    setCurrentPage(page);
                     handleSearch(page);
                   },
                   showTotal: (total, range) => (
