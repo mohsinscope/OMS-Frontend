@@ -389,7 +389,7 @@ const SuperVisorLecturerAdd = () => {
                   name="governorateId"
                   label="اسم المحافظة"
                   initialValue={
-                    isSupervisor ? governorateId : governate[0]?.value
+                    isSupervisor ? governorateId : governate?.value
                   }
                   rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
                 >
