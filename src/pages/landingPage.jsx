@@ -166,11 +166,11 @@ export default function LandingPage() {
                 <div className="db_main_card">
                   <h2 className="db_stat_label1" style={{ textAlign: "center" }}>عدد المحافظات الكلي</h2>
                   <div className="db_main_stat">
-                    <div className="db_stat_icon">
+                    <div >
                       <IraqMap/>
                     </div>
                     <div className="db_stat_content">
-                      <span className="db_stat_value">{counters.totalGovernorates}</span>
+                      <span className="db_stat_value">18</span>
                     </div>
                   </div>
                 </div>
@@ -327,7 +327,7 @@ export default function LandingPage() {
                     <YAxis
                       stroke="#64748b"
                       // Adjust the domain if needed; here we assume percentages might exceed 100.
-                      domain={[0, 150]}
+                      domain={[0, 100]}
                       tickFormatter={(value) => `${value}%`}
                     />
                     <Tooltip

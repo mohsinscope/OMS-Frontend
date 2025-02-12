@@ -6,6 +6,7 @@ import "./superVisorAteensenceAdd.css";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 import IconName from "./../../../reusable elements/icons.jsx";
+import dayjs from "dayjs";
 
 const { TextArea } = Input;
 
@@ -17,7 +18,8 @@ export default function SuperVisorAttendanceAdd() {
   const [loading, setLoading] = useState(true);
 
   // Form fields
-  const [selectedDate, setSelectedDate] = useState(null);
+  // Initialize selectedDate with the current day using dayjs()
+  const [selectedDate, setSelectedDate] = useState(dayjs());
   const [workingHours, setWorkingHours] = useState(1);
   const [passportAttendance, setPassportAttendance] = useState({
     الاستلام: 0,
@@ -83,13 +85,15 @@ export default function SuperVisorAttendanceAdd() {
       الجودة: 0,
       التسليم: 0,
     });
-    setSelectedDate(null);
+    setSelectedDate(dayjs()); // Reset to current date
     setWorkingHours(1);
     setNotes("");
     message.success("تمت إعادة التعيين بنجاح");
   };
 
   const handleSaveAndSendAction = async () => {
+    const formattedDate = selectedDate.format("YYYY-MM-DD");
+
     try {
       const dataToSend = {
         receivingStaff: passportAttendance["الاستلام"],
@@ -97,7 +101,7 @@ export default function SuperVisorAttendanceAdd() {
         printingStaff: passportAttendance["الطباعة"],
         qualityStaff: passportAttendance["الجودة"],
         deliveryStaff: passportAttendance["التسليم"],
-        date: selectedDate ? `${selectedDate}T00:00:00Z` : null,
+        date: selectedDate ? `${formattedDate}T00:00:00Z` : null,
         note: notes,
         workingHours,
         governorateId,
@@ -157,7 +161,6 @@ export default function SuperVisorAttendanceAdd() {
         <Skeleton
           active
           paragraph={{ rows: 12 }}
-          // You can add a className or style here to tweak the skeleton layout
           style={{ marginTop: 20 }}
         />
       </div>
@@ -217,7 +220,9 @@ export default function SuperVisorAttendanceAdd() {
           <label>التاريخ</label>
           <DatePicker
             style={{ width: "100%" }}
-            onChange={(date, dateString) => setSelectedDate(dateString)}
+            value={selectedDate}
+            onChange={(date, dateString) => setSelectedDate(date)}
+            format="YYYY-MM-DD"
           />
         </div>
 
