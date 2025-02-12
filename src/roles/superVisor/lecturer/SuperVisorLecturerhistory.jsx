@@ -25,7 +25,9 @@ const SuperVisorLecturerhistory = () => {
     permissions,
   } = useAuthStore();
   const hasCreatePermission = permissions.includes("Lc");
-  const isSupervisor =  roles.includes("Supervisor")  || (roles == "I.T")||(roles =="MainSupervisor");
+  const isSupervisor =
+    roles.includes("Supervisor") || roles === "I.T" || roles === "MainSupervisor";
+
   const [lectures, setLectures] = useState([]);
   const [totalLectures, setTotalLectures] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -97,13 +99,14 @@ const SuperVisorLecturerhistory = () => {
     }
   };
 
+  // -------------------------------
+  // Local Storage Search Filter Logic
+  // -------------------------------
   const handleSearch = async (page = 1) => {
     const payload = {
       title: formData.title || "",
       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-      governorateId: isSupervisor
-        ? profile.governorateId
-        : selectedGovernorate || null,
+      governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
       startDate: formData.startDate ? formatToISO(formData.startDate) : null,
       endDate: formData.endDate ? formatToISO(formData.endDate) : null,
       companyId: formData.companyId || null,
@@ -114,8 +117,71 @@ const SuperVisorLecturerhistory = () => {
       },
     };
 
+    // Save search filters in local storage
+    localStorage.setItem(
+      "lecturerHistorySearchFilters",
+      JSON.stringify({
+        formData,
+        selectedGovernorate,
+        selectedOffice,
+        currentPage: page,
+      })
+    );
+
     await fetchLectures(payload);
   };
+
+  // Restore filters on mount (if available)
+  useEffect(() => {
+    const savedFilters = localStorage.getItem("lecturerHistorySearchFilters");
+    if (savedFilters) {
+      const {
+        formData: savedFormData,
+        selectedGovernorate: savedGov,
+        selectedOffice: savedOffice,
+        currentPage: savedPage,
+      } = JSON.parse(savedFilters);
+      setFormData(savedFormData);
+      setSelectedGovernorate(savedGov);
+      setSelectedOffice(savedOffice);
+      setCurrentPage(savedPage || 1);
+
+      const payload = {
+        title: savedFormData.title || "",
+        officeId: isSupervisor ? profile.officeId : savedOffice || null,
+        governorateId: isSupervisor ? profile.governorateId : savedGov || null,
+        startDate: savedFormData.startDate ? formatToISO(savedFormData.startDate) : null,
+        endDate: savedFormData.endDate ? formatToISO(savedFormData.endDate) : null,
+        companyId: savedFormData.companyId || null,
+        lectureTypeIds: savedFormData.lectureTypeIds || [],
+        PaginationParams: {
+          PageNumber: savedPage || 1,
+          PageSize: pageSize,
+        },
+      };
+
+      fetchLectures(payload);
+    } else {
+      const initialPayload = {
+        title: "",
+        officeId: isSupervisor ? profile.officeId : null,
+        governorateId: isSupervisor ? profile.governorateId : null,
+        startDate: null,
+        endDate: null,
+        companyId: null,
+        lectureTypeIds: [],
+        PaginationParams: {
+          PageNumber: 1,
+          PageSize: pageSize,
+        },
+      };
+
+      fetchLectures(initialPayload);
+    }
+  }, [isSupervisor, profile.officeId, profile.governorateId]);
+  // -------------------------------
+  // End Local Storage Logic
+  // -------------------------------
 
   const handleDateChange = (date, dateType) => {
     setFormData((prev) => ({
@@ -205,24 +271,6 @@ const SuperVisorLecturerhistory = () => {
   };
 
   useEffect(() => {
-    const initialPayload = {
-      title: "",
-      officeId: isSupervisor ? profile.officeId : null,
-      governorateId: isSupervisor ? profile.governorateId : null,
-      startDate: null,
-      endDate: null,
-      companyId: null,
-      lectureTypeIds: [],
-      PaginationParams: {
-        PageNumber: 1,
-        PageSize: pageSize,
-      },
-    };
-
-    fetchLectures(initialPayload);
-  }, [isSupervisor, profile.officeId, profile.governorateId]);
-
-  useEffect(() => {
     fetchGovernorates();
     fetchCompanies();
   }, [fetchGovernorates]);
@@ -265,6 +313,9 @@ const SuperVisorLecturerhistory = () => {
       setSelectedOffice(null);
       setOffices([]);
     }
+
+    // Remove saved filters from local storage
+    localStorage.removeItem("lecturerHistorySearchFilters");
 
     const payload = {
       title: "",
@@ -329,19 +380,77 @@ const SuperVisorLecturerhistory = () => {
         <Link
           to="/supervisor/lecturer/history/LecturerShow"
           state={{ id: record.id }}
-          className="supervisor-Lectur-details-link">
+          className="supervisor-Lectur-details-link"
+        >
           عرض
         </Link>
       ),
     },
   ];
 
+  // -------------------------------
+  // New: Handle "المحاضر الخاصة بي" action
+  // -------------------------------
+  const handleMyLectures = async () => {
+    if (!profile || !profile.profileId) {
+      message.error("بيانات المستخدم غير متوفرة");
+      return;
+    }
+    const payload = {
+      title: "",
+      officeId: null,
+      startDate: null,
+      endDate: null,
+      governorateId: null,
+      companyId: null,
+      ProfileId: profile.profileId, // Use the signed-in user's profile id
+      lectureTypeId: null,
+      PaginationParams: {
+        PageNumber: 1,
+        PageSize: 10,
+      },
+    };
+    setIsLoading(true);
+    try {
+      const response = await axiosInstance.post(
+        `${Url}/api/Lecture/search`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      if (response.data) {
+        setLectures(response.data);
+        const paginationHeader = response.headers["pagination"];
+        if (paginationHeader) {
+          const paginationInfo = JSON.parse(paginationHeader);
+          setTotalLectures(paginationInfo.totalItems);
+        } else {
+          setTotalLectures(response.data.length);
+        }
+      }
+      message.success("تم جلب المحاضر الخاصة بك");
+    } catch (error) {
+      console.error("Error fetching my lectures:", error);
+      message.error("حدث خطأ أثناء جلب المحاضر الخاصة بك");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  // -------------------------------
+  // End New
+  // -------------------------------
+
   return (
     <div
       className={`supervisor-passport-dameged-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       <h1 className="supervisor-passport-dameged-title">المحاضر</h1>
 
       {isLoading ? (
@@ -351,7 +460,8 @@ const SuperVisorLecturerhistory = () => {
           <div
             className={`supervisor-passport-dameged-filters ${
               searchVisible ? "animate-show" : "animate-hide"
-            }`}>
+            }`}
+          >
             <form onSubmit={handleFormSubmit} className="supervisor-passport-dameged-form">
               <div className="filter-field">
                 <label htmlFor="governorate" className="supervisor-Lectur-label">
@@ -363,7 +473,8 @@ const SuperVisorLecturerhistory = () => {
                   onChange={handleGovernorateChange}
                   disabled={isSupervisor}
                   className="supervisor-Lectur-select"
-                  placeholder="اختر المحافظة">
+                  placeholder="اختر المحافظة"
+                >
                   {governorates.map((gov) => (
                     <Select.Option key={gov.id} value={gov.id}>
                       {gov.name}
@@ -381,7 +492,8 @@ const SuperVisorLecturerhistory = () => {
                   value={selectedOffice || undefined}
                   onChange={(value) => setSelectedOffice(value)}
                   disabled={isSupervisor || !selectedGovernorate}
-                  className="supervisor-Lectur-select">
+                  className="supervisor-Lectur-select"
+                >
                   {offices.map((office) => (
                     <Select.Option key={office.id} value={office.id}>
                       {office.name}
@@ -398,7 +510,8 @@ const SuperVisorLecturerhistory = () => {
                   id="company"
                   value={formData.companyId || undefined}
                   onChange={handleCompanyChange}
-                  className="supervisor-Lectur-select">
+                  className="supervisor-Lectur-select"
+                >
                   {companies.map((company) => (
                     <Select.Option key={company.id} value={company.id}>
                       {company.name}
@@ -429,7 +542,8 @@ const SuperVisorLecturerhistory = () => {
                     setFormData((prev) => ({ ...prev, lectureTypeIds: value }))
                   }
                   className="filter-dropdown"
-                  style={{ maxHeight: "200px", overflowY: "auto" }}>
+                  style={{ maxHeight: "200px", overflowY: "auto" }}
+                >
                   {lectureTypeNames.map((type) => (
                     <Select.Option key={type.id} value={type.id}>
                       {type.name}
@@ -454,7 +568,8 @@ const SuperVisorLecturerhistory = () => {
               <div className="supervisor-Lectur-buttons">
                 <Button
                   htmlType="submit"
-                  className="supervisor-passport-dameged-button">
+                  className="supervisor-passport-dameged-button"
+                >
                   ابحث
                 </Button>
                 <Button onClick={handleReset} className="supervisor-passport-dameged-button">
@@ -468,6 +583,15 @@ const SuperVisorLecturerhistory = () => {
                     اضافة محضر جديد +
                   </Button>
                 </Link>
+              )}
+
+              {/* NEW: Button for "المحاضر الخاصة بي" visible only if user has "PS" permission */}
+              {permissions.includes("PS") && (
+                <div style={{ marginTop: "10px" }}>
+                  <Button type="primary" onClick={handleMyLectures}>
+                    المحاضر الخاصة بي
+                  </Button>
+                </div>
               )}
             </form>
           </div>
