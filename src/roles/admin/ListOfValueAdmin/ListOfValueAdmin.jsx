@@ -38,6 +38,14 @@ export default function ListOfValueAdmin() {
     total: 0,
   });
 
+  // NEW: State for office search (only used when currentPath === "/admin/add-office")
+  const [officeSearch, setOfficeSearch] = useState({
+    GovernorateId: null,
+    Name: "",
+    Code: null,
+    IsEmbassy: null,
+  });
+
   // Set authorized menu items based on the permissions from the auth store
   useEffect(() => {
     console.log("Current permissions:", permissions);
@@ -97,6 +105,55 @@ export default function ListOfValueAdmin() {
       setSelectedData([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // NEW: Handle office search using a POST request
+  const handleOfficeSearch = async () => {
+    // Build payload from officeSearch state (using 50 as page size by default)
+    const payload = {
+      GovernorateId: officeSearch.GovernorateId || null,
+      Name: officeSearch.Name || "",
+      Code: officeSearch.Code ? Number(officeSearch.Code) : null,
+      IsEmbassy: officeSearch.IsEmbassy,
+      PaginationParams: {
+        PageNumber: 1,
+        PageSize: 50,
+      },
+    };
+    setLoading(true);
+    try {
+      const response = await axiosInstance.post("/api/office/search", payload);
+      let formattedData = transformData(response.data);
+      setSelectedData(formattedData);
+      const paginationHeader = response.headers["pagination"];
+      if (paginationHeader) {
+        const paginationInfo = JSON.parse(paginationHeader);
+        setPagination({
+          current: paginationInfo.currentPage,
+          pageSize: paginationInfo.itemsPerPage,
+          total: paginationInfo.totalItems,
+        });
+      }
+    } catch (error) {
+      console.error("Error searching offices:", error);
+      message.error("فشل البحث عن المكاتب");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // NEW: Reset the office search form and re-fetch data without search filters
+  const handleOfficeSearchReset = async () => {
+    setOfficeSearch({
+      GovernorateId: null,
+      Name: "",
+      Code: null,
+      IsEmbassy: null,
+    });
+    // Re-fetch the default data using the getEndpoint of the current config
+    if (selectedConfig) {
+      fetchData(selectedConfig.getEndpoint, 1, pagination.pageSize);
     }
   };
 
@@ -218,6 +275,7 @@ export default function ListOfValueAdmin() {
           deliveryStaff: Number(values.deliveryStaff),
           governorateId: values.governorateId,
           budget: values.budget ? Number(values.budget) : null,
+          isEmbassy: values.isEmbassy, // New field added
         };
       case "/admin/device-types":
         return {
@@ -225,17 +283,18 @@ export default function ListOfValueAdmin() {
           name: values.name,
           description: values.description,
         };
-        case "/admin/report-type":
-      return {
-        id: editingId, // Ensure the id is included in the payload
-        name: values.name,
-        description: values.description,
-      };
+      case "/admin/report-type":
+        return {
+          id: editingId, // Ensure the id is included in the payload
+          name: values.name,
+          description: values.description,
+        };
       case "/admin/add-governorate":
         return {
           id: editingId,
           name: values.name,
           code: values.code,
+          isCountry: values.isCountry, // New field added
         };
       case "/admin/damage-types":
       case "/admin/passport-dammage-types":
@@ -257,13 +316,13 @@ export default function ListOfValueAdmin() {
           minValue: Number(values.minValue),
           maxValue: Number(values.maxValue),
         };
-        case "/admin/email-report":
-          return {
-            id: editingId, // Include the id here
-            fullName: values.fullName,
-            email: values.email,
-            reportTypeIds: values.reportTypeIds,
-          };
+      case "/admin/email-report":
+        return {
+          id: editingId, // Include the id here
+          fullName: values.fullName,
+          email: values.email,
+          reportTypeIds: values.reportTypeIds,
+        };
       default:
         return values;
     }
@@ -385,12 +444,14 @@ export default function ListOfValueAdmin() {
           deliveryStaff: record.deliveryStaff,
           governorateId: record.governorateId,
           budget: record.budget,
+          isEmbassy: record.isEmbassy, // New field added
         };
         break;
       case "/admin/add-governorate":
         formData = {
           name: record.name,
           code: record.code,
+          isCountry: record.isCountry, // New field added
         };
         break;
       case "/admin/lecture-types":
@@ -412,13 +473,13 @@ export default function ListOfValueAdmin() {
           description: record.description,
         };
         break;
-        case "/admin/email-report":
-          formData = {
-            fullName: record.fullName,
-            email: record.email,
-            reportTypeIds: record.reportTypes ? record.reportTypes.map((rt) => rt.id) : [],
-          };
-          break;
+      case "/admin/email-report":
+        formData = {
+          fullName: record.fullName,
+          email: record.email,
+          reportTypeIds: record.reportTypes ? record.reportTypes.map((rt) => rt.id) : [],
+        };
+        break;
       default:
         formData = {
           name: record.name,
@@ -528,9 +589,7 @@ export default function ListOfValueAdmin() {
           {authorizedMenuItems.map((item, index) => (
             <li
               key={index}
-              className={`list-of-value-item ${
-                currentPath === item.path ? "active" : ""
-              }`}
+              className={`list-of-value-item ${currentPath === item.path ? "active" : ""}`}
               onClick={() => handleItemClick(item)}
             >
               <a className="list-of-value-link">
@@ -554,6 +613,70 @@ export default function ListOfValueAdmin() {
             إضافة <Icons type="add" />
           </Button>
         </div>
+        {/* NEW: Office search form inserted inside the details container */}
+        {currentPath === "/admin/add-office" && (
+          <div className="office-search-form" style={{ margin: "20px 0", padding: "10px", border: "1px solid #ddd" }}>
+            <Form layout="inline" onFinish={handleOfficeSearch}>
+              <Form.Item label="اسم المكتب">
+                <Input
+                  placeholder="ادخل اسم المكتب"
+                  value={officeSearch.Name}
+                  onChange={(e) =>
+                    setOfficeSearch({ ...officeSearch, Name: e.target.value })
+                  }
+                />
+              </Form.Item>
+              <Form.Item label="الكود">
+                <Input
+                  placeholder="ادخل الكود"
+                  value={officeSearch.Code || ""}
+                  onChange={(e) =>
+                    setOfficeSearch({ ...officeSearch, Code: e.target.value })
+                  }
+                />
+              </Form.Item>
+              <Form.Item label="المحافظة">
+                <Select
+                  placeholder="اختر المحافظة"
+                  value={officeSearch.GovernorateId}
+                  onChange={(value) =>
+                    setOfficeSearch({ ...officeSearch, GovernorateId: value })
+                  }
+                  style={{ width: 150 }}
+                >
+                  <Select.Option value={null}>الكل</Select.Option>
+                  {(dropdownOptions["governorateId"] || []).map((option) => (
+                    <Select.Option key={option.value} value={option.value}>
+                      {option.label}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Form.Item label="سفارة">
+                <Select
+                  placeholder="الكل"
+                  value={officeSearch.IsEmbassy}
+                  onChange={(value) =>
+                    setOfficeSearch({ ...officeSearch, IsEmbassy: value })
+                  }
+                  style={{ width: 120 }}
+                >
+                  <Select.Option value={null}>الكل</Select.Option>
+                  <Select.Option value={true}>نعم</Select.Option>
+                  <Select.Option value={false}>لا</Select.Option>
+                </Select>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  بحث
+                </Button>
+              </Form.Item>
+              <Form.Item>
+                <Button onClick={handleOfficeSearchReset}>إعادة تعيين</Button>
+              </Form.Item>
+            </Form>
+          </div>
+        )}
         <ConfigProvider direction="rtl">
           <Table
             columns={columns}

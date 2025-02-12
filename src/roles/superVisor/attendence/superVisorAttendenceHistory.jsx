@@ -144,8 +144,20 @@ export default function SupervisorAttendanceHistory() {
     fetchOffices(value);
   };
 
+  // Save current search filters to local storage and fetch attendance data
   const handleSearch = () => {
     setCurrentPage(1);
+    localStorage.setItem(
+      "supervisorAttendanceSearchFilters",
+      JSON.stringify({
+        startDate: startDate ? startDate.toISOString() : null,
+        endDate: endDate ? endDate.toISOString() : null,
+        workingHours,
+        selectedGovernorate,
+        selectedOffice,
+        currentPage: 1,
+      })
+    );
     fetchAttendanceData(1);
   };
 
@@ -158,12 +170,25 @@ export default function SupervisorAttendanceHistory() {
       setSelectedOffice(null);
     }
     setCurrentPage(1);
+    localStorage.removeItem("supervisorAttendanceSearchFilters");
     fetchAttendanceData(1);
     message.success("تمت إعادة التعيين بنجاح");
   };
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
+    // Save current filters with the new page number
+    localStorage.setItem(
+      "supervisorAttendanceSearchFilters",
+      JSON.stringify({
+        startDate: startDate ? startDate.toISOString() : null,
+        endDate: endDate ? endDate.toISOString() : null,
+        workingHours,
+        selectedGovernorate,
+        selectedOffice,
+        currentPage: page,
+      })
+    );
     fetchAttendanceData(page);
   };
 
@@ -171,13 +196,34 @@ export default function SupervisorAttendanceHistory() {
     navigate("/attendance/view", { state: { id: record.id } });
   };
 
+  // On component mount, restore saved filters (if any) and load data
   useEffect(() => {
     const initData = async () => {
       await fetchGovernorates();
-      await fetchAttendanceData(1);
+      const savedFilters = localStorage.getItem("supervisorAttendanceSearchFilters");
+      if (savedFilters) {
+        const {
+          startDate: savedStartDate,
+          endDate: savedEndDate,
+          workingHours: savedWorkingHours,
+          selectedGovernorate: savedGovernorate,
+          selectedOffice: savedOffice,
+          currentPage: savedPage,
+        } = JSON.parse(savedFilters);
+        if (savedStartDate) setStartDate(new Date(savedStartDate));
+        if (savedEndDate) setEndDate(new Date(savedEndDate));
+        if (savedWorkingHours) setWorkingHours(savedWorkingHours);
+        if (savedGovernorate) setSelectedGovernorate(savedGovernorate);
+        if (savedOffice) setSelectedOffice(savedOffice);
+        setCurrentPage(savedPage || 1);
+        await fetchAttendanceData(savedPage || 1);
+      } else {
+        await fetchAttendanceData(1);
+      }
     };
 
     initData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const columns = [
@@ -239,7 +285,8 @@ export default function SupervisorAttendanceHistory() {
                 className="html-dropdown"
                 value={isSupervisor ? userGovernorateId : selectedGovernorate}
                 onChange={handleGovernorateChange}
-                disabled={isSupervisor}>
+                disabled={isSupervisor}
+              >
                 <Select.Option value=""></Select.Option>
                 {governorates.map((gov) => (
                   <Select.Option key={gov.id} value={gov.id}>
@@ -255,7 +302,8 @@ export default function SupervisorAttendanceHistory() {
                 className="html-dropdown"
                 value={isSupervisor ? userOfficeId : selectedOffice}
                 onChange={(value) => setSelectedOffice(value)}
-                disabled={isSupervisor || !selectedGovernorate}>
+                disabled={isSupervisor || !selectedGovernorate}
+              >
                 <Select.Option value=""></Select.Option>
                 {offices.map((office) => (
                   <Select.Option key={office.id} value={office.id}>
@@ -326,7 +374,9 @@ export default function SupervisorAttendanceHistory() {
                   onChange: handlePageChange,
                   showSizeChanger: false,
                   showTotal: (total, range) => (
-                    <span style={{ marginLeft: "8px", fontWeight: "bold" }}>اجمالي السجلات: {total}</span>
+                    <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
+                      اجمالي السجلات: {total}
+                    </span>
                   ),
                 }}
                 loading={isLoading}
