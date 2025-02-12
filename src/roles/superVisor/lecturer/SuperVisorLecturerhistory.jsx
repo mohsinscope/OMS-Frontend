@@ -587,8 +587,8 @@ const SuperVisorLecturerhistory = () => {
 
               {/* NEW: Button for "المحاضر الخاصة بي" visible only if user has "PS" permission */}
               {permissions.includes("PS") && (
-                <div style={{ marginTop: "10px" }}>
-                  <Button type="primary" onClick={handleMyLectures}>
+                <div className="supervisor-Lectur-buttons" >
+                  <Button onClick={handleMyLectures} className="supervisor-passport-dameged-button" style={{width:"fit-content"}}>
                     المحاضر الخاصة بي
                   </Button>
                 </div>

@@ -616,8 +616,9 @@ export default function ListOfValueAdmin() {
         {/* NEW: Office search form inserted inside the details container */}
         {currentPath === "/admin/add-office" && (
           <div className="office-search-form" style={{ margin: "20px 0", padding: "10px", border: "1px solid #ddd" }}>
-            <Form layout="inline" onFinish={handleOfficeSearch}>
-              <Form.Item label="اسم المكتب">
+            <form className="supervisor-passport-dameged-form" onFinish={handleOfficeSearch}>
+            <div className="filter-field">
+            <label>اسم المكتب:</label>
                 <Input
                   placeholder="ادخل اسم المكتب"
                   value={officeSearch.Name}
@@ -625,8 +626,9 @@ export default function ListOfValueAdmin() {
                     setOfficeSearch({ ...officeSearch, Name: e.target.value })
                   }
                 />
-              </Form.Item>
-              <Form.Item label="الكود">
+                </div>
+                <div className="filter-field">
+              <label>الكود:</label>
                 <Input
                   placeholder="ادخل الكود"
                   value={officeSearch.Code || ""}
@@ -634,9 +636,11 @@ export default function ListOfValueAdmin() {
                     setOfficeSearch({ ...officeSearch, Code: e.target.value })
                   }
                 />
-              </Form.Item>
-              <Form.Item label="المحافظة">
+              </div>
+              <div className="filter-field">
+                <label>المحافظة</label>
                 <Select
+                  className="filter-dropdown"
                   placeholder="اختر المحافظة"
                   value={officeSearch.GovernorateId}
                   onChange={(value) =>
@@ -651,30 +655,32 @@ export default function ListOfValueAdmin() {
                     </Select.Option>
                   ))}
                 </Select>
-              </Form.Item>
-              <Form.Item label="سفارة">
+              </div>
+              <div className="filter-field" >
+                <label >سفارة:</label>
                 <Select
+                  className="filter-dropdown"
                   placeholder="الكل"
                   value={officeSearch.IsEmbassy}
                   onChange={(value) =>
                     setOfficeSearch({ ...officeSearch, IsEmbassy: value })
                   }
-                  style={{ width: 120 }}
+                  style={{ width: "120px" }}
                 >
                   <Select.Option value={null}>الكل</Select.Option>
                   <Select.Option value={true}>نعم</Select.Option>
                   <Select.Option value={false}>لا</Select.Option>
                 </Select>
-              </Form.Item>
-              <Form.Item>
+              </div>
+              <div className="filter-field">
                 <Button type="primary" htmlType="submit">
                   بحث
                 </Button>
-              </Form.Item>
-              <Form.Item>
+              </div>
+              <div className="filter-field">
                 <Button onClick={handleOfficeSearchReset}>إعادة تعيين</Button>
-              </Form.Item>
-            </Form>
+              </div>
+            </form>
           </div>
         )}
         <ConfigProvider direction="rtl">
