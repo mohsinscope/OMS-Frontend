@@ -16,7 +16,20 @@
   transition: all 0.3s ease-in-out;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
 }
+.sidebar-collapseddb{
+  width: 107%;
+  /* Limit the width */
+  margin-top: 6%;
 
+  padding: 20px;
+
+  border-radius: 8px;
+  /* Smooth rounded corners */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+}
 .content-wrapper {
   max-width: 1024px;
   width: 100%;
@@ -132,9 +145,12 @@
 
 /* Dashboard Styles */
 .db_stats_container {
+  margin-top: 7%;
   padding: 20px;
   /* background-color: #f8fafc; */
   min-height: 100vh;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease-in-out;
   font-family: 'Tajawal', sans-serif;
 }
 
@@ -173,15 +189,7 @@
 
 .db_stat_icon {
   background-color: rgba(37, 99, 235, 0.1);
-  padding: 10px;
-  border-radius: 10px;
-  color: #2563eb;
-  margin-bottom: 12px;
-  transition: all 0.3s ease;
-}
-.db_stat_icon_Buildings{
-  background-color: rgba(37, 99, 235, 0.1);
-  padding: 10px;
+  padding: 12px;
   border-radius: 10px;
   color: #2563eb;
   margin-bottom: 12px;
@@ -198,7 +206,7 @@
 
 .db_stat_label {
   color: #64748b;
-  font-size: 18px;
+  font-size: 16px;
   text-align: center;
   font-weight: 500;
 }
@@ -262,6 +270,7 @@
 }
 
 .db_charts_container {
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
   gap: 24px;
@@ -401,6 +410,7 @@
 
 /* Stats Section Styling */
 .db_main_stats {
+  width: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 24px;
@@ -408,20 +418,28 @@
   animation: fadeIn 0.5s ease-out;
   height: auto;
   min-height: 200px;
+  
 }
 
 .db_main_card {
-  background: white;
+  background: linear-gradient(135deg, #ffffff, #f9fafb);
   border-radius: 16px;
   padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease-in-out;
+}
+.db_main_card4 {
+  background: white;
+  border-radius: 16px;
+  padding: 14px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
   animation: slideIn 0.5s ease-out;
 }
 
 .db_main_card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  transform: translateY(-8px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
 }
 
 .db_card_blue {
@@ -431,10 +449,11 @@
 
 .db_main_stat {
   display: flex;
-  flex-direction: column;
   align-items: center;
   margin-bottom: 16px;
+  margin-top: 16px;
   gap: 16px;
+  flex-direction: column;
 }
 
 .db_stat_icon {
@@ -479,11 +498,10 @@
   color: white;
 }
 
-.db_stat_label {
-  font-size: 18px;
+.db_stat_label1 {
+  font-size: 20px;
   color: #64748b;
   margin-top: 4px;
-  margin-bottom: 8px;
 }
 
 .db_divider {
@@ -507,17 +525,36 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  background-color: #f8fafc;
+  padding: 16px;
+  background: linear-gradient(135deg, #ffffff, #f8f9fa); /* Modern soft gradient */
   border-radius: 12px;
-  transition: all 0.3s ease;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  position: relative;
+  overflow: hidden;
 }
 
 .db_sub_stat:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transform: translateY(-6px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #f8fafc, #ffffff);
+  border-color: #d1d5db;
 }
-
+.db_sub_stat::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(37, 99, 235, 0.05);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.db_sub_stat:hover::after {
+  opacity: 1;
+}
 .db_percentage_bar {
   width: 100%;
   height: 8px;
@@ -624,6 +661,54 @@
     transform: none;
   }
 }
+.db_percentage_bar_persentage {
+  width: 100%;
+  height: 8px;
+  background-color: #cbeed9a4;
+  border-radius: 4px;
+  margin-top: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.db_percentage_fill_persentage {
+  height: 100%;
+  background: linear-gradient(90deg, #2ea74c, #4cd964, #78e08f);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden; /* Ensures wave stays inside */
+  /* Remove transition and add animation */
+  animation: fillAnimation 1.5s ease-in-out forwards;
+}
+
+@keyframes fillAnimation {
+  from {
+    width: 0%;
+  }
+  to {
+    width: var(--width, 0%);
+  }
+}
+
+.db_percentage_wave {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(52, 199, 89, 0.5), transparent);
+  animation: waveAnimation 2s linear infinite;
+}
+
+/* Infinite Flowing Wave Animation */
+@keyframes waveAnimation {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
 
 /* Container for Attendance and Damaged Passports Cards */
 .attendance_damaged_container {
@@ -651,6 +736,25 @@
 
 .damaged_passport_card .db_stat_value {
   color: #ef4444;
+}
+.persentage_staff_card {
+  border: 1px solid #e0fdd9a9;
+  background: linear-gradient(to right, #fff, #eafceeb4);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.persentage_staff_card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(85, 182, 55, 0.356);
+}
+
+.persentage_staff_card .db_stat_icon {
+  background-color: #e3ffe1;
+  color: #35ad45;
+}
+
+.persentage_staff_card .db_stat_value {
+  color: #83ef44;
 }
 
 /* Responsive adjustments */
@@ -738,9 +842,3 @@
     transform: translateZ(5px);
   }
 }
-
-
-
-
-
-/* section for animation icon */
