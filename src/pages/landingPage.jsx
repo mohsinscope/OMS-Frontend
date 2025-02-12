@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import axiosInstance from './../intercepters/axiosInstance.js';
 import Url from './../store/url.js';
 import Icons from './../reusable elements/icons.jsx';
-
+import IraqMap from './../reusable elements/IraqMap.jsx';
 export default function LandingPage() {
   const { isSidebarCollapsed, permissions } = useAuthStore();
 
@@ -167,7 +167,7 @@ export default function LandingPage() {
                   <h2 className="db_stat_label1" style={{ textAlign: "center" }}>عدد المحافظات الكلي</h2>
                   <div className="db_main_stat">
                     <div className="db_stat_icon">
-                      <Icons type='buildings' width={60} height={60}/>
+                      <IraqMap/>
                     </div>
                     <div className="db_stat_content">
                       <span className="db_stat_value">{counters.totalGovernorates}</span>
