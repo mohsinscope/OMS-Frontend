@@ -673,12 +673,12 @@ export default function ListOfValueAdmin() {
                 </Select>
               </div>
               <div className="filter-field">
-                <Button type="primary" htmlType="submit">
+                <Button type="primary" htmlType="submit" className="supervisor-passport-dameged-button">
                   بحث
                 </Button>
               </div>
               <div className="filter-field">
-                <Button onClick={handleOfficeSearchReset}>إعادة تعيين</Button>
+                <Button type="primary" onClick={handleOfficeSearchReset} className="supervisor-passport-dameged-button">إعادة تعيين</Button>
               </div>
             </form>
           </div>
