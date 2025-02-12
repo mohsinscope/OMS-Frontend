@@ -6,6 +6,7 @@ import "./superVisorAteensenceAdd.css";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 import IconName from "./../../../reusable elements/icons.jsx";
+import dayjs from "dayjs";
 
 const { TextArea } = Input;
 
@@ -17,7 +18,7 @@ export default function SuperVisorAttendanceAdd() {
   const [loading, setLoading] = useState(true);
 
   // Form fields
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(dayjs());
   const [workingHours, setWorkingHours] = useState(1);
   const [passportAttendance, setPassportAttendance] = useState({
     الاستلام: 0,
@@ -217,7 +218,8 @@ export default function SuperVisorAttendanceAdd() {
           <label>التاريخ</label>
           <DatePicker
             style={{ width: "100%" }}
-            onChange={(date, dateString) => setSelectedDate(dateString)}
+            value={selectedDate}
+            onChange={(date, dateString) => setSelectedDate(date)}
           />
         </div>
 
