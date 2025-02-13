@@ -7,9 +7,14 @@ import { Link } from "react-router-dom";
 export default function NavBar({ onSidebarToggle }) {
   const { user, profile } = useAuthStore(); // Access both user and profile from store
   const [isNotificationsActive, setIsNotificationsActive] = useState(false);
-
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const handleNotificationClick = () => {
     setIsNotificationsActive((prev) => !prev);
+  };
+
+  const handleSidebarToggle = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+    onSidebarToggle();
   };
 
   return (
@@ -45,12 +50,13 @@ export default function NavBar({ onSidebarToggle }) {
       <div className="navbar-right">
         <h1 id="title-navbar" style={{ marginRight: "20px" }}>نظام إدارة المكاتب</h1>
         <div
-          style={{ cursor: "pointer" }}
-          onClick={() => {
-            onSidebarToggle();
-          }}>
-          <Icons type="menu" width={45} height={45} />
-        </div>
+  className={`menu-icon ${isSidebarOpen ? 'open' : ''}`}
+  onClick={handleSidebarToggle}
+>
+  <div className="menu-line"></div>
+  <div className="menu-line"></div>
+  <div className="menu-line"></div>
+</div>
         <Link to="/landing-page">
           <img src={Logo} alt="Logo" className="navbar-logo" />
         </Link>

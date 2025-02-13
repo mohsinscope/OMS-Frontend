@@ -569,9 +569,7 @@ export default function ListOfValueAdmin() {
             max={field.max}
             step={field.name === "budget" ? "0.01" : "1"}
             placeholder={field.placeholder || `ادخل ${field.label}`}
-            onWheel={(e) => e.target.blur()}
-            className="remove-arrows"
-            />
+          />
         );
       default:
         return (
