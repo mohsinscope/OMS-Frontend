@@ -6,6 +6,7 @@ const Config = {
     deleteEndpoint: (id) => `/api/office/${id}`,
     columns: [
       { title: "اسم المكتب", dataIndex: "name", key: "name" },
+      { title: "الكود", dataIndex: "code", key: "code" },
       {
         title: "موظفو الاستلام",
         dataIndex: "receivingStaff",

@@ -203,12 +203,20 @@
   margin: 12px 0;
   text-align: center;
 }
+.db_stat_value_1 {
+  font-size: 36px;
+  font-weight: 700;
+  color: #2563eb;
+  margin: 12px 0;
+  text-align: end;
+}
 
 .db_stat_label {
   color: #64748b;
   font-size: 16px;
   text-align: center;
   font-weight: 500;
+  padding-left: 10px;
 }
 
 .db_stat_card_important {
@@ -664,9 +672,9 @@
 }
 .db_percentage_bar_persentage {
   width: 100%;
-  height: 8px;
+  height: 20px;
   background-color: #cbeed9a4;
-  border-radius: 4px;
+  border-radius: 10px;
   margin-top: 8px;
   overflow: hidden;
   position: relative;
@@ -674,11 +682,10 @@
 
 .db_percentage_fill_persentage {
   height: 100%;
-  background: linear-gradient(90deg, #2ea74c, #4cd964, #78e08f);
-  border-radius: 4px;
+  background: linear-gradient(90deg, #4ae771, #4cd964, #78e08f);
+  border-radius: 10px;
   position: relative;
   overflow: hidden; /* Ensures wave stays inside */
-  /* Remove transition and add animation */
   animation: fillAnimation 1.5s ease-in-out forwards;
 }
 
@@ -691,6 +698,7 @@
   }
 }
 
+/* Wave effect overlay */
 .db_percentage_wave {
   position: absolute;
   top: 0;
@@ -701,15 +709,15 @@
   animation: waveAnimation 2s linear infinite;
 }
 
-/* Infinite Flowing Wave Animation */
 @keyframes waveAnimation {
   0% {
-    left: -100%;
+    right: -100%;
   }
   100% {
-    left: 100%;
+    right: 100%;
   }
 }
+
 
 /* Container for Attendance and Damaged Passports Cards */
 .attendance_damaged_container {
