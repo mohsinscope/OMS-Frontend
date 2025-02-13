@@ -45,7 +45,7 @@ const SuperVisorLecturerhistory = () => {
     companyId: null,
     lectureTypeIds: [],
   });
-  const [isLoading, setIsLoading] = useState(true); // Loading state
+  const [isLoading, setIsLoading] = useState(true);
 
   const formatToISO = (date) => {
     if (!date) return null;
@@ -54,7 +54,7 @@ const SuperVisorLecturerhistory = () => {
 
   const fetchLectures = async (payload) => {
     try {
-      setIsLoading(true); // Start loading
+      setIsLoading(true);
       const response = await axiosInstance.post(
         `${Url}/api/Lecture/search`,
         {
@@ -95,13 +95,10 @@ const SuperVisorLecturerhistory = () => {
         }`
       );
     } finally {
-      setIsLoading(false); // Stop loading
+      setIsLoading(false);
     }
   };
 
-  // -------------------------------
-  // Local Storage Search Filter Logic
-  // -------------------------------
   const handleSearch = async (page = 1) => {
     const payload = {
       title: formData.title || "",
@@ -117,71 +114,28 @@ const SuperVisorLecturerhistory = () => {
       },
     };
 
-    // Save search filters in local storage
-    localStorage.setItem(
-      "lecturerHistorySearchFilters",
-      JSON.stringify({
-        formData,
-        selectedGovernorate,
-        selectedOffice,
-        currentPage: page,
-      })
-    );
-
+    setCurrentPage(page);
     await fetchLectures(payload);
   };
 
-  // Restore filters on mount (if available)
+  // Fetch initial lectures on mount without restoring any filters from local storage
   useEffect(() => {
-    const savedFilters = localStorage.getItem("lecturerHistorySearchFilters");
-    if (savedFilters) {
-      const {
-        formData: savedFormData,
-        selectedGovernorate: savedGov,
-        selectedOffice: savedOffice,
-        currentPage: savedPage,
-      } = JSON.parse(savedFilters);
-      setFormData(savedFormData);
-      setSelectedGovernorate(savedGov);
-      setSelectedOffice(savedOffice);
-      setCurrentPage(savedPage || 1);
+    const initialPayload = {
+      title: "",
+      officeId: isSupervisor ? profile.officeId : null,
+      governorateId: isSupervisor ? profile.governorateId : null,
+      startDate: null,
+      endDate: null,
+      companyId: null,
+      lectureTypeIds: [],
+      PaginationParams: {
+        PageNumber: 1,
+        PageSize: pageSize,
+      },
+    };
 
-      const payload = {
-        title: savedFormData.title || "",
-        officeId: isSupervisor ? profile.officeId : savedOffice || null,
-        governorateId: isSupervisor ? profile.governorateId : savedGov || null,
-        startDate: savedFormData.startDate ? formatToISO(savedFormData.startDate) : null,
-        endDate: savedFormData.endDate ? formatToISO(savedFormData.endDate) : null,
-        companyId: savedFormData.companyId || null,
-        lectureTypeIds: savedFormData.lectureTypeIds || [],
-        PaginationParams: {
-          PageNumber: savedPage || 1,
-          PageSize: pageSize,
-        },
-      };
-
-      fetchLectures(payload);
-    } else {
-      const initialPayload = {
-        title: "",
-        officeId: isSupervisor ? profile.officeId : null,
-        governorateId: isSupervisor ? profile.governorateId : null,
-        startDate: null,
-        endDate: null,
-        companyId: null,
-        lectureTypeIds: [],
-        PaginationParams: {
-          PageNumber: 1,
-          PageSize: pageSize,
-        },
-      };
-
-      fetchLectures(initialPayload);
-    }
+    fetchLectures(initialPayload);
   }, [isSupervisor, profile.officeId, profile.governorateId]);
-  // -------------------------------
-  // End Local Storage Logic
-  // -------------------------------
 
   const handleDateChange = (date, dateType) => {
     setFormData((prev) => ({
@@ -276,7 +230,6 @@ const SuperVisorLecturerhistory = () => {
   }, [fetchGovernorates]);
 
   const handlePageChange = (page) => {
-    setCurrentPage(page);
     handleSearch(page);
   };
 
@@ -313,9 +266,6 @@ const SuperVisorLecturerhistory = () => {
       setSelectedOffice(null);
       setOffices([]);
     }
-
-    // Remove saved filters from local storage
-    localStorage.removeItem("lecturerHistorySearchFilters");
 
     const payload = {
       title: "",
@@ -388,9 +338,6 @@ const SuperVisorLecturerhistory = () => {
     },
   ];
 
-  // -------------------------------
-  // New: Handle "المحاضر الخاصة بي" action
-  // -------------------------------
   const handleMyLectures = async () => {
     if (!profile || !profile.profileId) {
       message.error("بيانات المستخدم غير متوفرة");
@@ -403,7 +350,7 @@ const SuperVisorLecturerhistory = () => {
       endDate: null,
       governorateId: null,
       companyId: null,
-      ProfileId: profile.profileId, // Use the signed-in user's profile id
+      ProfileId: profile.profileId,
       lectureTypeId: null,
       PaginationParams: {
         PageNumber: 1,
@@ -440,9 +387,6 @@ const SuperVisorLecturerhistory = () => {
       setIsLoading(false);
     }
   };
-  // -------------------------------
-  // End New
-  // -------------------------------
 
   return (
     <div
@@ -454,7 +398,7 @@ const SuperVisorLecturerhistory = () => {
       <h1 className="supervisor-passport-dameged-title">المحاضر</h1>
 
       {isLoading ? (
-        <Skeleton active paragraph={{ rows: 10 }} /> // Skeleton loading effect
+        <Skeleton active paragraph={{ rows: 10 }} />
       ) : (
         <>
           <div
@@ -566,10 +510,7 @@ const SuperVisorLecturerhistory = () => {
               </div>
 
               <div className="supervisor-Lectur-buttons">
-                <Button
-                  htmlType="submit"
-                  className="supervisor-passport-dameged-button"
-                >
+                <Button htmlType="submit" className="supervisor-passport-dameged-button">
                   ابحث
                 </Button>
                 <Button onClick={handleReset} className="supervisor-passport-dameged-button">
@@ -585,10 +526,9 @@ const SuperVisorLecturerhistory = () => {
                 </Link>
               )}
 
-              {/* NEW: Button for "المحاضر الخاصة بي" visible only if user has "PS" permission */}
               {permissions.includes("PS") && (
-                <div className="supervisor-Lectur-buttons" >
-                  <Button onClick={handleMyLectures} className="supervisor-passport-dameged-button" style={{width:"fit-content"}}>
+                <div className="supervisor-Lectur-buttons">
+                  <Button  className="supervisor-passport-dameged-button" onClick={handleMyLectures} style={{width:"fit-content"}}>
                     المحاضر الخاصة بي
                   </Button>
                 </div>

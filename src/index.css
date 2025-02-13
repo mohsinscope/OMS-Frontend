@@ -1,4 +1,10 @@
-@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@200..1000&family=IBM+Plex+Sans+Arabic:wght@100;200;300;400;500;600;700&display=swap");
+@font-face {
+  font-family: 'Cairo';
+  src: url('./assets/Cairo-VariableFont_slnt,wght.ttf') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -27,7 +33,7 @@ body {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: cairo;
+  font-family: 'Cairo', sans-serif;
 }
 
 * label {
