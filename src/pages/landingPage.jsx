@@ -149,28 +149,26 @@ export default function LandingPage() {
             <div className="db_main_stats" dir="rtl">
               {/* Offices and Governorates Container */}
               <div className="attendance_damaged_container">
-                {/* Offices Card */}
-                <div className="db_main_card">
-                  <h2 className="db_stat_label1" style={{ textAlign: "center" }}>عدد المكاتب الكلي</h2>
-                  <div className="db_main_stat">
-                    <div className="db_stat_icon">
-                      <Building2 size={60} />
-                    </div>
-                    <div className="db_stat_content">
-                      <span className="db_stat_value">{counters.totalOffices}</span>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Governorates Card */}
                 <div className="db_main_card">
-                  <h2 className="db_stat_label1" style={{ textAlign: "center" }}>عدد المحافظات الكلي</h2>
                   <div className="db_main_stat">
                     <div >
                       <IraqMap/>
                     </div>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",width:"100%",justifyContent:"space-between"}}>
+                    <h2 className="db_stat_label1" style={{ textAlign: "center" }}>عدد المحافظات الكلي</h2>
                     <div className="db_stat_content">
-                      <span className="db_stat_value">18</span>
+                      <span className="db_stat_value">
+                        {/* {counters.totalGovernorates} */}
+                        18
+                        </span>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",width:"100%",justifyContent:"space-between"}}>
+                    <h2 className="db_stat_label1" style={{ textAlign: "center" }}>عدد المكاتب الكلي</h2>
+                    <div className="db_stat_content">
+                      <span className="db_stat_value">{counters.totalOffices}</span>
                     </div>
                   </div>
                 </div>

@@ -118,7 +118,7 @@ export default function ListOfValueAdmin() {
       IsEmbassy: officeSearch.IsEmbassy,
       PaginationParams: {
         PageNumber: 1,
-        PageSize: 50,
+        PageSize: 10,
       },
     };
     setLoading(true);
@@ -569,6 +569,8 @@ export default function ListOfValueAdmin() {
             max={field.max}
             step={field.name === "budget" ? "0.01" : "1"}
             placeholder={field.placeholder || `ادخل ${field.label}`}
+            onWheel={(e) => e.target.blur()}
+            className="remove-arrows"
           />
         );
       default:
@@ -616,7 +618,7 @@ export default function ListOfValueAdmin() {
         {/* NEW: Office search form inserted inside the details container */}
         {currentPath === "/admin/add-office" && (
           <div className="office-search-form" style={{ margin: "20px 0", padding: "10px", border: "1px solid #ddd" }}>
-            <form className="supervisor-passport-dameged-form" onFinish={handleOfficeSearch}>
+            <form className="supervisor-passport-dameged-form">
             <div className="filter-field">
             <label>اسم المكتب:</label>
                 <Input
@@ -673,7 +675,7 @@ export default function ListOfValueAdmin() {
                 </Select>
               </div>
               <div className="filter-field">
-                <Button type="primary" htmlType="submit" className="supervisor-passport-dameged-button">
+                <Button type="primary"  onClick={handleOfficeSearch} className="supervisor-passport-dameged-button">
                   بحث
                 </Button>
               </div>
