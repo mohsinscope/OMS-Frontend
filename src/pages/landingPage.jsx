@@ -256,7 +256,7 @@ export default function LandingPage() {
 
                   <div className="db_sub_stat">
                     <div className="db_stat_icon">
-                      <MonitorX size={20} />
+                      <Icons type='evaluation_quality' size={20} />
                     </div>
                     <div className="db_stat_content">
                       <span className="db_stat_value">{counters.totalQualityStaff}</span>
