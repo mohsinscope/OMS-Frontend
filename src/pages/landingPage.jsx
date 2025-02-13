@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Building2, Clock, DollarSign, Bell, FileCheck, BookX, MonitorX } from 'lucide-react';
 import { CartesianGrid, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import './landingPage.css';
@@ -8,16 +8,17 @@ import axiosInstance from './../intercepters/axiosInstance.js';
 import Url from './../store/url.js';
 import Icons from './../reusable elements/icons.jsx';
 import IraqMap from './../reusable elements/IraqMap.jsx';
+
 export default function LandingPage() {
   const { isSidebarCollapsed, permissions } = useAuthStore();
 
-  // A simple inline FeatureItem component to avoid undefined errors.
-  const FeatureItem = ({ icon, title }) => (
+  // Memoize FeatureItem to avoid unnecessary re-renders
+  const FeatureItem = React.memo(({ icon, title }) => (
     <div className="feature-item">
       {icon}
       <span>{title}</span>
     </div>
-  );
+  ));
 
   // Check permissions
   const hasDBPermission = permissions.includes("DB");
@@ -26,10 +27,12 @@ export default function LandingPage() {
   const hasEXrPermission = permissions.includes("EXr");
   const hasDDrPermission = permissions.includes("DDr");
   const [count, setCount] = useState(0);
-  const linkStyle = {
+  
+  // Memoize linkStyle so the object is created only once
+  const linkStyle = useMemo(() => ({
     textDecoration: 'none',
     color: 'inherit'
-  };
+  }), []);
 
   // State for dashboard statistics
   const [dashboardStats, setDashboardStats] = useState(null);
@@ -58,7 +61,7 @@ export default function LandingPage() {
         });
     }
   }, [hasDBPermission]);
-  
+
   // Fetch the last seven days attendance data
   useEffect(() => {
     if (hasDBPermission) {
@@ -103,7 +106,7 @@ export default function LandingPage() {
       Object.keys(initialCounters).forEach(key => {
         let startValue = 0;
         const endValue = dashboardStats[key];
-        const duration = 650; // Duration of 2 seconds
+        const duration = 450; // Duration in ms
         const stepTime = 50; // Update every 50ms
         const increment = endValue / (duration / stepTime);
 
@@ -119,16 +122,19 @@ export default function LandingPage() {
     }
   }, [dashboardStats]);
 
-  // Staff distribution data for the pie chart
-  const staffData = dashboardStats ? [
-    { name: 'موظفي الاستلام', value: dashboardStats.totalReceivingStaff },
-    { name: 'موظفي المحاسبة', value: dashboardStats.totalAccountStaff },
-    { name: 'موظفي الطباعة', value: dashboardStats.totalPrintingStaff },
-    { name: 'موظفي الجودة', value: dashboardStats.totalQualityStaff },
-    { name: 'موظفي التسليم', value: dashboardStats.totalDeliveryStaff }
-  ] : [];
+  // Memoize staff distribution data for the pie chart
+  const staffData = useMemo(() => {
+    return dashboardStats ? [
+      { name: 'موظفي الاستلام', value: dashboardStats.totalReceivingStaff },
+      { name: 'موظفي المحاسبة', value: dashboardStats.totalAccountStaff },
+      { name: 'موظفي الطباعة', value: dashboardStats.totalPrintingStaff },
+      { name: 'موظفي الجودة', value: dashboardStats.totalQualityStaff },
+      { name: 'موظفي التسليم', value: dashboardStats.totalDeliveryStaff }
+    ] : [];
+  }, [dashboardStats]);
 
-  const COLORS = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  // Memoize COLORS array so it isn't re-created on every render
+  const COLORS = useMemo(() => ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], []);
 
   return (
     hasDBPermission ? (
@@ -324,7 +330,6 @@ export default function LandingPage() {
                     />
                     <YAxis
                       stroke="#64748b"
-                      // Adjust the domain if needed; here we assume percentages might exceed 100.
                       domain={[0, 100]}
                       tickFormatter={(value) => `${value}%`}
                     />

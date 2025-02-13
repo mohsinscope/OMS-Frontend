@@ -495,3 +495,47 @@
     transition: all 0.3s ease;
   }
 }
+
+
+/* burger icon  */
+
+/* Add this to your dashboard.css */
+.menu-icon {
+  position: relative;
+  width: 45px;
+  height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.menu-line {
+  width: 35px;
+  height: 4px; /* Made thicker */
+  background-color: currentColor;
+  position: absolute;
+  transition: transform 0.3s ease-out, opacity 0.2s ease-out;
+  border-radius: 7px;
+}
+
+.menu-line:nth-child(1) {
+  transform: translateY(-10px);
+}
+
+.menu-line:nth-child(3) {
+  transform: translateY(10px);
+}
+
+/* Animation when open */
+.menu-icon.open .menu-line:nth-child(1) {
+  transform: rotate(45deg);
+}
+
+.menu-icon.open .menu-line:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-icon.open .menu-line:nth-child(3) {
+  transform: rotate(-45deg);
+}
