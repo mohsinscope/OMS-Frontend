@@ -79,7 +79,7 @@
   border: none;
   border-radius: 8px;
 }
-
+/* removing the arrows from the numbers */
 .remove-arrows[type="number"]::-webkit-outer-spin-button,
 .remove-arrows[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;

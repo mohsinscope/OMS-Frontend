@@ -9,6 +9,14 @@ import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 
 export default function ViewAttendance() {
+  const staffFields = [
+    { key: "receivingStaff", label: "موظفي الاستلام" },
+    { key: "accountStaff", label: "موظفي الحسابات" },
+    { key: "printingStaff", label: "موظفي الطباعة" },
+    { key: "qualityStaff", label: "موظفي الجودة" },
+    { key: "deliveryStaff", label: "موظفي التسليم" },
+  ];
+  
   const location = useLocation();
   const navigate = useNavigate();
   const id = location.state?.id;
@@ -369,90 +377,63 @@ const handleDelete = async () => {
             layout="vertical"
             className="dammaged-passport-container-edit-modal"
           >
-            <Form.Item
-              name="receivingStaff"
-              label={
-                <span>
-                  موظفي الاستلام{" "}
-                  <span style={{ color: "blue", fontSize: "14px" }}>
-                    {`(الحالي: ${attendanceData.receivingStaff} / ${
-                      attendanceData2?.data?.receivingStaff || 0
-                    })`}
-                  </span>
-                </span>
-              }
-              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الاستلام" }]}
-            >
-              <Input placeholder="عدد موظفي الاستلام" type="number" />
-            </Form.Item>
+            {staffFields.map((field) => {
+          // current actual attendance
+          const currentValue = attendanceData[field.key];
+          // max capacity from office data
+          const maxValue = attendanceData2?.data?.[field.key] || 0;
 
+          return (
             <Form.Item
-              name="accountStaff"
+            className="attendance-field-wrapper-add"
+              key={field.key}
+              name={field.key}
               label={
                 <span>
-                  موظفي الحسابات{" "}
+                  {field.label}{" "}
                   <span style={{ color: "blue", fontSize: "14px" }}>
-                    {`(الحالي: ${attendanceData.accountStaff} / ${
-                      attendanceData2?.data?.accountStaff || 0
-                    })`}
+                    {`(الحالي: ${currentValue} / ${maxValue})`}
                   </span>
                 </span>
               }
-              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الحسابات" }]}
+              rules={[
+                { required: true, message: `يرجى إدخال عدد ${field.label}` },
+                {
+                  validator: (_, value) => {
+                    // Convert to number
+                    const numericValue = Number(value);
+                  
+                    // If empty, skip (the required rule handles emptiness)
+                    if (value === undefined || value === null) {
+                      return Promise.resolve();
+                    }
+                  
+                    // If negative or not a number
+                    if (Number.isNaN(numericValue) || numericValue < 0) {
+                      return Promise.reject(); // highlight in red, no inline message
+                    }
+                  
+                    // If above max
+                    if (numericValue > maxValue) {
+                      return Promise.reject(`لا يمكن أن يتجاوز عدد الموظفين ${maxValue}`);
+                    }
+                  
+                    return Promise.resolve();
+                  },
+                },
+              ]}
             >
-              <Input placeholder="عدد موظفي الحسابات" type="number" />
-            </Form.Item>
+            <Input
+              type="number"
+              className="attendance-input"
+              placeholder={`عدد ${field.label}`}
+              min={0}
+              max={maxValue}
+            />
+                </Form.Item>
+              );
+            })}
 
-            <Form.Item
-              name="printingStaff"
-              label={
-                <span>
-                  موظفي الطباعة{" "}
-                  <span style={{ color: "blue", fontSize: "14px" }}>
-                    {`(الحالي: ${attendanceData.printingStaff} / ${
-                      attendanceData2?.data?.printingStaff || 0
-                    })`}
-                  </span>
-                </span>
-              }
-              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الطباعة" }]}
-            >
-              <Input placeholder="عدد موظفي الطباعة" type="number" />
-            </Form.Item>
-
-            <Form.Item
-              name="qualityStaff"
-              label={
-                <span>
-                  موظفي الجودة{" "}
-                  <span style={{ color: "blue", fontSize: "14px" }}>
-                    {`(الحالي: ${attendanceData.qualityStaff} / ${
-                      attendanceData2?.data?.qualityStaff || 0
-                    })`}
-                  </span>
-                </span>
-              }
-              rules={[{ required: true, message: "يرجى إدخال عدد موظفي الجودة" }]}
-            >
-              <Input placeholder="عدد موظفي الجودة" type="number" />
-            </Form.Item>
-
-            <Form.Item
-              name="deliveryStaff"
-              label={
-                <span>
-                  موظفي التسليم{" "}
-                  <span style={{ color: "blue", fontSize: "14px" }}>
-                    {`(الحالي: ${attendanceData.deliveryStaff} / ${
-                      attendanceData2?.data?.deliveryStaff || 0
-                    })`}
-                  </span>
-                </span>
-              }
-              rules={[{ required: true, message: "يرجى إدخال عدد موظفي التسليم" }]}
-            >
-              <Input placeholder="عدد موظفي التسليم" type="number" />
-            </Form.Item>
 
             <Form.Item
               name="date"
@@ -463,8 +444,8 @@ const handleDelete = async () => {
               <Input placeholder="التاريخ" type="date" />
             </Form.Item>
 
-            <Form.Item name="note" label="الملاحظات" rules={[{ required: false }]}>
-              <Input.TextArea placeholder="أدخل الملاحظات" defaultValue="لا يوجد" />
+            <Form.Item name="note" label="الملاحظات" rules={[{ required: false }]} initialValue={attendanceData.note || "لا يوجد"}>
+              <Input.TextArea placeholder="أدخل الملاحظات"   />
             </Form.Item>
 
             <Form.Item
