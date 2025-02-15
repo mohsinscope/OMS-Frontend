@@ -360,7 +360,7 @@ const SuperVisorDammagePassportAdd = () => {
           >
             <p>يرجى ربط الماسح الضوئي أو تنزيل الخدمة من الرابط التالي:</p>
             <a
-              href="https://cdn-oms.scopesky.org/services/ScannerPolaris_WinSetup.msi"
+              href="http://oms-cdn.scopesky.iq/services/ScannerPolaris_WinSetup.msi"
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -70,7 +70,7 @@ export default function ImagePreviewer({
     // Handle remote database URLs
     return url.match(/^https?:\/\//)
       ? url
-      : `https://cdn-oms.scopesky.org/${url}`;
+      : `http://oms-cdn.scopesky.iq/${url}`;
   };
 
   const isPDF = (url) => {

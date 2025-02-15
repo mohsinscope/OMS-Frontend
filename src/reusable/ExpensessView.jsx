@@ -625,7 +625,7 @@ function flattenItems(items) {
             const imageUrls =
               response.data?.map(
                 (attachment) =>
-                  `https://cdn-oms.scopesky.org${attachment.filePath}`
+                  `http://oms-cdn.scopesky.iq/${attachment.filePath}`
               ) || [];
             // Fetch and convert images to Base64 with proxy
             const imagesWithBase64 = await Promise.all(
