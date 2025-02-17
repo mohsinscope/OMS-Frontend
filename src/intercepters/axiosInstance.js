@@ -7,7 +7,7 @@ import { notification } from 'antd';
 const createAxiosInstance = () =>
   axios.create({
     baseURL: BASE_URL,
-    timeout: 15000, // Reduced timeout for faster failure detection
+    timeout: 20000, // Reduced timeout for faster failure detection
   });
 
 const axiosInstance = createAxiosInstance();

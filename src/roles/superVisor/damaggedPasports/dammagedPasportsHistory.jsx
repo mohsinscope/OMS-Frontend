@@ -151,10 +151,13 @@ export default function SuperVisorPassport() {
     }
     setIsEmailLoading(true);
 
+    const dateWithFixedHour = new Date(emailReportDate);
+    dateWithFixedHour.setHours(3, 0, 0, 0);
+    
     const payload = {
-      ReportDate: formatToISO(emailReportDate),
+      ReportDate: dateWithFixedHour.toISOString(),
     };
-    console.log(payload)
+    console.log(payload);
     try {
       // Configure axios to return a blob with a 3-minute timeout.
       const response = await axiosInstance.post(
