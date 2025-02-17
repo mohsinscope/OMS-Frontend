@@ -350,9 +350,7 @@ export default function SupervisorAttendanceHistory() {
       }`}
       dir="rtl"
     >
-      <div className="supervisor-attendance-history-title">
-        <h1>الحضور</h1>
-      </div>
+      <h1 className="supervisor-passport-dameged-title">الحضور</h1>
 
       {isLoading ? (
         <Skeleton active paragraph={{ rows: 10 }} />
