@@ -129,7 +129,7 @@ export default function SuperVisorPassport() {
 
   const fetchDamageTypes = async () => {
     try {
-      const response = await axiosInstance.get(`${Url}/api/damagedtype/all`, {
+      const response = await axiosInstance.get(`${Url}/api/damagedtype/all?PageNumber=1&PageSize=1000`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       console.log(response);

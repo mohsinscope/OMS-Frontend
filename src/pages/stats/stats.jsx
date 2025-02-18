@@ -15,7 +15,9 @@ import dayjs from "dayjs";
 import './stats.css';
 const COLORS = [
   "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0",
-  "#FF5722", "#00BCD4", "#E91E63", "#3F51B5", "#CDDC39"
+  "#FF5722", "#00BCD4", "#E91E63", "#3F51B5", "#CDDC39",
+   "#795548", "#009688", "#607D8B", "#8BC34A",
+  "#00BFA5", "#FFAB00", "#673AB7", "#F06292", "#BA68C8"
 ];
 
 export default function Stats() {
@@ -92,12 +94,12 @@ export default function Stats() {
   const fetchTypesData = useCallback(async () => {
     try {
       const [deviceTypesRes, passportTypesRes] = await Promise.all([
-        axiosInstance.get(`${Url}/api/damageddevicetype/all`, {
+        axiosInstance.get(`${Url}/api/damageddevicetype/all?PageNumber=1&PageSize=1000`, {
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
         }),
-        axiosInstance.get(`${Url}/api/damagedtype/all`, {
+        axiosInstance.get(`${Url}/api/damagedtype/all?PageNumber=1&PageSize=1000`, {
           headers: {
             Authorization: `Bearer ${accessToken}`
           }
@@ -189,7 +191,7 @@ export default function Stats() {
       });
 
       const responses = await Promise.all(requests);
-      
+      console.log("response" , responses)
       const data = responses.map((response, index) => ({
         name: types[index].name,
         value: selectedTab === "damagedDevices" 
@@ -507,8 +509,8 @@ export default function Stats() {
                         data={chartData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={100}
-                        outerRadius={150}
+                        innerRadius={150}
+                        outerRadius={200}
                         paddingAngle={0}
                         dataKey="value"
                       >
