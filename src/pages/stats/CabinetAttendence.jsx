@@ -31,7 +31,7 @@ export default function CabinetAttendance() {
   });
 
   const [formState, setFormState] = useState({
-    selectedDate: null,
+    selectedDate: dayjs(), // Set today's date as the initial value
     selectedStaffType: "ReceivingStaff",
     selectedGovernorate: "",
     selectedOffice: "",
@@ -427,7 +427,7 @@ export default function CabinetAttendance() {
         </div>
 
         <div className="form-group">
-          <label>نوع الكابينة</label>
+          <label>القسم</label>
           <select
             value={formState.selectedStaffType}
             onChange={(e) =>

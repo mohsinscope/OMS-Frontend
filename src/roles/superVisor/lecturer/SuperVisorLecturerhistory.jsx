@@ -447,6 +447,17 @@ const SuperVisorLecturerhistory = () => {
               </div>
 
               <div className="filter-field">
+                <label htmlFor="title" className="supervisor-Lectur-label">
+                  عنوان المحضر
+                </label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  className="supervisor-Lectur-input"
+                />
+              </div>
+              <div className="filter-field">
                 <label htmlFor="company" className="supervisor-Lectur-label">
                   الشركة
                 </label>
@@ -464,17 +475,6 @@ const SuperVisorLecturerhistory = () => {
                 </Select>
               </div>
 
-              <div className="filter-field">
-                <label htmlFor="title" className="supervisor-Lectur-label">
-                  عنوان المحضر
-                </label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange(e.target.value)}
-                  className="supervisor-Lectur-input"
-                />
-              </div>
 
               <div className="filter-field">
                 <label>نوع المحضر</label>
