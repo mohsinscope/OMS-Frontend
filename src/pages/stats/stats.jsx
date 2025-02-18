@@ -9,18 +9,15 @@ import AttendanceStats from './attendenceStats.jsx';
 import ExpensesStats  from './expensessStats.jsx';
 import AttendanceUnavailable from './attendenceUnavailable.jsx';
 import CabinetAttendence from './CabinetAttendence.jsx';
+import dayjs from "dayjs";
+
 
 import './stats.css';
 const COLORS = [
   "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#9C27B0",
   "#FF5722", "#00BCD4", "#E91E63", "#3F51B5", "#CDDC39"
 ];
-// Define your chart data
-const chartData = [
-  { name: "اجهزة تالفة", value: 400 },
-  { name: "جوازات تالفة", value: 300 },
-  // Add more data as needed
-];
+
 export default function Stats() {
   const { profile, accessToken, isSidebarCollapsed,permissions } = useAuthStore();
   const [chartData, setChartData] = useState([]);
@@ -33,7 +30,7 @@ export default function Stats() {
   const [damagedPassportTypes, setDamagedPassportTypes] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(dayjs());
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -132,11 +129,17 @@ export default function Stats() {
           setError("الرجاء اختيار التاريخ");
           return;
         }
+              // Use selectedDate (or default to today) and format it natively
+      const dateObj = selectedDate ? new Date(selectedDate) : new Date();
+      const year = dateObj.getFullYear();
+      const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+      const day = dateObj.getDate().toString().padStart(2, '0');
+      const formattedDate = `${year}-${month}-${day}T00:00:00Z`;
 
         const response = await axiosInstance.post(`${Url}/api/Attendance/statistics/office`, {
           officeId: selectedOffice,
           workingHours: workingHours,
-          date: `${selectedDate.format('YYYY-MM-DD')}T00:00:00Z`
+          date: formattedDate,
         }, {
           headers: {
             Authorization: `Bearer ${accessToken}`
@@ -225,6 +228,11 @@ export default function Stats() {
     setSelectedGovernorate(null);
     setSelectedOffice(null);
     setOfficeAttendanceData(null);
+    if (tab === "officeAttendene") {
+      setSelectedDate(dayjs());
+    } else {
+      setSelectedDate(null);
+    }
   }, [selectedTab]);
  // Automatically call the API with null payload when the damaged devices/passports tab is active
  useEffect(() => {
@@ -334,25 +342,26 @@ export default function Stats() {
                   className={`stats-navbar-item ${selectedTab === "officeAttendene" ? "active" : ""}`}
                   onClick={() => handleTabChange("officeAttendene")}
                 >
-                  حضور المكتب
+                   تقرير حضور الموظفين حسب المكتب
                 </li>
                 <li
                   className={`stats-navbar-item ${selectedTab === "attendance" ? "active" : ""}`}
                   onClick={() => handleTabChange("attendance")}
                 >
-                  الحضور
+                  التقرير العام للحضور
+                
                 </li>
                 <li
               className={`stats-navbar-item ${selectedTab === "attendanceUnavailable" ? "active" : ""}`}
               onClick={() => handleTabChange("attendanceUnavailable")}
             >
-              المكاتب الغائبة
+              تقرير التزام المكاتب
             </li>
             <li
               className={`stats-navbar-item ${selectedTab === "cabinet-attendence" ? "active" : ""}`}
               onClick={() => handleTabChange("cabinet-attendence")}
             >
-              حضور الكابينات
+              تقرير حضور الاقسام
             </li>
             </>
             

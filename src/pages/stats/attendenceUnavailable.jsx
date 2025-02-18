@@ -165,7 +165,7 @@ const unavailableOfficesContent = useMemo(() => {
 
   return (
     <div dir="rtl" style={containerStyle}>
-      <Card title="مكاتب الغياب" bordered={false}>
+      <Card title="المكاتب الغير ملتزمة بتسجيل الحضور" bordered={false}>
         <form onSubmit={handleSubmit}>
           <div style={formContainerStyle}>
             <div style={formGroupStyle}>

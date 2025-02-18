@@ -42,7 +42,7 @@ const SuperVisorDammagePassportAdd = () => {
   const { profileId, governorateId, officeId } = profile || {};
 
   const isSupervisor =
-    roles.includes("Supervisor") || roles == "I.T" || roles == "MainSupervisor";
+    roles.includes("Supervisor") || roles === "I.T" || roles === "MainSupervisor";
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
 
@@ -60,7 +60,6 @@ const SuperVisorDammagePassportAdd = () => {
 
     const fetchInitialData = async () => {
       try {
-        // Promise.all to fetch Damaged Types + Governorates
         const [damagedTypesResponse, governoratesResponse] = await Promise.all([
           axiosInstance.get(`${Url}/api/damagedtype/all`, {
             headers: {
@@ -93,7 +92,7 @@ const SuperVisorDammagePassportAdd = () => {
           message.error("فشل تحميل المحافظات بسبب خطأ في البيانات");
         }
 
-        // If Supervisor, set selectedGovernorate + fetch offices for that gov
+        // If Supervisor, set selectedGovernorate + fetch offices
         if (isSupervisor) {
           setSelectedGovernorate(governorateId);
           await fetchOffices(governorateId);
@@ -147,57 +146,48 @@ const SuperVisorDammagePassportAdd = () => {
   };
 
   // -----------------------------
-  // 3) Handle form submission
+  // 3) Handle form submission (Multipart)
   // -----------------------------
   const handleFormSubmit = async (values) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
-      const payload = {
-        passportNumber: values.passportNumber,
-        date: values.date
-          ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
-          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
-        damagedTypeId: values.damagedTypeId,
-        officeId: isSupervisor ? officeId : selectedOffice,
-        governorateId: isSupervisor ? governorateId : selectedGovernorate,
-        profileId,
-        note: values.note || "",
-      };
+      // Build a FormData object to send everything in one request
+      const formData = new FormData();
 
-      const response = await axiosInstance.post(`${Url}/api/DamagedPassport`, payload, {
+      // Add text fields
+      formData.append("PassportNumber", values.passportNumber);
+      formData.append(
+        "Date",
+        values.date
+          ? values.date.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
+          : moment().format("YYYY-MM-DDTHH:mm:ss.SSSZ")
+      );
+      formData.append("DamagedTypeId", values.damagedTypeId);
+      formData.append("OfficeId", isSupervisor ? officeId : selectedOffice);
+      formData.append("GovernorateId", isSupervisor ? governorateId : selectedGovernorate);
+      formData.append("ProfileId", profileId);
+      formData.append("Note", values.note || "");
+
+      // Add files (the API expects "File" as key for each file)
+      fileList.forEach((file) => {
+        formData.append("File", file.originFileObj || file);
+      });
+
+      // Send as multipart/form-data to DamagedPassport endpoint
+      await axiosInstance.post(`${Url}/api/DamagedPassport`, formData, {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${accessToken}`,
         },
       });
 
-      const entityId = response.data?.id || response.data;
-      if (!entityId) {
-        throw new Error("فشل في استرداد معرف الكيان.");
-      }
-
-      // Attach files if any
-      if (fileList.length > 0) {
-        try {
-          await attachFiles(entityId);
-          message.success("تم إرسال البيانات والمرفقات بنجاح");
-        } catch (attachmentError) {
-          // Rollback on attachment error
-          await rollbackDamagedPassport(entityId);
-          throw new Error(
-            "فشل في إرفاق الملفات. تم إلغاء الإنشاء لضمان سلامة البيانات."
-          );
-        }
-      } else {
-        message.success("تم إرسال البيانات بنجاح بدون مرفقات");
-      }
-
-      // Navigate back after success
+      message.success("تم إرسال البيانات والمرفقات بنجاح");
       navigate(-1);
     } catch (error) {
-      message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات");
+      console.error("Error creating DamagedPassport:", error);
+      message.error("حدث خطأ أثناء إرسال البيانات أو المرفقات");
     } finally {
       setIsSubmitting(false);
     }
@@ -214,72 +204,12 @@ const SuperVisorDammagePassportAdd = () => {
   };
 
   // -----------------------------
-  // 5) Rollback method on attach error
-  // -----------------------------
-  const rollbackDamagedPassport = async (entityId) => {
-    try {
-      await axiosInstance.delete(`${Url}/api/DamagedPassport/${entityId}`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-    } catch (error) {
-      console.error("Failed to rollback damaged passport:", error);
-    }
-  };
-
-  // -----------------------------
-  // 6) Attach files
-  // -----------------------------
-  const attachFiles = async (entityId) => {
-    for (const file of fileList) {
-      const formData = new FormData();
-      formData.append("file", file.originFileObj || file);
-      formData.append("entityId", entityId);
-      formData.append("EntityType", "DamagedPassport");
-
-      await axiosInstance.post(`${Url}/api/Attachment/add-attachment`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-    }
-  };
-
-  // -----------------------------
-  // 7) File changes & scanning
+  // 5) File changes & scanning
   // -----------------------------
   const handleFileChange = (info) => {
     const updatedFiles = info.fileList;
-
-    // ------------------------
-    // OLD merging logic (commented out)
-    /*
-    // Only keep unique new files
-    const uniqueFiles = updatedFiles.filter(
-      (newFile) =>
-        !fileList.some(
-          (existingFile) =>
-            existingFile.name === newFile.name &&
-            existingFile.lastModified === newFile.lastModified
-        )
-    );
-
-    const newPreviews = uniqueFiles.map((file) =>
-      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
-    );
-
-    setPreviewUrls((prev) => [...prev, ...newPreviews]);
-    setFileList((prev) => [...prev, ...uniqueFiles]);
-    */
-    // ------------------------
-
-    // NEW (fixed) approach:
-    // 1) Directly set the fileList to info.fileList
     setFileList(updatedFiles);
 
-    // 2) Generate preview URLs from the final fileList
     const newPreviews = updatedFiles.map((file) =>
       file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
     );
@@ -323,6 +253,7 @@ const SuperVisorDammagePassportAdd = () => {
         type: "image/jpeg",
       });
 
+      // Ensure we don't add a duplicate
       if (
         !fileList.some((existingFile) => existingFile.name === scannedFile.name)
       ) {
@@ -344,7 +275,6 @@ const SuperVisorDammagePassportAdd = () => {
         message.info("تم بالفعل إضافة هذه الصورة.");
       }
     } catch (error) {
-      // Show a modal if scanning fails
       Modal.error({
         title: "خطأ",
         content: (
@@ -355,7 +285,6 @@ const SuperVisorDammagePassportAdd = () => {
               fontSize: "15px",
               fontWeight: "bold",
               textAlign: "center",
-              width: "fit-content",
             }}
           >
             <p>يرجى ربط الماسح الضوئي أو تنزيل الخدمة من الرابط التالي:</p>
@@ -376,7 +305,7 @@ const SuperVisorDammagePassportAdd = () => {
   };
 
   // -----------------------------
-  // 8) Navigation
+  // 6) Navigation
   // -----------------------------
   const handleBack = () => {
     navigate(-1);
@@ -442,61 +371,53 @@ const SuperVisorDammagePassportAdd = () => {
                     disabled={isSupervisor || !selectedGovernorate}
                     value={selectedOffice || undefined}
                     onChange={(value) => setSelectedOffice(value)}
-                    options={offices} // each office has { value, label }
+                    options={offices}
                   />
                 </Form.Item>
 
                 {/* Passport Number */}
                 <Form.Item
-  name="passportNumber"
-  label="رقم الجواز"
-  rules={[
-    { required: true, message: "يرجى إدخال رقم الجواز" },
-    {
-      pattern:
-        profile.officeName === "الكرادة"
-          ? /^[BRVK][0-9]{8}$/
-          : /^[B][0-9]{8}$/,
-      message:
-        profile.officeName === "الكرادة"
-          ? "يجب أن يبدأ بحرف B أو R أو V أو K ويتبعه 8 أرقام"
-          : "يجب أن يبدأ بحرف B ويتبعه 8 أرقام",
-    },
-  ]}
-  initialValue="B" // Ensure input starts with "B"
->
-  <Input
-    dir="ltr"
-    placeholder="أدخل رقم الجواز"
-    maxLength={9}
-    minLength={9}
-    onChange={(e) => {
-      let value = e.target.value.toUpperCase(); // Convert input to uppercase
-      if (profile.officeName === "الكرادة") {
-        // Allow any of the allowed letters (B, R, V, K) as first character:
-        if (!/^[BRVK]/.test(value)) {
-          // If it doesn't start with one of these letters, force B
-          value = "B" + value.replace(/[^0-9]/g, "");
-        } else {
-          // Otherwise, keep the allowed letter then filter only numbers after it
-          value = value[0] + value.slice(1).replace(/[^0-9]/g, "");
-        }
-      } else {
-        // Default: only allow B as the first letter
-        if (!value.startsWith("B")) {
-          value = "B" + value.replace(/[^0-9]/g, "");
-        } else {
-          value = "B" + value.slice(1).replace(/[^0-9]/g, "");
-        }
-      }
-      e.target.value = value; // Update the field value
-    }}
-  />
-</Form.Item>
-
-
-
-
+                  name="passportNumber"
+                  label="رقم الجواز"
+                  rules={[
+                    { required: true, message: "يرجى إدخال رقم الجواز" },
+                    {
+                      pattern:
+                        profile.officeName === "الكرادة"
+                          ? /^[BRVK][0-9]{8}$/
+                          : /^[B][0-9]{8}$/,
+                      message:
+                        profile.officeName === "الكرادة"
+                          ? "يجب أن يبدأ بحرف B أو R أو V أو K ويتبعه 8 أرقام"
+                          : "يجب أن يبدأ بحرف B ويتبعه 8 أرقام",
+                    },
+                  ]}
+                  initialValue="B"
+                >
+                  <Input
+                    dir="ltr"
+                    placeholder="أدخل رقم الجواز"
+                    maxLength={9}
+                    minLength={9}
+                    onChange={(e) => {
+                      let value = e.target.value.toUpperCase(); // Convert input to uppercase
+                      if (profile.officeName === "الكرادة") {
+                        if (!/^[BRVK]/.test(value)) {
+                          value = "B" + value.replace(/[^0-9]/g, "");
+                        } else {
+                          value = value[0] + value.slice(1).replace(/[^0-9]/g, "");
+                        }
+                      } else {
+                        if (!value.startsWith("B")) {
+                          value = "B" + value.replace(/[^0-9]/g, "");
+                        } else {
+                          value = "B" + value.slice(1).replace(/[^0-9]/g, "");
+                        }
+                      }
+                      e.target.value = value;
+                    }}
+                  />
+                </Form.Item>
 
                 {/* Damaged Type */}
                 <Form.Item
@@ -534,9 +455,7 @@ const SuperVisorDammagePassportAdd = () => {
               </div>
 
               {/* Image Upload / Scan Section */}
-              <h1 className="SuperVisor-title-container">
-                إضافة صورة الجواز التالف
-              </h1>
+              <h1 className="SuperVisor-title-container">إضافة صورة الجواز التالف</h1>
               <div className="add-image-section">
                 <div className="dragger-container">
                   <Form.Item
@@ -555,21 +474,19 @@ const SuperVisorDammagePassportAdd = () => {
                     ]}
                   >
                     <Dragger
-                      // Make Dragger a controlled component
                       fileList={fileList}
                       onChange={handleFileChange}
                       beforeUpload={(file) => {
+                        // Prevent PDF files
                         if (file.type === "application/pdf") {
                           message.error("لا يمكن تحميل ملفات PDF.");
-                          // Prevent file from being added to the list
                           return Upload.LIST_IGNORE;
                         }
-                        // Return false to prevent auto upload but allow the file
+                        // Prevent auto-upload
                         return false;
                       }}
                       multiple
                       showUploadList={false}
-                      
                     >
                       <p className="ant-upload-drag-icon">📂</p>
                       <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
