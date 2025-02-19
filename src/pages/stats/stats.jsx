@@ -509,8 +509,8 @@ export default function Stats() {
                         data={chartData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={150}
-                        outerRadius={200}
+                        innerRadius={100}
+                        outerRadius={150}
                         paddingAngle={0}
                         dataKey="value"
                       >

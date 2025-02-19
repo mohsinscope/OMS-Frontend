@@ -168,7 +168,7 @@ const SuperVisorDammagePassportAdd = () => {
       formData.append("OfficeId", isSupervisor ? officeId : selectedOffice);
       formData.append("GovernorateId", isSupervisor ? governorateId : selectedGovernorate);
       formData.append("ProfileId", profileId);
-      formData.append("Note", values.note || "");
+      formData.append("Note", values.note || "لا يوجد");
 
       // Add files (the API expects "File" as key for each file)
       fileList.forEach((file) => {
