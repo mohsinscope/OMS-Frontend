@@ -536,6 +536,28 @@ export default function SuperVisorPassport() {
       },
     },
     {
+      title: "وقت الانشاء",
+      dataIndex: "datecreated",
+      key: "datecreated",
+      className: "table-column-date",
+      render: (text) => {
+        const date = new Date(text);
+        if (isNaN(date.getTime())) {
+          return "تاريخ غير صالح";
+        }
+        let timeString = date.toLocaleTimeString("en-CA", {
+          hour12: true,      // 12-hour clock
+          hour: "2-digit",   // 2-digit hour
+          minute: "2-digit", // 2-digit minute
+        });
+        timeString = timeString
+          .replace("a.m", "صباحا")
+          .replace("p.m", "مساء");
+    
+        return timeString;
+      },
+    },       
+    {
       title: "تاريخ التلف",
       dataIndex: "date",
       key: "date",
