@@ -26,9 +26,7 @@ import "./../lecturer/SuperVisorLecturerAdd.css";
 
 const { Dragger } = Upload;
 
-/* --- Memoized Sub-Expense Card ---
-     This component displays each sub‑expense. It watches its own price and quantity,
-     and calculates its subtotal as price × quantity. */
+/* --- Memoized Sub-Expense Card --- */
 const SubExpenseCard = memo(
   ({ fieldKey, fieldName, index, remove, form, expenseTypeOptions }) => {
     const handleRemove = useCallback(() => {
@@ -43,9 +41,11 @@ const SubExpenseCard = memo(
       });
     }, [remove, fieldName]);
 
-    // Use Form.useWatch to subscribe only to this sub‑expense's price and quantity.
-    const subPrice = Form.useWatch(["subExpenses", fieldName, "price"], form) || 0;
-    const subQuantity = Form.useWatch(["subExpenses", fieldName, "quantity"], form) || 0;
+    // Watch only this sub-expense's price & quantity
+    const subPrice =
+      Form.useWatch(["subExpenses", fieldName, "price"], form) || 0;
+    const subQuantity =
+      Form.useWatch(["subExpenses", fieldName, "quantity"], form) || 0;
     const subTotal = subPrice * subQuantity;
 
     return (
@@ -53,7 +53,10 @@ const SubExpenseCard = memo(
         key={fieldKey}
         title={`مصروف فرعي ${index + 1}`}
         extra={
-          <MinusCircleOutlined onClick={handleRemove} style={{ color: "#ff4d4f" }} />
+          <MinusCircleOutlined
+            onClick={handleRemove}
+            style={{ color: "#ff4d4f" }}
+          />
         }
         style={{
           marginBottom: "16px",
@@ -66,10 +69,9 @@ const SubExpenseCard = memo(
             label="نوع المصروف"
             rules={[{ required: true, message: "يرجى اختيار نوع المصروف" }]}
           >
-            <Select placeholder="اختر نوع المصروف">
-              {expenseTypeOptions}
-            </Select>
+            <Select placeholder="اختر نوع المصروف">{expenseTypeOptions}</Select>
           </Form.Item>
+
           <Form.Item
             name={[fieldName, "price"]}
             label="السعر"
@@ -85,6 +87,7 @@ const SubExpenseCard = memo(
               parser={(value) => value.replace(/,\s?/g, "")}
             />
           </Form.Item>
+
           <Form.Item
             name={[fieldName, "quantity"]}
             label="الكمية"
@@ -96,6 +99,7 @@ const SubExpenseCard = memo(
               min={1}
             />
           </Form.Item>
+
           <Form.Item label="المجموع الفرعي">
             <InputNumber
               readOnly
@@ -107,10 +111,8 @@ const SubExpenseCard = memo(
               parser={(value) => value.replace(/,\s?/g, "")}
             />
           </Form.Item>
-          <Form.Item
-            name={[fieldName, "notes"]}
-            label="ملاحظات"
-          >
+
+          <Form.Item name={[fieldName, "notes"]} label="ملاحظات">
             <Input.TextArea rows={2} />
           </Form.Item>
         </Space>
@@ -119,12 +121,9 @@ const SubExpenseCard = memo(
   }
 );
 
-/* --- Memoized Total Amount Display ---
-     This component watches only the parent's price and quantity,
-     then calculates the total as (price × quantity) for the main expense only.
-     This is displayed in the "المجموع الكلي" field. */
+/* --- Memoized Total Amount Display --- */
 const TotalAmountDisplay = memo(({ form }) => {
-  // Watch main expense fields.
+  // Watch main expense's price & quantity
   const mainPrice = Form.useWatch("price", form) || 0;
   const mainQuantity = Form.useWatch("quantity", form) || 0;
   const total = mainPrice * mainQuantity;
@@ -149,6 +148,7 @@ function ExpensessAddDaily() {
   const location = useLocation();
   const monthlyExpenseId = location.state?.monthlyExpenseId;
   const totalMonthlyAmount = location.state?.totalMonthlyAmount;
+
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
@@ -157,8 +157,10 @@ function ExpensessAddDaily() {
   const [loading, setLoading] = useState(false);
   const [expenseTypes, setExpenseTypes] = useState([]);
   const [hasSubExpenses, setHasSubExpenses] = useState(false);
+
   const { profile, isSidebarCollapsed } = useAuthStore();
-  const { profileId, governorateId, officeId, governorateName, officeName, name: supervisorName } = profile || {};
+  const { profileId, governorateId, officeId, governorateName, officeName, name: supervisorName } =
+    profile || {};
 
   const [officeInfo] = useState({
     totalCount: 0,
@@ -170,6 +172,41 @@ function ExpensessAddDaily() {
   });
 
   const [officeBudget, setOfficeBudget] = useState();
+
+  /* ------------------------------------------------------------------
+   *  1) Define handleFileChange so Dragger can reference it
+   * ------------------------------------------------------------------ */
+  const handleFileChange = (info) => {
+    // Example logic: Filter out PDFs, build preview URLs
+    const updatedFiles = info.fileList.filter((file) => {
+      if (file.type === "application/pdf" || file.name?.endsWith(".pdf")) {
+        message.error(
+          "تحميل ملفات PDF غير مسموح به. يرجى تحميل صورة بدلاً من ذلك."
+        );
+        return false;
+      }
+      return true;
+    });
+
+    setFileList(updatedFiles);
+
+    const newPreviews = updatedFiles.map((file) =>
+      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
+    );
+    setPreviewUrls(newPreviews);
+  };
+
+  /* ------------------------------------------------------------------
+   *  2) Define handleDeleteImage so <ImagePreviewer> can call it
+   * ------------------------------------------------------------------ */
+  const handleDeleteImage = (index) => {
+    setPreviewUrls((prev) => {
+      // Revoke the existing object URL to free memory
+      URL.revokeObjectURL(prev[index]);
+      return prev.filter((_, i) => i !== index);
+    });
+    setFileList((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const fetchOfficeBudget = async () => {
     try {
@@ -196,7 +233,9 @@ function ExpensessAddDaily() {
 
   const fetchExpenseTypes = async () => {
     try {
-      const response = await axiosInstance.get("/api/ExpenseType?PageNumber=1&PageSize=100");
+      const response = await axiosInstance.get(
+        "/api/ExpenseType?PageNumber=1&PageSize=100"
+      );
       setExpenseTypes(response.data || []);
     } catch (error) {
       console.error("Error fetching expense types:", error);
@@ -208,94 +247,49 @@ function ExpensessAddDaily() {
     navigate(-1);
   };
 
-  const attachFiles = async (entityId) => {
-    for (const file of fileList) {
-      const formData = new FormData();
-      formData.append("file", file.originFileObj);
-      formData.append("entityId", entityId);
-      formData.append("EntityType", "Expense");
-
-      try {
-        await axiosInstance.post("/api/Attachment/add-attachment", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        });
-      } catch (error) {
-        throw new Error("فشل في إرفاق الملفات");
-      }
-    }
-  };
-
-  const rollbackExpense = async (entityId) => {
-    try {
-      await axiosInstance.delete(`/api/Expense/${entityId}`);
-    } catch (error) {
-      console.error("Failed to rollback expense record:", error);
-    }
-  };
+  // (Optional) attachFiles & rollbackExpense if needed
 
   const handleFormSubmit = async (values) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    try {
-      if (!profileId || !governorateId || !officeId) {
-        throw new Error("تفاصيل المستخدم مفقودة. يرجى تسجيل الدخول مرة أخرى.");
-      }
-      if (!monthlyExpenseId) {
-        throw new Error("لم يتم العثور على معرف المصروف الشهري");
-      }
-      const payload = {
-        price: values.price,
-        quantity: values.quantity,
-        notes: values.notes || "لا يوجد",
-        expenseDate: values.date.format("YYYY-MM-DDTHH:mm:ss"),
-        expenseTypeId: values.expenseTypeId,
-        monthlyExpensesId: monthlyExpenseId,
-      };
 
+    try {
+      // 1. Create FormData
+      const formData = new FormData();
+
+      // 2. Append main expense fields
+      formData.append("Quantity", values.quantity);
+      formData.append("Notes", values.notes || "لا يوجد");
+      formData.append("ExpenseDate", values.date.format("YYYY-MM-DDTHH:mm:ss"));
+      formData.append("ExpenseTypeId", values.expenseTypeId);
+      formData.append("Price", values.price);
+
+
+      // 3. If user has sub expenses, append them as JSON
       if (hasSubExpenses && values.subExpenses) {
-        payload.subExpenses = values.subExpenses.map((sub) => ({
+        const subExpensesPayload = values.subExpenses.map((sub) => ({
           price: sub.price,
           quantity: sub.quantity,
-          notes: sub.notes || "لا يوجد",
+          notes: sub.notes ?? "لا يوجد",
           expenseTypeId: sub.expenseTypeId,
         }));
+        formData.append("subExpensesJson", JSON.stringify(subExpensesPayload));
       }
 
-      // Calculate parent's total only.
-      const mainTotal = values.price * values.quantity;
-      // (subExpenses can be used for further processing if needed)
-      const totalAmount = mainTotal;
+      // 4. Append all files (including scanned files) from your fileList
+      fileList.forEach((file) => {
+        formData.append("Receipt", file.originFileObj);
+      });
 
-      if (totalAmount + totalMonthlyAmount > officeBudget) {
-        message.error("الميزانية غير كافية");
-        message.info(`الميزانية المتبقية ${officeBudget - totalMonthlyAmount}`);
-        setIsSubmitting(false);
-        return;
-      }
-
-      const response = await axiosInstance.post(
+      // 5. Post to endpoint as multipart/form-data
+      await axiosInstance.post(
         `/api/Expense/${monthlyExpenseId}/daily-expenses`,
-        payload
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
-      const entityId = response.data?.id;
-      if (!entityId) {
-        throw new Error("فشل في استرداد معرف الكيان من الاستجابة");
-      }
 
-      try {
-        if (fileList.length > 0) {
-          await attachFiles(entityId);
-          message.success("تم إرسال البيانات والمرفقات بنجاح");
-        } else {
-          message.success("تم إرسال البيانات بنجاح بدون مرفقات");
-        }
-        navigate(-1);
-      } catch (attachmentError) {
-        await rollbackExpense(entityId);
-        throw new Error("فشل في إرفاق الملفات.");
-      }
+      message.success("تم إرسال البيانات والمرفقات بنجاح");
+      navigate(-1);
     } catch (error) {
       message.error(error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات");
     } finally {
@@ -303,35 +297,13 @@ function ExpensessAddDaily() {
     }
   };
 
-  const handleFileChange = (info) => {
-    const updatedFiles = info.fileList.filter((file) => {
-      if (file.type === "application/pdf" || file.name?.endsWith(".pdf")) {
-        message.error("تحميل ملفات PDF غير مسموح به. يرجى تحميل صورة بدلاً من ذلك.");
-        return false;
-      }
-      return true;
-    });
-    setFileList(updatedFiles);
-    const newPreviews = updatedFiles.map((file) =>
-      file.originFileObj ? URL.createObjectURL(file.originFileObj) : null
-    );
-    setPreviewUrls(newPreviews);
-  };
-
-  const handleDeleteImage = (index) => {
-    setPreviewUrls((prev) => {
-      URL.revokeObjectURL(prev[index]);
-      return prev.filter((_, i) => i !== index);
-    });
-    setFileList((prev) => prev.filter((_, i) => i !== index));
-  };
-
+  // Keep your onScanHandler as-is
   const onScanHandler = async () => {
     if (isScanning) return;
     setIsScanning(true);
     try {
       const response = await axiosInstance.get(
-        `http://localhost:11234/api/ScanApi/ScannerPrint`,
+        "http://localhost:11234/api/ScanApi/ScannerPrint",
         {
           responseType: "json",
           headers: {
@@ -343,16 +315,15 @@ function ExpensessAddDaily() {
       if (!base64Data) {
         throw new Error("لم يتم استلام بيانات من الماسح الضوئي");
       }
+
       const blob = await fetch(`data:image/jpeg;base64,${base64Data}`).then(
         (res) => res.blob()
       );
-      const scannedFile = new File(
-        [blob],
-        `scanned-expense-${Date.now()}.jpeg`,
-        {
-          type: "image/jpeg",
-        }
-      );
+      const scannedFile = new File([blob], `scanned-expense-${Date.now()}.jpeg`, {
+        type: "image/jpeg",
+      });
+
+      // Add scanned file to your fileList
       if (!fileList.some((existingFile) => existingFile.name === scannedFile.name)) {
         const scannedPreviewUrl = URL.createObjectURL(blob);
         setFileList((prev) => [
@@ -423,14 +394,22 @@ function ExpensessAddDaily() {
 
   if (isSubmitting || loading) {
     return (
-      <div className="loading supervisor-damaged-passport-add-container" dir="rtl">
+      <div
+        className="loading supervisor-damaged-passport-add-container"
+        dir="rtl"
+      >
         <Skeleton active paragraph={{ rows: 10 }} />
       </div>
     );
   }
 
   return (
-    <div className={`supervisor-damaged-passport-add-container ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`} dir="rtl">
+    <div
+      className={`supervisor-damaged-passport-add-container ${
+        isSidebarCollapsed ? "sidebar-collapsed" : ""
+      }`}
+      dir="rtl"
+    >
       <div className="title-container">
         <h1>إضافة مصروف يومي جديد</h1>
         <Form form={form} onFinish={handleFormSubmit} layout="vertical">
@@ -447,6 +426,7 @@ function ExpensessAddDaily() {
                 {expenseTypeOptions}
               </Select>
             </Form.Item>
+
             <Form.Item
               name="price"
               label="السعر"
@@ -462,6 +442,7 @@ function ExpensessAddDaily() {
                 parser={(value) => value.replace(/,\s?/g, "")}
               />
             </Form.Item>
+
             <Form.Item
               name="quantity"
               label="الكمية"
@@ -473,7 +454,9 @@ function ExpensessAddDaily() {
                 style={{ width: "100%", height: "45px" }}
               />
             </Form.Item>
+
             <TotalAmountDisplay form={form} />
+
             <Form.Item
               name="date"
               label="التاريخ"
@@ -491,10 +474,15 @@ function ExpensessAddDaily() {
                 }}
               />
             </Form.Item>
+
             <Form.Item name="notes" label="ملاحظات" initialValue="لا يوجد">
-              <Input.TextArea rows={4} style={{ width: "100%", height: "45px" }} />
+              <Input.TextArea
+                rows={4}
+                style={{ width: "100%", height: "45px" }}
+              />
             </Form.Item>
           </div>
+
           <div style={{ marginTop: "20px" }}>
             <Button
               type="dashed"
@@ -512,8 +500,11 @@ function ExpensessAddDaily() {
                   : { marginBottom: "16px", color: "green" }
               }
             >
-              {hasSubExpenses ? "حذف جميع المصاريف الفرعية" : "إضافة مصاريف فرعية"}
+              {hasSubExpenses
+                ? "حذف جميع المصاريف الفرعية"
+                : "إضافة مصاريف فرعية"}
             </Button>
+
             {hasSubExpenses && (
               <Form.List name="subExpenses">
                 {(fields, { add, remove }) => (
@@ -542,9 +533,8 @@ function ExpensessAddDaily() {
               </Form.List>
             )}
           </div>
-          <h2 className="SuperVisor-Lecturer-title-conatiner">
-            إضافة صورة المصروف
-          </h2>
+
+          <h2 className="SuperVisor-Lecturer-title-conatiner">إضافة صورة المصروف</h2>
           <div className="add-image-section">
             <div className="dragger-container">
               <Form.Item
@@ -563,7 +553,7 @@ function ExpensessAddDaily() {
                 <Dragger
                   className="upload-dragger"
                   fileList={fileList}
-                  onChange={handleFileChange}
+                  onChange={handleFileChange} // <--- reference our newly defined function
                   beforeUpload={() => false}
                   multiple
                   showUploadList={false}
@@ -571,6 +561,7 @@ function ExpensessAddDaily() {
                   <p className="ant-upload-drag-icon">📂</p>
                   <p>قم بسحب الملفات أو الضغط هنا لتحميلها</p>
                 </Dragger>
+
                 <Button
                   type="primary"
                   onClick={onScanHandler}
@@ -586,15 +577,17 @@ function ExpensessAddDaily() {
                 </Button>
               </Form.Item>
             </div>
+
             <div className="image-previewer-container">
               <ImagePreviewer
                 uploadedImages={previewUrls}
                 defaultWidth={600}
                 defaultHeight={300}
-                onDeleteImage={handleDeleteImage}
+                onDeleteImage={handleDeleteImage} // <--- reference our newly defined function
               />
             </div>
           </div>
+
           <div className="image-previewer-section">
             <Button
               type="primary"
