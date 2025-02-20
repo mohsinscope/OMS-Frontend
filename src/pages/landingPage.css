@@ -636,8 +636,12 @@
 
 /* Responsive Design */
 @media screen and (max-width: 768px) {
+  
+  .db_stats_container{
+    width: 100%;
+  }
   .db_main_stats {
-    grid-template-columns: 1fr;
+    /* grid-template-columns: 1fr; */
     padding: 12px;
   }
 

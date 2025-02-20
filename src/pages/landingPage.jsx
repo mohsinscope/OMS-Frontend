@@ -197,7 +197,7 @@ export default function LandingPage() {
 
                 {/* Attendance Card */}
                 <div className="db_main_card4 persentage_staff_card">
-                  <h2 className="db_stat_label1" style={{ textAlign: "center" }}>نسبة الحضور موظفي الجوازات</h2>
+                  <h2 className="db_stat_label1" style={{ textAlign: "center" }}>نسبة حضور موظفي الجوازات</h2>
                   <div className="db_main_stat">
                     <div className="db_stat_icon">
                       <Icons type='person' width={60} height={60}/>
@@ -326,7 +326,23 @@ export default function LandingPage() {
                     <XAxis
                       dataKey="day"
                       stroke="#64748b"
-                      tickFormatter={(value) => `يوم ${value}`}
+                      tickFormatter={(dayOfMonth) => {
+                        // 1) Get current date info
+                        const now = new Date();
+                        const year = now.getFullYear();
+                        const month = now.getMonth(); // 0-based (January = 0)
+                    
+                        // 2) Construct a date for the current year/month with this day
+                        const date = new Date(year, month, dayOfMonth);
+                    
+                        // 3) If invalid (e.g., dayOfMonth out of range), fall back
+                        if (isNaN(date.getTime())) {
+                          return `يوم ${dayOfMonth}`; 
+                        }
+                    
+                        // 4) Format the weekday in Arabic (e.g. "الجمعة")
+                        return new Intl.DateTimeFormat('ar-EG', { weekday: 'long' }).format(date);
+                      }}
                     />
                     <YAxis
                       stroke="#64748b"
@@ -357,8 +373,8 @@ export default function LandingPage() {
             </div>
 
             <div className="db_stats_footer">
+              <span>اخر تحديث:  {"  "+new Date().toLocaleString('ar-EG')} </span>
               <Clock size={16} />
-              <span>{new Date().toLocaleString('en')} : اخر تحديث</span>
             </div>
           </>
         )}
