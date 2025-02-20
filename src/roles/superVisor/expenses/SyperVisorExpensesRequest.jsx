@@ -98,11 +98,23 @@ export default function SuperVisorExpensesRequest() {
   };
 
   const updateOfficeInfo = (expenses) => {
-    const totalCount = expenses.length;
-    const totalExpenses = expenses.reduce(
-      (sum, expense) => sum + expense.totalAmount,
-      0
-    );
+    let totalCount = 0;
+    let totalExpenses = 0;
+  
+    expenses.forEach(expense => {
+      // Count and add the parent expense amount
+      totalCount += 1;
+      totalExpenses += expense.totalAmount;
+  
+      // If there are sub-expenses, count and add them too
+      if (expense.children && expense.children.length > 0) {
+        expense.children.forEach(child => {
+          totalCount += 1;
+          totalExpenses += child.totalAmount;
+        });
+      }
+    });
+  
     setOfficeInfo((prev) => ({
       ...prev,
       totalCount,
@@ -219,7 +231,7 @@ export default function SuperVisorExpensesRequest() {
               .format("YYYY-MM-DD"),
             price: expense.price,
             quantity: expense.quantity,
-            totalAmount: expense.totalAmount,
+            totalAmount: expense.amount,
             notes: expense.notes,
             expenseTypeName: expense.expenseTypeName,
             isSubExpense: false,

@@ -225,6 +225,16 @@ const ExpensessView = () => {
       message.error("حدث خطأ أثناء حذف المصروف");
     }
   };
+  // Define a helper function to calculate overall total
+const calculateOverallTotal = (expenseData) => {
+  // Start with the parent expense amount
+  let total = expenseData.amount || 0;
+  // If subExpenses exist, add their amounts
+  if (expenseData.subExpenses && expenseData.subExpenses.length > 0) {
+    total += expenseData.subExpenses.reduce((sum, sub) => sum + (sub.amount || 0), 0);
+  }
+  return total;
+};
 
   // Define columns for the subexpenses table
   const subExpensesColumns = [
@@ -345,6 +355,19 @@ const ExpensessView = () => {
                 <span className="details-label">المبلغ الإجمالي:</span>
                 <input className="details-value" value={`${expenseData.amount.toLocaleString()} د.ع`} disabled />
               </div>
+              {expenseData.subExpenses &&
+  expenseData.subExpenses.length > 0 && (
+    <div className="details-row">
+      <span className="details-label">
+        المبلغ الإجمالي للمصاريف كلها مع المصاريف الإضافية:
+      </span>
+      <input
+        className="details-value"
+        value={`${calculateOverallTotal(expenseData).toLocaleString()} د.ع`}
+        disabled
+      />
+    </div>
+  )}
               <div className="details-row">
                 <span className="details-label">التاريخ:</span>
                 <input
