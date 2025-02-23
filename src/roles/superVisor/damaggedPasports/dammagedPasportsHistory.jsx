@@ -19,8 +19,10 @@ import Url from "./../../../store/url.js";
 import Icons from "./../../../reusable elements/icons.jsx";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import dayjs from "dayjs";
 
 const { Option } = Select;
+const STORAGE_KEY = "supervisorDamagedPassportSearchFilters";
 
 export default function SuperVisorPassport() {
   const {
@@ -51,6 +53,7 @@ export default function SuperVisorPassport() {
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [damageTypes, setDamageTypes] = useState([]);
 
+  // Filter state (similar to your attendance page)
   const [formData, setFormData] = useState({
     passportNumber: "",
     damagedTypeId: null,
@@ -129,10 +132,10 @@ export default function SuperVisorPassport() {
 
   const fetchDamageTypes = async () => {
     try {
-      const response = await axiosInstance.get(`${Url}/api/damagedtype/all?PageNumber=1&PageSize=1000`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      console.log(response);
+      const response = await axiosInstance.get(
+        `${Url}/api/damagedtype/all?PageNumber=1&PageSize=1000`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
       setDamageTypes(response.data);
     } catch (error) {
       message.error("حدث خطأ أثناء جلب بيانات نوع التلف");
@@ -143,23 +146,183 @@ export default function SuperVisorPassport() {
     fetchDamageTypes();
   }, []);
 
-  // New handler functions for email modal (download ZIP file)
+  // --- Storage: Save filters when search or page change
+  const saveFiltersToStorage = (page) => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        formData: {
+          passportNumber: formData.passportNumber,
+          damagedTypeId: formData.damagedTypeId,
+          startDate: formData.startDate ? formData.startDate.toISOString() : null,
+          endDate: formData.endDate ? formData.endDate.toISOString() : null,
+        },
+        selectedGovernorate,
+        selectedOffice,
+        currentPage: page,
+      })
+    );
+  };
+
+  // --- Handler for "بحث" button
+  const handleSearch = async (page = 1) => {
+    setCurrentPage(page);
+    saveFiltersToStorage(page);
+    const payload = {
+      passportNumber: formData.passportNumber || "",
+      officeId: isSupervisor ? profile.officeId : selectedOffice || null,
+      governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
+      damagedTypeId: formData.damagedTypeId || null,
+      startDate: formData.startDate ? formatToISO(formData.startDate, false) : null,
+      endDate: formData.endDate ? formatToISO(formData.endDate, true) : null,
+      PaginationParams: { PageNumber: page, PageSize: pageSize },
+    };
+    await fetchPassports(payload);
+  };
+
+  // --- Reset filters
+  const handleReset = async () => {
+    setFormData({
+      passportNumber: "",
+      damagedTypeId: null,
+      startDate: null,
+      endDate: null,
+    });
+    setCurrentPage(1);
+    if (!isSupervisor) {
+      setSelectedGovernorate(null);
+      setSelectedOffice(null);
+      setOffices([]);
+    }
+    localStorage.removeItem(STORAGE_KEY);
+    const payload = {
+      passportNumber: "",
+      officeId: isSupervisor ? profile.officeId : null,
+      governorateId: isSupervisor ? profile.governorateId : null,
+      damagedTypeId: null,
+      startDate: null,
+      endDate: null,
+      PaginationParams: { PageNumber: 1, PageSize: pageSize },
+    };
+    await fetchPassports(payload);
+    message.success("تم إعادة تعيين الفلاتر بنجاح");
+  };
+
+  // --- Handle governorate change
+  const handleGovernorateChange = async (value) => {
+    setSelectedGovernorate(value);
+    setSelectedOffice(null);
+    await fetchOffices(value);
+  };
+
+  const fetchGovernorates = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      setGovernorates(response.data);
+      if (isSupervisor) {
+        setSelectedGovernorate(profile.governorateId);
+        await fetchOffices(profile.governorateId);
+      }
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المحافظات");
+    }
+  }, [accessToken, isSupervisor, profile]);
+
+  const fetchOffices = async (governorateId) => {
+    if (!governorateId) {
+      setOffices([]);
+      setSelectedOffice(null);
+      return;
+    }
+    try {
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown/${governorateId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      if (response.data && response.data[0] && response.data[0].offices) {
+        setOffices(response.data[0].offices);
+        if (isSupervisor) {
+          setSelectedOffice(profile.officeId);
+        }
+      }
+    } catch (error) {
+      message.error("حدث خطأ أثناء جلب بيانات المكاتب");
+    }
+  };
+
+  // --- On mount: Restore filters from storage then fetch data
+  useEffect(() => {
+    const initFilters = async () => {
+      try {
+        await fetchGovernorates();
+        const savedFilters = localStorage.getItem(STORAGE_KEY);
+        if (savedFilters) {
+          const {
+            formData: savedFormData,
+            selectedGovernorate: savedGov,
+            selectedOffice: savedOff,
+            currentPage: savedPage,
+          } = JSON.parse(savedFilters);
+          if (savedFormData) {
+            setFormData({
+              passportNumber: savedFormData.passportNumber || "",
+              damagedTypeId: savedFormData.damagedTypeId || null,
+              startDate: savedFormData.startDate ? new Date(savedFormData.startDate) : null,
+              endDate: savedFormData.endDate ? new Date(savedFormData.endDate) : null,
+            });
+          }
+          if (!isSupervisor) {
+            setSelectedGovernorate(savedGov || null);
+            setSelectedOffice(savedOff || null);
+            if (savedGov) await fetchOffices(savedGov);
+          }
+          const pageToUse = savedPage || 1;
+          setCurrentPage(pageToUse);
+          // Finally, fetch passports using saved filters
+          const payload = {
+            passportNumber: savedFormData?.passportNumber || "",
+            officeId: isSupervisor ? profile.officeId : savedOff || null,
+            governorateId: isSupervisor ? profile.governorateId : savedGov || null,
+            damagedTypeId: savedFormData?.damagedTypeId || null,
+            startDate: savedFormData?.startDate ? formatToISO(new Date(savedFormData.startDate), false) : null,
+            endDate: savedFormData?.endDate ? formatToISO(new Date(savedFormData.endDate), true) : null,
+            PaginationParams: { PageNumber: pageToUse, PageSize: pageSize },
+          };
+          await fetchPassports(payload);
+        } else {
+          // No saved filters: fetch initial data with default values
+          const payload = {
+            passportNumber: "",
+            officeId: isSupervisor ? profile.officeId : null,
+            governorateId: isSupervisor ? profile.governorateId : null,
+            damagedTypeId: null,
+            startDate: null,
+            endDate: null,
+            PaginationParams: { PageNumber: 1, PageSize: pageSize },
+          };
+          await fetchPassports(payload);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    initFilters();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // --- Email Modal handlers (unchanged)
   const handleEmailReportOk = async () => {
     if (!emailReportDate) {
       message.error("الرجاء اختيار تاريخ التقرير");
       return;
     }
     setIsEmailLoading(true);
-
     const dateWithFixedHour = new Date(emailReportDate);
     dateWithFixedHour.setHours(3, 0, 0, 0);
-    
-    const payload = {
-      ReportDate: dateWithFixedHour.toISOString(),
-    };
-    console.log(payload);
+    const payload = { ReportDate: dateWithFixedHour.toISOString() };
     try {
-      // Configure axios to return a blob with a 3-minute timeout.
       const response = await axiosInstance.post(
         `${Url}/api/DamagedPassportsReport/zip`,
         payload,
@@ -168,15 +331,11 @@ export default function SuperVisorPassport() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          timeout: 180000, // 3 minutes timeout
-          responseType: "blob", // ensure the response is a blob
+          timeout: 180000,
+          responseType: "blob",
         }
       );
-
-      // Create a blob from the response data and trigger a download.
       const blob = new Blob([response.data], { type: "application/zip" });
-
-      // Optionally, extract the filename from the response headers.
       const contentDisposition = response.headers["content-disposition"];
       let filename = "DamagedPassportsReport.zip";
       if (contentDisposition) {
@@ -185,7 +344,6 @@ export default function SuperVisorPassport() {
           filename = filenameMatch[1];
         }
       }
-
       saveAs(blob, filename);
       message.success("تم تحميل التقرير بنجاح");
     } catch (error) {
@@ -203,6 +361,7 @@ export default function SuperVisorPassport() {
     setEmailReportDate(null);
   };
 
+  // --- Print PDF and Export Excel handlers remain unchanged
   const handlePrintPDF = async () => {
     try {
       const payload = {
@@ -212,10 +371,7 @@ export default function SuperVisorPassport() {
         damagedTypeId: formData.damagedTypeId || null,
         startDate: formData.startDate ? formatToISO(formData.startDate) : null,
         endDate: formData.endDate ? formatToISO(formData.endDate) : null,
-        PaginationParams: {
-          PageNumber: 1,
-          PageSize: totalPassports,
-        },
+        PaginationParams: { PageNumber: 1, PageSize: totalPassports },
       };
 
       const response = await axiosInstance.post(
@@ -230,7 +386,6 @@ export default function SuperVisorPassport() {
       );
 
       const fullPassportList = response.data || [];
-
       const element = document.createElement("div");
       element.dir = "rtl";
       element.style.fontFamily = "Arial, sans-serif";
@@ -267,7 +422,6 @@ export default function SuperVisorPassport() {
           </table>
         </div>
       `;
-
       const options = {
         margin: 3,
         filename: "تقرير_الجوازات_التالفة.pdf",
@@ -293,10 +447,7 @@ export default function SuperVisorPassport() {
         damagedTypeId: formData.damagedTypeId || null,
         startDate: formData.startDate ? formatToISO(formData.startDate) : null,
         endDate: formData.endDate ? formatToISO(formData.endDate) : null,
-        PaginationParams: {
-          PageNumber: 1,
-          PageSize: totalPassports,
-        },
+        PaginationParams: { PageNumber: 1, PageSize: totalPassports },
       };
 
       const response = await axiosInstance.post(
@@ -310,17 +461,13 @@ export default function SuperVisorPassport() {
         }
       );
       const fullPassportList = response.data || [];
-
       if (fullPassportList.length === 0) {
         message.error("لا توجد بيانات لتصديرها");
         return;
       }
 
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("تقرير الجوازات التالفة", {
-        properties: { rtl: true },
-      });
-
+      const worksheet = workbook.addWorksheet("تقرير الجوازات التالفة", { properties: { rtl: true } });
       const headers = [
         "نوع التلف",
         "رقم الجواز",
@@ -332,23 +479,12 @@ export default function SuperVisorPassport() {
         "ت",
       ];
       const headerRow = worksheet.addRow(headers);
-
       headerRow.eachCell((cell) => {
         cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
         cell.alignment = { horizontal: "center", vertical: "middle" };
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "FF4CAF50" },
-        };
-        cell.border = {
-          top: { style: "thin" },
-          bottom: { style: "thin" },
-          left: { style: "thin" },
-          right: { style: "thin" },
-        };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF4CAF50" } };
+        cell.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
       });
-
       fullPassportList.forEach((passport, index) => {
         const row = worksheet.addRow([
           passport.damagedTypeName,
@@ -360,23 +496,12 @@ export default function SuperVisorPassport() {
           new Date(passport.datecreated).toLocaleDateString("en-CA"),
           index + 1,
         ]);
-
         row.eachCell((cell) => {
           cell.alignment = { horizontal: "center", vertical: "middle" };
-          cell.border = {
-            top: { style: "thin" },
-            bottom: { style: "thin" },
-            left: { style: "thin" },
-            right: { style: "thin" },
-          };
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" },
-          };
+          cell.border = { top: { style: "thin" }, bottom: { style: "thin" }, left: { style: "thin" }, right: { style: "thin" } };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: index % 2 === 0 ? "FFF5F5F5" : "FFFFFFFF" } };
         });
       });
-
       worksheet.columns = [
         { width: 25 },
         { width: 25 },
@@ -387,14 +512,10 @@ export default function SuperVisorPassport() {
         { width: 15 },
         { width: 10 },
       ];
-
       const buffer = await workbook.xlsx.writeBuffer();
       const now = new Date();
-      const formattedDate = now.toISOString().split("T")[0]; // YYYY-MM-DD format
-      saveAs(
-        new Blob([buffer]), 
-        `${formattedDate}_تقرير_الجوازات_التالفة.xlsx`
-      );
+      const formattedDate = now.toISOString().split("T")[0];
+      saveAs(new Blob([buffer]), `${formattedDate}_تقرير_الجوازات_التالفة.xlsx`);
       message.success("تم تصدير التقرير بنجاح");
     } catch (error) {
       console.error("Error exporting to Excel:", error);
@@ -402,126 +523,7 @@ export default function SuperVisorPassport() {
     }
   };
 
-  const handleSearch = async (page = 1) => {
-    const payload = {
-      passportNumber: formData.passportNumber || "",
-      officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-      governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
-      damagedTypeId: formData.damagedTypeId || null,
-      startDate: formData.startDate ? formatToISO(formData.startDate, false) : null,
-      endDate: formData.endDate ? formatToISO(formData.endDate, true) : null,
-      PaginationParams: {
-        PageNumber: page,
-        PageSize: pageSize,
-      },
-    };
-
-    await fetchPassports(payload);
-  };
-
-  const handleReset = async () => {
-    setFormData({
-      passportNumber: "",
-      damagedTypeId: null,
-      startDate: null,
-      endDate: null,
-    });
-    setCurrentPage(1);
-    if (!isSupervisor) {
-      setSelectedGovernorate(null);
-      setSelectedOffice(null);
-      setOffices([]);
-    }
-
-    const payload = {
-      passportNumber: "",
-      officeId: isSupervisor ? profile.officeId : null,
-      governorateId: isSupervisor ? profile.governorateId : null,
-      damagedTypeId: null,
-      startDate: null,
-      endDate: null,
-      PaginationParams: {
-        PageNumber: 1,
-        PageSize: pageSize,
-      },
-    };
-
-    await fetchPassports(payload);
-    message.success("تم إعادة تعيين الفلاتر بنجاح");
-  };
-
-  const handleGovernorateChange = async (value) => {
-    setSelectedGovernorate(value);
-    setSelectedOffice(null);
-    await fetchOffices(value);
-  };
-
-  const fetchGovernorates = useCallback(async () => {
-    try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-      setGovernorates(response.data);
-      if (isSupervisor) {
-        setSelectedGovernorate(profile.governorateId);
-        await fetchOffices(profile.governorateId);
-      }
-    } catch (error) {
-      message.error("حدث خطأ أثناء جلب بيانات المحافظات");
-    }
-  }, [accessToken, isSupervisor, profile]);
-
-  const fetchOffices = async (governorateId) => {
-    if (!governorateId) {
-      setOffices([]);
-      setSelectedOffice(null);
-      return;
-    }
-
-    try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown/${governorateId}`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
-      if (response.data && response.data[0] && response.data[0].offices) {
-        setOffices(response.data[0].offices);
-        if (isSupervisor) {
-          setSelectedOffice(profile.officeId);
-        }
-      }
-    } catch (error) {
-      message.error("حدث خطأ أثناء جلب بيانات المكاتب");
-    }
-  };
-
-  useEffect(() => {
-    fetchGovernorates();
-  }, [fetchGovernorates]);
-  
-
-  useEffect(() => {
-    const initialPayload = {
-      passportNumber: "",
-      officeId: isSupervisor ? profile.officeId : null,
-      governorateId: isSupervisor ? profile.governorateId : null,
-      damagedTypeId: null,
-      startDate: null,
-      endDate: null,
-      PaginationParams: {
-        PageNumber: 1,
-        PageSize: pageSize,
-      },
-    };
-
-    fetchPassports(initialPayload);
-  }, [isSupervisor, profile.officeId, profile.governorateId]);
-
-  // Table columns
+  // --- Table columns
   const columns = [
     {
       title: "تاريخ الانشاء",
@@ -530,9 +532,7 @@ export default function SuperVisorPassport() {
       className: "table-column-date",
       render: (text) => {
         const date = new Date(text);
-        return isNaN(date.getTime())
-          ? "تاريخ غير صالح"
-          : date.toLocaleDateString("en-CA");
+        return isNaN(date.getTime()) ? "تاريخ غير صالح" : date.toLocaleDateString("en-CA");
       },
     },
     {
@@ -542,9 +542,7 @@ export default function SuperVisorPassport() {
       className: "table-column-date",
       render: (text) => {
         const date = new Date(text);
-        return isNaN(date.getTime())
-          ? "تاريخ غير صالح"
-          : date.toLocaleDateString("en-CA");
+        return isNaN(date.getTime()) ? "تاريخ غير صالح" : date.toLocaleDateString("en-CA");
       },
     },
     {
@@ -598,16 +596,11 @@ export default function SuperVisorPassport() {
       dir="rtl"
     >
       <h1 className="supervisor-passport-dameged-title">الجوازات التالفة</h1>
-
       {isLoading ? (
         <Skeleton active paragraph={{ rows: 10 }} />
       ) : (
         <>
-          <div
-            className={`supervisor-passport-dameged-filters ${
-              searchVisible ? "animate-show" : "animate-hide"
-            }`}
-          >
+          <div className={`supervisor-passport-dameged-filters ${searchVisible ? "animate-show" : "animate-hide"}`}>
             <form className="supervisor-passport-dameged-form">
               <div className="filter-field">
                 <label>المحافظة</label>
@@ -617,6 +610,7 @@ export default function SuperVisorPassport() {
                   onChange={handleGovernorateChange}
                   disabled={isSupervisor}
                 >
+                  <Option value="">اختيار محافظة</Option>
                   {governorates.map((gov) => (
                     <Option key={gov.id} value={gov.id}>
                       {gov.name}
@@ -624,7 +618,6 @@ export default function SuperVisorPassport() {
                   ))}
                 </Select>
               </div>
-
               <div className="filter-field">
                 <label>اسم المكتب</label>
                 <Select
@@ -633,6 +626,7 @@ export default function SuperVisorPassport() {
                   onChange={(value) => setSelectedOffice(value)}
                   disabled={isSupervisor || !selectedGovernorate}
                 >
+                  <Option value="">اختيار مكتب</Option>
                   {offices.map((office) => (
                     <Option key={office.id} value={office.id}>
                       {office.name}
@@ -640,20 +634,15 @@ export default function SuperVisorPassport() {
                   ))}
                 </Select>
               </div>
-
               <div className="filter-field">
                 <label>رقم الجواز</label>
                 <Input
                   value={formData.passportNumber}
                   onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      passportNumber: e.target.value,
-                    }))
+                    setFormData((prev) => ({ ...prev, passportNumber: e.target.value }))
                   }
                 />
               </div>
-
               <div className="filter-field">
                 <label>نوع التلف</label>
                 <Select
@@ -661,12 +650,10 @@ export default function SuperVisorPassport() {
                   placeholder="اختر نوع التلف"
                   value={formData.damagedTypeId || undefined}
                   onChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      damagedTypeId: value,
-                    }))
+                    setFormData((prev) => ({ ...prev, damagedTypeId: value }))
                   }
                 >
+                  <Option value="">اختر نوع التلف</Option>
                   {damageTypes.map((damageType) => (
                     <Option key={damageType.id} value={damageType.id}>
                       {damageType.name}
@@ -674,48 +661,34 @@ export default function SuperVisorPassport() {
                   ))}
                 </Select>
               </div>
-
               <div className="filter-field">
                 <label>التاريخ من</label>
                 <DatePicker
                   placeholder="اختر التاريخ"
-                  onChange={(date) =>
-                    setFormData((prev) => ({ ...prev, startDate: date }))
-                  }
-                  value={formData.startDate}
+                  onChange={(date) => setFormData((prev) => ({ ...prev, startDate: date }))}
+                  value={formData.startDate ? dayjs(formData.startDate) : null}
                   className="supervisor-passport-dameged-input"
                   style={{ width: "100%" }}
                 />
               </div>
-
               <div className="filter-field">
                 <label>التاريخ إلى</label>
                 <DatePicker
                   placeholder="اختر التاريخ"
-                  onChange={(date) =>
-                    setFormData((prev) => ({ ...prev, endDate: date }))
-                  }
-                  value={formData.endDate}
+                  onChange={(date) => setFormData((prev) => ({ ...prev, endDate: date }))}
+                  value={formData.endDate ? dayjs(formData.endDate) : null}
                   className="supervisor-passport-dameged-input"
                   style={{ width: "100%" }}
                 />
               </div>
-
               <div className="supervisor-device-filter-buttons">
-                <Button
-                  onClick={() => handleSearch(1)}
-                  className="supervisor-passport-dameged-button"
-                >
+                <Button onClick={() => handleSearch(1)} className="supervisor-passport-dameged-button">
                   البحث
                 </Button>
-                <Button
-                  onClick={handleReset}
-                  className="supervisor-passport-dameged-button"
-                >
+                <Button onClick={handleReset} className="supervisor-passport-dameged-button">
                   إعادة تعيين
                 </Button>
               </div>
-
               {hasCreatePermission && (
                 <Link to="/supervisor/damagedpasportshistory/supervisordammagepasportadd">
                   <Button type="primary" className="supervisor-passport-dameged-add-button">
@@ -723,7 +696,6 @@ export default function SuperVisorPassport() {
                   </Button>
                 </Link>
               )}
-
               <div className="supervisor-device-filter-buttons">
                 <button
                   type="button"
@@ -741,7 +713,6 @@ export default function SuperVisorPassport() {
                   انشاء ملف PDF
                   <Icons type="pdf" />
                 </button>
-
                 <button
                   type="button"
                   onClick={handleExportToExcel}
@@ -758,7 +729,6 @@ export default function SuperVisorPassport() {
                   انشاء ملف Excel
                   <Icons type="excel" />
                 </button>
-
                 {roles.includes("SuperAdmin") && (
                   <button
                     type="button"
@@ -780,7 +750,6 @@ export default function SuperVisorPassport() {
               </div>
             </form>
           </div>
-
           <div className="supervisor-passport-dameged-table-container">
             <ConfigProvider direction="rtl">
               <Table
@@ -794,11 +763,8 @@ export default function SuperVisorPassport() {
                   total: totalPassports,
                   showSizeChanger: false,
                   position: ["bottomCenter"],
-                  onChange: (page) => {
-                    setCurrentPage(page);
-                    handleSearch(page);
-                  },
-                  showTotal: (total, range) => (
+                  onChange: (page) => handleSearch(page),
+                  showTotal: (total) => (
                     <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
                       اجمالي السجلات: {total}
                     </span>
@@ -811,7 +777,6 @@ export default function SuperVisorPassport() {
           </div>
         </>
       )}
-
       <Modal
         title="اختر تاريخ التقرير"
         visible={isEmailModalVisible}
@@ -819,7 +784,7 @@ export default function SuperVisorPassport() {
         onCancel={handleEmailModalCancel}
         okText="ارسال"
         cancelText="إلغاء"
-        confirmLoading={isEmailLoading} // Displays loading spinner on the OK button
+        confirmLoading={isEmailLoading}
       >
         <DatePicker
           placeholder="اختر تاريخ التقرير"

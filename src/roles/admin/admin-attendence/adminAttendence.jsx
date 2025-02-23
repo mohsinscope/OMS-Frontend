@@ -89,7 +89,7 @@ const AdminAttendance = () => {
       align: "center",
       render: (text, record) => (
         <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
-          <Button type="primary" onClick={() => console.log("Edit:", record)}>
+          <Button type="primary" >
             تعديل
           </Button>
           <Button

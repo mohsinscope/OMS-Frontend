@@ -77,14 +77,14 @@ const AdminExpenses = () => {
       render: (text, record) => (
         <div style={{ display: "flex", justifyContent: "center", gap: "10px" }}>
           {/* عرض button */}
-          <Button type="primary" onClick={() => console.log("عرض", record)}>
+          <Button type="primary" >
             عرض
           </Button>
           {/* التعديل button */}
           <Button
             type="default"
             style={{ color: "blue", borderColor: "blue" }}
-            onClick={() => console.log("التعديل", record)}>
+            >
             التعديل
           </Button>
         </div>

@@ -587,7 +587,6 @@ export default function SuperVisorExpensesRequest() {
   }, [profile?.officeId]);
 
   useEffect(() => {
-    console.log("Last month expense updated:", lastMonthExpense);
   }, [lastMonthExpense]);
 
   return (

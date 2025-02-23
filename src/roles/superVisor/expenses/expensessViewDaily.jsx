@@ -112,10 +112,6 @@ const ExpensessView = () => {
   // Combined effect: Log debug info and fetch images when expenseData is available.
   useEffect(() => {
     if (expenseData) {
-      console.log("Monthly Status:", expenseData.monthlyStatus);
-      console.log("Has Update Permission:", hasUpdatePermission);
-      console.log("Has Delete Permission:", hasDeletePermission);
-      console.log("Can Perform Actions:", canPerformActions());
       
       // Use parentExpenseId if available; otherwise, fall back to expenseData.id or expenseId
       const idForImages = expenseData.parentExpenseId || expenseData.id || expenseId;
@@ -205,7 +201,6 @@ const ExpensessView = () => {
         profileId: expenseData.profileId,
       };
       const response = await axiosInstance.put(`/api/Expense/${expenseId}`, updatedValues);
-      console.log("API Response:", response.data);
       message.success("تم تحديث المصروف بنجاح");
       setEditModalVisible(false);
       await fetchExpenseDetails();
