@@ -61,7 +61,7 @@ const SuperVisorDammagePassportAdd = () => {
     const fetchInitialData = async () => {
       try {
         const [damagedTypesResponse, governoratesResponse] = await Promise.all([
-          axiosInstance.get(`${Url}/api/damagedtype/all`, {
+          axiosInstance.get(`${Url}/api/damagedtype/all/?PageNumber=1&PageSize=1000`, {
             headers: {
               Authorization: `Bearer ${accessToken}`,
             },
@@ -448,8 +448,9 @@ const SuperVisorDammagePassportAdd = () => {
                 {/* Note */}
                 <Form.Item name="note" label="ملاحظات" initialValue="">
                   <Input.TextArea
+                  rows={3}
                     placeholder="أدخل الملاحظات"
-                    style={{ width: "450px", maxHeight: "650px" }}
+                    style={{ width: "450px", maxHeight: "350px" }}
                   />
                 </Form.Item>
               </div>
