@@ -258,14 +258,12 @@ const EditUserModal = ({
 
   const handleFinish = async (values) => {
     try {
-      console.log('Form values being submitted:', values);  // Debug log
       
       // Add validation before submitting
       const requiredFields = ['fullName', 'roles', 'position', 'governorate', 'officeName'];
       const missingFields = requiredFields.filter(field => !values[field]);
       
       if (missingFields.length > 0) {
-        console.log('Missing fields:', missingFields); // Debug log
         message.error(`Missing required fields: ${missingFields.join(', ')}`);
         return;
       }

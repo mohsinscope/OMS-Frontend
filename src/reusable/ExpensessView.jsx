@@ -849,7 +849,6 @@ function flattenItems(items) {
     },
   ];
 
-  console.log(expense);
 
   return (
     <>

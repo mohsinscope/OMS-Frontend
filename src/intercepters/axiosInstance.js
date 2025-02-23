@@ -90,7 +90,8 @@ axiosInstance.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 403) {
-      navigator?.('/forbidden');
+      console.log("unothirzied");
+      window.location.href = '/forbidden'; // Navigates to /forbidden with a full reload
       return Promise.reject(error);
     }
 

@@ -175,7 +175,6 @@ const fetchGovernorateStats = async () => {
           value: stat.eveningShiftCount
         });
       });
-      console.log(morningStatsData)
 
       // Sort the data by value in descending order
       const sortedMorningData = morningStatsData.sort((a, b) => b.value - a.value);

@@ -35,8 +35,6 @@ const DynamicSidebar = ({
     const refreshToken = localStorage.getItem("refreshToken");
 
     try {
-      console.log("access token in try",localStorage.getItem("accessToken"))
-      console.log("refresh token in try",refreshToken)
 
       const response = await axios.post(
         `${Url}/api/account/refresh-token`,

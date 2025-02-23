@@ -148,7 +148,7 @@ export default function ManagerExpensessView() {
         />
         <button
           className="manager-expenses-view-print-button"
-          onClick={() => console.log("طباعة clicked")}>
+          >
           طباعة
         </button>
         <hr style={{ width: "100%", marginTop: "10px" }} />

@@ -191,7 +191,6 @@ export default function Stats() {
       });
 
       const responses = await Promise.all(requests);
-      console.log("response" , responses)
       const data = responses.map((response, index) => ({
         name: types[index].name,
         value: selectedTab === "damagedDevices" 

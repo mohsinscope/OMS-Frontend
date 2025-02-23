@@ -24,12 +24,10 @@ export default function ExpensessStats() {
   const [thresholds, setThresholds] = useState([]);
 
   const fetchGovernorates = useCallback(async () => {
-    console.log('Fetching governorates');
     try {
       const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
-      console.log('Governorates fetched:', response.data);
       setGovernorates(response.data);
     } catch (error) {
       console.error('Error fetching governorates:', error);
@@ -38,12 +36,10 @@ export default function ExpensessStats() {
   }, [accessToken]);
 
   const fetchThresholds = useCallback(async () => {
-    console.log('Fetching thresholds');
     try {
       const response = await axiosInstance.get(`${Url}/api/Threshold`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
-      console.log('Thresholds fetched:', response.data);
       setThresholds(response.data);
     } catch (error) {
       console.error('Error fetching thresholds:', error);
@@ -52,26 +48,21 @@ export default function ExpensessStats() {
   }, [accessToken]);
 
   const fetchLastMonthData = useCallback(async () => {
-    console.log('Fetching last month data with officeId:', selectedOffice);
     if (!selectedOffice) {
-      console.log('No office selected, skipping last month data fetch');
       setLastMonthData(null);
       return;
     }
 
     try {
-      console.log('Making last month data request');
       const response = await axiosInstance.post(
         `${Url}/api/Expense/search-last-month`,
         { officeId: selectedOffice },
         { headers: { Authorization: `Bearer ${accessToken}` }}
       );
       
-      console.log('Last month data response:', response.data);
       
       if (response.data && response.data.length > 0) {
         const data = response.data[0];
-        console.log('Setting last month data with:', data);
         setLastMonthData({
           totalAmount: data.totalAmount,
           officeName: data.officeName,
@@ -82,7 +73,6 @@ export default function ExpensessStats() {
           dateCreated: data.dateCreated
         });
       } else {
-        console.log('No last month data found');
         setLastMonthData(null);
       }
     } catch (error) {
@@ -145,14 +135,11 @@ export default function ExpensessStats() {
   }, [accessToken, selectedOffice, selectedGovernorate, selectedThreshold, startDate, endDate]);
 
   useEffect(() => {
-    console.log('Component initialized');
     const initializeData = async () => {
-      console.log('Starting initial data fetch');
       await Promise.all([
         fetchGovernorates(),
         fetchThresholds()
       ]);
-      console.log('Initial data fetch completed');
     };
     
     initializeData();
@@ -160,20 +147,16 @@ export default function ExpensessStats() {
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    console.log('Search button clicked - Starting data fetch');
     setLoading(true);
     try {
-      console.log('Fetching both expenses and last month data');
       await Promise.all([
         fetchExpensesData(),
         fetchLastMonthData()
       ]);
-      console.log('Data fetch completed successfully');
     } catch (error) {
       console.error("Error during search:", error);
     } finally {
       setLoading(false);
-      console.log('Search completed - Loading state reset');
     }
   }, [fetchExpensesData, fetchLastMonthData]);
 

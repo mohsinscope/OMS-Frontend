@@ -342,7 +342,6 @@ export default function SupervisorAttendanceHistory() {
     },
   ];
 
-  console.log("test")
   return (
     <div
       className={`supervisor-attendance-history-main-container ${

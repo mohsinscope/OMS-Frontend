@@ -48,10 +48,8 @@ export default function ListOfValueAdmin() {
 
   // Set authorized menu items based on the permissions from the auth store
   useEffect(() => {
-    console.log("Current permissions:", permissions);
     if (Array.isArray(permissions)) {
       const authorizedRoutes = getAuthorizedLOVRoutes(permissions);
-      console.log("Authorized routes:", authorizedRoutes);
       setAuthorizedMenuItems(authorizedRoutes);
     }
   }, [permissions]);
