@@ -231,6 +231,38 @@ const calculateOverallTotal = (expenseData) => {
   return total;
 };
 
+
+   // Check if the expense has sub-expenses before showing delete modal
+   const confirmDelete = () => {
+    if (expenseData.subExpenses && expenseData.subExpenses.length > 0) {
+      Modal.confirm({
+        title: "تأكيد الحذف",
+        content: (
+          <p style={{ color: "red", fontWeight: "bold" }}>
+            هل انت متاكد من حذف المصروف الرئيسي؟ سوف يتم حذف جميع المصاريف الفرعية معه
+          </p>
+        ),
+        okText: "حذف",
+        cancelText: "إلغاء",
+        okButtonProps: { danger: true },
+        onOk: handleDelete,
+      });
+    } else {
+      Modal.confirm({
+        title: "تأكيد الحذف",
+        content: (
+          <p>
+            هل انت متاكد من حذف هذا المصروف؟
+          </p>
+        ),
+        okText: "حذف",
+        cancelText: "إلغاء",
+        okButtonProps: { danger: true },
+        onOk: handleDelete,
+      });
+    }
+  };
+
   // Define columns for the subexpenses table
   const subExpensesColumns = [
     {
@@ -321,7 +353,7 @@ const calculateOverallTotal = (expenseData) => {
               </Button>
               {canPerformActions() && (
                 <>
-                  <Button type="primary" style={{ padding: "20px 30px" }} onClick={handleEditClick}>
+                  <Button type="primary" style={{ padding: "20px 30px" }} onClick={confirmDelete}>
                     تعديل
                   </Button>
                   <Button danger type="primary" style={{ padding: "20px 40px" }} onClick={handleDelete}>

@@ -1,6 +1,5 @@
 // store/authStore.js
 import { create } from "zustand";
-import BASE_URL from "./url.js";
 
 const parseToken = (token) => {
   if (!token) return null;
