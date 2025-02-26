@@ -232,8 +232,9 @@ const calculateOverallTotal = (expenseData) => {
 };
 
 
-   // Check if the expense has sub-expenses before showing delete modal
-   const confirmDelete = () => {
+  // Check what type of expense it is before showing the appropriate delete modal
+  const confirmDelete = () => {
+    // Check if this is a main expense with sub-expenses
     if (expenseData.subExpenses && expenseData.subExpenses.length > 0) {
       Modal.confirm({
         title: "تأكيد الحذف",
@@ -247,7 +248,24 @@ const calculateOverallTotal = (expenseData) => {
         okButtonProps: { danger: true },
         onOk: handleDelete,
       });
-    } else {
+    } 
+    // Check if this is a sub-expense
+    else if (subExpenseId || expenseData.parentExpenseId) {
+      Modal.confirm({
+        title: "تأكيد الحذف",
+        content: (
+          <p>
+            هل انت متاكد من حذف المصروف الفرعي هذا؟
+          </p>
+        ),
+        okText: "حذف",
+        cancelText: "إلغاء",
+        okButtonProps: { danger: true },
+        onOk: handleDelete,
+      });
+    } 
+    // Regular expense with no sub-expenses and not a sub-expense itself
+    else {
       Modal.confirm({
         title: "تأكيد الحذف",
         content: (
