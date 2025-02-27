@@ -514,8 +514,14 @@ export default function SuperVisorPassport() {
       ];
       const buffer = await workbook.xlsx.writeBuffer();
       const now = new Date();
-      const formattedDate = now.toISOString().split("T")[0];
-      saveAs(new Blob([buffer]), `${formattedDate}_تقرير_الجوازات_التالفة.xlsx`);
+      // Extract date parts
+      const nameday = now.toLocaleDateString("ar-EG", { weekday: "long" });
+      const day = now.getDate();
+      const month = now.getMonth() + 1; 
+      const year = now.getFullYear();
+      const formattedDateTime = `(${day}/${month}/${year})`;
+      const fileName = `تقرير_الجوازات_التالفة${formattedDateTime}(${nameday}).xlsx`;
+      saveAs(new Blob([buffer]), fileName);
       message.success("تم تصدير التقرير بنجاح");
     } catch (error) {
       console.error("Error exporting to Excel:", error);
