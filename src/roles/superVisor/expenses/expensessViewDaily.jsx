@@ -57,7 +57,7 @@ const ExpensessView = () => {
   // Fetch expense types
   const fetchExpenseTypes = async () => {
     try {
-      const response = await axiosInstance.get("/api/ExpenseType");
+      const response = await axiosInstance.get("/api/ExpenseType?PageNumber=1&PageSize=1000");
       setExpenseTypes(response.data || []);
     } catch (error) {
       message.error("فشل في جلب أنواع المصروفات");
@@ -73,6 +73,7 @@ const ExpensessView = () => {
       if (!expense) throw new Error("No expense data found");
 
       setExpenseData(expense);
+      console.log("expenseData.expenseTypeId:", expense);
       form.setFieldsValue({
         ...expense,
         date: moment(expense.expenseDate),
@@ -174,7 +175,7 @@ const ExpensessView = () => {
 
   const handleEditClick = () => {
     form.setFieldsValue({
-      expenseTypeId: expenseData.expenseTypeId,
+        expenseTypeId: expenseData.expenseTypeId,
       date: moment(expenseData.expenseDate).format("YYYY-MM-DD"),
       price: expenseData.price,
       quantity: expenseData.quantity,
@@ -371,10 +372,10 @@ const calculateOverallTotal = (expenseData) => {
               </Button>
               {canPerformActions() && (
                 <>
-                  <Button type="primary" style={{ padding: "20px 30px" }} onClick={confirmDelete}>
+                  <Button type="primary" style={{ padding: "20px 30px" }} onClick={handleEditClick}>
                     تعديل
                   </Button>
-                  <Button danger type="primary" style={{ padding: "20px 40px" }} onClick={handleDelete}>
+                  <Button danger type="primary" style={{ padding: "20px 40px" }} onClick={confirmDelete}>
                     حذف
                   </Button>
                 </>
