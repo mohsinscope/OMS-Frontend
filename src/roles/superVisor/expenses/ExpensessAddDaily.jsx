@@ -272,6 +272,7 @@ function ExpensessAddDaily() {
           quantity: sub.quantity,
           notes: sub.notes ?? "لا يوجد",
           expenseTypeId: sub.expenseTypeId,
+          
         }));
         formData.append("subExpensesJson", JSON.stringify(subExpensesPayload));
       }
