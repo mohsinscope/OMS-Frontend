@@ -83,7 +83,6 @@ const AdminUserManagment = () => {
           pageSize: pageSize
         }
       };
-
       const response = await axiosInstance.post(
         `${Url}/api/profile/search`,
         payload,
@@ -197,10 +196,12 @@ const AdminUserManagment = () => {
     'Supervisor': 3,
     'Accontnt': 4,
     'FollowUpEmployee': 5,
-    'Reporting Analyst': 6,
+    'ReportingAnalyst': 6,
     'Sr.Controller': 7,
-    'Project Coordinator': 8,
-    'Operation Manager': 9
+    'ProjectCoordinator': 8,
+    'OperationManager': 9,
+    'IT': 10
+
   };
   const handleEditUser = async (user) => {
     setSelectedUser(user);

@@ -18,7 +18,7 @@ const PasswordResetModal = ({ visible, onCancel, userId }) => {
         userId: userId,
         newPassword: values.newPassword
       });
-      
+
       message.success('تم تغيير كلمة السر بنجاح');
       form.resetFields();
       onCancel();
@@ -120,7 +120,10 @@ const PermissionsModal = ({ visible, onCancel, userId }) => {
         setUserRoles(response.data.roles || []);
         setUserPermissions(response.data.permissions?.AllPermissions || []);
         setSelectedPermissions(response.data.permissions?.AllPermissions || []);
-      } catch (error) {
+      } 
+      
+      
+      catch (error) {
         console.error('Error fetching user permissions:', error);
         message.error('فشل في جلب صلاحيات المستخدم');
       } finally {
