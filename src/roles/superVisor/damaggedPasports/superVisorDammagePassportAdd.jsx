@@ -17,6 +17,7 @@ import useAuthStore from "../../../store/store";
 import moment from "moment";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./superVisorDammagePassportAdd.css";
+import dayjs from 'dayjs';
 
 const { Dragger } = Upload;
 
@@ -440,9 +441,30 @@ const SuperVisorDammagePassportAdd = () => {
                   rules={[{ required: true, message: "يرجى اختيار تاريخ التلف" }]}
                 >
                   <DatePicker
-                    placeholder="اختر تاريخ التلف"
-                    style={{ width: "267px", height: "45px" }}
-                  />
+  placeholder="اختر تاريخ التلف"
+  style={{ width: "267px", height: "45px" }}
+  format="YYYY-MM-DD" // displays the full date including year
+  // Disable dates not in the current year or not in the current month.
+  disabledDate={(current) =>
+    current &&
+    (current.year() !== dayjs().year() ||
+     current.month() !== dayjs().month())
+  }
+  // Set the default picker view to the current date.
+  defaultPickerValue={dayjs()}
+  // When the user selects a date, ensure the year remains the current one.
+  onChange={(date, dateString) => {
+    if (date) {
+      const currentYear = dayjs().year();
+      // Since dayjs objects are immutable, create a new object with the updated year.
+      if (date.year() !== currentYear) {
+        date = date.set('year', currentYear);
+        // Optionally update the form's value if you're using Form.useForm():
+        // form.setFieldsValue({ date: date });
+      }
+    }
+  }}
+/>
                 </Form.Item>
 
                 {/* Note */}
