@@ -505,10 +505,10 @@ function flattenItems(items) {
   
         const row = worksheet.addRow([
           item["ملاحظات"] || "",
-          `IQD ${Number(item["المجموع"] || 0).toLocaleString()}`,
-          `IQD ${Number(item["السعر"] || 0).toLocaleString()}`,
+          Number(item["المجموع" || 0]),
+          Number(item["السعر"] || 0),
           item["الكمية"] || "",
-          (item.isSubExpense ? "↲ " : "") + (item["نوع المصروف"] || ""),
+          (item.isSubExpense ? "↲ " : "") + item["نوع المصروف"],
           item["التاريخ"] || "",
           // rowIndex,
           index + 1,
