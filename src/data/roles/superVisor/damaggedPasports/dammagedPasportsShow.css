@@ -1,0 +1,248 @@
+.supervisor-passport-damage-show-container {
+  /* Limit the width */
+  margin-top: 6%;
+  margin-right: 20px;
+  margin-left: 20px;
+  padding: 20px;
+
+  border-radius: 8px;
+  /* Smooth rounded corners */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+.supervisor-passport-damage-show-container h1 {
+  margin-bottom: 20px;
+}
+
+.edit-button-passport {
+  margin: 10px;
+  padding: 20px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  background-color: #efb034;
+  transition: background-color 0.3s;
+}
+.edit-button-passport:hover {
+  color: #efb034 !important;
+  background-color: white;
+  border: 2px solid #efb034 !important;
+}
+.passport-details-form {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  gap: 30px;
+}
+
+.image-container {
+  width: 50%;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+  margin-top: 30px;
+  gap: 70px;
+}
+
+.edit-button-and-delete {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.delete-button-passport {
+  margin: 10px;
+  padding: 20px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  background-color: #ff4d4d;
+  border: 2px solid #ff4d4d !important;
+  transition: background-color 0.3s;
+  font-size: 16px;
+}
+.delete-button-passport:hover {
+  color: #ff4d4d !important;
+  background-color: white;
+  border: 2px solid #ff4d4d !important;
+}
+.back-button {
+  margin: 10px;
+  padding: 20px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  background-color: #4880ff;
+  transition: background-color 0.3s;
+  font-size: 16px;
+}
+.back-button:hover {
+  background-color: #3068c9;
+}
+
+
+.dammaged-passport-container-edit-modal{
+  display: flex;
+  flex-direction: column ; 
+  justify-content: start;
+  align-items: start;
+
+}
+
+.dammaged-passport-container-edit-modal input{
+  width: 450px !important;
+
+}
+
+.dammaged-passport-container-edit-modal .ant-select{
+  width: 450px !important;
+
+}
+
+.dammaged-passport-container-edit-modal .ant-form-item-control-input-content{
+  width: 450px !important;
+margin-bottom: 20px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .supervisor-passport-damage-show-container {
+    margin: 80px 0px 0px;
+  }
+
+  .details-lecture-container,
+  .image-container {
+    width: 100%;
+  }
+  .details-container-Lecture{
+    flex-direction: column-reverse !important;
+    gap: 20px;
+  }
+  .edit-button-and-delete {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .edit-button-passport,
+  .delete-button-passport,
+  .back-button {
+    height: 45px;
+    width: 100%;
+    margin: 5px 0;
+    padding: 15px;
+  }
+
+  .details-row {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .details-value,
+  .textarea-value {
+    width: 100%;
+  }
+  .title-container{
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+
+
+
+@media (max-width: 576px) 
+ {
+  .title-container{
+    align-items: center;
+    justify-content: center;
+  }
+  .supervisor-passport-damage-show-container {
+   
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .image-container {
+    margin-top: 20px;
+  }
+
+  .dammaged-passport-container-edit-modal input,
+  .dammaged-passport-container-edit-modal .ant-select,
+  .dammaged-passport-container-edit-modal .ant-form-item-control-input-content {
+    width: 100% !important;
+  }
+  .details-container-Lecture .image-container{
+    width: 100%;
+  }
+  .details-lecture-container .details-row{
+    width: 190%;
+  }
+  .ant-modal {
+    width: 90% !important;
+    margin: 0 auto;
+  }
+
+  .ant-image {
+    width: 100% !important;
+    max-width: 250px;
+  }
+ 
+  .details-container-Lecture{
+    align-items: center;
+    justify-content: center ;
+  }
+}
+@media (min-width: 640px) and (max-width: 1024px) and (orientation: portrait){
+  .supervisor-passport-damage-show-container{
+    margin: 10% 10px 10px;
+  }
+  .sidebar-collapsed {
+    margin-top: 12%;
+    margin-left: 0%;
+    width: 100%;
+  }
+  .image-container {
+    width: 100% !important;
+  }
+  .details-lecture-container {
+    width: 100% !important;
+  }
+  .edit-button-and-delete {
+    width: 100% !important;
+    justify-content: start !important;
+    align-items: center !important;
+    gap: 10px;
+  }
+  .edit-button-passport,
+  .delete-button-passport,
+  .back-button {
+    height: 45px;
+    width: fit-content;
+    margin: 5px 0;
+    padding: 15px;
+  }
+  
+}
+@media (width: 1024px) and (height: 768px) and (orientation: landscape){
+  .details-container-Lecture{
+    flex-direction: row-reverse !important;
+  }
+  .details-lecture-container{
+    width: 40% !important;
+  }
+  .image-container{
+    width: 100% !important;
+  }
+}

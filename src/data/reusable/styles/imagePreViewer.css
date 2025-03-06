@@ -1,0 +1,32 @@
+.delete-button-container {
+  display: flex;
+  justify-content: center;
+  margin: auto;
+}
+.image-delete-button-container {
+  display: flex;
+  justify-content: center;
+  margin: auto;
+}
+.delete-button {
+  padding: 20px;
+}
+.pdf-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 0;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+.image-preivwer-container {
+  width: 50%;
+  /* margin-left: 200px; */
+}
+
+.dragger-container {
+  width: 22%;
+}

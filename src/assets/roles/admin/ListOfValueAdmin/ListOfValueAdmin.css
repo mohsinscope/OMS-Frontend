@@ -1,0 +1,91 @@
+.list-of-value-container {
+  margin-top: 6%;
+  margin-right: 20px;
+  margin-left: 20px;
+  padding: 20px;
+  gap: 20px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+}
+.list-of-value-container.sidebar-collapsed {
+  flex-direction: row;
+}
+.list-of-value-bar {
+  background-color: white;
+  height: fit-content;
+  width: 400px;
+  border-radius: 42px;
+  border: #bcc1ca 1px solid;
+  padding: 30px;
+}
+
+.list-of-value-items {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list-of-value-items li {
+  margin: 20px 2px;
+  font-size: x-large;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.list-of-value-items li span {
+  margin-left: 10px;
+  font-size: large;
+}
+
+.list-of-value-item.active {
+  color: #4880ff; /* Active color */
+  background-color: #f0f7ff; /* Optional background color for active item */
+}
+
+.list-of-value-item:hover {
+  background-color: #f0f7ff; /* Optional hover effect */
+}
+
+.list-of-value-item:active {
+  color: #4880ff;
+}
+
+.list-of-value-details-section-left {
+  display: flex;
+  flex-direction: column;
+  background-color: white;
+  width: 79%;
+  height: fit-content;
+  border: #bcc1ca 1px solid;
+  border-radius: 42px;
+  padding: 30px;
+}
+
+.top-list-of-value-details-section-left {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.top-list-of-value-details-section-left button {
+  background-color: #4880ff;
+  color: white;
+  cursor: pointer;
+  width: 132px;
+  height: 52px;
+  border: none;
+  border-radius: 8px;
+}
+/* removing the arrows from the numbers */
+.remove-arrows[type="number"]::-webkit-outer-spin-button,
+.remove-arrows[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.remove-arrows[type="number"] {
+  -moz-appearance: textfield;
+}

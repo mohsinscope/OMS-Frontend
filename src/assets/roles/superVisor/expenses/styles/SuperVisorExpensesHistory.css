@@ -1,0 +1,194 @@
+.supervisor-expenses-history-page {
+  margin-top: 6%;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: start;
+  margin-right: 20px;
+  margin-left: 20px;
+}
+
+.supervisor-expenses-history-filters {
+  display: flex;
+  justify-content: start;
+  align-items: end;
+  width: 100%;
+  gap: 20px;
+  padding: 20px 0px 20px 20px;
+  transition: all 0.6s ease-in-out;
+  overflow: hidden;
+}
+.supervisor-expenses-history-filters.animate-show {
+  display: flex;
+  flex-wrap: wrap;
+  max-height: 300px;
+  opacity: 1;
+  justify-content: flex-start;
+  transition: max-height 0.6s ease, opacity 0.6s ease;
+}
+
+.supervisor-expenses-history-filters.animate-hide {
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.6s ease, opacity 0.6s ease;
+}
+.supervisor-expenses-history-form {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 10px;
+}
+.filter-buttons {
+  gap: 10px;
+}
+.supervisor-expenses-history-form div {
+  display: flex;
+  justify-content: start;
+  align-items: start;
+  margin-left: 20px;
+  font-size: large;
+}
+
+.supervisor-expenses-history-form input {
+  width: 267px;
+  height: 45px;
+  padding: 0 20px;
+  border-radius: 8px;
+  outline: none;
+  border: #bcc1ca 1px solid;
+  text-align: right;
+  font-size: large;
+}
+.supervisor-expenses-history-form select {
+  width: 267px;
+  height: 45px;
+  padding: 0 20px;
+  border-radius: 8px;
+  outline: none;
+  border: #bcc1ca 1px solid;
+  text-align: right;
+  font-size: large;
+}
+.supervisor-expenses-history-filters button,
+.supervisor-expenses-history-table-container button {
+  background-color: #4880ff;
+  color: white;
+  width: 100px;
+  height: 45px;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: large;
+}
+.supervisor-expenses-history-details-link {
+  background-color: #4880ff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.supervisor-expenses-history-table-container table,
+.supervisor-expenses-history-table-container div table thead th {
+  text-align: center !important;
+  font-size: large;
+}
+
+#date {
+  padding-right: 10px;
+  height: 45px;
+}
+.supervisor-expenses-history-field-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  justify-content: start;
+  gap: 1px;
+}
+
+/* table of history */
+
+.supervisor-expenses-history-table-container {
+  width: 100%;
+}
+.ant-table-wrapper {
+  padding: 20px 0 !important;
+}
+
+/* table */
+
+.supervisor-expenses-history-table {
+  width: 100%;
+  /* Limit the width */
+  margin-left: 9%;
+  padding: 20px;
+
+  border-radius: 8px;
+}
+.ant-table-wrapper {
+  width: 100%;
+}
+.ant-spin-nested-loading {
+  width: 100%;
+}
+.ant-spin-container {
+  width: 100%;
+}
+.ant-table-content {
+  width: 100%;
+}
+.ant-table-content table {
+  width: 100%;
+}
+
+
+
+.sidebar-collapsed .supervisor-expenses-history-page {
+  margin-left: 7%;
+}
+
+.supervisor-expenses-history-field-wrapper #date {
+  width: 200px;
+  height: 34px;
+  border: none;
+  box-shadow: none;
+}
+.supervisor-expenses-history-field-wrapper input {
+  border: #bcc1ca 1px solid;
+}
+.supervisor-expenses-history-field-wrapper input:hover {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
+}
+.supervisor-expenses-history-field-wrapper input:focus {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
+}
+
+.supervisor-expenses-history-field-wrapper select:hover {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
+}
+.supervisor-expenses-history-field-wrapper select:focus {
+  border: #1677ff 1px solid;
+  box-shadow: 0 0 0 2px rgba(5, 145, 255, 0.1);
+  outline: 0;
+}
+
+.supervisor-expenses-history-field-wrapper #date:focus {
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.supervisor-expenses-history-field-wrapper #date:hover {
+  border: none;
+  box-shadow: none;
+  outline: none;
+}

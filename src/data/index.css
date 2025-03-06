@@ -1,0 +1,117 @@
+@font-face {
+  font-family: 'Cairo';
+  src: url('./assets/Cairo-VariableFont_slnt,wght.ttf') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Default styles */
+body {
+  transform: none;
+  transform-origin: unset;
+}
+
+/* Detect zoom at approximately 125% */
+@media (min-resolution: 120dpi) and (max-resolution: 144dpi) {
+  html {
+  font-size: 85%; /* Adjust font size to match your design */
+}
+}
+
+/* Optional: Reset for other zoom levels if necessary */
+@media (min-resolution: 145dpi) {
+  body {
+    transform: none;
+    transform-origin: unset;
+  }
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Cairo', sans-serif;
+}
+
+* label {
+  font-weight: bold;
+  font-size: 38;
+}
+
+:root {
+  height: 100vh;
+  --bg-color: #171a1f;
+  background-color: #f4f7fe;
+}
+
+input,
+select,
+textarea {
+  outline: none;
+  font-size: larger;
+}
+
+table thead tr th {
+  background-color: #f3f4f6 !important;
+  text-align: center !important;
+}
+
+table {
+  font-size: large !important;
+  text-align: center !important;
+}
+
+/* Custom Scrollbar for Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 8px;
+  border: 2px solid #f1f1f1;
+  transition: background-color 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* Custom Scrollbar for Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+
+/* For dark mode support */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar-track {
+    background: #2d2d2d;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #666;
+    border-color: #2d2d2d;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #888;
+  }
+
+  * {
+    scrollbar-color: #666 #2d2d2d;
+  }
+}
+
+.menu-item svg {
+  fill: currentColor !important;
+}
