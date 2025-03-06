@@ -1,0 +1,273 @@
+.supervisor-damaged-passport-add-container {
+  margin: 6% 20px 20px;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  width: 99%;
+}
+.supervisor-damaged-passport-add-container.sidebar-collapsed{
+  width: 100%;
+}
+.add-damagedpassport-section-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 20px;
+}
+
+.add-passport-fields-container {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 15px;
+  display: flex;
+  width: 100%;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.add-image-section {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  background-color: #fff;
+  gap: 30px;
+  padding: 40px;
+  border-radius: 15px;
+}
+
+.dragger-container {
+  width: 100%;
+  min-height: 200px;
+}
+
+.image-previewer-container {
+  width: 100%;
+  min-height: 300px;
+}
+
+.SuperVisor-title-container {
+  margin: 20px 0;
+  font-weight: bold;
+  text-align: start;
+  width: 100%;
+  color: #333;
+}
+
+.submit-button, .add-back-button {
+  min-width: 150px;
+  height: 45px;
+  border-radius: 8px;
+  font-size: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.submit-button {
+  background-color: #4880ff;
+  border: none;
+  color: white;
+}
+
+.image-previewer-section {
+  display: flex;
+  justify-content: space-between;
+  margin: 30px 0;
+  gap: 30px;
+}
+
+/* Form Controls */
+.ant-form-item {
+  margin-bottom: 0;
+}
+
+.ant-input, 
+.ant-select, 
+.ant-picker {
+  width: 100%;
+  height: 45px;
+  border: 1px solid #bcc1ca;
+  border-radius: 6px;
+}
+
+.ant-input-textarea {
+  width: 100%;
+  min-height: 100px;
+}
+
+.ant-upload.ant-upload-drag {
+  padding: 20px;
+  border: 1px dashed #bcc1ca;
+  background-color: #fafafa;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.ant-upload.ant-upload-drag:hover {
+  border-color: #4880ff;
+}
+
+/* RTL Support */
+[dir="rtl"] .supervisor-damaged-passport-add-container {
+  text-align: right;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .add-image-section {
+    grid-template-columns: 1fr;
+  }
+  
+  .add-passport-fields-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .supervisor-damaged-passport-add-container {
+    margin: 4% 15px 15px;
+  }
+  
+  .add-passport-fields-container {
+    padding: 20px;
+    gap: 15px;
+  }
+
+  .ant-input, .ant-select, .ant-picker {
+    width: 250px;
+  }
+}
+
+@media (max-width: 992px) {
+  .add-image-section {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .image-previewer-container {
+    min-height: 250px;
+  }
+
+  .ant-input-textarea {
+    width: 100% !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .supervisor-damaged-passport-add-container {
+    margin:10% 0px 0px;
+    width: 100%;
+  }
+
+  .add-passport-fields-container {
+    padding: 15px;
+    flex-direction: column;
+  }
+
+  .ant-form-item {
+    width: 100%;
+  }
+
+  .ant-input, .ant-select, .ant-picker {
+    width: 100% !important;
+  }
+
+  .image-previewer-section {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .submit-button, .add-back-button {
+    width: 100%;
+  }
+}
+@media (max-width: 576px) {
+  .supervisor-damaged-passport-add-container {
+    margin: 20% 0px 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .add-image-section {
+    display: flex;
+    flex-direction: column !important;
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .image-previewer-container {
+    margin-top: 90px;
+    width: 60% !important;
+    position: relative;
+    right: 50px;
+  }
+
+  .add-details-container {
+    width: 110% !important;
+  }
+
+  .add-damagedpassport-section-container {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .ant-image {
+    width: 250px !important;
+  }
+
+  .dragger-container {
+    width: 100% !important;
+  }
+
+  .add-passport-fields-container {
+    padding: 15px;
+  }
+
+  .add-passport-fields-container .ant-form-item {
+    width: 100%;
+  }
+  .form-item-damaged-device-container .ant-form-item{
+    width: 100%;
+
+  }
+  .add-passport-fields-container .ant-input,
+  .add-passport-fields-container .ant-select,
+  .add-passport-fields-container .ant-picker,
+  .add-passport-fields-container .ant-input-textarea {
+    width: 100% !important;
+  }
+
+  .image-previewer-section {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .submit-button,
+  .add-back-button {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
+
+@media (min-width: 640px) and (max-width: 1024px) and (orientation: portrait) {
+  .supervisor-damaged-passport-add-container {
+    margin: 10% 5px 5px;
+    width: 100%;
+}
+  .add-image-section {
+    display: flex;
+    flex-direction: column !important;
+    padding: 10px;
+    gap: 10px;
+  }
+  .dragger-container {
+    width: 100% !important;
+  }
+  .image-display{
+    margin-top: 50px;
+  }
+}

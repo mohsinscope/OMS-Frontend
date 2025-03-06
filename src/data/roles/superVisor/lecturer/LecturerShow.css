@@ -1,0 +1,429 @@
+.supervisor-lecture-show-container {
+  margin-top: 6%;
+  margin-right: 20px;
+  margin-left: 20px;
+  padding: 20px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+
+.title-container {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  width: 100%;
+}
+.title-container h1 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 24px;
+}
+
+.details-container-Lecture {
+  background-color: white;
+  width: 100%;
+  padding: 20px;
+  gap: 2px;
+  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: start;
+  height: fit-content;
+}
+
+.image-lecture-container {
+  width: 50%;
+}
+
+.information-lecture-container {
+  margin-top: 50px;
+  padding: 20px;
+  width: 30%;
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+}
+
+.details-lecture-container {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  width: 40%;
+  display: flex;
+  flex-direction: column;
+}
+
+.details-row {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 10px;
+}
+
+.details-label {
+  font-weight: bold;
+  color: #333;
+  flex: 0.4;
+  margin-left: 20px;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.note-details-label {
+  font-weight: bold;
+  color: #333;
+  flex: 0.4;
+  margin-left: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.details-value {
+  width: 100%;
+  color: #555;
+  flex: 0.6;
+  direction: rtl;
+  text-align: right;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.note-details-value {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  color: #555;
+  flex: 0.6;
+  direction: rtl;
+  text-align: right;
+}
+
+.textarea-value {
+  height: 160px;
+  resize: none;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  direction: rtl;
+  text-align: right;
+  width: 100%;
+}
+
+.back-button-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-start;
+  width: 80%;
+}
+
+.back-button {
+  margin: 10px;
+  padding: 20px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  background-color: #4880ff;
+  border: 2px solid #4880ff !important;
+  transition: background-color 0.3s;
+  font-size: 16px;
+}
+
+.back-button:hover {
+  background-color: #3068c9;
+}
+
+.loading {
+  text-align: center;
+  padding: 50px;
+  font-size: 18px;
+  color: #888;
+}
+
+.image-container {
+  width: 60%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.edit-button-and-delete {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.edit-button-lecture {
+  margin: 10px;
+  padding: 20px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  background-color: #efb034;
+  border: 2px solid #efb034 !important;
+  transition: background-color 0.3s;
+  font-size: 16px;
+}
+.edit-button-lecture:hover {
+  color: #efb034 !important;
+  background-color: white;
+  border: 2px solid #efb034 !important;
+}
+.delete-button-lecture {
+  margin: 10px;
+  padding: 20px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  background-color: #ff4d4d;
+  border: 2px solid #ff4d4d !important;
+  transition: background-color 0.3s;
+  font-size: 16px;
+}
+.delete-button-lecture:hover {
+  color: #ff4d4d !important;
+  background-color: white;
+  border: 2px solid #ff4d4d !important;
+}
+
+/* iPad and Tablet Responsive Styles */
+@media screen and (max-width: 1024px) {
+  .supervisor-lecture-show-container {
+    margin-top: 15%;
+    margin-right: 15px;
+    margin-left: 15px;
+    padding: 15px;
+  }
+
+  .details-container-Lecture {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    gap: 20px;
+  }
+
+  .details-lecture-container {
+    width: 50%;
+    margin-top: 10px;
+    order: 1;
+  }
+
+  .image-lecture-container {
+    width: 50%;
+    order: 2;
+  }
+
+  .details-value {
+    width: 100%;
+  }
+
+  .title-container h1 {
+    font-size: 22px;
+  }
+
+  .back-button-container {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .textarea-value {
+    height: 120px;
+  }
+
+  .note-details-value {
+    margin-top: 20px;
+  }
+}
+
+/* Portrait iPad Specific Adjustments */
+@media screen and (min-width: 768px) and (max-width: 1024px) and (orientation: portrait) {
+  .supervisor-lecture-show-container {
+    margin-top: 10%;
+    margin-right: 10px;
+    margin-left: 10px;
+    padding: 10px;
+  }
+  .details-container-Lecture {
+    padding: 15px;
+  }
+
+  .details-row {
+    padding: 8px;
+  }
+
+  .details-label {
+    margin-left: 15px;
+    font-size: 15px;
+  }
+
+  .details-value {
+    padding: 10px;
+    font-size: 15px;
+  }
+}
+
+/* Landscape iPad Specific Adjustments */
+@media screen and (min-width: 1024px) and (max-width: 1366px) and (orientation: landscape) {
+  .details-container-Lecture {
+    flex-direction: row;
+    height: auto;
+    min-height: 80vh;
+  }
+
+  .details-lecture-container {
+    width: 45%;
+  }
+
+  .image-lecture-container {
+    width: 55%;
+  }
+}
+
+/* Smaller tablets and larger phones */
+@media screen and (max-width: 767px) {
+  .supervisor-lecture-show-container {
+    margin-top: 10%;
+    margin-right: 10px;
+    margin-left: 10px;
+    padding: 10px;
+  }
+
+  .title-container h1 {
+    font-size: 20px;
+  }
+
+  .details-row {
+    padding: 6px;
+  }
+
+  .details-label {
+    margin-left: 10px;
+    font-size: 14px;
+  }
+
+  .details-value {
+    padding: 8px;
+    font-size: 14px;
+  }
+
+  .back-button {
+    width: 100%;
+    margin: 10px 0;
+  }
+}
+@media screen and (min-width: 1280px) and (max-width: 1366px) and (max-height: 800px) {
+  .supervisor-lecture-show-container {
+    margin-top: 8%;
+  }
+
+  .details-container-Lecture {
+    height: 90vh;
+  }
+
+  .details-row {
+    padding: 6px;
+  }
+
+  .note-details-value {
+    margin-top: 8px;
+  }
+
+  .textarea-value {
+    height: 80px;
+  }
+}
+@media screen and (min-width: 1280px) and (max-width: 1366px) and (-webkit-min-device-pixel-ratio: 2),
+  screen and (min-width: 1280px) and (max-width: 1366px) and (min-resolution: 192dpi) {
+  .details-container-Lecture {
+    box-shadow: rgba(99, 99, 99, 0.15) 0px 2px 6px 0px;
+  }
+
+  .details-value,
+  .textarea-value {
+    border: 1px solid rgba(221, 221, 221, 0.8);
+  }
+}
+
+/* device section */
+
+.supervisor-devices-dameged-add-button {
+  background-color: #04aa6d;
+  color: white;
+  border: 2px solid #04aa6d !important;
+  transition: all 0.1s ease-in-out;
+  font-weight: bold;
+}
+.supervisor-devices-dameged-add-button:hover {
+  background-color: white !important  ;
+  color: #04aa6d !important;
+  font-weight: bold;
+}
+.supervisor-devices-dameged-search-button {
+  background-color: #04aa6d;
+  color: white;
+  transition: all 0.1s ease-in-out;
+  font-weight: bold;
+}
+.supervisor-devices-dameged-search-button:hover {
+  background-color: #2299ff !important  ;
+  color: white !important;
+  font-weight: bold;
+}
+.supervisor-devices-dameged-reset-button {
+  background-color: #04aa6d;
+  color: white;
+  transition: all 0.1s ease-in-out;
+}
+.supervisor-devices-dameged-reset-button:hover {
+  background-color: #2299ff !important  ;
+  color: white !important;
+}
+.toggle-search-button:hover button {
+  background-color: #2299ff !important  ;
+  color: white !important;
+  transition: all 0.1s ease-in-out;
+}
+
+
+.model-container-lecture-edit form{
+  display: flex;
+  flex-direction: column ;
+  align-items: start;
+}
+
+.model-container-lecture-edit form input{
+  width: 500px  ;
+}
+.model-container-lecture-edit form textarea{
+  width: 550px !important ;
+}
+
+.model-container-lecture-edit form .ant-select-selection-item{
+  width: 477px;
+
+}
+
+
+.model-container-lecture-edit form .ant-picker{
+  width: 552px !important;
+
+}
+
+.model-container-lecture-edit .ant-select-selector{
+  width: 550px !important;
+
+}
+
+.model-container-lecture-edit .ant-row {
+  margin-bottom: 10px;
+  margin-top: 10px;
+}
