@@ -453,9 +453,9 @@ function flattenItems(items) {
   
       const supervisorDataRow = worksheet.addRow([
         statusMap[expense?.generalInfo?.["الحالة"]] || "N/A",
-        `IQD ${Number(expense?.generalInfo?.["المتبقي"] ?? 0).toLocaleString()}`,
-        `IQD ${Number(expense?.generalInfo?.["مجموع الصرفيات"] ?? 0).toLocaleString()}`,
-        `IQD ${Number(expense?.generalInfo?.["مبلغ النثرية"] ?? 0).toLocaleString()}`,
+        Number(expense?.generalInfo?.["المتبقي"] ?? 0),
+        Number(expense?.generalInfo?.["مجموع الصرفيات"] ?? 0),
+        Number(expense?.generalInfo?.["مبلغ النثرية"] ?? 0),
         expense?.generalInfo?.["المكتب"] || "N/A",
         expense?.generalInfo?.["المحافظة"] || "N/A",
         expense?.generalInfo?.["اسم المشرف"] || "N/A",
@@ -473,7 +473,15 @@ function flattenItems(items) {
       worksheet.addRow([]); // empty row
   
       // 2) Add header row for the items
-      const headers = ["ملاحظات", "المجموع", "سعر المفرد", "العدد", "البند", "التاريخ", "ت"];
+      const headers = [
+        "ملاحظات",
+        "المجموع",
+        "سعر المفرد",
+        "العدد",
+        "البند",
+        "التاريخ",
+        "ت",
+      ];
       const headerRow = worksheet.addRow(headers);
       headerRow.eachCell((cell) => {
         cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -491,6 +499,9 @@ function flattenItems(items) {
         };
       });
   
+      // Capture the starting row number for the flattened items
+      const itemsStartRow = headerRow.number + 1;
+  
       // 3) Insert each flattened item as a row with correct numbering
       let mainIndex = 0;
       let subIndex = 0;
@@ -506,15 +517,15 @@ function flattenItems(items) {
           // It's a sub-expense
           subIndex++;
         }
-        //if you need 1 and 1.1 indexing use this
+        // If you need 1 and 1.1 indexing use this
         // const rowIndex = item.isSubExpense ? `${lastMainIndex}.${subIndex}` : mainIndex;
   
         const row = worksheet.addRow([
           item["ملاحظات"] || "",
-          `IQD ${Number(item["المجموع"] || 0).toLocaleString()}`,
-          `IQD ${Number(item["السعر"] || 0).toLocaleString()}`,
+          Number(item["المجموع"] || 0),
+          Number(item["السعر"] || 0),
           item["الكمية"] || "",
-          (item.isSubExpense ? "↲ " : "") + (item["نوع المصروف"] || ""),
+          (item.isSubExpense ? "↲ " : "") + item["نوع المصروف"],
           item["التاريخ"] || "",
           // rowIndex,
           index + 1,
@@ -537,7 +548,36 @@ function flattenItems(items) {
         });
       });
   
-      // 4) Set column widths
+      // 4) Add a summary row under the table
+      const summaryRowIndex = worksheet.lastRow.number + 1;
+      const summaryRow = worksheet.addRow([]);
+      // Place the label in the first cell (you can change this as needed)
+      summaryRow.getCell(1).value = "المجموع الكامل للصرفيات";
+      // In the next cell (column B), add the formula to sum the "المجموع" column.
+      // Adjust the range based on your table rows.
+      summaryRow.getCell(2).value = {
+        formula: `SUM(B${itemsStartRow}:B${worksheet.lastRow.number - 1})`,
+        result: 0,
+      };
+  
+      // Style the summary row cells
+      summaryRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FF000000" } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFD3D3D3" },
+        };
+        cell.border = {
+          top: { style: "thin" },
+          bottom: { style: "thin" },
+          left: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+  
+      // 5) Set column widths
       worksheet.columns = [
         { width: 30 }, // ملاحظات
         { width: 30 }, // المجموع
@@ -547,14 +587,17 @@ function flattenItems(items) {
         { width: 25 }, // التاريخ
         { width: 20 }, // ت
       ];
+  
       const now = new Date();
-      const formattedDate = now.toLocaleDateString("en-GB", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).replace(/\//g, "-"); // Format: YYYY-MM-DD
+      const formattedDate = now
+        .toLocaleDateString("en-GB", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        })
+        .replace(/\//g, "-"); // Format: YYYY-MM-DD
       const fileName = `تقرير_المصاريف_${formattedDate}.xlsx`;
-      // 5) Output the file
+      // 6) Output the file
       const buffer = await workbook.xlsx.writeBuffer();
       saveAs(new Blob([buffer]), fileName);
       message.success(`تم تصدير التقرير بنجاح: ${fileName}`);
