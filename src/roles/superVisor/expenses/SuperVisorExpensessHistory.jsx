@@ -77,26 +77,29 @@ export default function SuperVisorExpensesHistory() {
 
 
 
-  const getAvailableStatuses = () => {
-    if (isAdmin || isSupervisor || userPosition === "ProjectCoordinator") {
-      return Object.values(Status);
-    }
-    const positionStatuses = positionStatusMap[userPosition] || [];
-    return [...new Set(positionStatuses)];
-  };
 
-  const filterExpensesByAllowedStatuses = (expenses) => {
-    if (isAdmin || isSupervisor || userPosition === "ProjectCoordinator") return expenses;
+// Modify the getAvailableStatuses function to include SrController
+const getAvailableStatuses = () => {
+  if (isAdmin || isSupervisor || userPosition === "ProjectCoordinator" || userPosition === "SrController") {
+    return Object.values(Status);
+  }
+  const positionStatuses = positionStatusMap[userPosition] || [];
+  return [...new Set(positionStatuses)];
+};
 
-    const allowedStatuses = getAvailableStatuses();
-    return expenses.filter((expense) => {
-      const expenseStatus =
-        typeof expense.status === "string"
-          ? Status[expense.status]
-          : expense.status;
-      return allowedStatuses.includes(expenseStatus);
-    });
-  };
+// Update the filterExpensesByAllowedStatuses function to include SrController
+const filterExpensesByAllowedStatuses = (expenses) => {
+  if (isAdmin || isSupervisor || userPosition === "ProjectCoordinator" || userPosition === "SrController") return expenses;
+
+  const allowedStatuses = getAvailableStatuses();
+  return expenses.filter((expense) => {
+    const expenseStatus =
+      typeof expense.status === "string"
+        ? Status[expense.status]
+        : expense.status;
+    return allowedStatuses.includes(expenseStatus);
+  });
+};
 
   const fetchGovernorates = useCallback(async () => {
     try {
@@ -205,38 +208,40 @@ export default function SuperVisorExpensesHistory() {
     fetchGovernorates();
   }, [fetchGovernorates]);
 
-  useEffect(() => {
-    if (!isAdmin && !isSupervisor && userPosition !== "ProjectCoordinator" && userPosition) {
-      const allowedStatuses = getAvailableStatuses();
-      if (allowedStatuses.length > 0) {
-        setSelectedStatuses(allowedStatuses);
-      }
+// Update the useEffect that sets selectedStatuses to include SrController
+useEffect(() => {
+  if (!isAdmin && !isSupervisor && userPosition !== "ProjectCoordinator" && userPosition !== "SrController" && userPosition) {
+    const allowedStatuses = getAvailableStatuses();
+    if (allowedStatuses.length > 0) {
+      setSelectedStatuses(allowedStatuses);
     }
-    fetchExpensesData(1);
-  }, [isSupervisor, userGovernorateId, userOfficeId, userPosition]);
+  }
+  fetchExpensesData(1);
+}, [isSupervisor, userGovernorateId, userOfficeId, userPosition]);
 
   const handleSearch = () => {
     setCurrentPage(1);
     fetchExpensesData(1);
   };
 
-  const handleReset = () => {
-    setStartDate(null);
-    setEndDate(null);
-    if (isAdmin || isSupervisor || userPosition === "ProjectCoordinator") {
-      setSelectedStatuses([]);
-    } else {
-      const allowedStatuses = getAvailableStatuses();
-      setSelectedStatuses(allowedStatuses);
-    }
-    if (!isSupervisor) {
-      setSelectedGovernorate(null);
-      setSelectedOffice(null);
-    }
-    setCurrentPage(1);
-    fetchExpensesData(1);
-    message.success("تم إعادة تعيين الفلاتر بنجاح");
-  };
+// Update the handleReset function to include SrController
+const handleReset = () => {
+  setStartDate(null);
+  setEndDate(null);
+  if (isAdmin || isSupervisor || userPosition === "ProjectCoordinator" || userPosition === "SrController") {
+    setSelectedStatuses([]);
+  } else {
+    const allowedStatuses = getAvailableStatuses();
+    setSelectedStatuses(allowedStatuses);
+  }
+  if (!isSupervisor) {
+    setSelectedGovernorate(null);
+    setSelectedOffice(null);
+  }
+  setCurrentPage(1);
+  fetchExpensesData(1);
+  message.success("تم إعادة تعيين الفلاتر بنجاح");
+};
 
   const handleGovernorateChange = (value) => {
     setSelectedGovernorate(value);
@@ -481,10 +486,32 @@ export default function SuperVisorExpensesHistory() {
       key: "dateCreated",
       render: (date) => new Date(date).toLocaleDateString(),
     },
-    {
-      title: "التفاصيل",
-      key: "details",
-      render: (_, record) => (
+ {
+  title: "التفاصيل",
+  key: "details",
+  render: (_, record) => {
+    // Check if user is supervisor and status is New or ReturnedToSupervisor
+    const expenseStatus = typeof record.status === "string" 
+      ? Status[record.status] 
+      : record.status;
+      
+    if (isSupervisor && (
+      expenseStatus === Status.New || 
+      expenseStatus === Status.ReturnedToSupervisor
+    )) {
+      return (
+        <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>
+          <Button
+            type="primary"
+            size="large"
+            className="supervisor-expenses-history-details-link">
+            عرض
+          </Button>
+        </Link>
+      );
+    } else {
+      // Default link for other roles/statuses
+      return (
         <Link to="/expenses-view" state={{ expense: record }}>
           <Button
             type="primary"
@@ -493,8 +520,10 @@ export default function SuperVisorExpensesHistory() {
             عرض
           </Button>
         </Link>
-      ),
-    },
+      );
+    }
+  },
+},
   ];
 
   const availableStatuses = getAvailableStatuses();
