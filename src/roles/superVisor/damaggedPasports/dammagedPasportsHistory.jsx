@@ -36,6 +36,8 @@ export default function SuperVisorPassport() {
 
   // Check permissions
   const hasCreatePermission = permissions.includes("DPc");
+  const hasArchivePermtion = permissions.includes("archive");
+
   const isSupervisor =
     roles.includes("Supervisor") ||
     roles.includes("I.T") ||
@@ -751,7 +753,7 @@ export default function SuperVisorPassport() {
                   انشاء ملف Excel
                   <Icons type="excel" />
                 </button>
-                {roles.includes("SuperAdmin") && (
+                {hasArchivePermtion && (
                   <button
                     type="button"
                     className="modern-button excel-button"

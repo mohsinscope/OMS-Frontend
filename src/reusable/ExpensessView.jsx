@@ -8,9 +8,6 @@ import {
   message,
   Input,
   Form,
-  Skeleton,
-  Spin,
-  Tooltip,
 } from "antd";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import html2pdf from "html2pdf.js";
@@ -22,8 +19,6 @@ import Url from "./../store/url";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import Icons from "./../reusable elements/icons.jsx";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import ExpensessViewActionsTable from "./ExpensessViewActionsTable";
 import { PlusOutlined } from "@ant-design/icons";
 
@@ -912,8 +907,9 @@ function flattenItems(items) {
           {expense?.generalInfo?.["التاريخ"]}
         </h1>
 
-        {/* Action Buttons */}
-        {profile?.position?.toLowerCase()?.includes("supervisor") ? null : (
+  {/* Action Buttons */}
+  {profile?.position?.toLowerCase()?.includes("supervisor") || 
+         profile?.position === "SrController" ? null : (
           <div
             style={{
               display: "flex",

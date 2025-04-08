@@ -438,15 +438,25 @@ const SuperVisorDammagePassportAdd = () => {
                   />
                 </Form.Item>
 
-                {/* Date */}
+             {/* Date */}
                 <Form.Item
                   name="date"
                   label="تاريخ التلف"
                   rules={[{ required: true, message: "يرجى اختيار تاريخ التلف" }]}
+                  initialValue={moment()}
                 >
                   <DatePicker
                     placeholder="اختر تاريخ التلف"
                     style={{ width: "267px", height: "45px" }}
+                    disabledDate={(current) => {
+                      // Disable dates that aren't today
+                      const isNotToday = !current || !current.isSame(moment(), 'day');
+                      
+                      // Disable Fridays (5) and Saturdays (6)
+                      const isFridayOrSaturday = current && (current.day() === 5 || current.day() === 6);
+                      
+                      return isNotToday || isFridayOrSaturday;
+                    }}
                   />
                 </Form.Item>
 

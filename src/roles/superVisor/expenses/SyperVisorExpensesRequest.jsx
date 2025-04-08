@@ -27,7 +27,6 @@ export default function SuperVisorExpensesRequest() {
   const [canCreateMonthly, setCanCreateMonthly] = useState(true);
   const [loading, setLoading] = useState(false);
   const [currentMonthDailyExpenses, setCurrentMonthDailyExpenses] = useState([]);
-  const [expenseTypes, setExpenseTypes] = useState([]);
   const [isMonthlyModalVisible, setIsMonthlyModalVisible] = useState(false);
   const [monthlyForm] = Form.useForm();
   const [isSendModalVisible, setIsSendModalVisible] = useState(false);
