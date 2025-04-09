@@ -14,7 +14,14 @@ import {
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
 import useAuthStore from "../../../store/store";
-import moment from "moment";
+// --- Remove moment import ---
+// import moment from "moment";
+import dayjs from "dayjs"; // <-- Use dayjs instead
+
+// Optional dayjs plugins if needed
+// import customParseFormat from 'dayjs/plugin/customParseFormat';
+// dayjs.extend(customParseFormat);
+
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./superVisorDammagePassportAdd.css";
 
@@ -42,7 +49,10 @@ const SuperVisorDammagePassportAdd = () => {
   const { profileId, governorateId, officeId } = profile || {};
 
   const isSupervisor =
-    roles.includes("Supervisor") ||  roles.includes("I.T")  ||  roles.includes("MainSupervisor") ;
+    roles.includes("Supervisor") ||
+    roles.includes("I.T") ||
+    roles.includes("MainSupervisor");
+
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
 
@@ -147,7 +157,6 @@ const SuperVisorDammagePassportAdd = () => {
 
   // -----------------------------
   // 3) Handle form submission (Multipart)
-  //sss
   // -----------------------------
   const handleFormSubmit = async (values) => {
     if (isSubmitting) return;
@@ -155,20 +164,20 @@ const SuperVisorDammagePassportAdd = () => {
 
     try {
       // Build a FormData object to send everything in one request
-       const formData = new FormData();
+      const formData = new FormData();
 
-    // Add text fields
-    formData.append("PassportNumber", values.passportNumber);
-    
-    // Add 3 hours to selected date or use current time + 3 hours
-    const selectedDate = values.date 
-      ? moment(values.date).add(6, 'hours')
-      : moment().add(6, 'hours');
-      
-    formData.append(
-      "Date",
-      selectedDate.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
-    );
+      // Add text fields
+      formData.append("PassportNumber", values.passportNumber);
+
+      // Convert date using dayjs instead of moment; add 6 hours
+      const selectedDate = values.date
+        ? dayjs(values.date).add(6, "hour") // or "hours"
+        : dayjs().add(6, "hour");
+
+      formData.append(
+        "Date",
+        selectedDate.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
+      );
       formData.append("DamagedTypeId", values.damagedTypeId);
       formData.append("OfficeId", isSupervisor ? officeId : selectedOffice);
       formData.append("GovernorateId", isSupervisor ? governorateId : selectedGovernorate);
@@ -438,23 +447,27 @@ const SuperVisorDammagePassportAdd = () => {
                   />
                 </Form.Item>
 
-             {/* Date */}
+                {/* Date */}
                 <Form.Item
                   name="date"
                   label="تاريخ التلف"
                   rules={[{ required: true, message: "يرجى اختيار تاريخ التلف" }]}
-                  initialValue={moment()}
+                  initialValue={dayjs()} // <-- Use dayjs for initial value
                 >
                   <DatePicker
                     placeholder="اختر تاريخ التلف"
                     style={{ width: "267px", height: "45px" }}
+                    // Replacing moment logic with dayjs
                     disabledDate={(current) => {
-                      // Disable dates that aren't today
-                      const isNotToday = !current || !current.isSame(moment(), 'day');
-                      
+                      // Block any date that isn't today
+                      const isNotToday = current
+                        ? !dayjs().isSame(current, "day")
+                        : true;
+
                       // Disable Fridays (5) and Saturdays (6)
-                      const isFridayOrSaturday = current && (current.day() === 5 || current.day() === 6);
-                      
+                      const isFridayOrSaturday =
+                        current && (current.day() === 5 || current.day() === 6);
+
                       return isNotToday || isFridayOrSaturday;
                     }}
                   />
@@ -463,7 +476,7 @@ const SuperVisorDammagePassportAdd = () => {
                 {/* Note */}
                 <Form.Item name="note" label="ملاحظات" initialValue="">
                   <Input.TextArea
-                  rows={3}
+                    rows={3}
                     placeholder="أدخل الملاحظات"
                     style={{ width: "450px", maxHeight: "350px" }}
                   />
