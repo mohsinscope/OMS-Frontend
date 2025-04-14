@@ -458,7 +458,7 @@ const SuperVisorDammagePassportAdd = () => {
                     placeholder="اختر تاريخ التلف"
                     style={{ width: "267px", height: "45px" }}
                     // Replacing moment logic with dayjs
-                    disabledDate={(current) => {
+          /*           disabledDate={(current) => {
                       // Block any date that isn't today
                       const isNotToday = current
                         ? !dayjs().isSame(current, "day")
@@ -469,7 +469,7 @@ const SuperVisorDammagePassportAdd = () => {
                         current && (current.day() === 5 || current.day() === 6);
 
                       return isNotToday || isFridayOrSaturday;
-                    }}
+                    }} */
                   />
                 </Form.Item>
 
