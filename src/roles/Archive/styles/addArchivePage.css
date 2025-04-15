@@ -1,0 +1,129 @@
+/* src/styles/addArchivePage.css */
+
+/* Overall layout for the document page */
+.document-page-layout {
+  padding-top: 6%;
+  /* background-color: #f0f2f5; */
+  min-height: 100vh;
+  direction: rtl;
+  font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
+}
+
+/* Header styles for AddDocumentPage */
+.document-page-header {
+  background-color: #fff;
+  padding: 6px 24px;
+  margin: 0px 20px;
+  /* margin-top: 64px; */
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  position: relative;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* Page title styling */
+.page-title {
+  font-size: 24px;
+  color: #1e293b;
+  margin: 8px 0;
+  font-weight: 600;
+}
+
+/* Breadcrumb styling */
+.ant-breadcrumb {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.ant-breadcrumb a {
+  color: #1890ff;
+}
+
+/* Container for the form */
+.document-page-container {
+  background-color: #fff;
+  padding: 24px;
+  margin: 0 20px 20px;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Styling for the form */
+.document-form {
+  margin-top: 16px;
+  width: 100%;
+}
+
+.document-form .ant-form-item-label > label {
+  font-weight: 500;
+  color: #475569;
+}
+
+/* Form actions (buttons) */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 5px;
+  padding: 20px;
+  width: 100%;
+}
+
+/* Upload dragger styling */
+.ant-upload-drag {
+  background-color: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  padding: 20px;
+  min-height: 220px;
+  width: 100%;
+}
+
+.ant-upload-drag:hover {
+  border-color: #1890ff;
+}
+
+/* Make sure all form inputs take full width */
+.ant-input, 
+.ant-select, 
+.ant-picker, 
+.ant-select-selector,
+.ant-input-textarea {
+  width: 100% !important;
+}
+
+/* Referenced document styling */
+.referenced-document-info {
+  background-color: #f0f7ff;
+  padding: 16px;
+  border: 1px solid #d6e4ff;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+/* Force form labels and input text to align to the right */
+.ant-form-item-label > label {
+  text-align: right;
+}
+
+.ant-input, .ant-select-selector, .ant-picker {
+  text-align: right;
+}
+
+/* Button hover effects */
+.ant-btn-primary {
+  background-color: #1890ff;
+  border-color: #1890ff;
+  transition: all 0.3s ease;
+}
+
+.ant-btn-primary:hover, 
+.ant-btn-primary:focus {
+  background-color: #40a9ff;
+  border-color: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
+}

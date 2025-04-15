@@ -1,3 +1,4 @@
+// src/App.jsx
 import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -12,13 +13,12 @@ import Forbidden from "./pages/forbidden.jsx";
 import axiosInstance from "./intercepters/axiosInstance.js";
 import DevToolsBlocker from './DevToolsBlocker.jsx';
 
-
-
-//admin
+// Admin Routes
 import AdminUserManagement from "./roles/admin/user-managment/AdminUserManagment.jsx";
 import ListOfValueAdmin from "./roles/admin/ListOfValueAdmin/ListOfValueAdmin.jsx";
 import BannedUsers from "./roles/admin/banned-users/BannedUsers.jsx";
-// Import all components
+
+// Other Components
 import Dashboard from "./pages/dashBoard.jsx";
 import AdminExpenses from "./roles/admin/admin-expensess/adminExpensess.jsx";
 import AdminAttendance from "./roles/admin/admin-attendence/adminAttendence.jsx";
@@ -41,6 +41,10 @@ import ExpensessAddDaily from './roles/superVisor/expenses/ExpensessAddDaily.jsx
 import SuperVisorLecturerhistory from "./roles/superVisor/lecturer/SuperVisorLecturerhistory.jsx";
 import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecturerAdd.jsx";
 import LecturerShow from "./roles/superVisor/lecturer/SuperVisorLecturerShow.jsx";
+import ArchivePage from "./roles/Archive/pages/ArchivePage.jsx";
+import AddDocumentPage from './roles/Archive/pages/addArchivePage.jsx';
+
+import { ArchiveProvider } from './roles/Archive/contexts/ArchiveContext.jsx';
 
 const App = () => {
   // Centralized routes configuration
@@ -54,68 +58,25 @@ const App = () => {
     { path: "admin/listofvalues", element: <ListOfValueAdmin /> },
     { path: "/admin/ban", element: <BannedUsers /> },
     // Supervisor Routes
-    {
-      path: "/supervisor/ExpensesRequests",
-      element: <SuperVisorExpensesRequest />,
-    },
+    { path: "/supervisor/ExpensesRequests", element: <SuperVisorExpensesRequest /> },
     { path: "supervisor/Expensess", element: <SuperVisorExpensesHistory /> },
     { path: "supervisor/Attendence", element: <SuperVisorAttendenceHistory /> },
-    {
-      path: "supervisor/Attendence/AttendenceAdd",
-      element: <SuperVisorAttendenceAdd />,
-    },
+    { path: "supervisor/Attendence/AttendenceAdd", element: <SuperVisorAttendenceAdd /> },
     { path: "attendance/view", element: <ViewAttendance /> },
-
-    {
-      path: "/supervisor/damagedpasportshistory",
-      element: <SuperVisorDamagedpasportsHistory />,
-    },
-    {
-      path: "/supervisor/damagedpasportshistory/DammagedPasportsShow",
-      element: <DammagedPasportsShow />,
-    },
-    {
-      path: "/supervisor/damagedpasportshistory/supervisordammagepasportadd",
-      element: <SuperVisorDammagePassportAdd />,
-    },
+    { path: "/supervisor/damagedpasportshistory", element: <SuperVisorDamagedpasportsHistory /> },
+    { path: "/supervisor/damagedpasportshistory/DammagedPasportsShow", element: <DammagedPasportsShow /> },
+    { path: "/supervisor/damagedpasportshistory/supervisordammagepasportadd", element: <SuperVisorDammagePassportAdd /> },
     { path: "/supervisor/damegedDevices", element: <SuperVisorDevices /> },
-    {
-      path: "/damegedDevices/show",
-      element: <SuperVisorDeviceShow />,
-    },
-    {
-      path: "/damegedDevices/add",
-      element: <SuperVisorDevicesAdd />,
-    },
-    {
-      path: "/supervisor/lecturer/history",
-      element: <SuperVisorLecturerhistory />,
-    },
-    {
-      path: "/supervisor/lecturerAdd/supervisorlecturerAdd",
-      element: <SuperVisorLecturerAdd />,
-    },
-    {
-      path: "/supervisor/lecturer/history/LecturerShow",
-      element: <LecturerShow />,
-    },
-    {
-      path: "/supervisor/lecturer/history/LecturerShow",
-      element: <LecturerShow />,
-    },
-    ,
-    {
-      path: "/Expensess-view-daily",
-      element: <ExpensessViewDaily />,
-    },
-    {
-      path: "/add-daily-expense",
-      element: <ExpensessAddDaily />
-    },
-    {
-      path: "/ExpensessViewMonthly",
-      element: <ExpensessViewMonthly />
-    },
+    { path: "/damegedDevices/show", element: <SuperVisorDeviceShow /> },
+    { path: "/damegedDevices/add", element: <SuperVisorDevicesAdd /> },
+    { path: "/supervisor/lecturer/history", element: <SuperVisorLecturerhistory /> },
+    { path: "/supervisor/lecturerAdd/supervisorlecturerAdd", element: <SuperVisorLecturerAdd /> },
+    { path: "/supervisor/lecturer/history/LecturerShow", element: <LecturerShow /> },
+    { path: "/Expensess-view-daily", element: <ExpensessViewDaily /> },
+    { path: "/add-daily-expense", element: <ExpensessAddDaily /> },
+    { path: "/ExpensessViewMonthly", element: <ExpensessViewMonthly /> },
+    { path: "/Archive", element: <ArchivePage /> },
+    { path: "/AddArchive", element: <AddDocumentPage /> },
     // Common Routes
     { path: "settings", element: <Settings /> },
     { path: "expenses-view", element: <ExpensessView /> },
@@ -156,31 +117,30 @@ const App = () => {
   }
 
   return (
-    <Router>
-{/*           <DevToolsBlocker /> 
- */}
-      <Routes>
-        {/* Public Route */}
-        <Route path="/" element={<SignInPage />} />
-
-        {/* Protected Routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout />
-            </ProtectedRoute>
-          }>
-          {/* Define nested protected routes */}
-          {routes.map(({ path, element }, index) => (
-            <Route key={index} path={path} element={element} />
-          ))}
-
-          {/* 404 route */}
-          <Route path="*" element={<NotFound />} />
-        </Route>
-      </Routes>
-    </Router>
+    <ArchiveProvider>
+      <Router>
+        {/* <DevToolsBlocker /> */}
+        <Routes>
+          {/* Public Route */}
+          <Route path="/" element={<SignInPage />} />
+          {/* Protected Routes */}
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Layout />
+              </ProtectedRoute>
+            }
+          >
+            {routes.map(({ path, element }, index) => (
+              <Route key={index} path={path} element={element} />
+            ))}
+            {/* 404 route */}
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </Router>
+    </ArchiveProvider>
   );
 };
 

@@ -243,6 +243,34 @@ const Config = {
       },
     ],
   },
+  "/admin/Archive-party": {
+    getEndpoint: "/api/DocumentParty",
+    postEndpoint: "/api/DocumentParty",
+    putEndpoint: (id) => `/api/DocumentParty/${id}`,
+    deleteEndpoint: (id) => `/api/DocumentParty/${id}`,
+    columns: [
+      { title: "اسم الجهة", dataIndex: "name", key: "name" },
+      
+    ],
+    formFields: [
+      { name: "name", label: "الاسم الكامل للجهة", type: "text" },
+      
+    ],
+  },
+  "/admin/Archive-projects": {
+    getEndpoint: "/api/Project",
+    postEndpoint: "/api/Project",
+    putEndpoint: (id) => `/api/Project/${id}`,
+    deleteEndpoint: (id) => `/api/Project/${id}`,
+    columns: [
+      { title: "اسم الجهة", dataIndex: "name", key: "name" },
+      
+    ],
+    formFields: [
+      { name: "name", label: "الاسم الكامل للجهة", type: "text" },
+      
+    ],
+  },
 };
 
 export default Config;
