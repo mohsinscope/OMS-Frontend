@@ -534,8 +534,8 @@ function ExpensessAddDaily() {
               </Form.List>
             )}
           </div>
-
-          <h2 className="SuperVisor-Lecturer-title-conatiner">إضافة صورة المصروف</h2>
+{/* تجربة */}
+          <h2 className="SuperVisor-Lecturer-title-conatiner">اضافة صورة الوصل للمصروف</h2>
           <div className="add-image-section">
             <div className="dragger-container">
               <Form.Item

@@ -16,6 +16,9 @@ import html2pdf from "html2pdf.js";
 import "./styles/SuperVisorExpensesHistory.css";
 import Icons from "./../../../reusable elements/icons.jsx";
 import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
+
+import moment from "moment"; // Ensure moment is imported
 
 const Status = {
   New: 0,
@@ -53,32 +56,48 @@ const positionStatusMap = {
   Director: [Status.SentToDirector],
 };
 
+/** NEW: LocalStorage key for caching filters & pagination. */
+const STORAGE_KEY_EXPENSES = "supervisorExpensesSearchFilters";
+
 export default function SuperVisorExpensesHistory() {
+  // ------------------------------------------------------------------------------------------------
+  // State
+  // ------------------------------------------------------------------------------------------------
   const [expensesList, setExpensesList] = useState([]);
   const [governorates, setGovernorates] = useState([]);
   const [offices, setOffices] = useState([]);
   const [selectedGovernorate, setSelectedGovernorate] = useState(null);
   const [selectedOffice, setSelectedOffice] = useState(null);
+
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const pageSize = 10;
 
+  // Store / profile
   const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } =
     useAuthStore();
   const userPosition = profile?.position;
-  const isSupervisor = userPosition === "Supervisor" || userPosition ==="MainSupervisor";
+  const isSupervisor = userPosition === "Supervisor" || userPosition === "MainSupervisor";
   const isAdmin = roles.includes("SuperAdmin");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
 
-
-
+  // ------------------------------------------------------------------------------------------------
+  // Status Filtering Logic
+  // ------------------------------------------------------------------------------------------------
   const getAvailableStatuses = () => {
-    if (isAdmin || isSupervisor || userPosition === "ProjectCoordinator") {
+    // Include SrController if relevant
+    if (
+      isAdmin ||
+      isSupervisor ||
+      userPosition === "ProjectCoordinator" ||
+      userPosition === "SrController"
+    ) {
       return Object.values(Status);
     }
     const positionStatuses = positionStatusMap[userPosition] || [];
@@ -86,7 +105,14 @@ export default function SuperVisorExpensesHistory() {
   };
 
   const filterExpensesByAllowedStatuses = (expenses) => {
-    if (isAdmin || isSupervisor || userPosition === "ProjectCoordinator") return expenses;
+    // If admin, supervisor, ProjectCoordinator, or SrController: see all
+    if (
+      isAdmin ||
+      isSupervisor ||
+      userPosition === "ProjectCoordinator" ||
+      userPosition === "SrController"
+    )
+      return expenses;
 
     const allowedStatuses = getAvailableStatuses();
     return expenses.filter((expense) => {
@@ -98,14 +124,14 @@ export default function SuperVisorExpensesHistory() {
     });
   };
 
+  // ------------------------------------------------------------------------------------------------
+  // Fetches
+  // ------------------------------------------------------------------------------------------------
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axiosInstance.get(
-        `${Url}/api/Governorate/dropdown`,
-        {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }
-      );
+      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
       setGovernorates(response.data);
 
       if (isSupervisor) {
@@ -121,9 +147,9 @@ export default function SuperVisorExpensesHistory() {
     if (!governorateId) {
       setOffices([]);
       setSelectedOffice(null);
-      return;
+      return Promise.resolve([]);
     }
-
+  
     try {
       const response = await axiosInstance.get(
         `${Url}/api/Governorate/dropdown/${governorateId}`,
@@ -131,23 +157,29 @@ export default function SuperVisorExpensesHistory() {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-
+  
       if (response.data && response.data[0] && response.data[0].offices) {
         setOffices(response.data[0].offices);
-
+  
         if (isSupervisor) {
           setSelectedOffice(profile.officeId);
         }
+        
+        return response.data[0].offices;
       }
+      return [];
     } catch (error) {
       message.error("حدث خطأ أثناء جلب بيانات المكاتب");
+      return [];
     }
   };
+  
 
   const fetchExpensesData = async (pageNumber = 1) => {
     try {
       setIsLoading(true);
 
+      // Build filter object
       const searchBody = {
         officeId: isSupervisor ? userOfficeId : selectedOffice,
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
@@ -161,11 +193,19 @@ export default function SuperVisorExpensesHistory() {
         },
       };
 
-      if (selectedStatuses.length === 0 && !isAdmin && !isSupervisor  && userPosition !== "ProjectCoordinator") {
+      // If user is not admin/supervisor/ProjectCoordinator/SrController and hasn't chosen statuses, use only what's allowed
+      if (
+        selectedStatuses.length === 0 &&
+        !isAdmin &&
+        !isSupervisor &&
+        userPosition !== "ProjectCoordinator" &&
+        userPosition !== "SrController"
+      ) {
         const allowedStatuses = getAvailableStatuses();
         searchBody.statuses = allowedStatuses;
       }
 
+      // Make the request
       const response = await axiosInstance.post(
         `${Url}/api/Expense/search`,
         searchBody,
@@ -177,6 +217,7 @@ export default function SuperVisorExpensesHistory() {
         }
       );
 
+      // Filter by allowed statuses if not admin or supervisor
       const filteredExpenses = filterExpensesByAllowedStatuses(response.data);
       setExpensesList(filteredExpenses);
 
@@ -195,6 +236,9 @@ export default function SuperVisorExpensesHistory() {
     }
   };
 
+  // ------------------------------------------------------------------------------------------------
+  // useEffect initialization
+  // ------------------------------------------------------------------------------------------------
   useEffect(() => {
     if (isSupervisor && userGovernorateId) {
       fetchOffices(userGovernorateId);
@@ -205,25 +249,154 @@ export default function SuperVisorExpensesHistory() {
     fetchGovernorates();
   }, [fetchGovernorates]);
 
+  /**
+   * NEW: On mount, load filters from local storage if present.
+   * Then do a fetch with those filters (or with default if none).
+   */
   useEffect(() => {
-    if (!isAdmin && !isSupervisor && userPosition !== "ProjectCoordinator" && userPosition) {
-      const allowedStatuses = getAvailableStatuses();
-      if (allowedStatuses.length > 0) {
-        setSelectedStatuses(allowedStatuses);
+    const savedFilters = localStorage.getItem(STORAGE_KEY_EXPENSES);
+    if (savedFilters) {
+      try {
+        const parsed = JSON.parse(savedFilters);
+        const {
+          selectedGovernorate: savedGov,
+          selectedOffice: savedOff,
+          startDate: savedStart,
+          endDate: savedEnd,
+          selectedStatuses: savedStatuses,
+          currentPage: savedPage,
+        } = parsed;
+  
+        // If supervisor, we typically override with user-based governorate/office
+        if (!isSupervisor) {
+          setSelectedGovernorate(savedGov);
+          
+          // Important: Need to load offices for the saved governorate
+          if (savedGov) {
+            fetchOffices(savedGov).then(() => {
+              // Only set the office after offices are loaded for this governorate
+              setSelectedOffice(savedOff);
+            });
+          }
+        }
+  
+        setStartDate(savedStart ? moment(savedStart) : null);
+        setEndDate(savedEnd ? moment(savedEnd) : null);
+        setSelectedStatuses(savedStatuses || []);
+  
+        const finalPage = savedPage || 1;
+        setCurrentPage(finalPage);
+  
+        // Now fetch with these filters
+        const doFetch = async () => {
+          setIsLoading(true);
+          const searchBody = {
+            officeId: isSupervisor
+              ? userOfficeId
+              : savedOff !== undefined
+              ? savedOff
+              : null,
+            governorateId: isSupervisor
+              ? userGovernorateId
+              : savedGov !== undefined
+              ? savedGov
+              : null,
+            profileId: profile?.id,
+            statuses:
+              savedStatuses && savedStatuses.length > 0 ? savedStatuses : null,
+            startDate: savedStart ? new Date(savedStart).toISOString() : null,
+            endDate: savedEnd ? new Date(savedEnd).toISOString() : null,
+            PaginationParams: {
+              PageNumber: finalPage,
+              PageSize: pageSize,
+            },
+          };
+  
+          // If still no statuses and user is not admin/supervisor/ProjectCoordinator/SrController,
+          // set them to allowed
+          if (
+            (!savedStatuses || savedStatuses.length === 0) &&
+            !isAdmin &&
+            !isSupervisor &&
+            userPosition !== "ProjectCoordinator" &&
+            userPosition !== "SrController"
+          ) {
+            searchBody.statuses = getAvailableStatuses();
+          }
+  
+          try {
+            const resp = await axiosInstance.post(
+              `${Url}/api/Expense/search`,
+              searchBody,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${accessToken}`,
+                },
+              }
+            );
+            const filteredData = filterExpensesByAllowedStatuses(resp.data);
+            setExpensesList(filteredData);
+  
+            const paginationHeader = resp.headers["pagination"];
+            if (paginationHeader) {
+              const paginationInfo = JSON.parse(paginationHeader);
+              setTotalRecords(paginationInfo.totalItems);
+            } else {
+              setTotalRecords(resp.data.length);
+            }
+          } catch (err) {
+            console.error(err);
+            message.error("حدث خطأ أثناء جلب البيانات");
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        doFetch();
+      } catch (err) {
+        console.error("Error loading saved filters:", err);
       }
+    } else {
+      // If no saved filters, fetch with defaults
+      fetchExpensesData(1);
     }
-    fetchExpensesData(1);
-  }, [isSupervisor, userGovernorateId, userOfficeId, userPosition]);
+  }, []); // run once on mount
+   // run once on mount
+  // NOTE: We do not add dependencies so it runs only once
+
+  // ------------------------------------------------------------------------------------------------
+  // Handlers
+  // ------------------------------------------------------------------------------------------------
+
+  /** NEW: A helper to save current filters & page in localStorage. */
+  const saveFiltersToStorage = (page) => {
+    const filtersData = {
+      selectedGovernorate,
+      selectedOffice,
+      startDate: startDate ? startDate.toISOString() : null,
+      endDate: endDate ? endDate.toISOString() : null,
+      selectedStatuses,
+      currentPage: page,
+    };
+    localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(filtersData));
+  };
 
   const handleSearch = () => {
-    setCurrentPage(1);
-    fetchExpensesData(1);
+    const newPage = 1;
+    setCurrentPage(newPage);
+    saveFiltersToStorage(newPage);
+    fetchExpensesData(newPage);
   };
 
   const handleReset = () => {
     setStartDate(null);
     setEndDate(null);
-    if (isAdmin || isSupervisor || userPosition === "ProjectCoordinator") {
+    if (
+      isAdmin ||
+      isSupervisor ||
+      userPosition === "ProjectCoordinator" ||
+      userPosition === "SrController"
+    ) {
       setSelectedStatuses([]);
     } else {
       const allowedStatuses = getAvailableStatuses();
@@ -234,6 +407,10 @@ export default function SuperVisorExpensesHistory() {
       setSelectedOffice(null);
     }
     setCurrentPage(1);
+
+    // Clear localStorage
+    localStorage.removeItem(STORAGE_KEY_EXPENSES);
+
     fetchExpensesData(1);
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
@@ -245,11 +422,16 @@ export default function SuperVisorExpensesHistory() {
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
+    saveFiltersToStorage(page);
     fetchExpensesData(page);
   };
 
+  // ------------------------------------------------------------------------------------------------
+  // Report / Export
+  // ------------------------------------------------------------------------------------------------
   const handlePrintPDF = async () => {
     try {
+      // We'll need the total count for pageSize if we want all data
       const searchBody = {
         officeId: isSupervisor ? userOfficeId : selectedOffice,
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
@@ -259,20 +441,16 @@ export default function SuperVisorExpensesHistory() {
         endDate: endDate ? endDate.toISOString() : null,
         PaginationParams: {
           PageNumber: 1,
-          PageSize: totalRecords,
+          PageSize: totalRecords || 99999,
         },
       };
 
-      const response = await axiosInstance.post(
-        `${Url}/api/Expense/search`,
-        searchBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await axiosInstance.post(`${Url}/api/Expense/search`, searchBody, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
       const allExpenses = response.data;
 
@@ -296,24 +474,27 @@ export default function SuperVisorExpensesHistory() {
               ${allExpenses
                 .map(
                   (expense, index) => `
-                <tr>
-                  <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                    index + 1
-                  }</td>
-                  <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                    expense.governorateName || ""
-                  }</td>
-                  <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                    expense.officeName || ""
-                  }</td>
-                  <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${
-                    expense.totalAmount?.toLocaleString() || ""
-                  }</td>
-                  <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${new Date(
-                    expense.dateCreated
-                  ).toLocaleDateString()}</td>
-                </tr>
-              `
+                  <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                      ${index + 1}
+                    </td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                      ${expense.governorateName || ""}
+                    </td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                      ${expense.officeName || ""}
+                    </td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                      ${
+                        expense.totalAmount?.toLocaleString() ||
+                        ""
+                      }
+                    </td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
+                      ${new Date(expense.dateCreated).toLocaleDateString()}
+                    </td>
+                  </tr>
+                `
                 )
                 .join("")}
             </tbody>
@@ -347,23 +528,18 @@ export default function SuperVisorExpensesHistory() {
         endDate: endDate ? endDate.toISOString() : null,
         PaginationParams: {
           PageNumber: 1,
-          PageSize: totalRecords,
+          PageSize: totalRecords || 99999,
         },
       };
 
-      const response = await axiosInstance.post(
-        `${Url}/api/Expense/search`,
-        searchBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
+      const response = await axiosInstance.post(`${Url}/api/Expense/search`, searchBody, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
 
-      const allExpenses = response.data;
-
+      const allExpenses = response.data || [];
       if (allExpenses.length === 0) {
         message.error("لا توجد بيانات لتصديرها");
         return;
@@ -374,7 +550,13 @@ export default function SuperVisorExpensesHistory() {
         properties: { rtl: true },
       });
 
-      const headers = ["التاريخ", "مجموع الصرفيات", "المكتب", "المحافظة", "#"];
+      const headers = [
+        "التاريخ",
+        "مجموع الصرفيات",
+        "المكتب",
+        "المحافظة",
+        "#",
+      ];
       const headerRow = worksheet.addRow(headers);
 
       headerRow.eachCell((cell) => {
@@ -425,13 +607,14 @@ export default function SuperVisorExpensesHistory() {
         { width: 15 }, // Total Amount
         { width: 20 }, // Office
         { width: 20 }, // Governorate
-        { width: 5 }, // Index
+        { width: 5 },  // Index
       ];
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
+
       saveAs(blob, "تقرير_سجل_الصرفيات.xlsx");
       message.success("تم تصدير التقرير بنجاح");
     } catch (error) {
@@ -440,6 +623,9 @@ export default function SuperVisorExpensesHistory() {
     }
   };
 
+  // ------------------------------------------------------------------------------------------------
+  // Table Columns
+  // ------------------------------------------------------------------------------------------------
   const columns = [
     {
       title: "المحافظة",
@@ -484,46 +670,85 @@ export default function SuperVisorExpensesHistory() {
     {
       title: "التفاصيل",
       key: "details",
-      render: (_, record) => (
-        <Link to="/expenses-view" state={{ expense: record }}>
-          <Button
-            type="primary"
-            size="large"
-            className="supervisor-expenses-history-details-link">
-            عرض
-          </Button>
-        </Link>
-      ),
+      render: (_, record) => {
+        // Supervisor logic
+        const expenseStatus =
+          typeof record.status === "string"
+            ? Status[record.status]
+            : record.status;
+
+        // If supervisor and status is New or ReturnedToSupervisor, go to different route
+        if (
+          isSupervisor &&
+          (expenseStatus === Status.New ||
+            expenseStatus === Status.ReturnedToSupervisor)
+        ) {
+          return (
+            <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>
+              <Button
+                type="primary"
+                size="large"
+                className="supervisor-expenses-history-details-link"
+              >
+                عرض
+              </Button>
+            </Link>
+          );
+        } else {
+          // Default route
+          return (
+            <Link to="/expenses-view" state={{ expense: record }}>
+              <Button
+                type="primary"
+                size="large"
+                className="supervisor-expenses-history-details-link"
+              >
+                عرض
+              </Button>
+            </Link>
+          );
+        }
+      },
     },
   ];
 
+  // This ensures the correct list of statuses for the dropdown
   const availableStatuses = getAvailableStatuses();
 
+  // ------------------------------------------------------------------------------------------------
+  // Render
+  // ------------------------------------------------------------------------------------------------
   return (
     <div
       className={`supervisor-passport-dameged-page ${
         isSidebarCollapsed ? "sidebar-collapsed" : ""
       }`}
-      dir="rtl">
+      dir="rtl"
+    >
       <h1 className="supervisor-passport-dameged-title">سجل الصرفيات</h1>
 
       {isLoading ? (
-        <Skeleton active paragraph={{ rows: 10 }} />      ) : (
+        <Skeleton active paragraph={{ rows: 10 }} />
+      ) : (
         <>
           <div
             className={`supervisor-passport-dameged-filters ${
               searchVisible ? "animate-show" : "animate-hide"
-            }`}>
+            }`}
+          >
             {(isAdmin || !isSupervisor) && (
               <form className="supervisor-passport-dameged-form">
                 <div className="filter-field">
                   <label>المحافظة</label>
                   <Select
                     className="html-dropdown"
-                    value={isSupervisor ? userGovernorateId : selectedGovernorate}
+                    value={
+                      isSupervisor ? userGovernorateId : selectedGovernorate
+                    }
                     onChange={handleGovernorateChange}
                     disabled={isSupervisor}
-                    placeholder="اختر المحافظة">
+                    placeholder="اختر المحافظة"
+                  >
                     <Select.Option value={null}>الكل</Select.Option>
                     {governorates.map((gov) => (
                       <Select.Option key={gov.id} value={gov.id}>
@@ -540,7 +765,8 @@ export default function SuperVisorExpensesHistory() {
                     value={isSupervisor ? userOfficeId : selectedOffice}
                     onChange={(value) => setSelectedOffice(value)}
                     disabled={isSupervisor || !selectedGovernorate}
-                    placeholder="اختر المكتب">
+                    placeholder="اختر المكتب"
+                  >
                     <Select.Option value={null}>الكل</Select.Option>
                     {offices.map((office) => (
                       <Select.Option key={office.id} value={office.id}>
@@ -561,12 +787,14 @@ export default function SuperVisorExpensesHistory() {
                 maxTagCount={3}
                 maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
                 className="filter-dropdown"
-                style={{ maxHeight: "200px", overflowY: "auto" }}>
+                style={{ maxHeight: "200px", overflowY: "auto" }}
+              >
                 {availableStatuses.map((statusValue) => (
                   <Select.Option
                     key={statusValue}
                     value={statusValue}
-                    className="supervisor-expenses-history-select-option">
+                    className="supervisor-expenses-history-select-option"
+                  >
                     {statusDisplayNames[statusValue]}
                   </Select.Option>
                 ))}
@@ -599,18 +827,20 @@ export default function SuperVisorExpensesHistory() {
               <Button
                 onClick={handleSearch}
                 className="supervisor-passport-dameged-button"
-                loading={isLoading}>
+                loading={isLoading}
+              >
                 البحث
               </Button>
 
               <Button
                 className="supervisor-passport-dameged-button"
                 onClick={handleReset}
-                disabled={isLoading}>
+                disabled={isLoading}
+              >
                 إعادة التعيين
               </Button>
             </div>
-            
+
             <div className="supervisor-device-filter-buttons">
               <button
                 type="button"
@@ -623,7 +853,8 @@ export default function SuperVisorExpensesHistory() {
                   padding: "12px 24px",
                   borderRadius: "8px",
                   width: "fit-content",
-                }}>
+                }}
+              >
                 انشاء ملف PDF
                 <Icons type="pdf" />
               </button>
@@ -638,7 +869,8 @@ export default function SuperVisorExpensesHistory() {
                   padding: "12px 24px",
                   borderRadius: "8px",
                   width: "fit-content",
-                }}>
+                }}
+              >
                 انشاء ملف Excel
                 <Icons type="excel" />
               </button>
@@ -659,7 +891,7 @@ export default function SuperVisorExpensesHistory() {
                   pageSize: pageSize,
                   total: totalRecords,
                   onChange: handlePageChange,
-                  showTotal: (total, range) => (
+                  showTotal: (total) => (
                     <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
                       اجمالي السجلات: {total}
                     </span>
@@ -671,4 +903,5 @@ export default function SuperVisorExpensesHistory() {
         </>
       )}
     </div>
-  );}
+  );
+}
