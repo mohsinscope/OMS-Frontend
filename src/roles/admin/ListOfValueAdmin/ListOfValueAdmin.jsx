@@ -321,6 +321,16 @@ export default function ListOfValueAdmin() {
           email: values.email,
           reportTypeIds: values.reportTypeIds,
         };
+      case "/admin/Archive-party":
+        return {
+          id: editingId, // Include the id here
+          name: values.name,
+        };
+      case "/admin/Archive-projects":
+        return {
+          id: editingId, // Include the id here
+          name: values.name,
+        };
       default:
         return values;
     }
@@ -425,6 +435,7 @@ export default function ListOfValueAdmin() {
 
   // Populate the form with the selected record’s data for editing
   const handleEdit = (record) => {
+    console.log(record)
     if (!record.id) {
       message.error("معرف السجل غير متوفر");
       return;
@@ -476,6 +487,18 @@ export default function ListOfValueAdmin() {
           fullName: record.fullName,
           email: record.email,
           reportTypeIds: record.reportTypes ? record.reportTypes.map((rt) => rt.id) : [],
+        };
+      case "/admin/Archive-party":
+        formData = {
+          id: record.id,
+          name: record.name,
+          // datecreated: record.datecreated,
+        };
+      case "/admin/Archive-projects":
+        formData = {
+          id: record.id,
+          name: record.name,
+          // datecreated: record.datecreated,
         };
         break;
       default:

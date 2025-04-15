@@ -68,7 +68,19 @@ export const LOV_MENU_ITEMS = [
     icon: "email", // Ensure you have an icon for email reports
     path: "/admin/email-report",
     permission: "LOVo" // Use an appropriate permission code
-  }
+  },
+  {
+    label: "اضافة جهة",
+    icon: "Archive", // Ensure you have an icon for email reports
+    path: "/admin/Archive-party",
+    permission: "LOVo" // Use an appropriate permission code
+  },
+  {
+    label: "مشاريع",
+    icon: "projects", // Ensure you have an icon for email reports
+    path: "/admin/Archive-projects",
+    permission: "LOVo" // Use an appropriate permission code
+  },
 ];
 
 export const hasLOVPermission = (permissions = []) => {
