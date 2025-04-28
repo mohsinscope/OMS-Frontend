@@ -8,6 +8,10 @@
   direction: rtl;
   font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif;
 }
+.document-page-layout-sidebar-collapsed{
+  padding-top: 6%;
+  margin-right: -50px;
+}
 
 /* Header styles for AddDocumentPage */
 .document-page-header {
@@ -84,14 +88,7 @@
   border-color: #1890ff;
 }
 
-/* Make sure all form inputs take full width */
-.ant-input, 
-.ant-select, 
-.ant-picker, 
-.ant-select-selector,
-.ant-input-textarea {
-  width: 100% !important;
-}
+
 
 /* Referenced document styling */
 .referenced-document-info {

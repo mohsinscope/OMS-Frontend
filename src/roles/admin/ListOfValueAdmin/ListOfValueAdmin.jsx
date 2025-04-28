@@ -18,7 +18,7 @@ import { getAuthorizedLOVRoutes, LOVConfig } from "./LovConfig.js";
 import useAuthStore from "./../../../store/store.js";
 
 export default function ListOfValueAdmin() {
-  const { permissions } = useAuthStore();
+  const { permissions, isSidebarCollapsed  } = useAuthStore();
   const [authorizedMenuItems, setAuthorizedMenuItems] = useState([]);
   const [selectedData, setSelectedData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -322,15 +322,30 @@ export default function ListOfValueAdmin() {
           reportTypeIds: values.reportTypeIds,
         };
       case "/admin/Archive-party":
-        return {
-          id: editingId, // Include the id here
-          name: values.name,
-        };
+          return {
+              id:         editingId,
+              name:       values.name,
+              partyType:  values.partyType,
+              isOfficial: values.isOfficial,
+              projectId:  values.projectId,
+            };
       case "/admin/Archive-projects":
         return {
           id: editingId, // Include the id here
           name: values.name,
         };
+        case "/admin/document-cc":
+  return {
+    id: editingId,
+    recipientName: values.recipientName,
+  };
+
+case "/admin/ministry":
+case "/admin/tags":
+  return {
+    id: editingId,
+    name: values.name,
+  };
       default:
         return values;
     }
@@ -489,11 +504,12 @@ export default function ListOfValueAdmin() {
           reportTypeIds: record.reportTypes ? record.reportTypes.map((rt) => rt.id) : [],
         };
       case "/admin/Archive-party":
-        formData = {
-          id: record.id,
-          name: record.name,
-          // datecreated: record.datecreated,
-        };
+          formData = {
+              name:       record.name,
+              partyType:  record.partyType,
+              isOfficial: record.isOfficial,
+              projectId:  record.projectId,
+            };
       case "/admin/Archive-projects":
         formData = {
           id: record.id,
@@ -501,6 +517,14 @@ export default function ListOfValueAdmin() {
           // datecreated: record.datecreated,
         };
         break;
+        case "/admin/document-cc":
+  formData = { recipientName: record.recipientName };
+  break;
+
+case "/admin/ministry":
+case "/admin/tags":
+  formData = { name: record.name };
+  break;
       default:
         formData = {
           name: record.name,
@@ -606,7 +630,7 @@ export default function ListOfValueAdmin() {
   };
 
   return (
-    <div className="list-of-value-container" dir="rtl">
+    <div className={`list-of-value-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`} dir="rtl">
       <div className="list-of-value-bar">
         <ul className="list-of-value-items">
           {authorizedMenuItems.map((item, index) => (

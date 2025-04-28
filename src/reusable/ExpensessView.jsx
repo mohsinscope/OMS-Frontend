@@ -317,37 +317,47 @@ function flattenItems(items) {
   
         // 5) Process daily expense items (some may have subExpenses)
         const dailyItems = dailyExpensesResponse.data.map((item, index) => {
-          const mainItem = {
+          const hasSubExpenses = item.subExpenses && item.subExpenses.length > 0;
+        
+          // Calculate sums if you need to combine parent + sub
+          const totalQuantity = hasSubExpenses
+            ? Number(item.quantity) +
+              item.subExpenses.reduce((acc, sub) => acc + (Number(sub.quantity) || 0), 0)
+            : Number(item.quantity) || 0;
+        
+          const totalAmount = hasSubExpenses
+            ? Number(item.amount) +
+              item.subExpenses.reduce((acc, sub) => acc + (Number(sub.amount) || 0), 0)
+            : Number(item.amount) || 0;
+        
+          const dailyRow = {
             key: `daily-${item.id}`,
-            تسلسل: regularItems.length + index + 1,
+            تسلسل: index + 1,           // Adjust if combining with other lists
             التاريخ: new Date(item.expenseDate).toLocaleDateString(),
-            "نوع المصروف": item.expenseTypeName,
-            الكمية: item.quantity,
-            السعر: item.price,
-            المجموع: item.amount,
-            ملاحظات: item.notes,
+            // If it has subExpenses, override it to "مستلزمات مكتب"
+            "نوع المصروف": hasSubExpenses ? "مستلزمات مكتب" : item.expenseTypeName,
+        
+            // For the "العدد" column, decide whether to sum parent + subs or just show parent
+            الكمية: totalQuantity,
+        
+            // For "سعر المفرد", show dashed line if it has children
+            السعر: hasSubExpenses ? "------" : item.price,
+        
+            // Sum the amounts if it has children
+            المجموع: totalAmount,
+        
+            // If it has children, override notes to "لا يوجد"
+            ملاحظات: hasSubExpenses ? "لا يوجد" : item.notes,
+        
+            // Keep IDs or anything else you need
             id: item.id,
             type: "daily",
-            isSubExpense: false,
+        
+            // IMPORTANT: Do NOT attach children here
+            // children: item.subExpenses.map(...)  // <--- remove or comment out
           };
-  
-          if (item.subExpenses && item.subExpenses.length > 0) {
-            mainItem.children = item.subExpenses.map((sub, subIndex) => ({
-              key: `subexpense-${sub.id}`,
-              تسلسل: `${regularItems.length + index + 1}.${subIndex + 1}`,
-              التاريخ: new Date(sub.expenseDate).toLocaleDateString(),
-              "نوع المصروف": sub.expenseTypeName,
-              الكمية: sub.quantity,
-              السعر: sub.price,
-              المجموع: sub.amount,
-              ملاحظات: sub.notes,
-              id: sub.id,
-              type: "sub-daily",
-              isSubExpense: true,
-            }));
-          }
-  
-          return mainItem;
+        
+          return dailyRow;
         });
   
         // 6) Combine the two sets & sort by date desc
@@ -829,50 +839,85 @@ function flattenItems(items) {
       title: "البند",
       dataIndex: "نوع المصروف",
       align: "center",
-      render: (text, record) => (
-        <span
-          style={{
-            paddingRight: record.isSubExpense ? "20px" : "0",
-            color: record.isSubExpense ? "#1890ff" : "inherit",
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          {record.isSubExpense && <span style={{ marginLeft: "8px" }}>↳</span>}
-          {text}
-        </span>
-      ),
+      render: (text, record) => {
+        // If the record has children, override the text with "مستلزمات مكتب"
+        const displayText = record.children && record.children.length > 0 ? "مستلزمات مكتب" : text;
+        return (
+          <span
+            style={{
+              paddingRight: record.isSubExpense ? "20px" : "0",
+              color: record.isSubExpense ? "#1890ff" : "inherit",
+              display: "flex",
+              alignItems: "center",
+            }}
+          >
+            {record.isSubExpense && <span style={{ marginLeft: "8px" }}>↳</span>}
+            {displayText}
+          </span>
+        );
+      },
     },
     {
       title: "العدد",
       dataIndex: "الكمية",
       align: "center",
+      render: (text, record) => {
+        const parentQuantity = Number(text) || 0;
+        const childrenQuantity = record.children && record.children.length > 0
+          ? record.children.reduce((sum, child) => sum + (Number(child["الكمية"]) || 0), 0)
+          : 0;
+        const totalQuantity = parentQuantity + childrenQuantity;
+        return totalQuantity;
+      },
     },
     {
       title: "سعر المفرد",
       dataIndex: "السعر",
       align: "center",
-      render: (text) =>
-        `IQD ${Number(text).toLocaleString(undefined, {
+      render: (value, record) => {
+        // 1) If it's a subexpense row, display '------'
+        //    (or if you inserted '------' in your data directly)
+        if (record.isSubExpense || value === "------") {
+          return "------";
+        }
+    
+        // 2) Otherwise, parse the numeric value
+        const numericVal = Number(value);
+        // If it's not a valid number, display '------'
+        if (isNaN(numericVal)) {
+          return "------";
+        }
+    
+        // 3) If it's a valid number, format it as IQD
+        return `IQD ${numericVal.toLocaleString(undefined, {
           minimumFractionDigits: 0,
           maximumFractionDigits: 2,
-        })}`,
+        })}`;
+      },
     },
-    {
-      title: "المجموع",
-      dataIndex: "المجموع",
-      align: "center",
-      render: (text) =>
-        `IQD ${Number(text).toLocaleString(undefined, {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 2,
-        })}`,
-    },
-    {
-      title: "ملاحظات",
-      dataIndex: "ملاحظات",
-      align: "center",
-    },
+{
+  title: "المجموع",
+  dataIndex: "المجموع",
+  align: "center",
+  render: (text, record) => {
+    // Convert the parent's amount to a number (defaulting to 0)
+    const parentAmount = Number(text) || 0;
+    // If there are children, sum their "المجموع" values
+    const childrenAmount = record.children
+      ? record.children.reduce((sum, child) => sum + (Number(child.المجموع) || 0), 0)
+      : 0;
+    // Total is parent's amount plus subexpenses amounts
+    const total = parentAmount + childrenAmount;
+    return `IQD ${total.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+  },
+},
+{
+  title: "ملاحظات",
+  dataIndex: "ملاحظات",
+  align: "center",
+  render: (text, record) =>
+    record.children && record.children.length > 0 ? "لا يوجد" : text,
+},
     {
       title: "الإجراءات",
       key: "actions",
@@ -1058,24 +1103,7 @@ function flattenItems(items) {
     columns={expenseItemsColumns}
     dataSource={expense?.items}
     bordered
-    expandable={{
-      defaultExpandAllRows: false,
-      expandRowByClick: false,
-      expandIcon: ({ expanded, onExpand, record }) =>
-        record.children ? (
-          <PlusOutlined
-            style={{
-              cursor: "pointer",
-              color: "#1890ff",
-              fontSize: "22px",
-              transform: expanded ? "rotate(45deg)" : "rotate(0deg)",
-              transition: "transform 0.2s",
-              margin: "0 auto",
-            }}
-            onClick={(e) => onExpand(record, e)}
-          />
-        ) : null,
-    }}
+
     pagination={{ pageSize: 5, position: ["bottomCenter"] }}
     locale={{ emptyText: "لا توجد عناصر للصرف." }}
     summary={() => {

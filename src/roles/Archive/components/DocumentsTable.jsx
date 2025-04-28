@@ -1,30 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Tag, Space, Button, message } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
+import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from './../../../intercepters/axiosInstance.js';
 import useAuthStore from './../../../store/store.js';
-const DocumentsTable = ({ onViewDocument }) => {
+
+const DocumentsTable = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const {profile} = useAuthStore();
-  
+  const { profile } = useAuthStore();
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetchDocuments();
+    // eslint-disable-next-line
   }, []);
 
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      console.log(profile.profileId)
+      console.log(profile.profileId);
       const response = await axiosInstance.get('/api/Document');
       console.log('API Response:', response.data);
 
-      // Ensure we're working with an array
       let documentsData = [];
       if (Array.isArray(response.data)) {
         documentsData = response.data;
       } else if (response.data && typeof response.data === 'object') {
-        // Look for common array properties
         const arrayProps = ['data', 'items', 'results', 'documents', 'content'];
         for (const prop of arrayProps) {
           if (Array.isArray(response.data[prop])) {
@@ -32,7 +34,6 @@ const DocumentsTable = ({ onViewDocument }) => {
             break;
           }
         }
-        // If still not found, treat the object as a single item
         if (documentsData.length === 0 && Object.keys(response.data).length > 0) {
           if (response.data.id) {
             documentsData = [response.data];
@@ -40,10 +41,9 @@ const DocumentsTable = ({ onViewDocument }) => {
         }
       }
 
-      // Process data: ensure each record has a unique key
       const processedData = documentsData.map((doc, index) => ({
         ...doc,
-        key: doc.id || `doc-${index}`
+        key: doc.id || `doc-${index}`,
       }));
 
       console.log('Processed data:', processedData);
@@ -56,7 +56,6 @@ const DocumentsTable = ({ onViewDocument }) => {
     }
   };
 
-  // Helper to format date
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     try {
@@ -68,7 +67,6 @@ const DocumentsTable = ({ onViewDocument }) => {
     }
   };
 
-  // Helper to format time
   const formatTime = (dateString) => {
     if (!dateString) return '-';
     try {
@@ -80,11 +78,9 @@ const DocumentsTable = ({ onViewDocument }) => {
     }
   };
 
-  // Map document type ID (your enum) to Arabic labels.
+  // Map document type IDs to labels.
   const getDocumentTypeName = (typeId) => {
-    // Based on the enum:
-    // 1: Incoming -> "وارد"
-    // 2: Outgoing -> "صادر"
+    // Example enum mapping
     const types = {
       1: 'صادر',
       2: 'وارد',
@@ -92,37 +88,26 @@ const DocumentsTable = ({ onViewDocument }) => {
     return types[typeId] || 'غير معروف';
   };
 
-  // Define table columns
   const columns = [
     {
       title: 'رقم المستند',
       dataIndex: 'documentNumber',
       key: 'documentNumber',
-      render: text => text || '-',
-      sorter: (a, b) => {
-        const valueA = a.documentNumber || '';
-        const valueB = b.documentNumber || '';
-        return valueA.localeCompare(valueB);
-      }
+      render: (text) => text || '-',
+      sorter: (a, b) => (a.documentNumber || '').localeCompare(b.documentNumber || ''),
     },
     {
       title: 'العنوان',
       dataIndex: 'title',
       key: 'title',
-      render: text => text || '-',
-      sorter: (a, b) => {
-        const valueA = a.title || '';
-        const valueB = b.title || '';
-        return valueA.localeCompare(valueB);
-      }
+      render: (text) => text || '-',
+      sorter: (a, b) => (a.title || '').localeCompare(b.title || ''),
     },
     {
       title: 'نوع المستند',
       dataIndex: 'documentType',
       key: 'documentType',
-      render: type => (
-        <Tag color="blue">{getDocumentTypeName(type)}</Tag>
-      ),
+      render: (type) => <Tag color="blue">{getDocumentTypeName(type)}</Tag>,
       filters: [
         { text: 'وارد', value: 1 },
         { text: 'صادر', value: 2 },
@@ -133,31 +118,23 @@ const DocumentsTable = ({ onViewDocument }) => {
       title: 'الموضوع',
       dataIndex: 'subject',
       key: 'subject',
-      render: text => text || '-',
+      render: (text) => text || '-',
       ellipsis: true,
     },
     {
       title: 'تاريخ المستند',
       dataIndex: 'documentDate',
       key: 'documentDate',
-      render: date => formatDate(date),
-      sorter: (a, b) => {
-        const dateA = a.documentDate ? new Date(a.documentDate).getTime() : 0;
-        const dateB = b.documentDate ? new Date(b.documentDate).getTime() : 0;
-        return dateA - dateB;
-      }
+      render: (date) => formatDate(date),
+      sorter: (a, b) =>
+        (a.documentDate ? new Date(a.documentDate).getTime() : 0) -
+        (b.documentDate ? new Date(b.documentDate).getTime() : 0),
     },
-    // {
-    //   title: 'وقت المستند',
-    //   dataIndex: 'documentDate',
-    //   key: 'documentTime',
-    //   render: date => formatTime(date),
-    // },
     {
       title: 'يتطلب رد',
       dataIndex: 'isRequiresReply',
       key: 'isRequiresReply',
-      render: requiresReply => (
+      render: (requiresReply) => (
         <Tag color={requiresReply ? 'green' : 'red'}>
           {requiresReply ? 'نعم' : 'لا'}
         </Tag>
@@ -172,31 +149,28 @@ const DocumentsTable = ({ onViewDocument }) => {
       title: 'تاريخ الإنشاء',
       dataIndex: 'datecreated',
       key: 'datecreated',
-      render: date => formatDate(date),
-      sorter: (a, b) => {
-        const dateA = a.datecreated ? new Date(a.datecreated).getTime() : 0;
-        const dateB = b.datecreated ? new Date(b.datecreated).getTime() : 0;
-        return dateA - dateB;
-      }
+      render: (date) => formatDate(date),
+      sorter: (a, b) =>
+        (a.datecreated ? new Date(a.datecreated).getTime() : 0) -
+        (b.datecreated ? new Date(b.datecreated).getTime() : 0),
     },
     {
       title: 'وقت الإنشاء',
       dataIndex: 'datecreated',
       key: 'timeCreated',
-      render: date => formatTime(date),
+      render: (date) => formatTime(date),
     },
     {
       title: 'الإجراءات',
       key: 'actions',
       render: (_, record) => (
         <Space size="middle">
-          <Button 
-            type="primary" 
-            icon={<EyeOutlined />} 
-            onClick={() => onViewDocument(record)}
+            <Link
+            to="/ViewArchivePage"
+            state={{ id: record.id }}
           >
             عرض
-          </Button>
+          </Link>
         </Space>
       ),
     },
@@ -204,23 +178,18 @@ const DocumentsTable = ({ onViewDocument }) => {
 
   return (
     <div className="documents-table-container">
-      <Button 
-        type="primary" 
-        onClick={fetchDocuments} 
-        style={{ marginBottom: 16 }}
-      >
+      <Button type="primary" onClick={fetchDocuments} style={{ marginBottom: 16 }}>
         تحديث
       </Button>
-      <Table 
-  dataSource={documents} 
-  columns={columns} 
-  rowKey="key"
-  loading={loading}
-  pagination={{ pageSize: 10, position: ['bottomCenter'] }}
-  scroll={{ x: 1200 }}
-  locale={{ emptyText: 'لا توجد مستندات' }}
-/>
-
+      <Table
+        dataSource={documents}
+        columns={columns}
+        rowKey="key"
+        loading={loading}
+        pagination={{ pageSize: 10, position: ['bottomCenter'] }}
+        scroll={{ x: 1200 }}
+        locale={{ emptyText: 'لا توجد مستندات' }}
+      />
     </div>
   );
 };

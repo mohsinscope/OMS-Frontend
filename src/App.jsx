@@ -43,8 +43,8 @@ import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecture
 import LecturerShow from "./roles/superVisor/lecturer/SuperVisorLecturerShow.jsx";
 import ArchivePage from "./roles/Archive/pages/ArchivePage.jsx";
 import AddDocumentPage from './roles/Archive/pages/addArchivePage.jsx';
-
 import { ArchiveProvider } from './roles/Archive/contexts/ArchiveContext.jsx';
+import ViewArchivePage from './roles/Archive/pages/DocumentShow/ViewArchivePage.jsx';
 
 const App = () => {
   // Centralized routes configuration
@@ -77,6 +77,7 @@ const App = () => {
     { path: "/ExpensessViewMonthly", element: <ExpensessViewMonthly /> },
     { path: "/Archive", element: <ArchivePage /> },
     { path: "/AddArchive", element: <AddDocumentPage /> },
+    { path: "/ViewArchivePage", element: <ViewArchivePage /> },
     // Common Routes
     { path: "settings", element: <Settings /> },
     { path: "expenses-view", element: <ExpensessView /> },

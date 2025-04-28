@@ -11,7 +11,7 @@ import {
   InputNumber,
   Upload,
   Skeleton,
-  Table, // Import Table from antd
+  Table,
 } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -39,6 +39,8 @@ const ExpensessView = () => {
   });
   const [images, setImages] = useState([]);
   const [expenseData, setExpenseData] = useState(null);
+  const [parentExpenseData, setParentExpenseData] = useState(null); // Added for storing parent data
+  const [allRelatedExpenses, setAllRelatedExpenses] = useState([]); // Store all related expenses
   const [expenseTypes, setExpenseTypes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Loading state for details
@@ -64,7 +66,35 @@ const ExpensessView = () => {
     }
   };
 
-  // Fetch expense details
+  // Fetch parent expense details when viewing a sub-expense
+  const fetchParentExpenseDetails = async (parentId) => {
+    try {
+      const response = await axiosInstance.get(`/api/Expense/dailyexpenses/${parentId}`);
+      const parentExpense = response.data;
+      if (!parentExpense) throw new Error("No parent expense data found");
+      
+      setParentExpenseData(parentExpense);
+      
+      // Prepare all related expenses for display in the table
+      const allExpenses = [
+        // Include the parent expense with a special flag
+        { ...parentExpense, isParent: true },
+        // Include all sub-expenses except the current one if viewing a sub-expense
+        ...(parentExpense.subExpenses || []).filter(sub => sub.id !== expenseId)
+      ];
+      
+      setAllRelatedExpenses(allExpenses);
+      
+      // Use parent's images
+      fetchExpensesImages(parentId);
+      
+    } catch (error) {
+      console.error("Error fetching parent expense details:", error);
+      message.error("حدث خطأ أثناء جلب تفاصيل المصروف الرئيسي");
+    }
+  };
+
+  // Fetch expense details - modified to handle both parent and sub expenses
   const fetchExpenseDetails = async () => {
     setIsLoading(true);
     try {
@@ -73,7 +103,24 @@ const ExpensessView = () => {
       if (!expense) throw new Error("No expense data found");
 
       setExpenseData(expense);
-      console.log("expenseData.expenseTypeId:", expense);
+      
+      // Check if this is a sub-expense
+      if (expense.parentExpenseId) {
+        // If it's a sub-expense, fetch the parent expense
+        await fetchParentExpenseDetails(expense.parentExpenseId);
+      } else if (expense.subExpenses && expense.subExpenses.length > 0) {
+        // If it's a parent expense, set up related expenses
+        setAllRelatedExpenses([
+          { ...expense, isParent: true },
+          ...(expense.subExpenses || [])
+        ]);
+        // Use this expense's images
+        fetchExpensesImages(expense.id);
+      } else {
+        // Regular expense with no relation
+        fetchExpensesImages(expense.id);
+      }
+      
       form.setFieldsValue({
         ...expense,
         date: moment(expense.expenseDate),
@@ -91,7 +138,7 @@ const ExpensessView = () => {
     }
   };
 
-  // Fetch images using the provided ID (parent or expense ID)
+  // Fetch images using the provided ID
   const fetchExpensesImages = async (idToUse) => {
     if (!idToUse) {
       console.error("No ID provided for fetching images.");
@@ -110,21 +157,7 @@ const ExpensessView = () => {
     }
   };
 
-  // Combined effect: Log debug info and fetch images when expenseData is available.
-  useEffect(() => {
-    if (expenseData) {
-      
-      // Use parentExpenseId if available; otherwise, fall back to expenseData.id or expenseId
-      const idForImages = expenseData.parentExpenseId || expenseData.id || expenseId;
-      if (idForImages) {
-        fetchExpensesImages(idForImages);
-      } else {
-        console.error("No valid ID found for fetching images");
-      }
-    }
-  }, [expenseData, expenseId, hasUpdatePermission, hasDeletePermission]);
-
-  // Initialization effect: Check for expenseId and fetch types & details
+  // Initialize data on component mount
   useEffect(() => {
     if (!expenseId) {
       message.error("معرف المصروف غير موجود");
@@ -154,7 +187,8 @@ const ExpensessView = () => {
       return;
     }
     try {
-      const idForUpload = expenseData.parentExpenseId || expenseId;
+      // If this is a sub-expense, use the parent ID for image upload
+      const idForUpload = parentExpenseData ? parentExpenseData.id : (expenseData.parentExpenseId || expenseId);
       const formData = new FormData();
       formData.append("entityId", idForUpload);
       formData.append("entityType", "Expense");
@@ -175,7 +209,7 @@ const ExpensessView = () => {
 
   const handleEditClick = () => {
     form.setFieldsValue({
-        expenseTypeId: expenseData.expenseTypeId,
+      expenseTypeId: expenseData.expenseTypeId,
       date: moment(expenseData.expenseDate).format("YYYY-MM-DD"),
       price: expenseData.price,
       quantity: expenseData.quantity,
@@ -221,17 +255,26 @@ const ExpensessView = () => {
       message.error("حدث خطأ أثناء حذف المصروف");
     }
   };
-  // Define a helper function to calculate overall total
-const calculateOverallTotal = (expenseData) => {
-  // Start with the parent expense amount
-  let total = expenseData.amount || 0;
-  // If subExpenses exist, add their amounts
-  if (expenseData.subExpenses && expenseData.subExpenses.length > 0) {
-    total += expenseData.subExpenses.reduce((sum, sub) => sum + (sub.amount || 0), 0);
-  }
-  return total;
-};
 
+  // Define a helper function to calculate overall total, works for both parent and sub-expenses
+  const calculateOverallTotal = () => {
+    if (parentExpenseData) {
+      // If this is a sub-expense, calculate total from parent data
+      let total = parentExpenseData.amount || 0;
+      if (parentExpenseData.subExpenses && parentExpenseData.subExpenses.length > 0) {
+        total += parentExpenseData.subExpenses.reduce((sum, sub) => sum + (sub.amount || 0), 0);
+      }
+      return total;
+    } else if (expenseData) {
+      // If this is a parent expense or regular expense
+      let total = expenseData.amount || 0;
+      if (expenseData.subExpenses && expenseData.subExpenses.length > 0) {
+        total += expenseData.subExpenses.reduce((sum, sub) => sum + (sub.amount || 0), 0);
+      }
+      return total;
+    }
+    return 0;
+  };
 
   // Check what type of expense it is before showing the appropriate delete modal
   const confirmDelete = () => {
@@ -282,8 +325,8 @@ const calculateOverallTotal = (expenseData) => {
     }
   };
 
-  // Define columns for the subexpenses table
-  const subExpensesColumns = [
+  // Define columns for the expenses table - shows parent and related expenses
+  const expensesColumns = [
     {
       title: "رقم",
       key: "index",
@@ -291,10 +334,15 @@ const calculateOverallTotal = (expenseData) => {
       width: 50,
     },
     {
-      title: "نوع المصروف الفرعي",
+      title: "نوع المصروف",
       dataIndex: "expenseTypeName",
       key: "expenseTypeName",
       width: 150,
+      render: (text, record) => (
+        <span style={record.isParent ? { fontWeight: 'bold', color: 'blue' } : {}}>
+          {record.isParent ? `${text} ` : text}
+        </span>
+      ),
     },
     {
       title: "السعر",
@@ -328,8 +376,26 @@ const calculateOverallTotal = (expenseData) => {
       key: "expenseDate",
       width: 120,
       render: (date) => moment(date).format("YYYY-MM-DD"),
-    },
+    }
   ];
+
+  // Determine if we're viewing a parent expense, a sub-expense, or a regular expense
+  const isParentExpense = expenseData && expenseData.subExpenses && expenseData.subExpenses.length > 0;
+  const isSubExpense = expenseData && expenseData.parentExpenseId;
+  
+  // Determine which expenses to show in the table
+  const expensesToShow = isSubExpense ? allRelatedExpenses : (isParentExpense ? allRelatedExpenses : []);
+  
+  // Highlight the current expense if it's a sub-expense
+  const highlightCurrentSubExpense = () => {
+    if (isSubExpense && allRelatedExpenses.length > 0) {
+      return allRelatedExpenses.map(expense => ({
+        ...expense,
+        isCurrentExpense: expense.id === expenseId
+      }));
+    }
+    return expensesToShow;
+  };
 
   if (loading) {
     return (
@@ -353,15 +419,15 @@ const calculateOverallTotal = (expenseData) => {
       ) : (
         <>
           <div className="title-container">
-          <h1 style={{ color: "#000", fontSize: "24px" }}>
-            تفاصيل المصروف
-            {expenseData.subExpenses && expenseData.subExpenses.length > 0 && (
-              <>
-              
-             - <span style={{ color: "blue", marginLeft: "8px" }}>  مصروف متعدد </span>
-              </>
-            )}
-          </h1>
+            <h1 style={{ color: "#000", fontSize: "24px" }}>
+              تفاصيل المصروف
+              {isParentExpense && (
+                <span style={{ color: "blue", marginRight: "8px" }}> - مصروف متعدد</span>
+              )}
+              {isSubExpense && (
+                <span style={{ color: "green", marginRight: "8px" }}> - مصروف فرعي</span>
+              )}
+            </h1>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px", gap: "20px" }}>
               <Button
                 type="primary"
@@ -385,35 +451,43 @@ const calculateOverallTotal = (expenseData) => {
 
           <div className="details-container-Lecture">
             <div className="details-lecture-container">
-              <div className="details-row">
-                <span className="details-label">نوع المصروف:</span>
-                <input className="details-value" value={expenseData.expenseTypeName} disabled />
-              </div>
-              <div className="details-row">
-                <span className="details-label">السعر:</span>
-                <input className="details-value" value={`${expenseData.price.toLocaleString()} د.ع`} disabled />
-              </div>
-              <div className="details-row">
-                <span className="details-label">الكمية:</span>
-                <input className="details-value" value={expenseData.quantity} disabled />
-              </div>
-              <div className="details-row">
-                <span className="details-label">المبلغ الإجمالي:</span>
-                <input className="details-value" value={`${expenseData.amount.toLocaleString()} د.ع`} disabled />
-              </div>
-              {expenseData.subExpenses &&
-  expenseData.subExpenses.length > 0 && (
-    <div className="details-row">
-      <span className="details-label">
-        المبلغ الإجمالي للمصاريف كلها مع المصاريف الإضافية:
-      </span>
-      <input
-        className="details-value"
-        value={`${calculateOverallTotal(expenseData).toLocaleString()} د.ع`}
-        disabled
-      />
-    </div>
-  )}
+              {/* Display all individual fields only when NOT viewing a parent expense with children */}
+              {!isParentExpense && (
+                <>
+                  <div className="details-row">
+                    <span className="details-label">نوع المصروف:</span>
+                    <input className="details-value" value={expenseData.expenseTypeName} disabled />
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">السعر:</span>
+                    <input className="details-value" value={`${expenseData.price.toLocaleString()} د.ع`} disabled />
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">الكمية:</span>
+                    <input className="details-value" value={expenseData.quantity} disabled />
+                  </div>
+                  <div className="details-row">
+                    <span className="details-label">المبلغ الإجمالي:</span>
+                    <input className="details-value" value={`${expenseData.amount.toLocaleString()} د.ع`} disabled />
+                  </div>
+                </>
+              )}
+              
+              {/* Always show the total amount for parent expenses with children or sub-expenses */}
+              {(isParentExpense || isSubExpense) && (
+                <div className="details-row">
+                  <span className="details-label">
+                    المبلغ الإجمالي للمصاريف كلها مع المصاريف الإضافية:
+                  </span>
+                  <input
+                    className="details-value"
+                    value={`${calculateOverallTotal().toLocaleString()} د.ع`}
+                    disabled
+                  />
+                </div>
+              )}
+              
+              {/* Always show date and notes regardless of expense type */}
               <div className="details-row">
                 <span className="details-label">التاريخ:</span>
                 <input
@@ -422,10 +496,7 @@ const calculateOverallTotal = (expenseData) => {
                   disabled
                 />
               </div>
-              <div className="details-row">
-                <span className="details-label">الملاحظات:</span>
-                <textarea className="textarea-value" value={expenseData.notes || "لا توجد ملاحظات"} disabled />
-              </div>
+         
             </div>
 
             <div className="image-container">
@@ -434,7 +505,7 @@ const calculateOverallTotal = (expenseData) => {
                   <span className="note-details-label">صورة المصروف:</span>
                   <ImagePreviewer
                     uploadedImages={images.map((img) => img.url)}
-                    defaultWidth={600}
+                    defaultWidth={350}
                     defaultHeight={"fit-content"}
                   />
                 </div>
@@ -442,12 +513,12 @@ const calculateOverallTotal = (expenseData) => {
             </div>
           </div>
 
-          {/* Conditionally render the subexpenses table if there are subexpenses */}
-          {expenseData.subExpenses && expenseData.subExpenses.length > 0 && (
+          {/* Show the related expenses table for both parent and sub expenses */}
+          {(isParentExpense || isSubExpense) && expensesToShow.length > 0 && (
             <div
-              className="subexpenses-table-container"
+              className="related-expenses-table-container"
               style={{
-                width:"100%",
+                width: "100%",
                 marginTop: "20px",
                 backgroundColor: "#fff",
                 padding: "20px",
@@ -455,14 +526,26 @@ const calculateOverallTotal = (expenseData) => {
                 boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
               }}
             >
-              <h2 style={{ textAlign: "center", marginBottom: "20px" }}>تفاصيل المصروفات الفرعية</h2>
+              <h2 style={{ textAlign: "center", marginBottom: "20px" }}>
+                {isSubExpense 
+                  ? "جميع المصروفات المرتبطة (الرئيسي والفرعية)" 
+                  : "تفاصيل المصروفات الفرعية"
+                }
+              </h2>
               <Table
-                dataSource={expenseData.subExpenses}
-                columns={subExpensesColumns}
+                dataSource={highlightCurrentSubExpense()}
+                columns={expensesColumns}
                 rowKey="id"
                 pagination={false}
                 bordered
+                rowClassName={(record) => record.id === expenseId ? 'highlighted-row' : ''}
               />
+              <style jsx>{`
+                .highlighted-row {
+                  background-color: #f0f8ff;
+                  font-weight: bold;
+                }
+              `}</style>
             </div>
           )}
         </>
@@ -542,7 +625,7 @@ const calculateOverallTotal = (expenseData) => {
                     if (selectedImage) {
                       setImageData({
                         imageId: selectedImage.id,
-                        entityId: expenseId,
+                        entityId: isSubExpense && parentExpenseData ? parentExpenseData.id : expenseId,
                         entityType: "Expense",
                       });
                     }

@@ -89,3 +89,54 @@
 .remove-arrows[type="number"] {
   -moz-appearance: textfield;
 }
+
+/* Add to your ListOfValueAdmin.css file */
+
+.list-of-value-container {
+  display: flex;
+  height: 100%;
+  transition: all 0.3s ease-in-out;
+}
+
+.list-of-value-bar {
+  width: 250px;
+  transition: width 0.3s ease-in-out;
+  overflow-y: auto;
+  align-items: center;
+}
+
+.sidebar-collapsed .list-of-value-bar {
+  width: 80px;
+}
+
+.list-of-value-details-section-left {
+  flex: 1;
+  padding: 20px;
+  transition: all 0.3s ease-in-out;
+}
+
+.sidebar-collapsed .list-of-value-details-section-left {
+  margin-right: 80px; /* Adjust based on your collapsed sidebar width */
+}
+
+.sidebar-collapsed .list-of-value-item span {
+  display: none;
+}
+
+/* Align icons to center when sidebar is collapsed */
+.sidebar-collapsed .list-of-value-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  
+
+ 
+}
+.sidebar-collapsed .list-of-value-item.active {
+  background-color: white; /* Optional background color for active item */
+}
+
+.list-of-value-container th{
+  font-size: 16px;
+}
