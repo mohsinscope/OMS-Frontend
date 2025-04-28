@@ -1,6 +1,5 @@
 // src/contexts/ArchiveContext.jsx
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { fetchDocuments, addDocument, updateDocument, deleteDocument } from '../services/archiveService';
 
 // Create context
 const ArchiveContext = createContext();

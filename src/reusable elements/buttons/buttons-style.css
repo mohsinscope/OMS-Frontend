@@ -1,0 +1,49 @@
+.delete-button{
+    margin: 10px;
+    padding: 20px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    background-color: #ff4d4d;
+    border: 2px solid #ff4d4d !important;
+    transition: background-color 0.3s;
+    font-size: 16px;
+}
+
+.delete-button:hover{
+    color: #ff4d4d !important;
+    background-color: white !important;
+    border: 2px solid #ff4d4d !important;
+}
+
+
+.audit-button{
+    margin: 10px;
+    padding: 20px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: white;
+    background-color: #37ac28;
+    border: 2px solid #37ac28 !important;
+    transition: background-color 0.3s;
+    font-size: 16px;
+}
+
+.audit-button:hover{
+    color: #37ac28 !important;
+    background-color: white !important;
+    border: 2px solid #37ac28 !important;
+}
+
+.audit-button:focus{
+    color: #37ac28 !important;
+    background-color: white !important;
+    border: 2px solid #37ac28 !important;
+}
+.delete-button:focus{
+    color: #ff4d4d !important;
+    background-color: white !important;
+    border: 2px solid #ff4d4d !important;
+}

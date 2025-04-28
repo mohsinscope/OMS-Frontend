@@ -243,20 +243,49 @@ const Config = {
       },
     ],
   },
-  "/admin/Archive-party": {
-    getEndpoint: "/api/DocumentParty",
-    postEndpoint: "/api/DocumentParty",
-    putEndpoint: (id) => `/api/DocumentParty/${id}`,
-    deleteEndpoint: (id) => `/api/DocumentParty/${id}`,
-    columns: [
-      { title: "اسم الجهة", dataIndex: "name", key: "name" },
+"/admin/Archive-party": {
+  getEndpoint:    "/api/DocumentParty",
+  postEndpoint:   "/api/DocumentParty",
+  putEndpoint:    (id) => `/api/DocumentParty/${id}`,
+  deleteEndpoint: (id) => `/api/DocumentParty/${id}`,
+  columns: [
+    { title: "اسم الجهة", dataIndex: "name",       key: "name" },
+    {
+      title: "نوع الجهة",
+      dataIndex: "partyType",
+      key: "partyType",
+      render: (value) =>
+        ({
+          0: "مديرية عامة",
+          1: "مديرية",
+          2: "قسم",
+          3: "شعبة",
+        }[value] ?? "غير معروف")
+    },
+    { title: "رسمية؟",    dataIndex: "isOfficial", key: "isOfficial",
+      render: (v) => v ? "نعم" : "لا" },
+    { title: "المشروع",   dataIndex: "projectId",  key: "projectId" },
+  ],
+  formFields: [                    // <–– أبقها نسخة واحدة فقط
+    { name: "name",       label: "اسم الجهة",  type: "text" },
+    { name: "partyType",  label: "نوع الجهة",  type: "dropdown",
+      options: [
+        { label: "مديرية عامة", value: 0 },
+        { label: "مديرية",   value: 1 },
+        { label: "قسم",   value: 2 },
+        { label: "شعبة",   value: 3 },
+
+      ]},
       
-    ],
-    formFields: [
-      { name: "name", label: "الاسم الكامل للجهة", type: "text" },
-      
-    ],
-  },
+    { name: "isOfficial", label: "رسمية؟",     type: "dropdown",
+      options: [
+        { label: "نعم", value: true  },
+        { label: "لا",  value: false },
+      ]},
+    { name: "projectId",  label: "المشروع",    type: "dropdown",
+      optionsEndpoint: "/api/Project?PageNumber=1&PageSize=100" },
+  ],
+},
   "/admin/Archive-projects": {
     getEndpoint: "/api/Project",
     postEndpoint: "/api/Project",
@@ -264,13 +293,53 @@ const Config = {
     deleteEndpoint: (id) => `/api/Project/${id}`,
     columns: [
       { title: "اسم الجهة", dataIndex: "name", key: "name" },
+          { title: "تاريخ الإنشاء", dataIndex: "dateCreated", key: "dateCreated",
+              render: (v) => new Date(v).toLocaleDateString('ar-IQ') },
       
     ],
     formFields: [
       { name: "name", label: "الاسم الكامل للجهة", type: "text" },
       
     ],
-  },
+  },"/admin/document-cc": {
+  getEndpoint:    "/api/DocumentCC",
+  postEndpoint:   "/api/DocumentCC",
+  putEndpoint:    (id) => `/api/DocumentCC/${id}`,
+  deleteEndpoint: (id) => `/api/DocumentCC/${id}`,
+  columns: [
+    { title: "اسم المستلم", dataIndex: "recipientName", key: "recipientName" },
+  ],
+  formFields: [
+    { name: "recipientName", label: "اسم المستلم", type: "text" },
+  ],
+},
+
+"/admin/ministry": {
+  getEndpoint:    "/api/Ministry",
+  postEndpoint:   "/api/Ministry",
+  putEndpoint:    (id) => `/api/Ministry/${id}`,
+  deleteEndpoint: (id) => `/api/Ministry/${id}`,
+  columns: [
+    { title: "اسم الوزارة", dataIndex: "name", key: "name" },
+  ],
+  formFields: [
+    { name: "name", label: "اسم الوزارة", type: "text" },
+  ],
+},
+
+"/admin/tags": {
+  getEndpoint:    "/api/Tags",
+  postEndpoint:   "/api/Tags",
+  putEndpoint:    (id) => `/api/Tags/${id}`,
+  deleteEndpoint: (id) => `/api/Tags/${id}`,
+  columns: [
+    { title: "الوسم", dataIndex: "name", key: "name" },
+  ],
+  formFields: [
+    { name: "name", label: "الوسم", type: "text" },
+  ],
+},
+
 };
 
 export default Config;

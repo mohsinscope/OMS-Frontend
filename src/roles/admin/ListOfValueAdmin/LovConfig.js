@@ -79,7 +79,24 @@ export const LOV_MENU_ITEMS = [
     label: "مشاريع",
     icon: "projects", // Ensure you have an icon for email reports
     path: "/admin/Archive-projects",
-    permission: "LOVo" // Use an appropriate permission code
+    permission: "LOVc" // Use an appropriate permission code
+  },{
+    label: "جهات الإحالة (CC)",
+    icon: "cc",              // أضف أيقونة cc إلى ملف icons.jsx إن لم تكن موجودة
+    path: "/admin/document-cc",
+    permission: "LOVc"
+  },
+  {
+    label: "الوزارات",
+    icon: "ministry",        // أيقونة تمثل وزارة
+    path: "/admin/ministry",
+    permission: "LOVc"
+  },
+  {
+    label: " (tags) الوسوم",
+    icon: "tag",             // أيقونة تمثل Tag
+    path: "/admin/tags",
+    permission: "LOVc"
   },
 ];
 

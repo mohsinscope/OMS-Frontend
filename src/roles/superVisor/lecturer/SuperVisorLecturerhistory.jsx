@@ -391,7 +391,7 @@ const SuperVisorLecturerhistory = () => {
   return (
     <div
       className={`supervisor-passport-dameged-page ${
-        isSidebarCollapsed ? "sidebar-collapsed" : ""
+        isSidebarCollapsed ? " sidebar-collapsed" : ""
       }`}
       dir="rtl"
     >
