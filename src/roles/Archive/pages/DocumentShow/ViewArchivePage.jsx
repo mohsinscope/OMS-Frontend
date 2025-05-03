@@ -1,5 +1,5 @@
-// src/pages/archive/DocumentShow.jsx
-import { useState, useEffect, useMemo, useCallback } from "react";
+/*  عرض مستند + تعديل + حذف + مرفقات  */
+import { useState, useEffect, useCallback } from "react";
 import {
   Skeleton,
   message,
@@ -14,273 +14,220 @@ import {
 } from "antd";
 import {
   FileTextOutlined,
-  ClockCircleOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
   MailOutlined,
-  PaperClipOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
-import moment from "moment";
-import axiosInstance from './../../../../intercepters/axiosInstance.js';
-import Url from './../../../../store/url.js';
+import dayjs from "dayjs";
 
-import useAuthStore from './../../../../store/store.js';
-import Lele from './../../../../reusable elements/icons.jsx';
-import DocumentDetails from './DocumentDetails.jsx';
-import DocumentAttachments from './DocumentAttachments.jsx';
-import RelatedDocuments from './RelatedDocuments.jsx';
-import DeleteButton from './../../../../reusable elements/buttons/DeleteButton.jsx';
-import AuditButton from './../../../../reusable elements/buttons/AuditButton.jsx';
+import axiosInstance from "../../../../intercepters/axiosInstance";
+import Url           from "../../../../store/url";
+import "./viewArchiveStyle.css";
+import useAuthStore  from "../../../../store/store";
+import Lele          from "../../../../reusable elements/icons";
+import DocumentDetails     from "./DocumentDetails";
+import DocumentAttachments from "./DocumentAttachments";
+import RelatedDocuments    from "./RelatedDocuments";
+import AuditButton         from "../../../../reusable elements/buttons/AuditButton";
+import EditDocumentForm    from "./actions/EditDocumentForm.jsx";
+
 const { Title, Text } = Typography;
 
-/* ثابتـات */
+/* ثوابت مبسّطة */
 export const DOCUMENT_TYPES = {
   1: { name: "وارد",  color: "blue"  },
-  2: { name: "صادر", color: "green" },
+  2: { name: "صادر",  color: "green" },
+};
+export const RESPONSE_TYPES = {
+  1: { name: "اجابة وارد"  },
+  2: { name: "تأكيد وارد"  },
+  3: { name: "وارد جديد"   },
+  4: { name: "اجابة صادر"  },
+  5: { name: "تأكيد صادر"  },
+  6: { name: "صادر جديد"   },
 };
 
-export const RESPONSE_TYPES = {
-  1: { name: "اجابة وارد",   color: "cyan"   },
-  2: { name: "تأكيد وارد",   color: "purple" },
-  3: { name: "وارد جديد",    color: "red"    },
-  4: { name: "اجابة وارد",   color: "blue"   },
-  5: { name: "تأكيد صادر",   color: "pink"   },
-  6: { name: "صادر جديد",    color: "green"  },
-};
+/* helper لعرض "لا يوجد" */
+const showValue = (v) => (v || v === 0 ? v : "لا يوجد");
 
 const DocumentShow = () => {
-  const { isSidebarCollapsed, permissions } = useAuthStore();
-  const hasUpdatePermission = permissions.includes("Du");
-  const hasDeletePermission = permissions.includes("Dd");
+  /* ───── معلومات المستخدم من الـ store ───── */
+  const { isSidebarCollapsed, permissions, profile } = useAuthStore();
+  const currentProfileId = profile?.profileId;
+  const isSuperAdmin     =
+    permissions.includes("SuperAdmin") || profile?.role === "SuperAdmin";
 
-  const location   = useLocation();
-  const navigate   = useNavigate();
-  const documentId = location.state?.id;
+  const hasDeletePermission = permissions.includes("Au");   // صلاحية الحذف
+  const hasUpdatePermission = permissions.includes("Au");   // صلاحية التعديل (قبل التحقق الخاص أدناه)
 
-  /* ========== State ========== */
-  const [documentData,      setDocumentData]      = useState(null);
-  const [images,            setImages]            = useState([]);
-  const [loading,           setLoading]           = useState(false);
-  const [activeTabKey,      setActiveTabKey]      = useState("details");
-  const [editModalVisible,  setEditModalVisible]  = useState(false);
+  /* ───── React-router ───── */
+  const { state } = useLocation();
+  const navigate  = useNavigate();
+  const documentId = state?.id;
 
-  /* attachment state */
-  const [attachmentFile,        setAttachmentFile]   = useState(null);
-  const [selectedAttachmentId,  setSelectedAttachmentId] = useState("");
-  const [uploadLoading,         setUploadLoading]    = useState(false);
-  const [uploadProgress,        setUploadProgress]   = useState(0);
+  /* ───── حالة الصفحة ───── */
+  const [documentData, setDocumentData] = useState(null);
+  const [images,       setImages]       = useState([]);
+  const [loading,      setLoading]      = useState(false);
+  const [activeTabKey, setActiveTabKey] = useState("details");
 
-  /* ---------- helpers ---------- */
-  const showValue = useCallback((v) => (v || v === 0 ? v : "لا يوجد"), []);
-  const getStatusColor = useCallback((d) => {
-    if (!d) return "blue";
-    if (d.isUrgent)   return "red";
-    if (d.isImportant)return "orange";
-    if (d.isAudited)  return "green";
-    return "blue";
-  }, []);
-  const getStatusIcon = useCallback((d) => {
-    if (!d) return <FileTextOutlined />;
-    if (d.isUrgent)   return <ExclamationCircleOutlined />;
-    if (d.isImportant)return <InfoCircleOutlined />;
-    if (d.isAudited)  return <CheckCircleOutlined />;
-    return <FileTextOutlined />;
-  }, []);
+  /* ───── نافذة التعديل ───── */
+  const [editModalVisible, setEditModalVisible] = useState(false);
 
-  /* ---------- API Calls ---------- */
-  const fetchDocumentDetails = useCallback(async () => {
+  /* ───── helpers للألوان/الأيقونات ───── */
+  const statusColor = useCallback(
+    (d) =>
+      !d
+        ? "blue"
+        : d.isUrgent
+        ? "red"
+        : d.isImportant
+        ? "orange"
+        : d.isAudited
+        ? "green"
+        : "blue",
+    []
+  );
+  const statusIcon = useCallback(
+    (d) =>
+      !d ? (
+        <FileTextOutlined />
+      ) : d.isUrgent ? (
+        <ExclamationCircleOutlined />
+      ) : d.isImportant ? (
+        <InfoCircleOutlined />
+      ) : d.isAudited ? (
+        <CheckCircleOutlined />
+      ) : (
+        <FileTextOutlined />
+      ),
+    []
+  );
+
+  /* ───── API calls ───── */
+  const fetchDetails = async () => {
     const { data } = await axiosInstance.get(`${Url}/api/Document/${documentId}`);
     setDocumentData(data);
-    return data;
-  }, [documentId]);
-
-  const fetchImages = useCallback(async () => {
-    const { data } = await axiosInstance.get(`${Url}/api/Attachment/Document/${documentId}`);
+  };
+  const fetchImages = async () => {
+    const { data } = await axiosInstance.get(
+      `${Url}/api/Attachment/Document/${documentId}`
+    );
     setImages(data.map((x) => ({ id: x.id, url: x.filePath })));
-  }, [documentId]);
+  };
 
+  /* ───── تحميل مبدئى ───── */
   useEffect(() => {
     if (!documentId) {
-      message.error("معرف المستند غير موجود");
+      message.error("معرّف المستند غير متوفر");
       navigate(-1);
       return;
     }
     (async () => {
       try {
         setLoading(true);
-        await fetchDocumentDetails();
-        await fetchImages();
+        await Promise.all([fetchDetails(), fetchImages()]);
       } catch {
-        message.error("خطأ أثناء تحميل البيانات");
+        message.error("فشل تحميل البيانات");
       } finally {
         setLoading(false);
       }
     })();
-  }, [documentId, fetchDocumentDetails, fetchImages, navigate]);
+  }, [documentId, navigate]);
 
-  /* ---------- Navigation helpers ---------- */
-  const navigateToReply = () =>
-    navigate("/AddArchive", { state: { parentDocumentId: documentId } });
+  /* ───── حذف المستند ───── */
+  const handleDelete = () =>
+    Modal.confirm({
+      title  : "تأكيد الحذف",
+      content: "هل تريد حذف هذا المستند نهائيًا؟",
+      okType : "danger",
+      okText : "حذف",
+      cancelText: "إلغاء",
+      onOk: async () => {
+        try {
+          await axiosInstance.delete(`${Url}/api/Document/${documentId}`);
+          message.success("تم الحذف");
+          navigate(-1);
+        } catch (e) {
+          message.error(e.response?.data?.message || "فشل الحذف");
+        }
+      },
+    });
 
-  const navigateToParentDocument = () =>
-    documentData?.parentDocumentId &&
-    navigate("/ViewArchivePage", { state: { id: documentData.parentDocumentId } });
-
-  /* ---------- Attachment handlers ---------- */
-  const handleBeforeUpload = (file) => {
-    if (file.type === "application/pdf") {
-      message.error("لا يمكن تحميل ملفات PDF.");
-      return Upload.LIST_IGNORE;
-    }
-    const isLt5M = file.size / 1024 / 1024 < 5;
-    if (!isLt5M) {
-      message.error("يجب أن يكون حجم الملف أقل من 5 ميجابايت!");
-      return Upload.LIST_IGNORE;
-    }
-    setAttachmentFile(file);
-    return false;
-  };
-
-  const uploadOrReplace = async (method /* 'post' | 'put' */) => {
-    if (!attachmentFile) return;
-    setUploadLoading(true);
-    setUploadProgress(0);
-    try {
-      const fd = new FormData();
-      fd.append("entityId", documentId);
-      fd.append("entityType", "Document");
-      fd.append("file", attachmentFile);
-
-      const url =
-        method === "post"
-          ? `${Url}/api/attachment`
-          : `${Url}/api/attachment/${selectedAttachmentId}`;
-
-      await axiosInstance[method](url, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-        onUploadProgress: (e) =>
-          setUploadProgress(Math.round((e.loaded * 100) / e.total)),
-      });
-
-      message.success("تم تحديث المرفقات بنجاح");
-      setAttachmentFile(null);
-      setSelectedAttachmentId("");
-      await fetchImages();
-    } catch {
-      message.error("خطأ في رفع المرفق");
-    } finally {
-      setUploadLoading(false);
-    }
-  };
-
-  /* ---------- Tabs ---------- */
+  /* ───── Tabs ───── */
   const tabList = [
-    { key: "details",         tab: "معلومات المستند" },
-    { key: "attachments",     tab: `المرفقات (${images.length})` },
-    { key: "childDocuments",  tab: `المستندات المرتبطة (${documentData?.childDocuments?.length || 0})` },
+    { key: "details",        tab: "معلومات المستند" },
+    { key: "attachments",    tab: `المرفقات (${images.length})` },
+    {
+      key: "childDocuments",
+      tab: `المستندات المرتبطة (${documentData?.childDocuments?.length || 0})`,
+    },
   ];
 
-  const contentMap = {
-    details: (
-      <DocumentDetails
-        documentData={documentData}
-        DOCUMENT_TYPES={DOCUMENT_TYPES}
-        RESPONSE_TYPES={RESPONSE_TYPES}
-        navigateToParentDocument={navigateToParentDocument}
-        showValue={showValue}
-      />
-    ),
+  /* رابط المرفق الرئيسى (إن وُجد) لتمريره إلى نموذج التعديل */
+  const currentImageUrl =
+    images.find((x) => x.id === documentData?.mainAttachmentId)?.url ||
+    images[0]?.url ||
+    "";
 
-    attachments: (
-      <DocumentAttachments
-        images={images}
-        hasUpdatePermission={hasUpdatePermission}
-        attachmentFile={attachmentFile}
-        selectedAttachmentId={selectedAttachmentId}
-        uploadLoading={uploadLoading}
-        uploadProgress={uploadProgress}
-        /* handlers */
-        handleBeforeUpload={handleBeforeUpload}
-        handleReplaceImage={() => uploadOrReplace("put")}
-        handleAddNewImage={() => uploadOrReplace("post")}
-        setAttachmentFile={setAttachmentFile}
-        setSelectedAttachmentId={setSelectedAttachmentId}
-      />
-    ),
+  /* ⬇️ شرط ظهور زر التعديل: صلاحية Au + (SuperAdmin أو منشئ المستند) */
+  const canEdit =
+    hasUpdatePermission &&
+    (isSuperAdmin || documentData?.profileId === currentProfileId);
 
-    childDocuments: (
-      <RelatedDocuments
-        childDocuments={documentData?.childDocuments}
-        DOCUMENT_TYPES={DOCUMENT_TYPES}
-        getStatusColor={getStatusColor}
-        getStatusIcon={getStatusIcon}
-        navigate={navigate}
-      />
-    ),
-  };
-
-  /* ---------- Render ---------- */
+  /* ───── الواجهة ───── */
   return (
     <ConfigProvider direction="rtl">
       <div
-        className={`document-show-container ${
-          isSidebarCollapsed ? "sidebar-collapsed" : ""
+        id="document-show-page"
+        className={`header-section-of-avrhcive-page ${
+          isSidebarCollapsed
+            ? "header-section-of-avrhcive-page-sidebar-collapsed"
+            : ""
         }`}
-        style={{ padding: 20 }}
       >
         {loading ? (
           <Skeleton active paragraph={{ rows: 12 }} />
         ) : documentData ? (
           <>
-            {/* Header */}
-            <div
-              className={`header-section-of-avrhcive-page ${
-                isSidebarCollapsed ? "header-section-of-avrhcive-page-sidebar-collapsed" : ""
-              }`}
-            >
+            {/* ───────── Header ───────── */}
+            <div dir="rtl">
               <Space align="center">
                 <Avatar
                   size={48}
-                  style={{
-                    backgroundColor: getStatusColor(documentData),
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                  icon={getStatusIcon(documentData)}
+                  style={{ backgroundColor: statusColor(documentData) }}
+                  icon={statusIcon(documentData)}
                 />
                 <div>
-                  <Title level={3} style={{ margin: 0 }}>
+                  <Title level={4} style={{ margin: 0 }}>
                     {documentData.title}
                   </Title>
                   <Text type="secondary">#{documentData.documentNumber}</Text>
                 </div>
               </Space>
 
-              <Space wrap>
+              <Space wrap style={{ marginTop: 12, marginRight: 15 }}>
                 <Button onClick={() => navigate(-1)} icon={<Lele type="back" />}>
                   الرجوع
                 </Button>
 
                 {hasDeletePermission && (
-                  <DeleteButton
-                    documentId={documentId}
-                    onDeleteSuccess={() => navigate(-1)}
-                    buttonProps={{ danger: true }}
-                  />
+                  <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
+                    حذف
+                  </Button>
                 )}
 
                 <AuditButton
                   documentId={documentId}
-                  onAuditSuccess={() => window.location.reload()}
+                  onAuditSuccess={fetchDetails}
                 />
 
-                {hasUpdatePermission && (
+                {canEdit && (
                   <Button
-                    type="primary"
+                    type="default"
                     icon={<Lele type="edit" />}
                     onClick={() => setEditModalVisible(true)}
                   >
@@ -288,40 +235,73 @@ const DocumentShow = () => {
                   </Button>
                 )}
 
-                <Button type="default" icon={<MailOutlined />} onClick={navigateToReply}>
+                <Button
+                  type="dashed"
+                  icon={<MailOutlined />}
+                  onClick={() =>
+                    navigate("/AddArchive", { state: { parentDocumentId: documentId } })
+                  }
+                >
                   رد
                 </Button>
               </Space>
             </div>
 
-            {/* Tabs */}
+            {/* ───────── Tabs ───────── */}
             <Card
-              style={{ width: "100%", marginBottom: 24, boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}
+              className="doc-show-table"
+              style={{ width: "100%", marginTop: 24 }}
               tabList={tabList}
               activeTabKey={activeTabKey}
               onTabChange={setActiveTabKey}
-              tabBarExtraContent={
-                activeTabKey === "childDocuments" && (
-                  <Button type="link" icon={<PaperClipOutlined />} onClick={navigateToReply}>
-                    إضافة مستند مرتبط
-                  </Button>
-                )
-              }
             >
-              {contentMap[activeTabKey]}
+              {activeTabKey === "details" && (
+                <DocumentDetails
+                  documentData={documentData}
+                  DOCUMENT_TYPES={DOCUMENT_TYPES}
+                  RESPONSE_TYPES={RESPONSE_TYPES}
+                  showValue={showValue}
+                />
+              )}
+
+              {activeTabKey === "attachments" && (
+                <DocumentAttachments
+                  images={images}
+                  hasUpdatePermission={false /* تعطيل التعديل هنا */}
+                />
+              )}
+
+              {activeTabKey === "childDocuments" && (
+                <RelatedDocuments
+                  childDocuments={documentData.childDocuments}
+                  DOCUMENT_TYPES={DOCUMENT_TYPES}
+                  navigate={navigate}
+                />
+              )}
             </Card>
 
-            {/* --- Modal التعديل (يمكنك إبقاء النموذج القديم أو توليد Form جديد) --- */}
+            {/* ───────── Edit Modal ───────── */}
             <Modal
               title="تعديل المستند"
               open={editModalVisible}
               onCancel={() => setEditModalVisible(false)}
               footer={null}
-              width={800}
+              width={900}
               destroyOnClose
+              centered
+              style={{ marginTop: "100px" }}
             >
-              {/* ضع نموذج التعديل هنا أو استورده كمكوّن منفصل لاحقًا */}
-              قيد التطوير...
+              <EditDocumentForm
+                initialData={documentData}
+                initialImageUrl={currentImageUrl}
+                onClose={() => setEditModalVisible(false)}
+                onUpdateSuccess={async () => {
+                  await fetchDetails();
+                  await fetchImages();
+                  setEditModalVisible(false);
+                  message.success("تم التحديث بنجاح");
+                }}
+              />
             </Modal>
           </>
         ) : (

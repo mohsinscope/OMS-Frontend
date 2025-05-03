@@ -25,7 +25,7 @@ const useAuthStore = create((set, get) => ({
   isRefreshing: false,
   searchVisible: true,
   isSidebarCollapsed: false,
-
+  
   toggleSidebar: () => {
     set((state) => ({
       isSidebarCollapsed: !state.isSidebarCollapsed
@@ -40,7 +40,7 @@ const useAuthStore = create((set, get) => ({
     if (!accessToken || !refreshToken || !userProfileStr) {
       set({ isInitialized: true });
       return;
-    }
+    } 
 
     try {
       const tokenPayload = parseToken(accessToken);
@@ -133,6 +133,7 @@ const useAuthStore = create((set, get) => ({
 
     window.location.href = '/login';
   },
+  
 }));
 
 export default useAuthStore;
