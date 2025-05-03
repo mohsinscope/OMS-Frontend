@@ -1,4 +1,3 @@
-// src/pages/archive/AddDocumentPage.jsx
 import React, { useState, useEffect } from "react";
 import {
   Form,
@@ -13,12 +12,23 @@ import {
   Divider,
   Layout,
   ConfigProvider,
-  Breadcrumb,
   Modal,
   Descriptions,
+  Space,
+  Tag,
+  Card,
+  Tooltip,
 } from "antd";
-import { InboxOutlined, ArrowLeftOutlined } from "@ant-design/icons";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { 
+  InboxOutlined, 
+  ArrowLeftOutlined, 
+  SearchOutlined, 
+  LinkOutlined,
+  CheckCircleOutlined,
+  DeleteOutlined,
+  InfoCircleOutlined,
+} from "@ant-design/icons";
+import { useNavigate, useLocation } from "react-router-dom";
 import ar_EG from "antd/lib/locale/ar_EG";
 import axiosInstance from "../../../intercepters/axiosInstance.js";
 import moment from "moment";
@@ -51,28 +61,28 @@ const getDocumentOptionChoices = (side) => {
   return [];
 };
 
-/*──────────────────────── component ────────────────────────*/
 function AddDocumentPage({
   editMode = false,
   confirmMode = false,
   referencedDocument = null,
   initialValues = {},
 }) {
-  /* ───────────── hooks & selectors ───────────── */
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const location = useLocation();
   const profileId = useAuthStore((s) => s.profile?.profileId);
 
-  // مَعرّف الكتاب الأصلى (إذا جئنا من زر "رد")
   const parentDocumentId = location.state?.parentDocumentId ?? null;
   const hasParent = Boolean(parentDocumentId);
 
-  /* ───────────── state ───────────── */
   const [fileList, setFileList] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [fetchedDocumentData, setFetchedDocumentData] = useState(null);
+  const [searchDocumentNumber, setSearchDocumentNumber] = useState("");
+  const [searchingDocument, setSearchingDocument] = useState(false);
+  const [foundParentDocument, setFoundParentDocument] = useState(null);
+  const [parentDocModalVisible, setParentDocModalVisible] = useState(false);
 
   const [projectOptions, setProjectOptions] = useState([]);
   const [documentPartyOptions, setDocumentPartyOptions] = useState([]);
@@ -83,13 +93,17 @@ function AddDocumentPage({
   const [selectedDocumentSide, setSelectedDocumentSide] = useState(
     initialValues.documentSide || null
   );
-  const [selectedIsOfficial, setSelectedIsOfficial] = useState(true);
+  const [selectedResponseType, setSelectedResponseType] = useState(null);
+  const [isReplyDocument, setIsReplyDocument] = useState(false);
   const [viewModalVisible, setViewModalVisible] = useState(false);
+  const [selectedIsOfficial, setSelectedIsOfficial] = useState(true);
+  const [selectedPartyType, setSelectedPartyType] = useState(null);
+  const [selectedProject, setSelectedProject] = useState(null);
 
-  const { 
-    isSidebarCollapsed, 
-
-  } = useAuthStore();
+  const { isSidebarCollapsed, profile } = useAuthStore();
+  const userPosition = profile?.position;
+  const isDirector = userPosition === "Director" || userPosition === "SuperAdmin";
+  
   /* ───────────── fetch static selects ───────────── */
   useEffect(() => {
     (async () => {
@@ -118,6 +132,16 @@ function AddDocumentPage({
       }
     })();
   }, []);
+
+  /* ───────────── check if document is reply type ───────────── */
+  useEffect(() => {
+    if (selectedResponseType === 1 || selectedResponseType === 4) {
+      setIsReplyDocument(true);
+    } else {
+      setIsReplyDocument(false);
+      setFoundParentDocument(null);
+    }
+  }, [selectedResponseType]);
 
   /* ───────────── fetch parent document (للعرض فقط) ───────────── */
   useEffect(() => {
@@ -161,6 +185,72 @@ function AddDocumentPage({
     });
   }, [editMode, initialValues, form]);
 
+  const handlePartyTypeChange = async (partyType) => {
+    setSelectedPartyType(partyType);
+    form.setFieldsValue({ PartyId: undefined }); // Clear PartyId when party type changes
+
+    if (selectedProject && selectedIsOfficial !== null) {
+      try {
+        const response = await axiosInstance.get(
+          `/api/DocumentParty/${selectedProject}/${partyType}/${selectedIsOfficial}`
+        );
+        setDocumentPartyOptions(response.data); // Set the response data to the options
+      } catch (error) {
+        message.error("خطأ في جلب بيانات الجهات");
+      }
+    } else {
+      message.error("لم يتم تحديد المشروع أو حالة الجهة الرسمية");
+    }
+  };
+
+  /* ───────────── handle response type change ───────────── */
+  const handleResponseTypeChange = (option) => {
+    const responseType = getResponseTypeValue(selectedDocumentSide, option);
+    setSelectedResponseType(responseType);
+    form.setFieldsValue({ ResponseType: option });
+  };
+
+  /* ───────────── search for parent document ───────────── */
+  const handleSearchParentDocument = async (e) => {
+    // Prevent form submission if triggered by Enter key
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+    
+    if (!searchDocumentNumber.trim()) {
+      message.warning("الرجاء إدخال رقم الكتاب للبحث");
+      return;
+    }
+
+    setSearchingDocument(true);
+    try {
+      const response = await axiosInstance.get(`/api/Document/bynumber/${searchDocumentNumber.trim()}`);
+      setFoundParentDocument(response.data);
+      message.success(`تم العثور على الكتاب: ${response.data.title}`);
+    } catch (error) {
+      console.error(error);
+      message.error("لم يتم العثور على الكتاب بهذا الرقم");
+      setFoundParentDocument(null);
+    } finally {
+      setSearchingDocument(false);
+    }
+  };
+
+  /* ───────────── view parent document details ───────────── */
+  const viewParentDocumentDetails = () => {
+    if (foundParentDocument) {
+      setParentDocModalVisible(true);
+    }
+  };
+
+  /* ───────────── confirm selection of parent document ───────────── */
+  const confirmParentDocument = () => {
+    if (foundParentDocument) {
+      message.success(`تم اختيار الكتاب "${foundParentDocument.title}" كمرجع`);
+      setParentDocModalVisible(false);
+    }
+  };
+
   /* ───────────── upload helpers ───────────── */
   const fileUploadProps = {
     name: "file",
@@ -200,6 +290,11 @@ function AddDocumentPage({
         return message.error("ارفع ملفاً واحداً على الأقل");
       }
 
+      // Check if this is a reply document but no parent document was selected
+      if ((selectedResponseType === 1 || selectedResponseType === 4) && !foundParentDocument) {
+        return message.error("هذا النوع من الكتب يتطلب تحديد الكتاب الأصلي، الرجاء البحث وتحديد الكتاب");
+      }
+
       setSubmitting(true);
       const fd = new FormData();
 
@@ -228,9 +323,27 @@ function AddDocumentPage({
       );
       fd.append("Subject", values.subject);
       fd.append("Notes", values.notes ?? "");
-      if (values.ccIds?.length) fd.append("CCIds", values.ccIds.join(","));
-      if (values.tagIds?.length) fd.append("TagIds", values.tagIds.join(","));
-      fd.append("ParentDocumentId", parentDocumentId ?? "");
+      
+      // Handle multiple selections for CCIds
+      if (values.ccIds?.length) {
+        values.ccIds.forEach(id => {
+          fd.append("CCIds", id);
+        });
+      }
+      
+      // Handle multiple selections for TagIds
+      if (values.tagIds?.length) {
+        values.tagIds.forEach(id => {
+          fd.append("TagIds", id);
+        });
+      }
+      
+      // Set parent document ID - either from location state or from search
+      if (foundParentDocument && isReplyDocument) {
+        fd.append("ParentDocumentId", foundParentDocument.id);
+      } else {
+        fd.append("ParentDocumentId", parentDocumentId ?? "");
+      }
 
       fileList.forEach((f) =>
         fd.append("Files", f.originFileObj ?? f, f.name)
@@ -258,19 +371,14 @@ function AddDocumentPage({
   /* ───────────── render ───────────── */
   return (
     <ConfigProvider locale={ar_EG} direction="rtl">
-      <Layout       className={`document-page-layout ${
-        isSidebarCollapsed ? "document-page-layout-sidebar-collapsed" : "document-page-layout"
-      }`} style={{background:"none"}}>
-        <Header className="document-page-header">
+      <Layout       
+        className={`document-page-layout ${
+          isSidebarCollapsed ? "document-page-layout-sidebar-collapsed" : "document-page-layout"
+        }`} 
+        style={{background:"none"}}
+      >
+        <Header className="document-page-header"  >
           <h1>{editMode ? "تعديل كتاب" : "إضافة كتاب جديد"}</h1>
-          <Breadcrumb className="document-breadcrumb">
-            <Breadcrumb.Item>
-              <Link to="/archive">الأرشيف</Link>
-            </Breadcrumb.Item>
-            <Breadcrumb.Item>
-              {editMode ? "تعديل كتاب" : "إضافة كتاب جديد"}
-            </Breadcrumb.Item>
-          </Breadcrumb>
         </Header>
 
         <Content className="document-page-content">
@@ -296,10 +404,73 @@ function AddDocumentPage({
                     <Button
                       type="default"
                       onClick={() => setViewModalVisible(true)}
+          
                     >
                       عرض التفاصيل
                     </Button>
                   </div>
+                </Col>
+              )}
+
+              {foundParentDocument && isReplyDocument && (
+                <Col span={24}>
+                  <Card 
+                    title={<><LinkOutlined /> الكتاب المرجعي (سيتم الرد عليه)</>}
+                    style={{ marginBottom: 16, borderColor: '#1890ff' }}
+                    extra={
+                      <Button
+                        type="text"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => setFoundParentDocument(null)}
+                      >
+                        إلغاء الاختيار
+                      </Button>
+                    }
+                  >
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <p>
+                          <strong>رقم الكتاب:</strong> {foundParentDocument.documentNumber}
+                        </p>
+                        <p>
+                          <strong>العنوان:</strong> {foundParentDocument.title}
+                        </p>
+                        <p>
+                          <strong>التاريخ:</strong>{" "}
+                          {new Date(foundParentDocument.documentDate).toLocaleDateString("ar-EG")}
+                        </p>
+                      </Col>
+                      <Col span={12}>
+                        <p>
+                          <strong>الجهة:</strong> {foundParentDocument.partyName}
+                        </p>
+                        <p>
+                          <strong>نوع الكتاب:</strong> {foundParentDocument.documentType === 1 ? "صادر" : "وارد"}
+                        </p>
+                        <p>
+                          <Tag color={foundParentDocument.isUrgent ? "red" : "default"}>
+                            {foundParentDocument.isUrgent ? "عاجل" : "غير عاجل"}
+                          </Tag>
+                          <Tag color={foundParentDocument.isImportant ? "orange" : "default"}>
+                            {foundParentDocument.isImportant ? "مهم" : "غير مهم"}
+                          </Tag>
+                          <Tag color={foundParentDocument.isRequiresReply ? "green" : "default"}>
+                            {foundParentDocument.isRequiresReply ? "يتطلب رد" : "لا يتطلب رد"}
+                          </Tag>
+                        </p>
+                      </Col>
+                    </Row>
+                    <Button 
+                      type="primary"
+                      size="small"
+                      icon={<InfoCircleOutlined />}
+                      onClick={viewParentDocumentDetails}
+                      style={{height:"40px"}}
+                    >
+                      عرض التفاصيل
+                    </Button>
+                  </Card>
                 </Col>
               )}
 
@@ -317,14 +488,14 @@ function AddDocumentPage({
                         name="isOfficialParty"
                         label="هل الجهة رسمية؟"
                         rules={[{ required: true, message: "اختر" }]}
-                        initialValue={true}
+                        initialValue={selectedIsOfficial}
                       >
                         <Select
-                          onChange={(v) => {
-                            setSelectedIsOfficial(v);
+                          onChange={(value) => {
+                            setSelectedIsOfficial(value); // Update only the official status
                             form.setFieldsValue({
-                              PartyId: undefined,
-                              ministryId: undefined,
+                              PartyId: undefined, // Reset PartyId
+                              ministryId: value ? undefined : null, // Reset ministryId if not official
                             });
                           }}
                         >
@@ -370,6 +541,7 @@ function AddDocumentPage({
                           filterOption={(i, o) =>
                             o.children.toLowerCase().includes(i.toLowerCase())
                           }
+                          onChange={(value) => setSelectedProject(value)} // Set selected project
                         >
                           {projectOptions.map((p) => (
                             <Option key={p.id} value={p.id}>
@@ -379,11 +551,30 @@ function AddDocumentPage({
                         </Select>
                       </Form.Item>
                     </Col>
-
+                    <Col xs={24} sm={4}>
+                      <Form.Item
+                        name="partyType"
+                        label="نوع الجهه"
+                        rules={[{ required: true, message: "اختر" }]}
+                        initialValue={selectedPartyType}
+                      >
+                        <Select
+                          onChange={(value) => {
+                            setSelectedPartyType(value);  // Update party type
+                            handlePartyTypeChange(value); // Fetch the document party options dynamically
+                          }}
+                        >
+                          <Option value="MainDepartment">مديرية عامة</Option>
+                          <Option value="Department">مديرية</Option>
+                          <Option value="Section">قسم</Option>
+                          <Option value="Directorate">شعبة</Option>
+                        </Select>
+                      </Form.Item>
+                    </Col>
                     <Col xs={24} sm={4}>
                       <Form.Item
                         name="PartyId"
-                        label="نوع الجهه"
+                        label="اسم الجهه"
                         rules={[{ required: true, message: "اختر الجهة" }]}
                       >
                         <Select
@@ -391,6 +582,7 @@ function AddDocumentPage({
                           filterOption={(i, o) =>
                             o.children.toLowerCase().includes(i.toLowerCase())
                           }
+                          disabled={!selectedPartyType || !selectedProject || !selectedIsOfficial}
                         >
                           {documentPartyOptions
                             .filter((p) => p.isOfficial === selectedIsOfficial)
@@ -403,7 +595,6 @@ function AddDocumentPage({
                       </Form.Item>
                     </Col>
 
-
                     <Col xs={24} sm={4}>
                       <Form.Item
                         name="documentSide"
@@ -414,6 +605,8 @@ function AddDocumentPage({
                           onChange={(v) => {
                             setSelectedDocumentSide(v);
                             form.setFieldsValue({ ResponseType: undefined });
+                            setSelectedResponseType(null);
+                            setIsReplyDocument(false);
                           }}
                         >
                           <Option value="صادر">صادر</Option>
@@ -421,14 +614,19 @@ function AddDocumentPage({
                         </Select>
                       </Form.Item>
                     </Col>
+                  </Row>
 
-                    <Col xs={24} sm={4}>
+                  <Row gutter={16}>
+                    <Col xs={24} sm={isReplyDocument && !foundParentDocument ? 4 : 4}>
                       <Form.Item
                         name="ResponseType"
                         label="خيارات الكتاب"
                         rules={[{ required: true, message: "اختر خياراً" }]}
                       >
-                        <Select disabled={!selectedDocumentSide}>
+                        <Select 
+                          disabled={!selectedDocumentSide}
+                          onChange={handleResponseTypeChange}
+                        >
                           {(getDocumentOptionChoices(selectedDocumentSide) || []
                           ).map((opt) => (
                             <Option key={opt} value={opt}>
@@ -439,13 +637,41 @@ function AddDocumentPage({
                       </Form.Item>
                     </Col>
 
-           
+                    {/* Parent Document Search Field - Only show if document is reply type and no parent selected yet */}
+                    {isReplyDocument && !foundParentDocument && (
+  <Col xs={24} sm={8}>
+    <Form.Item label="بحث عن الكتاب الأصلي للرد عليه">
+      <Row gutter={8} align="middle">
+        {/* حقل الرقم */}
+        <Col flex="auto">
+          <Input
+            placeholder="أدخل رقم الكتاب للبحث"
+            value={searchDocumentNumber}
+            onChange={(e) => setSearchDocumentNumber(e.target.value)}
+            onPressEnter={handleSearchParentDocument}
+          />
+        </Col>
+
+        {/* زر البحث */}
+        <Col>
+          <Button
+            type="primary"
+            icon={<SearchOutlined />}
+            onClick={handleSearchParentDocument}
+            loading={searchingDocument}
+            style={{height:"40px"}}
+          >
+            بحث
+          </Button>
+        </Col>
+      </Row>
+    </Form.Item>
+  </Col>
+)}
                   </Row>
 
                   {/* ==== صف المشروع/الرقم/العنوان/التاريخ ==== */}
                   <Row gutter={16}>
-          
-
                     <Col xs={24} sm={6}>
                       <Form.Item
                         name="documentNumber"
@@ -497,7 +723,7 @@ function AddDocumentPage({
 
                   {/* ==== صف عاجل/مهم/يستلزم/CC/Tags ==== */}
                   <Row gutter={16}>
-                  <Col xs={24} sm={5}>
+                    <Col xs={24} sm={5}>
                       <Form.Item
                         name="isRequiresReply"
                         label="يتطلب رد؟"
@@ -552,30 +778,29 @@ function AddDocumentPage({
                       </Form.Item>
                     </Col>
 
-            
-
-                    <Col xs={24} sm={6}>
-                      <Form.Item name="tagIds" label="الوسوم">
-                        <Select
-                          mode="multiple"
-                          allowClear
-                          showSearch
-                          filterOption={(i, o) =>
-                            o.children.toLowerCase().includes(i.toLowerCase())
-                          }
-                        >
-                          {tagOptions.map((t) => (
-                            <Option key={t.id} value={t.id}>
-                              {t.name}
-                            </Option>
-                          ))}
-                        </Select>
-                      </Form.Item>
-                    </Col>
+                    {isDirector && (
+                      <Col xs={24} sm={6}>
+                        <Form.Item name="tagIds" label="الوسوم">
+                          <Select
+                            mode="multiple"
+                            allowClear
+                            showSearch
+                            filterOption={(i, o) =>
+                              o.children.toLowerCase().includes(i.toLowerCase())
+                            }
+                          >
+                            {tagOptions.map((t) => (
+                              <Option key={t.id} value={t.id}>
+                                {t.name}
+                              </Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                      </Col>
+                    )}
                   </Row>
 
-                  {/* ==== الموضوع / الملاحظات ==== */}
-                  <Row gutter={16}>
+                  {/* ==== الموضوع / الملاحظات ==== */}<Row gutter={16}>
                     <Col xs={24} sm={12}>
                       <Form.Item
                         name="subject"
@@ -640,6 +865,7 @@ function AddDocumentPage({
               onClick={handleSubmit}
               loading={submitting}
               size="large"
+              icon={<CheckCircleOutlined />}
             >
               {editMode ? "حفظ التغييرات" : "حفظ"}
             </Button>
@@ -648,8 +874,9 @@ function AddDocumentPage({
               onClick={() => navigate("/archive")}
               size="large"
               style={{ marginInlineStart: 8 }}
+              icon={<ArrowLeftOutlined />}
             >
-              العودة <ArrowLeftOutlined />
+              العودة
             </Button>
           </div>
         </Content>
@@ -684,6 +911,104 @@ function AddDocumentPage({
           </Descriptions>
         ) : (
           "لا توجد بيانات"
+        )}
+      </Modal>
+
+      {/* ==== Modal تفاصيل الكتاب المرجعي ==== */}
+      <Modal
+        open={parentDocModalVisible}
+        title={<><LinkOutlined /> بيانات الكتاب المرجعي</>}
+        width={700}
+        footer={[
+          <Button
+            key="confirm"
+            type="primary"
+            onClick={confirmParentDocument}
+            disabled={!foundParentDocument}
+            icon={<CheckCircleOutlined />}
+          >
+            تأكيد الاختيار
+          </Button>,
+          <Button
+            key="close"
+            onClick={() => setParentDocModalVisible(false)}
+          >
+            إغلاق
+          </Button>,
+        ]}
+        onCancel={() => setParentDocModalVisible(false)}
+      >
+        {foundParentDocument ? (
+          <>
+            <Descriptions bordered column={2} size="small" style={{ marginBottom: 16 }}>
+              <Descriptions.Item label="رقم الكتاب" span={1}>
+                {foundParentDocument.documentNumber}
+              </Descriptions.Item>
+              <Descriptions.Item label="نوع الكتاب" span={1}>
+                {foundParentDocument.documentType === 1 ? "صادر" : "وارد"}
+              </Descriptions.Item>
+              <Descriptions.Item label="عنوان الكتاب" span={2}>
+                {foundParentDocument.title}
+              </Descriptions.Item>
+              <Descriptions.Item label="الجهة" span={1}>
+                {foundParentDocument.partyName}
+              </Descriptions.Item>
+              <Descriptions.Item label="التاريخ" span={1}>
+                {new Date(foundParentDocument.documentDate).toLocaleDateString("ar-EG")}
+              </Descriptions.Item>
+              <Descriptions.Item label="الموضوع" span={2}>
+                {foundParentDocument.subject}
+              </Descriptions.Item>
+            </Descriptions>
+            
+            <Row gutter={16}>
+              <Col span={8}>
+                <Tag color={foundParentDocument.isUrgent ? "red" : "default"} style={{ marginBottom: 8, padding: '4px 8px' }}>
+                  {foundParentDocument.isUrgent ? "عاجل" : "غير عاجل"}
+                </Tag>
+              </Col>
+              <Col span={8}>
+                <Tag color={foundParentDocument.isImportant ? "orange" : "default"} style={{ marginBottom: 8, padding: '4px 8px' }}>
+                  {foundParentDocument.isImportant ? "مهم" : "غير مهم"}
+                </Tag>
+              </Col>
+              <Col span={8}>
+                <Tag color={foundParentDocument.isRequiresReply ? "green" : "default"} style={{ marginBottom: 8, padding: '4px 8px' }}>
+                  {foundParentDocument.isRequiresReply ? "يتطلب رد" : "لا يتطلب رد"}
+                </Tag>
+              </Col>
+            </Row>
+
+            {foundParentDocument.ccNames && foundParentDocument.ccNames.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ marginBottom: 8 }}><strong>نسخة منه إلى:</strong></div>
+                <div>
+                  {foundParentDocument.ccNames.map((name, index) => (
+                    <Tag key={index} color="blue" style={{ margin: '0 4px 4px 0' }}>
+                      {name}
+                    </Tag>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {foundParentDocument.tagNames && foundParentDocument.tagNames.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ marginBottom: 8 }}><strong>الوسوم:</strong></div>
+                <div>
+                  {foundParentDocument.tagNames.map((name, index) => (
+                    <Tag key={index} color="purple" style={{ margin: '0 4px 4px 0' }}>
+                      {name}
+                    </Tag>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            لا توجد بيانات متاحة
+          </div>
         )}
       </Modal>
     </ConfigProvider>

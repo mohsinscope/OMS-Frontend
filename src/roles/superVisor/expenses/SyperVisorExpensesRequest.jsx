@@ -13,12 +13,20 @@ import {
   Spin,
   Skeleton,
   Tooltip,
+  DatePicker 
 } from "antd";
 import { PlusCircleOutlined, CalendarOutlined, PlusOutlined  } from "@ant-design/icons";
+import arEG from "antd/lib/locale/ar_EG"; 
+import moment from "moment";
 import useAuthStore from "../../../store/store";
 import axiosInstance from "../../../intercepters/axiosInstance.js";
 import { Link } from "react-router-dom";
-import moment from "moment";
+ import dayjs from "dayjs";
+ import utc from "dayjs/plugin/utc";
+ dayjs.extend(utc);
+ import "dayjs/locale/ar";     // ← load Arabic
+dayjs.extend(utc);
+dayjs.locale("ar");          // ← set globally to Arabic
 import "./styles/SuperVisorExpinsesRequest.css";
 
 export default function SuperVisorExpensesRequest() {
@@ -38,11 +46,24 @@ export default function SuperVisorExpensesRequest() {
   const [canSendRequests, setCanSendRequests] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // Loading state
 
+// first day of this month
+const startMonth = dayjs().startOf("month");
+// first day of next month
+const nextMonth  = dayjs().add(1, "month").startOf("month");
+
+// disable anything before this month or after next month
+const disableOtherMonths = (current) => {
+  // `current` is a Day.js object
+  return (
+    current.isBefore(startMonth, "month") ||
+    current.isAfter(nextMonth,  "month")
+  );
+};
   // Initialize officeInfo with the date set to 00:00:00 but only display the date portion ("YYYY-MM-DD")
   const [officeInfo, setOfficeInfo] = useState({
     totalCount: 0,
     totalExpenses: 0,
-    date: moment(new Date()).startOf("day").format("YYYY-MM-DD"),
+    date: dayjs().startOf("day").format("YYYY-MM-DD"),
     governorate: profile?.governorateName || "",
     officeName: profile?.officeName || "",
     supervisorName: profile?.fullName || "",
@@ -153,9 +174,7 @@ export default function SuperVisorExpensesRequest() {
   };
 
   // Format date for display without the hours
-  const formatDate = (dateString) => {
-    return moment(dateString).startOf("day").format("YYYY-MM-DD");
-  };
+  const formatDate = dateString => dayjs(dateString).startOf("day").format("YYYY-MM-DD");
 
   const getStatusColor = (status) => {
     const statusColors = {
@@ -268,16 +287,23 @@ export default function SuperVisorExpensesRequest() {
     }
   };
 
-  const handleCreateMonthlyExpense = async () => {
+  const handleCreateMonthlyExpense = async (values) => {
     try {
       setLoading(true);
-      const payload = {
-        totalAmount: 0,
-        status: 0,
-        officeId: profile?.officeId,
-        governorateId: profile?.governorateId,
-        profileId: profile?.profileId,
+         // take the selected month, set to first day, zero UTC
+            const monthIso = dayjs(values.month)
+              .utc()
+              .startOf("month")
+              .format("YYYY-MM-DDTHH:mm:ss[Z]");
+              const payload = {
+                 totalAmount: 0,
+                status: 0,
+                 officeId: profile?.officeId,
+                 governorateId: profile?.governorateId,
+                 profileId: profile?.profileId,
+                 dateCreated: monthIso,       // include your new ISO date
       };
+
 
       const response = await axiosInstance.post("/api/Expense/MonthlyExpenses", payload);
 
@@ -916,6 +942,21 @@ export default function SuperVisorExpensesRequest() {
           className="new-expensess-monthly"
           style={{ marginTop: "10px" }}
         >
+           <ConfigProvider direction="rtl" locale={arEG}>
+            <Form.Item
+              name="month"
+              label="اختر الشهر"
+              rules={[{ required: true, message: "يرجى اختيار الشهر" }]}
+            >
+              <DatePicker
+                picker="month"
+                format="MMMM YYYY"
+                style={{ width: "100%" }}
+                placeholder="اختر الشهر"
+                disabledDate={disableOtherMonths}
+              />
+            </Form.Item>
+              </ConfigProvider> 
           <Form.Item name="notes" label="هل انت متأكد من انشاء مصروف لهذا الشهر" style={{ width: "100%" }} />
           <Form.Item>
             <Button type="primary" htmlType="submit" loading={loading} block size="large">
