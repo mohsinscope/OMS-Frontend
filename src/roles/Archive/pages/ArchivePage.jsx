@@ -34,9 +34,11 @@ import dayjs from "dayjs";
 import ar_EG from "antd/lib/locale/ar_EG";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import "../styles/archiveStyles.css";
+import useAuthStore from './../../../store/store.js';
 
 const { Content } = Layout;
 const { Option } = Select;
+
 
 /* ─────────── ثوابت ─────────── */
 const DOCUMENT_TYPES = { 1: "صادر", 2: "وارد" };
@@ -125,6 +127,9 @@ const SHORTCUTS = [
 ];
 
 export default function ArchivePage() {
+  
+const { permissions } = useAuthStore();
+const hasCreatePermission = permissions.includes("DOCc");
   const [form] = Form.useForm();
   const navigate = useNavigate();
 
@@ -428,11 +433,14 @@ export default function ArchivePage() {
               <h1 style={{ margin: 0 }}>الأرشيف</h1>
             </Col>
             <Col>
+            {hasCreatePermission && 
+            
               <Link to="/AddArchive">
                 <Button type="primary" size="large">
                   أرشفة كتاب +
                 </Button>
               </Link>
+            }
             </Col>
           </Row>
 
