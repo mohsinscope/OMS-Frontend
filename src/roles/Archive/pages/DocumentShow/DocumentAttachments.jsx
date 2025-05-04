@@ -16,7 +16,7 @@ const DocumentAttachments = ({ images }) => (
       </div>
     ) : (
       <Empty
-        description="لا توجد مرفقات لهذا المستند"
+        description="لا توجد مرفقات لهذا الكتاب"
         image={Empty.PRESENTED_IMAGE_SIMPLE}
       />
     )}

@@ -185,7 +185,7 @@ export default function EditDocumentForm({
         fd.append("Files", fileList[0], fileList[0].name);
       }
 
-      /* endpoint يتضمن معرف المستند */
+      /* endpoint يتضمن معرف الكتاب */
       await axiosInstance.put(
         `${Url}/api/Document/${initialData.id}`,   // ⬅️  /Document/{id}
         fd,

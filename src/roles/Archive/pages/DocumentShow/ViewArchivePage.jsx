@@ -33,7 +33,7 @@ import DocumentAttachments from "./DocumentAttachments";
 import RelatedDocuments    from "./RelatedDocuments";
 import AuditButton         from "../../../../reusable elements/buttons/AuditButton";
 import EditDocumentForm    from "./actions/EditDocumentForm.jsx";
-
+import DocumentHistory from './DocumentActionsHistory.jsx';
 const { Title, Text } = Typography;
 
 /* ثوابت مبسّطة */
@@ -122,7 +122,7 @@ const DocumentShow = () => {
   /* ───── تحميل مبدئى ───── */
   useEffect(() => {
     if (!documentId) {
-      message.error("معرّف المستند غير متوفر");
+      message.error("معرّف الكتاب غير متوفر");
       navigate(-1);
       return;
     }
@@ -138,11 +138,11 @@ const DocumentShow = () => {
     })();
   }, [documentId, navigate]);
 
-  /* ───── حذف المستند ───── */
+  /* ───── حذف الكتاب ───── */
   const handleDelete = () =>
     Modal.confirm({
       title  : "تأكيد الحذف",
-      content: "هل تريد حذف هذا المستند نهائيًا؟",
+      content: "هل تريد حذف هذا الكتاب نهائيًا؟",
       okType : "danger",
       okText : "حذف",
       cancelText: "إلغاء",
@@ -159,12 +159,13 @@ const DocumentShow = () => {
 
   /* ───── Tabs ───── */
   const tabList = [
-    { key: "details",        tab: "معلومات المستند" },
+    { key: "details",        tab: "معلومات الكتاب" },
     { key: "attachments",    tab: `المرفقات (${images.length})` },
     {
       key: "childDocuments",
-      tab: `المستندات المرتبطة (${documentData?.childDocuments?.length || 0})`,
+      tab: `الكتب المرتبطة (${documentData?.childDocuments?.length || 0})`,
     },
+    { key: "history",        tab: "سجلّ الإجراءات" },   // ← أضف هذا العنصر
   ];
 
   /* رابط المرفق الرئيسى (إن وُجد) لتمريره إلى نموذج التعديل */
@@ -173,10 +174,6 @@ const DocumentShow = () => {
     images[0]?.url ||
     "";
 
-  /* ⬇️ شرط ظهور زر التعديل: صلاحية Au + (SuperAdmin أو منشئ المستند) */
-  const canEdit =
-    hasUpdatePermission &&
-    (isSuperAdmin || documentData?.profileId === currentProfileId);
 
   /* ───── الواجهة ───── */
   return (
@@ -278,11 +275,14 @@ const DocumentShow = () => {
                   navigate={navigate}
                 />
               )}
+                            {activeTabKey === "history" && (
+                <DocumentHistory documentId={documentId} />
+              )}
             </Card>
 
             {/* ───────── Edit Modal ───────── */}
             <Modal
-              title="تعديل المستند"
+              title="تعديل الكتاب"
               open={editModalVisible}
               onCancel={() => setEditModalVisible(false)}
               footer={null}

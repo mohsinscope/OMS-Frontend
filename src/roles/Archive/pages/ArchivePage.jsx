@@ -211,7 +211,7 @@ const hasCreatePermission = permissions.includes("DOCc");
     }
   };
 
-  /* جلب المستندات */
+  /* جلب الكتب */
   const fetchDocuments = async (vals = {}, pageNumber = 1) => {
     setLoading(true);
     try {

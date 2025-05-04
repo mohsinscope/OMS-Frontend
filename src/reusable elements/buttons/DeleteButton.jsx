@@ -13,11 +13,11 @@ const DeleteButton = ({ documentId, onDeleteSuccess }) => {
   const handleDelete = async () => {
     try {
       await axiosInstance.delete(endpoint);
-      message.success("تم حذف المستند بنجاح");
+      message.success("تم حذف الكتاب بنجاح");
       setModalVisible(false);
       if (onDeleteSuccess) onDeleteSuccess();
     } catch (error) {
-      message.error("حدث خطأ أثناء حذف المستند");
+      message.error("حدث خطأ أثناء حذف الكتاب");
     }
   };
 
@@ -31,7 +31,7 @@ const DeleteButton = ({ documentId, onDeleteSuccess }) => {
         className="delete-button"
         onClick={() => setModalVisible(true)}
       >
-        حذف المستند
+        حذف الكتاب
       </Button>
       <ConfigProvider direction="rtl">
       <Modal
@@ -42,7 +42,7 @@ const DeleteButton = ({ documentId, onDeleteSuccess }) => {
         okText="حذف"
         cancelText="إلغاء"
       >
-        <p>هل أنت متأكد أنك تريد حذف هذا المستند؟</p>
+        <p>هل أنت متأكد أنك تريد حذف هذا الكتاب</p>
       </Modal>
       </ConfigProvider>
     </>

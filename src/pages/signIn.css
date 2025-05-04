@@ -6,24 +6,22 @@
 
 /* Left-side styling */
 .left-side {
-  padding: 6% 4%;
+  padding: 6% 5%;
   width: 60%;
   background: linear-gradient(133.27deg, #007e78 11.78%, #00197d 50.49%, #003d84 100%);
-
+  text-align: justify;
   color: white;
   clip-path: polygon(0 0, 100% 0, 0 100%);
+  
 }
 
 .logo {
   width: 350px;
-  margin-left: 8%;
-  margin-right: 8%;
 }
 
 .left-side h1 {
   font-size: 2.5rem;
   font-weight: bold;
-  width: fit-content;
 }
 
 /* Right-side styling */
@@ -539,6 +537,7 @@
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
     text-align: center;
     padding: 0px 0px;
+    padding-bottom: 20px;
   }
   .logo {
     width: 250px;

@@ -16,14 +16,14 @@ const AuditButton = ({ documentId, onAuditSuccess }) => {
   const handleAudit = async () => {
     try {
       await axiosInstance.post(endpoint);
-      message.success("تم تدقيق المستند بنجاح");
+      message.success("تم تدقيق الكتاب بنجاح");
       setModalVisible(false);
       // Either use a callback or simply refresh the page
       if (onAuditSuccess) onAuditSuccess();
       else window.location.reload();
     } catch (error) {
       console.error("Audit error:", error);
-      message.error("حدث خطأ أثناء تدقيق المستند");
+      message.error("حدث خطأ أثناء تدقيق الكتاب");
     }
   };
 
@@ -35,7 +35,7 @@ const AuditButton = ({ documentId, onAuditSuccess }) => {
         onClick={() => setModalVisible(true)}
       className="audit-button"
       >
-        تدقيق المستند
+        تدقيق الكتاب
       </Button>
       <ConfigProvider direction="rtl">
 
@@ -48,7 +48,7 @@ const AuditButton = ({ documentId, onAuditSuccess }) => {
         okText="تأكيد"
         cancelText="إلغاء"
       >
-        <p>هل أنت متأكد أنك تريد تدقيق هذا المستند؟</p>
+        <p>هل أنت متأكد أنك تريد تدقيق هذا الكتاب</p>
       </Modal>
       </ConfigProvider>
     </>
