@@ -7,9 +7,9 @@ import dayjs from "dayjs";
 const ACTION_TYPES = {
   1: { label: "تم الإنشاء",   color: "blue"   },
   2: { label: "تم التعديل",   color: "orange" },
-  3: { label: "تم الحذف",     color: "red"    },
-  4: { label: "تم التدقيق",   color: "green"  },
-  5: { label: "ربط/إلغاء ربط", color: "purple" },
+  3: { label: "تم الرد",     color: "red"    },
+  4: { label: "تم التاكيد",   color: "green"  },
+  5: { label: "تم تغيير الحالة", color: "purple" },
 };
 
 export default function DocumentHistory({ documentId }) {
@@ -26,6 +26,7 @@ export default function DocumentHistory({ documentId }) {
           `${Url}/api/Document/${documentId}/history`
         );
         setRows(data);
+        console.log(data)
       } catch (e) {
         message.error("تعذّر جلب سجلّ الإجراءات");
       } finally {
