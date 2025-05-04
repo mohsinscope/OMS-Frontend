@@ -73,30 +73,30 @@ export const LOV_MENU_ITEMS = [
     label: "اضافة جهة",
     icon: "Archive", // Ensure you have an icon for email reports
     path: "/admin/Archive-party",
-    permission: "LOVo" // Use an appropriate permission code
+    permission: "LOVDOC" // Use an appropriate permission code
   },
   {
     label: "مشاريع",
     icon: "projects", // Ensure you have an icon for email reports
     path: "/admin/Archive-projects",
-    permission: "LOVc" // Use an appropriate permission code
+    permission: "LOVDOC" // Use an appropriate permission code
   },{
     label: "جهات الإحالة (CC)",
     icon: "cc",              // أضف أيقونة cc إلى ملف icons.jsx إن لم تكن موجودة
     path: "/admin/document-cc",
-    permission: "LOVc"
+    permission: "LOVDOC"
   },
   {
     label: "الوزارات",
     icon: "ministry",        // أيقونة تمثل وزارة
     path: "/admin/ministry",
-    permission: "LOVc"
+    permission: "LOVDOC"
   },
   {
     label: " (tags) الوسوم",
     icon: "tag",             // أيقونة تمثل Tag
     path: "/admin/tags",
-    permission: "LOVc"
+    permission: "LOVDOC"
   },
 ];
 

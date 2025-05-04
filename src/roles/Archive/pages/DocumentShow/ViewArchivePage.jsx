@@ -60,8 +60,8 @@ const DocumentShow = () => {
   const isSuperAdmin     =
     permissions.includes("SuperAdmin") || profile?.role === "SuperAdmin";
 
-  const hasDeletePermission = permissions.includes("Au");   // صلاحية الحذف
-  const hasUpdatePermission = permissions.includes("Au");   // صلاحية التعديل (قبل التحقق الخاص أدناه)
+  const hasDeletePermission = permissions.includes("DOCd");   // صلاحية الحذف
+  const hasUpdatePermission = permissions.includes("DOCu");   // صلاحية التعديل (قبل التحقق الخاص أدناه)
 
   /* ───── React-router ───── */
   const { state } = useLocation();
@@ -225,7 +225,7 @@ const DocumentShow = () => {
                   onAuditSuccess={fetchDetails}
                 />
 
-                {canEdit && (
+                {hasUpdatePermission && (
                   <Button
                     type="default"
                     icon={<Lele type="edit" />}

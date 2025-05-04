@@ -18,7 +18,7 @@ export const MENU_ITEMS = [
     label: "الارشيف",
     icon: "Archive",
     path: "/Archive",
-    requiredPermission: "Ar",
+    requiredPermission: "DOCr",
     role: []
   },
   {
