@@ -1,5 +1,5 @@
 /* src/components/archive/RelatedDocuments.jsx
-   بطاقات المستندات المرتبطة – آمنة من نقص الدوال المُمرَّرة */
+   بطاقات الكتب المرتبطة – آمنة من نقص الدوال المُمرَّرة */
 
    import React from "react";
    import {
@@ -28,7 +28,7 @@
    
    const { Text } = Typography;
    
-   /* ======== دوالّ احتياطيّة لحالة المستند ======== */
+   /* ======== دوالّ احتياطيّة لحالة الكتاب ======== */
    const fallbackColor = (d) => {
      if (!d)                return "blue";
      if (d.isUrgent)        return "red";

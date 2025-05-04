@@ -51,7 +51,7 @@ const DocumentsTable = () => {
       setLoading(false);
     } catch (error) {
       console.error('Error fetching documents:', error);
-      message.error('حدث خطأ أثناء جلب المستندات');
+      message.error('حدث خطأ أثناء جلب الكتب');
       setLoading(false);
     }
   };
@@ -90,7 +90,7 @@ const DocumentsTable = () => {
 
   const columns = [
     {
-      title: 'رقم المستند',
+      title: 'رقم الكتاب',
       dataIndex: 'documentNumber',
       key: 'documentNumber',
       render: (text) => text || '-',
@@ -104,7 +104,7 @@ const DocumentsTable = () => {
       sorter: (a, b) => (a.title || '').localeCompare(b.title || ''),
     },
     {
-      title: 'نوع المستند',
+      title: 'نوع الكتاب',
       dataIndex: 'documentType',
       key: 'documentType',
       render: (type) => <Tag color="blue">{getDocumentTypeName(type)}</Tag>,
@@ -122,7 +122,7 @@ const DocumentsTable = () => {
       ellipsis: true,
     },
     {
-      title: 'تاريخ المستند',
+      title: 'تاريخ الكتاب',
       dataIndex: 'documentDate',
       key: 'documentDate',
       render: (date) => formatDate(date),

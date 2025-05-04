@@ -27,6 +27,7 @@ import {
   CheckCircleOutlined,
   DeleteOutlined,
   InfoCircleOutlined,
+  EyeFilled,
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 import ar_EG from "antd/lib/locale/ar_EG";
@@ -279,94 +280,100 @@ function AddDocumentPage({
   };
 
   /* ───────────── submit logic ───────────── */
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      if (!profileId) {
-        message.error("تعذّر إيجاد بيانات المستخدم");
-        return;
-      }
-      if (!fileList.length) {
-        return message.error("ارفع ملفاً واحداً على الأقل");
-      }
+  
 
-      // Check if this is a reply document but no parent document was selected
-      if ((selectedResponseType === 1 || selectedResponseType === 4) && !foundParentDocument) {
-        return message.error("هذا النوع من الكتب يتطلب تحديد الكتاب الأصلي، الرجاء البحث وتحديد الكتاب");
-      }
+ /* ───────────── submit logic ───────────── */
+ /* ───────────── submit logic (with console logs) ───────────── */
+/* ───────────── submit logic (fixed) ───────────── */
+const handleSubmit = async () => {
+  try {
+    /* 1. التحقق من الحقول */
+    const values = await form.validateFields();
 
-      setSubmitting(true);
-      const fd = new FormData();
+    if (!profileId) return message.error("تعذّر إيجاد بيانات المستخدم");
+    if (!fileList.length) return message.error("ارفع ملفاً واحداً على الأقل");
 
-      fd.append("DocumentNumber", values.documentNumber);
-      fd.append("Title", values.title);
-      fd.append("DocumentType", selectedDocumentSide === "صادر" ? 1 : 2);
-      fd.append(
-        "ResponseType",
-        getResponseTypeValue(selectedDocumentSide, values.ResponseType)
-      );
-      fd.append("IsRequiresReply", values.isRequiresReply);
-      fd.append("IsUrgent", values.isUrgent);
-      fd.append("IsImportant", values.isImportant);
-      fd.append("IsNeeded", values.isNeeded);
-      fd.append("IsOfficialParty", values.isOfficialParty);
-      fd.append("ProjectId", values.project);
-      fd.append("PartyId", values.PartyId);
-      fd.append("ProfileId", profileId);
-      fd.append(
-        "MinistryId",
-        values.isOfficialParty ? values.ministryId : ""
-      );
-      fd.append(
-        "DocumentDate",
-        `${values.date.format("YYYY-MM-DD")}T00:00:00Z`
-      );
-      fd.append("Subject", values.subject);
-      fd.append("Notes", values.notes ?? "");
-      
-      // Handle multiple selections for CCIds
-      if (values.ccIds?.length) {
-        values.ccIds.forEach(id => {
-          fd.append("CCIds", id);
-        });
-      }
-      
-      // Handle multiple selections for TagIds
-      if (values.tagIds?.length) {
-        values.tagIds.forEach(id => {
-          fd.append("TagIds", id);
-        });
-      }
-      
-      // Set parent document ID - either from location state or from search
-      if (foundParentDocument && isReplyDocument) {
-        fd.append("ParentDocumentId", foundParentDocument.id);
-      } else {
-        fd.append("ParentDocumentId", parentDocumentId ?? "");
-      }
+    /* 2. تحديد وضع الإرسال */
+    const targetDocumentId = foundParentDocument?.id || parentDocumentId;
+    const isReplyMode      = !!targetDocumentId;
 
-      fileList.forEach((f) =>
-        fd.append("Files", f.originFileObj ?? f, f.name)
-      );
+    console.log("🗂️  Mode:", isReplyMode ? "Reply" : "New");
 
-      await axiosInstance.post("/api/Document", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      message.success("تم إضافة الكتاب");
-      navigate("/archive");
-    } catch (e) {
-      const msg =
-        e.response?.data?.message ||
-        Object.values(e.response?.data?.errors || {})
-          .flat()
-          .join(", ") ||
-        "خطأ غير معروف";
-      message.error(msg);
-    } finally {
-      setSubmitting(false);
+    if (isReplyDocument && !isReplyMode) {
+      return message.error("هذا النوع يتطلب تحديد الكتاب الأصلي قبل الإرسال");
     }
-  };
+
+    setSubmitting(true);
+
+    /* 3. بناء FormData */
+    const fd = new FormData();
+
+    // (أ) الحقول المشتركة
+    fd.append("Title",          values.title);
+    fd.append("ResponseType",
+      getResponseTypeValue(selectedDocumentSide, values.ResponseType));
+    fd.append("IsRequiresReply", values.isRequiresReply);
+    fd.append("IsUrgent",        values.isUrgent);
+    fd.append("IsImportant",     values.isImportant);
+    fd.append("IsNeeded",        values.isNeeded);
+    fd.append("IsOfficialParty", values.isOfficialParty);
+    fd.append("ProjectId",       values.project);
+    fd.append("PartyId",         values.PartyId);
+    fd.append("ProfileId",       profileId);
+    fd.append("MinistryId",      values.isOfficialParty ? values.ministryId : "");
+    fd.append("Subject",         values.subject);
+    fd.append("Notes",           values.notes ?? "");
+
+    // (ب) الحقول المتغيّرة
+    if (isReplyMode) {
+      fd.append("ReplyDocumentNumber", values.documentNumber);
+      fd.append("ReplyType",           selectedDocumentSide === "صادر" ? 1 : 2);
+      fd.append("ReplyDate",
+        `${values.date.format("YYYY-MM-DD")}T00:00:00Z`);
+      /*  ⬅️ السطر المُضاف */
+      fd.append("ParentDocumentId",    targetDocumentId);
+    } else {
+      fd.append("DocumentNumber", values.documentNumber);
+      fd.append("DocumentType",   selectedDocumentSide === "صادر" ? 1 : 2);
+      fd.append("DocumentDate",
+        `${values.date.format("YYYY-MM-DD")}T00:00:00Z`);
+
+      const parentId = foundParentDocument?.id ?? parentDocumentId ?? "";
+      if (parentId) fd.append("ParentDocumentId", parentId);
+    }
+
+    // (ج) القوائم المتعددة
+    (values.ccIds  || []).forEach(id => fd.append("CCIds",  id));
+    (values.tagIds || []).forEach(id => fd.append("TagIds", id));
+
+    // (د) الملفات
+    fileList.forEach(f => fd.append("Files", f.originFileObj ?? f, f.name));
+
+    /* طباعة محتويات الـ FormData للتأكد */
+
+    /* 4. تحديد المسار */
+    const endpoint = isReplyMode
+      ? `/api/Document/${targetDocumentId}/reply`
+      : "/api/Document";
+
+    /* 5. الإرسال */
+    await axiosInstance.post(endpoint, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    message.success(isReplyMode ? "تم إرسال الردّ بنجاح" : "تم إضافة الكتاب");
+    navigate("/archive");
+  } catch (e) {
+    const msg =
+      e.response?.data?.message ||
+      Object.values(e.response?.data?.errors || {}).flat().join(", ") ||
+      "خطأ غير معروف";
+    console.error("❌ Submission error:", msg, e);
+    message.error(msg);
+  } finally {
+    setSubmitting(false);
+  }
+};
 
   /* ───────────── render ───────────── */
   return (
@@ -375,7 +382,7 @@ function AddDocumentPage({
         className={`document-page-layout ${
           isSidebarCollapsed ? "document-page-layout-sidebar-collapsed" : "document-page-layout"
         }`} 
-        style={{background:"none"}}
+        style={{background:"none" }}
       >
         <Header className="document-page-header"  >
           <h1>{editMode ? "تعديل كتاب" : "إضافة كتاب جديد"}</h1>
@@ -404,7 +411,7 @@ function AddDocumentPage({
                     <Button
                       type="default"
                       onClick={() => setViewModalVisible(true)}
-          
+                     
                     >
                       عرض التفاصيل
                     </Button>
@@ -417,9 +424,12 @@ function AddDocumentPage({
                   <Card 
                     title={<><LinkOutlined /> الكتاب المرجعي (سيتم الرد عليه)</>}
                     style={{ marginBottom: 16, borderColor: '#1890ff' }}
+                    
+                        
                     extra={
                       <Button
-                        type="text"
+                        type="dashed"
+                        
                         danger
                         icon={<DeleteOutlined />}
                         onClick={() => setFoundParentDocument(null)}
@@ -429,7 +439,7 @@ function AddDocumentPage({
                     }
                   >
                     <Row gutter={16}>
-                      <Col span={12}>
+                      <Col span={12} style={{fontSize:"18px"}}>
                         <p>
                           <strong>رقم الكتاب:</strong> {foundParentDocument.documentNumber}
                         </p>
@@ -441,7 +451,7 @@ function AddDocumentPage({
                           {new Date(foundParentDocument.documentDate).toLocaleDateString("ar-EG")}
                         </p>
                       </Col>
-                      <Col span={12}>
+                      <Col span={12}  style={{fontSize:"18px"}}>
                         <p>
                           <strong>الجهة:</strong> {foundParentDocument.partyName}
                         </p>
@@ -464,9 +474,10 @@ function AddDocumentPage({
                     <Button 
                       type="primary"
                       size="small"
-                      icon={<InfoCircleOutlined />}
+                      icon={<EyeFilled />}
                       onClick={viewParentDocumentDetails}
-                      style={{height:"40px"}}
+                      style={{height:"40px" ,marginTop:"30px"}}
+                      
                     >
                       عرض التفاصيل
                     </Button>
@@ -482,8 +493,8 @@ function AddDocumentPage({
                   preserve={false}
                 >
                   {/* ==== صف الرسمية/الوزارة/الجهة وغيرها ==== */}
-                  <Row gutter={16}>
-                    <Col xs={24} sm={4}>
+                  <Row gutter={16} >
+                    <Col xs={24} sm={4} className="margin-bottom">
                       <Form.Item
                         name="isOfficialParty"
                         label="هل الجهة رسمية؟"
@@ -616,7 +627,7 @@ function AddDocumentPage({
                     </Col>
                   </Row>
 
-                  <Row gutter={16}>
+                  <Row gutter={16} className="margin-bottom">
                     <Col xs={24} sm={isReplyDocument && !foundParentDocument ? 4 : 4}>
                       <Form.Item
                         name="ResponseType"
@@ -639,7 +650,7 @@ function AddDocumentPage({
 
                     {/* Parent Document Search Field - Only show if document is reply type and no parent selected yet */}
                     {isReplyDocument && !foundParentDocument && (
-  <Col xs={24} sm={8}>
+  <Col xs={24} sm={8}  >
     <Form.Item label="بحث عن الكتاب الأصلي للرد عليه">
       <Row gutter={8} align="middle">
         {/* حقل الرقم */}
@@ -672,7 +683,7 @@ function AddDocumentPage({
 
                   {/* ==== صف المشروع/الرقم/العنوان/التاريخ ==== */}
                   <Row gutter={16}>
-                    <Col xs={24} sm={6}>
+                    <Col xs={24} sm={6} className="margin-bottom">
                       <Form.Item
                         name="documentNumber"
                         label="رقم الكتاب"
@@ -722,7 +733,7 @@ function AddDocumentPage({
                   </Row>
 
                   {/* ==== صف عاجل/مهم/يستلزم/CC/Tags ==== */}
-                  <Row gutter={16}>
+                  <Row gutter={16} className="margin-bottom">
                     <Col xs={24} sm={5}>
                       <Form.Item
                         name="isRequiresReply"

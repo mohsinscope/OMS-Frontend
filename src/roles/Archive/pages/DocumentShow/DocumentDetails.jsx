@@ -91,8 +91,8 @@ const DocumentDetails = ({
 
       <Descriptions bordered column={{ xxl:3,xl:3,lg:3,md:3,sm:2,xs:1 }} size="small">
         {/* بيانات أساسية */}
-        <Descriptions.Item label="رقم المستند">{showValue(documentData.documentNumber)}</Descriptions.Item>
-        <Descriptions.Item label="نوع المستند">
+        <Descriptions.Item label="رقم الكتاب">{showValue(documentData.documentNumber)}</Descriptions.Item>
+        <Descriptions.Item label="نوع الكتاب">
           <Tag color={DOCUMENT_TYPES[documentData.documentType]?.color}>
             {DOCUMENT_TYPES[documentData.documentType]?.name || "غير معروف"}
           </Tag>
@@ -125,7 +125,7 @@ const DocumentDetails = ({
         </Descriptions.Item>
 
         {/* تواريخ */}
-        <Descriptions.Item label="تاريخ المستند">
+        <Descriptions.Item label="تاريخ الكتاب">
           <ClockCircleOutlined style={{ marginLeft:4 }}/>
           {documentData.documentDate? moment(documentData.documentDate).format("YYYY-MM-DD"):"لا يوجد"}
         </Descriptions.Item>
@@ -158,14 +158,14 @@ const DocumentDetails = ({
         {documentData.notes && <Descriptions.Item label="ملاحظات" span={3}>{documentData.notes}</Descriptions.Item>}
       </Descriptions>
 
-      {/* تنبيه المستند الأصلي */}
+      {/* تنبيه الكتاب الأصلي */}
       {documentData.parentDocumentId && (
         <Alert
           type="info"
           showIcon
           icon={<LinkOutlined/>}
           style={{marginTop:16}}
-          message={<><span>هذا المستند مرتبط بمستند آخر.&nbsp;</span><Button type="link" onClick={goToParent}>عرض المستند الأصلي</Button></>}
+          message={<><span>هذا الكتاب مرتبط بكتاب آخر.&nbsp;</span><Button type="link" onClick={goToParent}>عرض الكتاب الأصلي</Button></>}
         />
       )}
     </Space>
