@@ -352,6 +352,10 @@ const EditUserModal = ({
               <Option value={8}>Project Coordinator</Option>
               <Option value={9}>Operation Manager</Option>
               <Option value={10}>IT</Option>
+              <Option value={11}>Expense Auditer</Option>
+              <Option value={12}>Expense Manager</Option>
+              <Option value={13}>Expense General Manager</Option>
+              <Option value={14}>Document Auditer</Option>
 
             </Select>
           </Form.Item>
