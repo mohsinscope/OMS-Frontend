@@ -200,7 +200,12 @@ const AdminUserManagment = () => {
     'Sr.Controller': 7,
     'ProjectCoordinator': 8,
     'OperationManager': 9,
-    'IT': 10
+    'IT': 10,
+    'ExpenseAuditer': 11,
+    'ExpenseManager': 12,
+    'ExpenseGeneralManager': 13,
+    'DocumentAuditer': 14,
+   
 
   };
   const handleEditUser = async (user) => {
