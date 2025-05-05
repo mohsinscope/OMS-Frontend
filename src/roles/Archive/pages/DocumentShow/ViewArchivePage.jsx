@@ -62,7 +62,7 @@ const DocumentShow = () => {
 
   const hasDeletePermission = permissions.includes("DOCd");   // صلاحية الحذف
   const hasUpdatePermission = permissions.includes("DOCu");   // صلاحية التعديل (قبل التحقق الخاص أدناه)
-
+  const hasAuditPermission = permissions.includes("DOCAudit");
   /* ───── React-router ───── */
   const { state } = useLocation();
   const navigate  = useNavigate();
@@ -217,10 +217,16 @@ const DocumentShow = () => {
                   </Button>
                 )}
 
+                {
+                  hasAuditPermission && 
+                    
                 <AuditButton
-                  documentId={documentId}
-                  onAuditSuccess={fetchDetails}
-                />
+                documentId={documentId}
+                onAuditSuccess={fetchDetails}
+              />
+
+                }
+
 
                 {hasUpdatePermission && (
                   <Button
