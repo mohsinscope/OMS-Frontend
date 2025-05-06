@@ -802,7 +802,6 @@ const disableOtherMonths = (current) => {
                   <h1 style={{ marginBottom: "5px" }}>المصروفات اليومية للشهر الحالي</h1>
                   <Button
                     type="primary"
-                    disabled={!canSendRequests}
                     size="large"
                     onClick={() => setIsSendModalVisible(true)}
                   >

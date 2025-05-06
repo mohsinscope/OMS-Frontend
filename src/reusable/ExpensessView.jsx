@@ -34,6 +34,10 @@ const Status = {
   RecievedBySupervisor: 8,
   Completed: 9,
   SentFromDirector: 10,
+  ReturnedToExpendeAuditer: 11,
+  SentToExpenseManager: 12,
+  ReturnedToExpenseManager: 13,
+  SentToExpenseGeneralManager: 14,
 };
 
 const statusMap = {
@@ -47,6 +51,12 @@ const statusMap = {
   [Status.RecievedBySupervisor]: "تم الاستلام من قبل المشرف",
   [Status.SentFromDirector]: "تم الموافقة من قبل المدير التنفيذي",
   [Status.Completed]: "مكتمل",
+  [Status.ReturnedToExpendeAuditer]: "تم الارجاع لمدقق الحسابات",
+  [Status.SentToExpenseManager]: "تم الارسال لمدير الحسابات",
+  [Status.ReturnedToExpenseManager]: "تم الارجاع لمدير الحسابات",
+  [Status.SentToExpenseGeneralManager]: "تم الارسال الى مدير ادارة الحسابات",
+
+
 };
 
 export default function ExpensesView() {
@@ -87,10 +97,14 @@ function flattenItems(items) {
   const getNextStatus = (currentStatus, position) => {
     // Convert the position string to lowercase for case-insensitive matching.
     position = position?.toLowerCase();
-  
-    if (currentStatus === "SentFromDirector" && position?.includes("projectcoordinator")) {
-      return Status.RecievedBySupervisor;
-    } else if (currentStatus === "SentToProjectCoordinator" && position?.includes("projectcoordinator")) {
+    console.log(position)
+    console.log(currentStatus)
+
+    if (currentStatus === "SentFromDirector" && position?.includes("expenseauditer")) {
+      return Status.SentToExpenseManager;
+    } 
+   
+    else if (currentStatus === "SentToProjectCoordinator" && position?.includes("projectcoordinator")) {
       return Status.SentToManager;
     } else if (currentStatus === "ReturnedToProjectCoordinator" && position?.includes("projectcoordinator")) {
       return Status.SentToManager;
@@ -100,13 +114,33 @@ function flattenItems(items) {
       return Status.SentToDirector;
     } else if (currentStatus === "SentToDirector" && position?.includes("director")) {
       return Status.SentFromDirector;
-    } else if (currentStatus === "RecievedBySupervisor") {
+      
+    } 
+    else if (currentStatus === "SentToExpenseGeneralManager" && position?.includes("expensegeneralmanager")) {
+      return Status.RecievedBySupervisor;
+    }
+ else if (currentStatus === "ReturnedToExpendeAuditer" && position?.includes("expenseauditer")) {
+      return Status.SentToExpenseGeneralManager;
+    }
+
+    else if (currentStatus === "SentToExpenseManager" && position?.includes("expensemanager")) {
+      return Status.SentToExpenseGeneralManager;
+      
+    } 
+     else if (currentStatus === "ReturnedToExpenseManager" && position?.includes("expensemanager")) {
+      return Status.SentToExpenseGeneralManager;
+      
+    } 
+    
+    else if (currentStatus === "RecievedBySupervisor" && position?.includes("supervisor")) {
       return Status.Completed;
     }
   
     console.warn(`Unexpected position: ${position} or status: ${currentStatus}`);
     return currentStatus;
   };
+
+
   const getRejectionStatus = (currentStatus, position) => {
     position = position?.toLowerCase();
     if (currentStatus === "SentToProjectCoordinator" && position?.includes("projectcoordinator")) {
@@ -118,8 +152,23 @@ function flattenItems(items) {
     } else if (currentStatus === "ReturnedToManager" && position?.includes("manager")) {
       return Status.ReturnedToProjectCoordinator;
     } 
+    else if (currentStatus === "SentFromDirector" && position?.includes("expenseauditer")) {
+      return Status.ReturnedToProjectCoordinator;
+    } 
+    else if (currentStatus === "ReturnedToExpendeAuditer" && position?.includes("expenseauditer")) {
+      return Status.ReturnedToProjectCoordinator;
+    } 
+    else if (currentStatus === "SentToExpenseManager" && position?.includes("expensemanager")) {
+      return Status.ReturnedToExpendeAuditer;
+    } 
+    else if (currentStatus === "ReturnedToExpenseManager" && position?.includes("expensemanager")) {
+      return Status.ReturnedToExpendeAuditer;
+    } 
     else if (currentStatus === "SentToDirector" && position?.includes("director"))  {
       return Status.ReturnedToManager;
+    }
+    else if (currentStatus === "SentToExpenseGeneralManager" && position?.includes("expensegeneralmanager"))  {
+      return Status.ReturnedToExpenseManager;
     }
     
     return currentStatus;
@@ -974,7 +1023,7 @@ function flattenItems(items) {
             >
               موافقة
             </Button>
-            {expense?.generalInfo?.["الحالة"] === "SentFromDirector" ? null : (
+            {expense?.generalInfo?.["الحالة"] === "" ? null : (
               <Button
                 danger
                 type="primary"
