@@ -141,7 +141,7 @@ const DocumentDetails = ({
 
         {/* نسخة إلى */}
         <Descriptions.Item
-          label={<div style={{display:"flex",alignItems:"center"}}><CopyOutlined/><span style={{marginLeft:5}}>نسخة إلى</span>{ccRecipients.length>0&&<Badge count={ccRecipients.length} style={badgeStyle}/>}</div>}
+          label={<div style={{display:"flex",alignItems:"center"}}><CopyOutlined/><span style={{marginLeft:5}}>نسخة إلى</span></div>}
           span={3}
         >
           <TagGroup items={ccRecipients} color="cyan" icon={<CopyOutlined/>} emptyText="لا توجد نسخ"/>
@@ -149,7 +149,7 @@ const DocumentDetails = ({
 
         {/* الوسوم */}
         <Descriptions.Item
-          label={<div style={{display:"flex",alignItems:"center"}}><TagsOutlined/><span style={{marginLeft:5}}>الوسوم</span>{documentTags.length>0&&<Badge count={documentTags.length} style={{...badgeStyle,background:"#722ed1"}}/>}</div>}
+          label={<div style={{display:"flex",alignItems:"center"}}><TagsOutlined/><span style={{marginLeft:5}}>الوسوم</span></div>}
           span={3}
         >
           <TagGroup items={documentTags} color="purple" icon={<TagsOutlined/>} emptyText="لا توجد وسوم"/>

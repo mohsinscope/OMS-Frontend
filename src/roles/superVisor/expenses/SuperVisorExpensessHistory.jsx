@@ -31,6 +31,10 @@ const Status = {
   RecievedBySupervisor: 8,
   Completed: 9,
   SentFromDirector: 10,
+  ReturnedToExpendeAuditer: 11,
+  SentToExpenseManager: 12,
+  ReturnedToExpenseManager: 13,
+  SentToExpenseGeneralManager: 14,
 };
 
 const statusDisplayNames = {
@@ -44,6 +48,10 @@ const statusDisplayNames = {
   [Status.RecievedBySupervisor]: "تم الاستلام من قبل المشرف",
   [Status.SentFromDirector]: "تم الموافقة من قبل المدير التنفيذي",
   [Status.Completed]: "مكتمل",
+  [Status.ReturnedToExpendeAuditer]: "تم الارجاع لمدقق الحسابات",
+  [Status.SentToExpenseManager]: "تم الارسال لمدير الحسابات",
+  [Status.ReturnedToExpenseManager]: "تم الارجاع لمدير الحسابات",
+  [Status.SentToExpenseGeneralManager]: "تم الارسال الى مدير ادارة الحسابات",
 };
 
 const positionStatusMap = {
@@ -53,7 +61,10 @@ const positionStatusMap = {
     Status.SentFromDirector,
   ],
   Manager: [Status.SentToManager, Status.ReturnedToManager],
-  Director: [Status.SentToDirector],
+  ExpenseAuditer: [Status.ReturnedToExpendeAuditer ,Status.SentFromDirector],
+  ExpenseManager: [Status.ReturnedToExpenseManager , Status.SentToExpenseManager],
+  ExpenseGeneralManager: [Status.SentToExpenseGeneralManager],
+
 };
 
 /** NEW: LocalStorage key for caching filters & pagination. */
@@ -96,7 +107,7 @@ export default function SuperVisorExpensesHistory() {
       isAdmin ||
       isSupervisor ||
       userPosition === "ProjectCoordinator" ||
-      userPosition === "SrController"
+      userPosition === "SrController" 
     ) {
       return Object.values(Status);
     }
@@ -681,7 +692,8 @@ export default function SuperVisorExpensesHistory() {
         if (
           isSupervisor &&
           (expenseStatus === Status.New ||
-            expenseStatus === Status.ReturnedToSupervisor)
+            expenseStatus === Status.ReturnedToSupervisor||
+            expenseStatus === Status.RecievedBySupervisor)
         ) {
           return (
             <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>

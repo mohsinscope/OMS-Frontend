@@ -708,6 +708,8 @@ const handleSubmit = async () => {
                           mode="multiple"
                           allowClear
                           showSearch
+                          maxTagCount="responsive"                  // automatically collapse based on available width
+                          maxTagPlaceholder={omittedValues => `+${omittedValues.length}`}
                           filterOption={(i, o) =>
                             o.children.toLowerCase().includes(i.toLowerCase())
                           }
