@@ -111,19 +111,9 @@
 }
 
 /* Button hover effects */
-.ant-btn-primary {
-  background-color: #1890ff;
-  border-color: #1890ff;
-  transition: all 0.3s ease;
-}
 
-.ant-btn-primary:hover, 
-.ant-btn-primary:focus {
-  background-color: #40a9ff;
-  border-color: #40a9ff;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
-}
+
+
 
 
 .margin-bottom div{
