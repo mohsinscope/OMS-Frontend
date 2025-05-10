@@ -42,7 +42,8 @@ import SuperVisorLecturerhistory from "./roles/superVisor/lecturer/SuperVisorLec
 import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecturerAdd.jsx";
 import LecturerShow from "./roles/superVisor/lecturer/SuperVisorLecturerShow.jsx";
 import ArchivePage from "./roles/Archive/pages/ArchivePage.jsx";
-import AddDocumentPage from './roles/Archive/pages/addArchivePage.jsx';
+import AddDocumentPage from './roles/Archive/pages/addArchivePage/addArchivePage.jsx';
+
 import { ArchiveProvider } from './roles/Archive/contexts/ArchiveContext.jsx';
 import ViewArchivePage from './roles/Archive/pages/DocumentShow/ViewArchivePage.jsx';
 

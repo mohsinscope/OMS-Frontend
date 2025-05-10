@@ -1,4 +1,4 @@
-const Config = {
+export const LovConfig = {
   "/admin/add-office": {
     getEndpoint: "/api/office",
     postEndpoint: "/api/office",
@@ -243,49 +243,7 @@ const Config = {
       },
     ],
   },
-"/admin/Archive-party": {
-  getEndpoint:    "/api/DocumentParty",
-  postEndpoint:   "/api/DocumentParty",
-  putEndpoint:    (id) => `/api/DocumentParty/${id}`,
-  deleteEndpoint: (id) => `/api/DocumentParty/${id}`,
-  columns: [
-    { title: "اسم الجهة", dataIndex: "name",       key: "name" },
-    {
-      title: "نوع الجهة",
-      dataIndex: "partyType",
-      key: "partyType",
-      render: (value) =>
-        ({
-          0: "مديرية عامة",
-          1: "مديرية",
-          2: "قسم",
-          3: "شعبة",
-        }[value] ?? "غير معروف")
-    },
-    { title: "رسمية؟",    dataIndex: "isOfficial", key: "isOfficial",
-      render: (v) => v ? "نعم" : "لا" },
-    { title: "المشروع",   dataIndex: "projectId",  key: "projectId" },
-  ],
-  formFields: [                    // <–– أبقها نسخة واحدة فقط
-    { name: "name",       label: "اسم الجهة",  type: "text" },
-    { name: "partyType",  label: "نوع الجهة",  type: "dropdown",
-      options: [
-        { label: "مديرية عامة", value: 0 },
-        { label: "مديرية",   value: 1 },
-        { label: "قسم",   value: 2 },
-        { label: "شعبة",   value: 3 },
 
-      ]},
-      
-    { name: "isOfficial", label: "رسمية؟",     type: "dropdown",
-      options: [
-        { label: "نعم", value: true  },
-        { label: "لا",  value: false },
-      ]},
-    { name: "projectId",  label: "المشروع",    type: "dropdown",
-      optionsEndpoint: "/api/Project?PageNumber=1&PageSize=100" },
-  ],
-},
   "/admin/Archive-projects": {
     getEndpoint: "/api/Project",
     postEndpoint: "/api/Project",
@@ -314,19 +272,6 @@ const Config = {
   ],
 },
 
-"/admin/ministry": {
-  getEndpoint:    "/api/Ministry",
-  postEndpoint:   "/api/Ministry",
-  putEndpoint:    (id) => `/api/Ministry/${id}`,
-  deleteEndpoint: (id) => `/api/Ministry/${id}`,
-  columns: [
-    { title: "اسم الوزارة", dataIndex: "name", key: "name" },
-  ],
-  formFields: [
-    { name: "name", label: "اسم الوزارة", type: "text" },
-  ],
-},
-
 "/admin/tags": {
   getEndpoint:    "/api/Tags",
   postEndpoint:   "/api/Tags",
@@ -340,6 +285,134 @@ const Config = {
   ],
 },
 
+"/admin/ministry-hierarchy": {
+  label: "الوزارة",
+  icon: "government",          // تأكد أن الأيقونة موجودة فى Icons.jsx
+  tabs: {
+    ministry: {
+      label: "وزارة",
+      getEndpoint: "/api/Ministry",
+      postEndpoint: "/api/Ministry",
+      putEndpoint: id => `/api/Ministry/${id}`,
+      deleteEndpoint: id => `/api/Ministry/${id}`,
+      columns: [{ title: "اسم الوزارة", dataIndex: "name", key: "name" }],
+      formFields: [{ name: "name", label: "اسم الوزارة", type: "text" }],
+      payload: values => ({ id: values.id, name: values.name }),
+    },
+    generalDirectorate: {
+      label: "مديرية عامة",
+      getEndpoint: "/api/GeneralDirectorate",
+      postEndpoint: "/api/GeneralDirectorate",
+      putEndpoint: id => `/api/GeneralDirectorate/${id}`,
+      deleteEndpoint: id => `/api/GeneralDirectorate/${id}`,
+      columns: [
+        { title: "اسم المديرية العامة", dataIndex: "name", key: "name" },
+        { title: "الوزارة", dataIndex: "ministryName", key: "ministryName" },
+      ],
+      formFields: [
+        { name: "name", label: "اسم المديرية العامة", type: "text" },
+        {
+          name: "ministryId",
+          label: "الوزارة",
+          type: "dropdown",
+          optionsEndpoint: "/api/Ministry?PageNumber=1&PageSize=100",
+        },
+      ],
+      payload: v => ({
+        id: v.id,
+        name: v.name,
+        ministryId: v.ministryId,
+      }),
+    },
+    directorate: {
+      label: "مديرية",
+      getEndpoint: "/api/Directorate",
+      postEndpoint: "/api/Directorate",
+      putEndpoint: id => `/api/Directorate/${id}`,
+      deleteEndpoint: id => `/api/Directorate/${id}`,
+      columns: [
+        { title: "اسم المديرية", dataIndex: "name", key: "name" },
+        {
+          title: "مديرية عامة",
+          dataIndex: "generalDirectorateName",
+          key: "generalDirectorateName",
+        },
+      ],
+      formFields: [
+        { name: "name", label: "اسم المديرية", type: "text" },
+        {
+          name: "generalDirectorateId",
+          label: "المديرية العامة",
+          type: "dropdown",
+          optionsEndpoint:
+            "/api/GeneralDirectorate?PageNumber=1&PageSize=100",
+        },
+      ],
+      payload: v => ({
+        id: v.id,
+        name: v.name,
+        generalDirectorateId: v.generalDirectorateId,
+      }),
+    },
+    department: {
+      label: "قسم",
+      getEndpoint: "/api/Department",
+      postEndpoint: "/api/Department",
+      putEndpoint: id => `/api/Department/${id}`,
+      deleteEndpoint: id => `/api/Department/${id}`,
+      columns: [
+        { title: "اسم القسم", dataIndex: "name", key: "name" },
+        { title: "المديرية", dataIndex: "directorateName", key: "directorateName" },
+      ],
+      formFields: [
+        { name: "name", label: "اسم القسم", type: "text" },
+        {
+          name: "directorateId",
+          label: "المديرية",
+          type: "dropdown",
+          optionsEndpoint: "/api/Directorate?PageNumber=1&PageSize=100",
+        },
+      ],
+      payload: v => ({ id: v.id, name: v.name, directorateId: v.directorateId }),
+    },
+    section: {
+      label: "شعبة",
+      getEndpoint: "/api/Section",
+      postEndpoint: "/api/Section",
+      putEndpoint: id => `/api/Section/${id}`,
+      deleteEndpoint: id => `/api/Section/${id}`,
+      columns: [
+        { title: "اسم الشعبة", dataIndex: "name", key: "name" },
+        { title: "القسم", dataIndex: "departmentName", key: "departmentName" },
+      ],
+      formFields: [
+        { name: "name", label: "اسم الشعبة", type: "text" },
+        {
+          name: "departmentId",
+          label: "القسم",
+          type: "dropdown",
+          optionsEndpoint: "/api/Department?PageNumber=1&PageSize=100",
+        },
+      ],
+      payload: v => ({ id: v.id, name: v.name, departmentId: v.departmentId }),
+    },
+  },
+},
+
+/*‑‑‑‑‑‑‑‑‑‑ Private Party  (بديل Archive‑party) ‑‑‑‑‑‑‑‑‑‑*/
+"/admin/private-party": {
+  label: "جهة خاصة",
+  icon: "corporate",
+  getEndpoint: "/api/PrivateParty",
+  postEndpoint: "/api/PrivateParty",
+  putEndpoint: id => `/api/PrivateParty/${id}`,
+  deleteEndpoint: id => `/api/PrivateParty/${id}`,
+  columns: [{ title: "اسم الجهة", dataIndex: "name", key: "name" }],
+  formFields: [{ name: "name", label: "اسم الجهة", type: "text" }],
+  payload: v => ({ id: v.id, name: v.name }),
+},
+
+
 };
 
-export default Config;
+export default LovConfig

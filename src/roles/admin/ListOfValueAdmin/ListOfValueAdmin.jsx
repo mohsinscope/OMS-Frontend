@@ -11,7 +11,8 @@ import {
   message,
   ConfigProvider,
   Select,
-  Space,
+  Space,Tabs 
+
 } from "antd";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import { getAuthorizedLOVRoutes, LOVConfig } from "./LovConfig.js";
@@ -32,6 +33,9 @@ export default function ListOfValueAdmin() {
   const [editingId, setEditingId] = useState(null);
   const [currentPath, setCurrentPath] = useState(null);
   const [currentLabel, setCurrentLabel] = useState("تفاصيل القيمة");
+  const [hierarchyConfig, setHierarchyConfig] = useState(null);   // يحتفظ بكامل كائن tabs
+const [currentTabKey,    setCurrentTabKey]  = useState(null);   // المفتاح الحالى (ministry, generalDirectorate ...)
+
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -244,17 +248,28 @@ export default function ListOfValueAdmin() {
       return;
     }
     const selected = LOVConfig[item.path];
-    if (!selected) {
-      message.error("لم يتم العثور على التكوين المطلوب");
-      return;
-    }
+    if (!selected) { message.error("لم يتم العثور على التكوين المطلوب"); return; }
+  
     setCurrentPath(item.path);
-    setSelectedConfig(selected);
     setCurrentLabel(item.label);
+  
+    // ✦ إذا كانت وزارة – اختَر أول تبويب افتراضياً
+    if (item.path === "/admin/ministry-hierarchy") {
+      const defaultKey   = "ministry";
+      setHierarchyConfig(selected);               // tabs الكامل
+      setCurrentTabKey(defaultKey);
+      setSelectedConfig(selected.tabs[defaultKey]);
+    } else {
+      setHierarchyConfig(null);
+      setSelectedConfig(selected);
+    }
   };
 
   // Create the payload for POST/PUT requests based on the current path
   const createPayload = (values) => {
+    if (selectedConfig?.payload) {
+      return selectedConfig.payload({ ...values, id: editingId });
+    }
     switch (currentPath) {
       case "/admin/lecture-types":
         return {
@@ -731,6 +746,36 @@ case "/admin/tags":
           </div>
         )}
         <ConfigProvider direction="rtl">
+        {currentPath === "/admin/ministry-hierarchy" && hierarchyConfig && (
+  <Tabs
+  
+    activeKey={currentTabKey}
+    /* هنا نضع onChange مع فحص الصلاحية */
+    onChange={(key) => {
+      const tab = hierarchyConfig.tabs[key];
+
+      // ↳ فحص الصلاحية قبل التبديل
+      if (
+        Array.isArray(permissions) &&
+        tab.permission &&                       // إن حُدِّدَت صلاحية
+        !permissions.includes(tab.permission)  // والمستخدم لا يملكها
+      ) {
+        message.error("ليس لديك صلاحية لهذا القسم");
+        return;                                // أوقف التبديل
+      }
+
+      // ↳ السماح بالتبديل
+      setCurrentTabKey(key);
+      setSelectedConfig(tab);
+      setCurrentLabel(tab.label);
+    }}
+    style={{ marginBottom: 24 }}
+  >
+    {Object.entries(hierarchyConfig.tabs).map(([key, tab]) => (
+      <Tabs.TabPane key={key} tab={tab.label} />
+    ))}
+  </Tabs>
+)}
           <Table
             columns={columns}
             dataSource={selectedData}
