@@ -306,3 +306,8 @@
     background-color: #40a9ff;
     color: white;
   }
+
+  .archive-content .ant-form-item-control {
+    margin-top: 6px;       /* فراغ 8px بين اللّيبل والحقل */
+  }
+  

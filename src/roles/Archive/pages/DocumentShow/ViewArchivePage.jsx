@@ -25,7 +25,8 @@ import dayjs from "dayjs";
 
 import axiosInstance from "../../../../intercepters/axiosInstance";
 import Url           from "../../../../store/url";
-import "./viewArchiveStyle.css";
+import './../../styles/viewArchiveStyle.css';
+
 import useAuthStore  from "../../../../store/store";
 import Lele          from "../../../../reusable elements/icons";
 import DocumentDetails     from "./DocumentDetails";

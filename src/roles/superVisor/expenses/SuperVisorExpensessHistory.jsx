@@ -17,8 +17,7 @@ import "./styles/SuperVisorExpensesHistory.css";
 import Icons from "./../../../reusable elements/icons.jsx";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
-
-import moment from "moment"; // Ensure moment is imported
+import dayjs from "dayjs";
 
 const Status = {
   New: 0,
@@ -272,8 +271,8 @@ export default function SuperVisorExpensesHistory() {
         const {
           selectedGovernorate: savedGov,
           selectedOffice: savedOff,
-          startDate: savedStart,
-          endDate: savedEnd,
+         startDate: savedStart,  // ISO strings
+         endDate:   savedEnd,
           selectedStatuses: savedStatuses,
           currentPage: savedPage,
         } = parsed;
@@ -291,8 +290,8 @@ export default function SuperVisorExpensesHistory() {
           }
         }
   
-        setStartDate(savedStart ? moment(savedStart) : null);
-        setEndDate(savedEnd ? moment(savedEnd) : null);
+       setStartDate(savedStart ? dayjs(savedStart) : null);
+       setEndDate(  savedEnd   ? dayjs(savedEnd)   : null);
         setSelectedStatuses(savedStatuses || []);
   
         const finalPage = savedPage || 1;

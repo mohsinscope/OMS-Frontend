@@ -70,9 +70,9 @@ export const LOV_MENU_ITEMS = [
     permission: "LOVo" // Use an appropriate permission code
   },
   {
-    label: "اضافة جهة",
+    label: "اضافة جهة غير حكومية",
     icon: "Archive", // Ensure you have an icon for email reports
-    path: "/admin/Archive-party",
+    path: "/admin/private-party",
     permission: "LOVDOC" // Use an appropriate permission code
   },
   {
@@ -88,8 +88,8 @@ export const LOV_MENU_ITEMS = [
   },
   {
     label: "الوزارات",
-    icon: "ministry",        // أيقونة تمثل وزارة
-    path: "/admin/ministry",
+    icon:  "ministry",
+    path:  "/admin/ministry-hierarchy",   // ✅ طابقنا المفتاح
     permission: "LOVDOC"
   },
   {

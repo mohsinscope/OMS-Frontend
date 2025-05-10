@@ -637,3 +637,11 @@
     max-width: 400px;
   }
 }
+
+/* For handling specific zoom levels (approximate) */
+@media  (min-resolution: 1.25dppx) {
+  /* This roughly targets 125% zoom on standard screens */
+.logo {
+  width: 290px;
+}
+}
