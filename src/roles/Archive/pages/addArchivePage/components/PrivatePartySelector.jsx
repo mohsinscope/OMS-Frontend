@@ -22,7 +22,7 @@ export default function PrivatePartySelector({ disabled }) {
   return (
     <Form.Item
       name="privatePartyId"
-      label="الجهة الخاصة"
+      label="قطاع خاص"
       rules={!disabled ? [{ required: true, message: "اختر الجهة الخاصة" }] : []}
     >
       <Select disabled={disabled} loading={loading}>

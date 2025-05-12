@@ -107,9 +107,7 @@ function AddDocumentPage({
   const [searchingDocument, setSearchingDocument] = useState(false);
 
   // official toggle
-  const [isOfficial, setIsOfficial] = useState(
-    initialValues.isOfficialParty != null ? initialValues.isOfficialParty : true
-  );
+ const isOfficial = Form.useWatch("isOfficialParty", form) ?? true;
 
   /* Fetch static lists */
   useEffect(() => {
@@ -219,75 +217,94 @@ function AddDocumentPage({
     }
   };
 
-  /* Submit handler */
-  const handleSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      if (!profileId) return message.error("تعذّر إيجاد المستخدم");
-      if (!fileList.length) return message.error("ارفع ملفًا واحدًا على الأقل");
+  /* ─────────────── Submit handler ─────────────── */
+const handleSubmit = async () => {
+  try {
+    const values = await form.validateFields();
 
-      const targetDocumentId = foundParentDocument?.id || parentDocumentId;
-      const isReplyMode = !!targetDocumentId;
-      if (isReplyDocument && !isReplyMode) {
-        return message.error("هذا النوع يتطلّب تحديد الكتاب الأصلى");
-      }
+    if (!profileId)          return message.error("تعذّر إيجاد المستخدم");
+    if (!fileList.length)    return message.error("ارفع ملفًا واحدًا على الأقل");
 
-      const fd = new FormData();
-      fd.append("Title", values.title);
-      fd.append("ResponseType", getResponseTypeValue(selectedDocumentSide, values.ResponseType));
-      fd.append("IsRequiresReply", values.isRequiresReply);
-      fd.append("IsUrgent", values.isUrgent);
-      fd.append("IsImportant", values.isImportant);
-      fd.append("IsNeeded", values.isNeeded);
-      fd.append("ProjectId", values.projectId);
-      fd.append("Subject", values.subject);
-      fd.append("Notes", values.notes ?? "");
-      fd.append("ProfileId", profileId);
+    const targetDocumentId = foundParentDocument?.id || parentDocumentId;
+    const isReplyMode      = !!targetDocumentId;
 
-      if (isOfficial) {
-        fd.append("SectionId", values.sectionId);
-      } else {
-        fd.append("PrivatePartyId", values.privatePartyId);
-      }
-
-      if (isReplyMode) {
-        fd.append("ReplyDocumentNumber", values.documentNumber);
-        fd.append("ReplyType", selectedDocumentSide === "صادر" ? "1" : "2");
-        fd.append("ReplyDate", values.date.format("YYYY-MM-DDT00:00:00[Z]"));
-        fd.append("ParentDocumentId", targetDocumentId);
-      } else {
-        fd.append("DocumentNumber", values.documentNumber);
-        fd.append("DocumentType", selectedDocumentSide === "صادر" ? "1" : "2");
-        fd.append("DocumentDate", values.date.format("YYYY-MM-DDT00:00:00[Z]"));
-        if (targetDocumentId && !isReplyDocument) {
-          fd.append("ParentDocumentId", targetDocumentId);
-        }
-      }
-
-      (values.ccIds || []).forEach(id => fd.append("CCIds", id));
-      (values.tagIds || []).forEach(id => fd.append("TagIds", id));
-      fileList.forEach(f => fd.append("Files", f.originFileObj ?? f, f.name));
-
-      setSubmitting(true);
-      const url = isReplyMode
-        ? `/api/Document/${targetDocumentId}/reply`
-        : "/api/Document";
-      await axiosInstance.post(url, fd, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      message.success(isReplyMode ? "تم إرسال الرد" : "تم إضافة الكتاب");
-      navigate("/archive");
-    } catch (e) {
-      const msg =
-        e.response?.data?.message ||
-        Object.values(e.response?.data?.errors || {}).flat().join(", ") ||
-        "خطأ غير معروف";
-      message.error(msg);
-    } finally {
-      setSubmitting(false);
+    if (isReplyDocument && !isReplyMode) {
+      return message.error("هذا النوع يتطلّب تحديد الكتاب الأصلى");
     }
-  };
+
+    /* ─── Build payload ─── */
+    const fd = new FormData();
+
+    // ── shared
+    fd.append("Title",            values.title);
+    fd.append("ResponseType",     getResponseTypeValue(selectedDocumentSide, values.ResponseType));
+    fd.append("IsRequiresReply",  values.isRequiresReply);
+    fd.append("IsUrgent",         values.isUrgent);
+    fd.append("IsImportant",      values.isImportant);
+    fd.append("IsNeeded",         values.isNeeded);
+    fd.append("ProjectId",        values.projectId);
+    fd.append("Subject",          values.subject);
+    fd.append("Notes",            values.notes ?? "");
+    fd.append("ProfileId",        profileId);
+
+    /* ⬇⬇  NEW PART — official vs. private payload  ⬇⬇ */
+    if (values.isOfficialParty)  {
+      // 100 % official – send the full hierarchy
+  if (values.ministryId)            fd.append("MinistryId",           values.ministryId);            // ما يزال إلزاميًا
+  if (values.generalDirectorateId)  fd.append("GeneralDirectorateId", values.generalDirectorateId);  // اختيارى
+  if (values.directorateId)         fd.append("DirectorateId",        values.directorateId);         // اختيارى
+  if (values.departmentId)          fd.append("DepartmentId",         values.departmentId);          // اختيارى
+  if (values.sectionId)             fd.append("SectionId",            values.sectionId); 
+    } else {
+      // private party
+      fd.append("PrivatePartyId",       values.privatePartyId);
+    }
+    /* ⬆⬆  END NEW PART ⬆⬆ */
+
+    // ── document‑side specifics
+    if (isReplyMode) {
+      // … replying to an existing document
+      fd.append("ReplyDocumentNumber", values.documentNumber);
+      fd.append("ReplyType",           selectedDocumentSide === "صادر" ? "1" : "2");
+      fd.append("ReplyDate",           values.date.format("YYYY-MM-DDT00:00:00[Z]"));
+      fd.append("ParentDocumentId",    targetDocumentId);
+    } else {
+      // … brand‑new document
+      fd.append("DocumentNumber",  values.documentNumber);
+      fd.append("DocumentType",    selectedDocumentSide === "صادر" ? "1" : "2");
+      fd.append("DocumentDate",    values.date.format("YYYY-MM-DDT00:00:00[Z]"));
+      if (targetDocumentId && !isReplyDocument) {
+        fd.append("ParentDocumentId", targetDocumentId);
+      }
+    }
+
+    // ── arrays (unchanged)
+    (values.ccIds  || []).forEach(id => fd.append("CCIds",  id));
+    (values.tagIds || []).forEach(id => fd.append("TagIds", id));
+    fileList.forEach(f => fd.append("Files", f.originFileObj ?? f, f.name));
+
+    /* ─── Fire request ─── */
+    setSubmitting(true);
+    const url = isReplyMode
+      ? `/api/Document/${targetDocumentId}/reply`
+      : "/api/Document";
+    await axiosInstance.post(url, fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    message.success(isReplyMode ? "تم إرسال الرد" : "تم إضافة الكتاب");
+    navigate("/archive");
+  } catch (e) {
+    const msg =
+      e.response?.data?.message ||
+      Object.values(e.response?.data?.errors || {}).flat().join(", ") ||
+      "خطأ غير معروف";
+    message.error(msg);
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   /* Render */
   return (
@@ -560,17 +577,12 @@ function AddDocumentPage({
                         rules={[{ required: true, message: "اختر" }]}
                       >
                         <Select
-                          onChange={(val) => {
-                            setIsOfficial(val);
-                            form.resetFields([
-                              "ministryId",
-                              "generalDirectorateId",
-                              "directorateId",
-                              "departmentId",
-                              "sectionId",
-                              "privatePartyId"
-                            ]);
-                          }}
+                       onChange={(val) => {
+                          form.resetFields([
+                            "ministryId","generalDirectorateId","directorateId",
+                            "departmentId","sectionId","privatePartyId"
+                          ]);
+                        }}
                         >
                           <Option value={true}>رسمية</Option>
                           <Option value={false}>غير رسمية</Option>
@@ -578,10 +590,15 @@ function AddDocumentPage({
                       </Form.Item>
                     </Col>
                     <Col span={20}>
-                      <OfficialPartySelector disabled={!form.getFieldValue("isOfficialParty")} />
+                       <OfficialPartySelector
+                          key={isOfficial ? "official" : "private"}
+                          disabled={!isOfficial}
+                        />
                     </Col>
                     <Col span={4}>
-                      <PrivatePartySelector disabled={!!form.getFieldValue("isOfficialParty")} />
+                       <PrivatePartySelector
+                          disabled={isOfficial}
+                        />
                     </Col>
                   </Row>
 
@@ -640,6 +657,7 @@ function AddDocumentPage({
                               type="primary" icon={<SearchOutlined />}
                               loading={searchingDocument}
                               onClick={handleSearchParentDocument}
+                              style={{height:"45px"}}
                             >
                               بحث
                             </Button>
@@ -663,7 +681,7 @@ function AddDocumentPage({
 
                     <Col span={6}>
                       <Form.Item
-                        name="title" label="عنوان الكتاب"
+                        name="title" label="الموضوع"
                         rules={[{ required: true, message: "أدخل العنوان" }]}
                       >
                         <Input />
@@ -751,12 +769,12 @@ function AddDocumentPage({
                   </Row>
 
                   {/* ==== الموضوع / الملاحظات ==== */}
-                  <Divider orientation="left">الموضوع والملاحظات</Divider>
+                  <Divider orientation="left">تفاصيل الكتاب والملاحظات</Divider>
                   <Row gutter={16}>
                     <Col span={12}>
                       <Form.Item
-                        name="subject" label="الموضوع"
-                        rules={[{ required: true, message: "أدخل الموضوع" }]}
+                        name="subject" label="تفاصيل الكتاب"
+                        rules={[{ required: true, message: "أدخل التفاصيل" }]}
                       >
                         <TextArea rows={4} />
                       </Form.Item>

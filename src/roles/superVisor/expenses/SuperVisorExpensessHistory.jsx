@@ -60,6 +60,8 @@ const positionStatusMap = {
     Status.SentFromDirector,
   ],
   Manager: [Status.SentToManager, Status.ReturnedToManager],
+  
+  Director: [Status.SentToDirector ],
   ExpenseAuditer: [Status.ReturnedToExpendeAuditer ,Status.SentFromDirector],
   ExpenseManager: [Status.ReturnedToExpenseManager , Status.SentToExpenseManager],
   ExpenseGeneralManager: [Status.SentToExpenseGeneralManager],

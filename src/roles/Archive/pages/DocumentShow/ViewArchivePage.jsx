@@ -25,16 +25,17 @@ import dayjs from "dayjs";
 
 import axiosInstance from "../../../../intercepters/axiosInstance";
 import Url           from "../../../../store/url";
-import './../../styles/viewArchiveStyle.css';
+import "./../../styles/viewArchiveStyle.css";
 
 import useAuthStore  from "../../../../store/store";
 import Lele          from "../../../../reusable elements/icons";
 import DocumentDetails     from "./DocumentDetails";
-import DocumentAttachments from "./DocumentAttachments";
+import DocumentAttachments from "./DocumentAttachments";   // ← لا تغيّر المسار
 import RelatedDocuments    from "./RelatedDocuments";
 import AuditButton         from "../../../../reusable elements/buttons/AuditButton";
 import EditDocumentForm    from "./actions/EditDocumentForm.jsx";
-import DocumentHistory from './DocumentActionsHistory.jsx';
+import DocumentHistory     from "./DocumentActionsHistory.jsx";
+
 const { Title, Text } = Typography;
 
 /* ثوابت مبسّطة */
@@ -52,7 +53,7 @@ export const RESPONSE_TYPES = {
 };
 
 /* helper لعرض "لا يوجد" */
-const showValue = (v) => (v || v === 0 ? v : "لا يوجد");
+const showValue = (v) => (v || v === 0 ? v : "لم يتم التحديد");
 
 const DocumentShow = () => {
   /* ───── معلومات المستخدم من الـ store ───── */
@@ -62,16 +63,19 @@ const DocumentShow = () => {
     permissions.includes("SuperAdmin") || profile?.role === "SuperAdmin";
 
   const hasDeletePermission = permissions.includes("DOCd");   // صلاحية الحذف
-  const hasUpdatePermission = permissions.includes("DOCu");   // صلاحية التعديل (قبل التحقق الخاص أدناه)
-  const hasAuditPermission = permissions.includes("DOCAudit");
-  /* ───── React-router ───── */
+  const hasUpdatePermission = permissions.includes("DOCu");   // صلاحية التعديل
+  const hasAuditPermission  = permissions.includes("DOCAudit");
+
+  /* ───── React‑router ───── */
   const { state } = useLocation();
   const navigate  = useNavigate();
   const documentId = state?.id;
 
   /* ───── حالة الصفحة ───── */
   const [documentData, setDocumentData] = useState(null);
-  const [images,       setImages]       = useState([]);
+
+  // احتفظنا بالمصفوفة فقط لحساب العدد وللحصول على المرفق الرئيسى عند التعديل
+  const [images, setImages] = useState([]);                    // *** CHANGED ***
   const [loading,      setLoading]      = useState(false);
   const [activeTabKey, setActiveTabKey] = useState("details");
 
@@ -113,11 +117,13 @@ const DocumentShow = () => {
     const { data } = await axiosInstance.get(`${Url}/api/Document/${documentId}`);
     setDocumentData(data);
   };
+
+  // استبدلنا مسار MinIO الجديد ليعيد روابط موقّعة *** CHANGED ***
   const fetchImages = async () => {
     const { data } = await axiosInstance.get(
-      `${Url}/api/Attachment/Document/${documentId}`
+      `${Url}/api/Document/${documentId}/attachment-urls`
     );
-    setImages(data.map((x) => ({ id: x.id, url: x.filePath })));
+    setImages(data); // data = [{id,url}, …]
   };
 
   /* ───── تحميل مبدئى ───── */
@@ -161,12 +167,12 @@ const DocumentShow = () => {
   /* ───── Tabs ───── */
   const tabList = [
     { key: "details",        tab: "معلومات الكتاب" },
-    { key: "attachments",    tab: `المرفقات (${images.length})` },
+    { key: "attachments",    tab: `المرفقات (${images.length})` }, // *** CHANGED ***
     {
       key: "childDocuments",
-      tab: `الكتب المرتبطة (${documentData?.childDocuments?.length || 0})`,
+      tab: `سلسلة الكتب (${documentData?.childDocuments?.length || 0})`,
     },
-    { key: "history",        tab: "سجلّ الإجراءات" },   // ← أضف هذا العنصر
+    { key: "history",        tab: "سجلّ الإجراءات" },
   ];
 
   /* رابط المرفق الرئيسى (إن وُجد) لتمريره إلى نموذج التعديل */
@@ -174,7 +180,6 @@ const DocumentShow = () => {
     images.find((x) => x.id === documentData?.mainAttachmentId)?.url ||
     images[0]?.url ||
     "";
-
 
   /* ───── الواجهة ───── */
   return (
@@ -218,16 +223,12 @@ const DocumentShow = () => {
                   </Button>
                 )}
 
-                {
-                  hasAuditPermission && 
-                    
-                <AuditButton
-                documentId={documentId}
-                onAuditSuccess={fetchDetails}
-              />
-
-                }
-
+                {hasAuditPermission && (
+                  <AuditButton
+                    documentId={documentId}
+                    onAuditSuccess={fetchDetails}
+                  />
+                )}
 
                 {hasUpdatePermission && (
                   <Button
@@ -268,11 +269,9 @@ const DocumentShow = () => {
                 />
               )}
 
+              {/* ‼️ استبدلنا الاستدعاء ليأخذ معرّف الكتاب فقط ‼️ */    /* CHANGED */}
               {activeTabKey === "attachments" && (
-                <DocumentAttachments
-                  images={images}
-                  hasUpdatePermission={false /* تعطيل التعديل هنا */}
-                />
+                <DocumentAttachments documentId={documentId} />
               )}
 
               {activeTabKey === "childDocuments" && (
@@ -282,7 +281,8 @@ const DocumentShow = () => {
                   navigate={navigate}
                 />
               )}
-                            {activeTabKey === "history" && (
+
+              {activeTabKey === "history" && (
                 <DocumentHistory documentId={documentId} />
               )}
             </Card>
@@ -304,7 +304,7 @@ const DocumentShow = () => {
                 onClose={() => setEditModalVisible(false)}
                 onUpdateSuccess={async () => {
                   await fetchDetails();
-                  await fetchImages();
+                  await fetchImages();  // لتحديث عدد المرفقات أيضًا
                   setEditModalVisible(false);
                   message.success("تم التحديث بنجاح");
                 }}
