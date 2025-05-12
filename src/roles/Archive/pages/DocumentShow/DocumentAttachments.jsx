@@ -1,26 +1,21 @@
-/* تبويب المرفقات للقراءة فقط */
+/* تبويب المرفقات (قراءة فقط - يجلب من MinIO) */
 import React from "react";
-import { Empty } from "antd";
-import ImagePreviewer from "../../../../reusable/ImagePreViewer.jsx";
+import MinioImagePreviewer from './../../../../reusable/MinIoImagePreViewer.jsx';
+export default function DocumentAttachments({
+  documentId,
+  defaultWidth  = 600,
+  defaultHeight = 450,
+}) {
+  if (!documentId) return null; // أمان إضافي
 
-const DocumentAttachments = ({ images }) => (
-  <div className="document-attachments">
-    {images.length ? (
-      <div className="image-preview-container">
-        <ImagePreviewer
-          uploadedImages={images.map((img) => img.url)}
-          defaultWidth={600}
-          defaultHeight={450}
-          /* لا يوجد تحديد أو استبدال */
-        />
-      </div>
-    ) : (
-      <Empty
-        description="لا توجد مرفقات لهذا الكتاب"
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
+  return (
+    <div className="document-attachments">
+      <MinioImagePreviewer
+        entityType="Document"   // ثابت لأن المكوّن خاص بالكتب
+        entityId={documentId}
+        defaultWidth={defaultWidth}
+        defaultHeight={defaultHeight}
       />
-    )}
-  </div>
-);
-
-export default DocumentAttachments;
+    </div>
+  );
+}
