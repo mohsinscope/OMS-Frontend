@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Table,
   ConfigProvider,
@@ -137,7 +137,7 @@ function flattenItems(items) {
     }
   
     console.warn(`Unexpected position: ${position} or status: ${currentStatus}`);
-    return currentStatus;
+    return null;
   };
 
 
@@ -171,8 +171,25 @@ function flattenItems(items) {
       return Status.ReturnedToExpenseManager;
     }
     
-    return currentStatus;
+    return null;
   };
+
+  // 🔽 put this right after the last “useState” declaration
+//---------------------------------------------------------
+const currentStatus   = expense?.generalInfo?.["الحالة"];  // may be undefined on first render
+const userPosition    = profile?.position || "";
+
+/* 🟢 can this user legally approve the current status? */
+const canApprove = useMemo(() => {
+  if (!profile?.profileId || currentStatus == null) return false;
+  return getNextStatus(currentStatus, userPosition) !== null;
+}, [profile?.profileId, currentStatus, userPosition]);
+
+/* 🟢 can this user legally return the current status? */
+const canReturn = useMemo(() => {
+  if (!profile?.profileId || currentStatus == null) return false;
+  return getRejectionStatus(currentStatus, userPosition) !== null;
+}, [profile?.profileId, currentStatus, userPosition]);
 
   const handleActionClick = (type) => {
     setActionType(type);
@@ -187,58 +204,79 @@ function flattenItems(items) {
     form.resetFields();
   };
 
-  const handleActionSubmit = async () => {
-    try {
-      await form.validateFields();
-      if (!profile.profileId) {
-        message.error("لم يتم العثور على معلومات المستخدم");
-        return;
-      }
-      try {
-        setIsSubmitting(true);
-        const currentStatus = expense?.generalInfo?.["الحالة"];
-        const newStatus =
-          actionType === "Approval"
-            ? getNextStatus(currentStatus, profile?.position)
-            : getRejectionStatus(currentStatus, profile?.position);
-        const dynamicActionType =
-          actionType === "Approval"
-            ? `تمت الموافقة من ${profile?.position || ""} ${profile?.fullName || ""}`
-            : `تم الارجاع من ${profile?.position || ""} ${profile?.fullName || ""}`;
-        // Call the Actions endpoint
-        await axiosInstance.post(
-          `${Url}/api/Actions`,
-          {
-            actionType: dynamicActionType,
-            notes: actionNote,
-            profileId: profile.profileId,
-            monthlyExpensesId: expenseId,
-          },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        // Update the expense status
-        await axiosInstance.post(
-          `${Url}/api/Expense/${expenseId}/status`,
-          { monthlyExpensesId: expenseId, newStatus: newStatus },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-        message.success(
-          `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`
-        );
-        handleModalCancel();
-        navigate(-1);
-      } catch (error) {
-        console.error(`Error processing ${actionType}:`, error);
-        message.error(
-          `حدث خطأ أثناء ${actionType === "Approval" ? "الموافقة" : "الإرجاع"}`
-        );
-      } finally {
-        setIsSubmitting(false);
-      }
-    } catch (validationError) {
-      console.error("Validation error:", validationError);
+const handleActionSubmit = async () => {
+  try {
+    // 1️⃣ Make sure the note exists
+    const { notes } = await form.validateFields();
+
+    // 2️⃣ Check that we have a logged‑in profile
+    if (!profile?.profileId) {
+      message.error("لم يتم العثور على معلومات المستخدم");
+      return;
     }
-  };
+
+    setIsSubmitting(true);
+
+    // 3️⃣ Figure out the requested transition
+    const currentStatus = expense?.generalInfo?.["الحالة"];          // numeric enum
+    const getStatusFn   = actionType === "Approval" ? getNextStatus : getRejectionStatus;
+    const newStatus     = getStatusFn(currentStatus, profile?.position);
+
+    // 3‑a  Guard: illegal transition
+    if (newStatus === null) {
+      message.error("لا يمكنك تنفيذ هذا الإجراء على هذه الحالة.");
+      return;
+    }
+
+    // 3‑b  Guard: nothing changes (e.g. same status)
+    if (newStatus === currentStatus) {
+      message.warning("الحالة الحالية لا تسمح بهذا الإجراء.");
+      return;
+    }
+
+    // 4️⃣ Compose Action text in Arabic
+    const dynamicActionType =
+      actionType === "Approval"
+        ? `تمت الموافقة من ${profile.position || ""} ${profile.fullName || ""}`
+        : `تم الارجاع من ${profile.position || ""} ${profile.fullName || ""}`;
+
+    // 5️⃣ Write the Action record
+    await axiosInstance.post(
+      `${Url}/api/Actions`,
+      {
+        actionType:  dynamicActionType,
+        notes,                              // from Ant D form
+        profileId:        profile.profileId,
+        monthlyExpensesId: expenseId,
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    // 6️⃣ Update the status on the server
+    await axiosInstance.post(
+      `${Url}/api/Expense/${expenseId}/status`,
+      { monthlyExpensesId: expenseId, newStatus },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    // 7️⃣ Success feedback
+    message.success(
+      `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`
+    );
+    handleModalCancel();          // close the modal & clear form
+    navigate(-1);                 // go back to the previous page
+  } catch (err) {
+    // Validation or request errors
+    console.error("Error in handleActionSubmit:", err);
+    message.error(
+      `حدث خطأ أثناء ${
+        actionType === "Approval" ? "الموافقة" : "الإرجاع"
+      }`
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const fetchDailyExpenseDetails = async (id) => {
     try {
@@ -1016,10 +1054,7 @@ function flattenItems(items) {
               type="primary"
               style={{ padding: "20px 30px" }}
               onClick={() => handleActionClick("Approval")}
-              disabled={
-                !profile.profileId ||
-                expense?.generalInfo?.["الحالة"] === Status.Completed
-              }
+             disabled={!canApprove}
             >
               موافقة
             </Button>
@@ -1029,7 +1064,7 @@ function flattenItems(items) {
                 type="primary"
                 style={{ padding: "20px 40px" }}
                 onClick={() => handleActionClick("Return")}
-                disabled={!profile.profileId}
+                disabled={!canReturn}
               >
                 ارجاع
               </Button>
