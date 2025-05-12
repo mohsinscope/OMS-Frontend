@@ -3,9 +3,18 @@ import { Row, Col, Form, Select, Spin } from "antd";
 import useCascade from "../hooks/useCascade.jsx";
 
 const { Option } = Select;
+const spinner   = <Spin size="small" />;
 
-export default function OfficialPartySelector({ disabled }) {
+/**
+ * الاختيار الهرمى للجهات الرسمية
+ * يعتمد على hook  useCascade لجلب الخيارات على حسب المستوى
+ *
+ * @param {boolean} disabled    - لتعطيل كامل المكوّن
+ */
+export default function OfficialPartySelector({ disabled = false }) {
   const form = Form.useFormInstance();
+
+  /* hook مركزي لجلب القوائم */
   const {
     ministryOptions,      fetchMinistries,
     generalDirOptions,    fetchGeneralDirectorates,
@@ -15,28 +24,66 @@ export default function OfficialPartySelector({ disabled }) {
     resetBelow,
   } = useCascade();
 
-  /* -------- حالات محلية لكل مستوى -------- */
+  /*  ► حالات محلّية تمثِّل القيمة المختارة فعلياً فى كل ComboBox  */
   const [ministryId,          setMinistryId]          = useState(null);
   const [generalDirectorateId,setGeneralDirectorateId]= useState(null);
   const [directorateId,       setDirectorateId]       = useState(null);
   const [departmentId,        setDepartmentId]        = useState(null);
   const [sectionId,           setSectionId]           = useState(null);
 
-
-useEffect(() => {
-  console.log("➡️ Current selection:", {
-    ministryId,
-    generalDirectorateId,
-    directorateId,
-    departmentId,
-    sectionId,
-  });
-}, [ministryId, generalDirectorateId, directorateId, departmentId, sectionId]);
-
-  /* تحميل الوزارات */
+  /*──────────────────────
+    1. تحميل الوزارات أولاً
+  ──────────────────────*/
   useEffect(() => { fetchMinistries(); }, [fetchMinistries]);
 
-  /* دوال التغيير */
+  /*──────────────────────
+    2. مزامنة القيم المُعبّأة برمجياً مع الحالة المحليّة
+       (تُفيد فى حالة prefillFromParent أو edit‑mode)
+  ──────────────────────*/
+  const watchedMinistryId          = Form.useWatch("ministryId",          form);
+  const watchedGeneralDirectorateId= Form.useWatch("generalDirectorateId",form);
+  const watchedDirectorateId       = Form.useWatch("directorateId",       form);
+  const watchedDepartmentId        = Form.useWatch("departmentId",        form);
+  const watchedSectionId           = Form.useWatch("sectionId",           form);
+
+  /* كل watch يحدِّث الحالة ويجلب القوائم إن لزم */
+  useEffect(() => {
+    if (watchedMinistryId && watchedMinistryId !== ministryId) {
+      setMinistryId(watchedMinistryId);
+      fetchGeneralDirectorates(watchedMinistryId);
+    }
+  }, [watchedMinistryId]);          // eslint-disable-line
+
+  useEffect(() => {
+    if (watchedGeneralDirectorateId && watchedGeneralDirectorateId !== generalDirectorateId) {
+      setGeneralDirectorateId(watchedGeneralDirectorateId);
+      fetchDirectorates(watchedGeneralDirectorateId);
+    }
+  }, [watchedGeneralDirectorateId]); // eslint-disable-line
+
+  useEffect(() => {
+    if (watchedDirectorateId && watchedDirectorateId !== directorateId) {
+      setDirectorateId(watchedDirectorateId);
+      fetchDepartments(watchedDirectorateId);
+    }
+  }, [watchedDirectorateId]);        // eslint-disable-line
+
+  useEffect(() => {
+    if (watchedDepartmentId && watchedDepartmentId !== departmentId) {
+      setDepartmentId(watchedDepartmentId);
+      fetchSections(watchedDepartmentId);
+    }
+  }, [watchedDepartmentId]);         // eslint-disable-line
+
+  useEffect(() => {
+    if (watchedSectionId && watchedSectionId !== sectionId) {
+      setSectionId(watchedSectionId);
+    }
+  }, [watchedSectionId]);            // eslint-disable-line
+
+  /*──────────────────────
+    3. دوال onChange لكل مستوى
+  ──────────────────────*/
   const onMinistryChange = (val) => {
     setMinistryId(val);
     setGeneralDirectorateId(null);
@@ -102,9 +149,9 @@ useEffect(() => {
     form.setFieldsValue({ sectionId: val });
   };
 
-  const spinner = <Spin size="small" />;
-
-  /* -------- واجهة المستخدم -------- */
+  /*──────────────────────
+    4. واجهة المستخدم
+  ──────────────────────*/
   return (
     <Row gutter={16}>
       {/* الوزارة */}
@@ -112,13 +159,13 @@ useEffect(() => {
         <Form.Item
           name="ministryId"
           label="الوزارة"
-          rules={!disabled ? [{ required: true, message: "اختر الوزارة" }] : []}
+          rules={disabled ? [] : [{ required: true, message: "اختر الوزارة" }]}
         >
           <Select
             allowClear
+            disabled={disabled}
             value={ministryId}
             onChange={onMinistryChange}
-            disabled={disabled}
             loading={!ministryOptions.length}
             suffixIcon={!ministryOptions.length ? spinner : undefined}
           >
@@ -134,9 +181,9 @@ useEffect(() => {
         <Form.Item name="generalDirectorateId" label="مديرية عامة">
           <Select
             allowClear
+            disabled={disabled || !ministryId}
             value={generalDirectorateId}
             onChange={onGeneralDirChange}
-            disabled={disabled || !ministryId}
             loading={!!ministryId && !generalDirOptions.length}
             suffixIcon={!generalDirOptions.length && ministryId ? spinner : undefined}
           >
@@ -147,14 +194,14 @@ useEffect(() => {
         </Form.Item>
       </Col>
 
-      {/* المديرية */}
+      {/* جهات المديرية */}
       <Col span={4}>
         <Form.Item name="directorateId" label="جهات المديرية">
           <Select
             allowClear
+            disabled={disabled || !generalDirectorateId}
             value={directorateId}
             onChange={onDirectorateChange}
-            disabled={disabled || !generalDirectorateId}
             loading={!!generalDirectorateId && !directorateOptions.length}
             suffixIcon={!directorateOptions.length && generalDirectorateId ? spinner : undefined}
           >
@@ -170,9 +217,9 @@ useEffect(() => {
         <Form.Item name="departmentId" label="قسم">
           <Select
             allowClear
+            disabled={disabled || !directorateId}
             value={departmentId}
             onChange={onDepartmentChange}
-            disabled={disabled || !directorateId}
             loading={!!directorateId && !departmentOptions.length}
             suffixIcon={!departmentOptions.length && directorateId ? spinner : undefined}
           >
@@ -188,9 +235,9 @@ useEffect(() => {
         <Form.Item name="sectionId" label="شعبة">
           <Select
             allowClear
+            disabled={disabled || !departmentId}
             value={sectionId}
             onChange={onSectionChange}
-            disabled={disabled || !departmentId}
             loading={!!departmentId && !sectionOptions.length}
             suffixIcon={!sectionOptions.length && departmentId ? spinner : undefined}
           >
