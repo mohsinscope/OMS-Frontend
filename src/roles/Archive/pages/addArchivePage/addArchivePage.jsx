@@ -38,6 +38,28 @@ import useAuthStore from "./../../../../store/store.js";
 import ImagePreviewer from "./../../../../reusable/ImagePreViewer.jsx";
 import './../../styles/addArchivePage.css';
 
+
+/*─────────────────── Prefill helper (NEW) ───────────────────*/
+const prefillFromParent = (doc, form) => {
+  if (!doc) return;
+
+  const values = {
+    isOfficialParty: !doc.privatePartyId,
+    ministryId:           doc.ministryId,
+    generalDirectorateId: doc.generalDirectorateId,
+    directorateId:        doc.directorateId,
+    departmentId:         doc.departmentId,
+    sectionId:            doc.sectionId,
+    privatePartyId:       doc.privatePartyId,
+  };
+
+  form.setFieldsValue(values);
+
+  /* لاحظ: لم نعد بحاجة لاستدعاء fetch* هنا؛
+           OfficialPartySelector يراقب القيم ويجلب القوائم تلقائياً
+           عبر useWatch كما عدّلناه سابقاً. */
+};
+/*────────────────────────────────────────────────────────────*/
 const { Option } = Select;
 const { TextArea } = Input;
 const { Dragger } = Upload;
@@ -109,6 +131,12 @@ function AddDocumentPage({
   // official toggle
  const isOfficial = Form.useWatch("isOfficialParty", form) ?? true;
 
+const needParentSearch =
+  isReplyDocument &&          // المستخدم اختار "اجابة صادر/وارد"
+  !hasParent &&              // لم يأتِ من زر ردّ (لا parentDocumentId فى الـroute)
+  !foundParentDocument;      // ولم يجد مستنداً بالبحث بعد
+
+
   /* Fetch static lists */
   useEffect(() => {
     (async () => {
@@ -142,6 +170,7 @@ function AddDocumentPage({
       try {
         const { data } = await axiosInstance.get(`/api/Document/${parentDocumentId}`);
         setFetchedDocumentData(data);
+          prefillFromParent(data, form);          // <<– add this line
       } catch {
         message.error("تعذّر جلب بيانات الكتاب الأصلى");
       }
@@ -171,22 +200,28 @@ function AddDocumentPage({
   }, [editMode, initialValues, form]);
 
   /* Upload config */
-  const fileUploadProps = {
+    const fileUploadProps = {
     name: "file",
     multiple: true,
     fileList,
     beforeUpload: (file) => {
-      const ok = ["application/pdf", "image/jpeg", "image/png"].includes(file.type)
-        && file.size/1024/1024 < 10;
+      const ok =
+        ["application/pdf", "image/jpeg", "image/png"].includes(file.type) &&
+        file.size / 1024 / 1024 < 10;
       if (!ok) {
         message.error("يُسمح بـ PDF أو JPG/PNG ≤ 10MB");
         return false;
       }
+      // always add the File to fileList
       setFileList(prev => [...prev, file]);
-      if (file.type.startsWith("image/")) {
+      // for PDFs, push the File object itself
+      if (file.type === "application/pdf") {
+        setPreviewUrls(prev => [...prev, file]);
+      } else {
+        // for images, push a blob URL
         setPreviewUrls(prev => [...prev, URL.createObjectURL(file)]);
       }
-      return false;
+      return false; // prevent auto‐upload
     },
     onRemove: () => {
       setFileList([]);
@@ -206,6 +241,7 @@ function AddDocumentPage({
         message.info("الكتاب المرجعي موجود بالفعل");
       } else {
         setFoundParentDocument(data);
+        prefillFromParent(data, form);
         message.success(`تم العثور على الكتاب: ${data.title}`);
       }
       setSearchDocumentNumber("");
@@ -642,7 +678,7 @@ const handleSubmit = async () => {
                       </Form.Item>
                     </Col>
 
-                    {isReplyDocument && !foundParentDocument && (
+                    {needParentSearch && (
                       <Col span={8}>
                         <Form.Item label="بحث عن الكتاب الأصلى">
                           <Input.Group compact>

@@ -14,7 +14,8 @@ import {
 } from "antd";
 import {
   FileTextOutlined,
-  CheckCircleOutlined,
+    CheckCircleOutlined,    // for the audit button
+  CloseCircleOutlined,    // for the unaudit button,
   ExclamationCircleOutlined,
   InfoCircleOutlined,
   MailOutlined,
@@ -57,8 +58,10 @@ const showValue = (v) => (v || v === 0 ? v : "لم يتم التحديد");
 
 const DocumentShow = () => {
   /* ───── معلومات المستخدم من الـ store ───── */
-  const { isSidebarCollapsed, permissions, profile } = useAuthStore();
+  const { isSidebarCollapsed, permissions, profile ,roles } = useAuthStore();
   const currentProfileId = profile?.profileId;
+  const isManager = roles.includes("SuperAdmin");
+  console.log(profile?.roles)
   const isSuperAdmin     =
     permissions.includes("SuperAdmin") || profile?.role === "SuperAdmin";
 
@@ -82,6 +85,10 @@ const DocumentShow = () => {
   /* ───── نافذة التعديل ───── */
   const [editModalVisible, setEditModalVisible] = useState(false);
 
+
+  useEffect(() => {
+  setActiveTabKey("details");
+}, [documentId]);
   /* ───── helpers للألوان/الأيقونات ───── */
   const statusColor = useCallback(
     (d) =>
@@ -125,7 +132,33 @@ const DocumentShow = () => {
     );
     setImages(data); // data = [{id,url}, …]
   };
-
+const handleUnaudit = () =>
+  Modal.confirm({
+    title: "تأكيد إلغاء التدقيق",
+    content: "هل تريد إلغاء تدقيق هذا الكتاب؟",
+    okText: "نعم",
+    cancelText: "إلغاء",
+    
+    // Force RTL for modal content
+    modalRender: (modal) => <div dir="rtl">{modal}</div>,
+    
+    // Add this to position buttons on the right
+    okButtonProps: { style: { float: 'right', marginLeft: 8 } },
+    cancelButtonProps: { style: { float: 'right' } },
+    
+    onOk: async () => {
+      try {
+        await axiosInstance.post(
+          `${Url}/api/Document/${documentId}/unaudit`,
+          { profileId: currentProfileId }
+        );
+        message.success("تم إلغاء التدقيق");
+        await fetchDetails();
+      } catch (e) {
+        message.error(e.response?.data?.message || "فشل إلغاء التدقيق");
+      }
+    },
+  });
   /* ───── تحميل مبدئى ───── */
   useEffect(() => {
     if (!documentId) {
@@ -167,7 +200,6 @@ const DocumentShow = () => {
   /* ───── Tabs ───── */
   const tabList = [
     { key: "details",        tab: "معلومات الكتاب" },
-    { key: "attachments",    tab: `المرفقات (${images.length})` }, // *** CHANGED ***
     {
       key: "childDocuments",
       tab: `سلسلة الكتب (${documentData?.childDocuments?.length || 0})`,
@@ -223,12 +255,27 @@ const DocumentShow = () => {
                   </Button>
                 )}
 
-                {hasAuditPermission && (
-                  <AuditButton
-                    documentId={documentId}
-                    onAuditSuccess={fetchDetails}
+
+  {/* ← if NOT audited: show audit button */}
+  {!documentData.isAudited && hasAuditPermission && (
+          <AuditButton
+                
+                  documentId={documentId}
+                  profileId={currentProfileId}       // ← new
+                  onAuditSuccess={fetchDetails}
                   />
-                )}
+  )}
+
+  {/* ← if audited: show unaudit button */}
+  {documentData.isAudited && isManager && (
+    <Button
+      type="default"
+      icon={<CloseCircleOutlined />}
+      onClick={handleUnaudit}
+    >
+      إلغاء تدقيق
+    </Button>
+  )}
 
                 {hasUpdatePermission && (
                   <Button
@@ -269,10 +316,7 @@ const DocumentShow = () => {
                 />
               )}
 
-              {/* ‼️ استبدلنا الاستدعاء ليأخذ معرّف الكتاب فقط ‼️ */    /* CHANGED */}
-              {activeTabKey === "attachments" && (
-                <DocumentAttachments documentId={documentId} />
-              )}
+           
 
               {activeTabKey === "childDocuments" && (
                 <RelatedDocuments

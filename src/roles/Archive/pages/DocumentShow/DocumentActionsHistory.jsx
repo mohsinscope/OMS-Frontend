@@ -10,6 +10,8 @@ const ACTION_TYPES = {
   3: { label: "تم الرد",     color: "red"    },
   4: { label: "تم التاكيد",   color: "green"  },
   5: { label: "تم تغيير الحالة", color: "purple" },
+   6: { label: "تم التدقيق",   color: "cyan"  },
+  7: { label: "تم الغاء التدقيق", color: "pink" },
 };
 
 export default function DocumentHistory({ documentId }) {
