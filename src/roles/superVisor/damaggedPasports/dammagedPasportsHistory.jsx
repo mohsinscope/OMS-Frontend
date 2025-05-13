@@ -131,7 +131,7 @@ export default function SuperVisorPassport() {
       setIsLoading(false);
     }
   };
-
+  console.log(passportList)
   const fetchDamageTypes = async () => {
     try {
       const response = await axiosInstance.get(
@@ -271,8 +271,8 @@ export default function SuperVisorPassport() {
             setFormData({
               passportNumber: savedFormData.passportNumber || "",
               damagedTypeId: savedFormData.damagedTypeId || null,
-              startDate: savedFormData.startDate ? new Date(savedFormData.startDate) : null,
-              endDate: savedFormData.endDate ? new Date(savedFormData.endDate) : null,
+              startDate: savedFormData.startDate ? savedFormData.startDate : null,
+              endDate: savedFormData.endDate ? savedFormData.endDate : null,
             });
           }
           if (!isSupervisor) {
@@ -288,8 +288,8 @@ export default function SuperVisorPassport() {
             officeId: isSupervisor ? profile.officeId : savedOff || null,
             governorateId: isSupervisor ? profile.governorateId : savedGov || null,
             damagedTypeId: savedFormData?.damagedTypeId || null,
-            startDate: savedFormData?.startDate ? formatToISO(new Date(savedFormData.startDate), false) : null,
-            endDate: savedFormData?.endDate ? formatToISO(new Date(savedFormData.endDate), true) : null,
+            startDate: savedFormData?.startDate ? formatToISO(savedFormData.startDate, false) : null,
+            endDate: savedFormData?.endDate ? formatToISO(savedFormData.endDate, true) : null,
             PaginationParams: { PageNumber: pageToUse, PageSize: pageSize },
           };
           await fetchPassports(payload);
@@ -463,6 +463,7 @@ export default function SuperVisorPassport() {
         }
       );
       const fullPassportList = response.data || [];
+      console.log(fullPassportList)
       if (fullPassportList.length === 0) {
         message.error("لا توجد بيانات لتصديرها");
         return;
@@ -471,6 +472,7 @@ export default function SuperVisorPassport() {
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet("تقرير الجوازات التالفة", { properties: { rtl: true } });
       const headers = [
+        "الملاحضات",
         "نوع التلف",
         "رقم الجواز",
         "اسم المستخدم",
@@ -489,6 +491,7 @@ export default function SuperVisorPassport() {
       });
       fullPassportList.forEach((passport, index) => {
         const row = worksheet.addRow([
+          passport.note,
           passport.damagedTypeName,
           passport.passportNumber,
           passport.profileFullName,
@@ -505,6 +508,7 @@ export default function SuperVisorPassport() {
         });
       });
       worksheet.columns = [
+        { width: 25 },
         { width: 25 },
         { width: 25 },
         { width: 25 },

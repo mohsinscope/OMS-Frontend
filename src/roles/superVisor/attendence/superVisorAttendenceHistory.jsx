@@ -184,18 +184,7 @@ export default function SupervisorAttendanceHistory() {
     // We always jump to page 1 on new search
     setCurrentPage(1);
 
-    // Save to localStorage
-    localStorage.setItem(
-      "supervisorAttendanceSearchFilters",
-      JSON.stringify({
-        startDate: startDate ? startDate.toISOString() : null,
-        endDate: endDate ? endDate.toISOString() : null,
-        workingHours,
-        selectedGovernorate,
-        selectedOffice,
-        currentPage: 1,
-      })
-    );
+
 
     // Now fetch with these filters
     fetchAttendanceData(1, selectedGovernorate, selectedOffice);
@@ -211,7 +200,6 @@ export default function SupervisorAttendanceHistory() {
       setSelectedOffice(null);
     }
     setCurrentPage(1);
-    localStorage.removeItem("supervisorAttendanceSearchFilters");
     // Re-fetch
     fetchAttendanceData(1, null, null);
     message.success("تمت إعادة التعيين بنجاح");
@@ -221,17 +209,7 @@ export default function SupervisorAttendanceHistory() {
   const handlePageChange = (page) => {
     setCurrentPage(page);
     // Update localStorage with new page
-    localStorage.setItem(
-      "supervisorAttendanceSearchFilters",
-      JSON.stringify({
-        startDate: startDate ? startDate.toISOString() : null,
-        endDate: endDate ? endDate.toISOString() : null,
-        workingHours,
-        selectedGovernorate,
-        selectedOffice,
-        currentPage: page,
-      })
-    );
+
     fetchAttendanceData(page, selectedGovernorate, selectedOffice);
   };
 
