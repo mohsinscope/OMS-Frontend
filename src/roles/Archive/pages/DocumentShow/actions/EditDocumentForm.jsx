@@ -14,7 +14,7 @@ import {
 } from "antd";
 import { InboxOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import useAuthStore from './../../../../../store/store.js';
-import moment from "moment";
+import dayjs from "dayjs";
 import axiosInstance from '../../../../../intercepters/axiosInstance.js';
 import Url from '../../../../../store/url.js';
 import MinioImagePreviewer from './../../../../../reusable/MinIoImagePreViewer.jsx';
@@ -148,8 +148,6 @@ useEffect(() => {
       setGeneralDirectorateOptions(response.data);
       form.resetFields(['generalDirectorateId', 'directorateId', 'departmentId', 'sectionId']);
     } catch (error) {
-      console.error("Error loading general directorates:", error);
-      message.error("خطأ في تحميل المديريات العامة");
     }
   };
 
@@ -166,8 +164,6 @@ useEffect(() => {
       setDirectorateOptions(response.data);
       form.resetFields(['directorateId', 'departmentId', 'sectionId']);
     } catch (error) {
-      console.error("Error loading directorates:", error);
-      message.error("خطأ في تحميل المديريات");
     }
   };
 
@@ -184,8 +180,6 @@ useEffect(() => {
       setDepartmentOptions(response.data);
       form.resetFields(['departmentId', 'sectionId']);
     } catch (error) {
-      console.error("Error loading departments:", error);
-      message.error("خطأ في تحميل الأقسام");
     }
   };
 
@@ -202,8 +196,6 @@ useEffect(() => {
       setSectionOptions(response.data);
       form.resetFields(['sectionId']);
     } catch (error) {
-      console.error("Error loading sections:", error);
-      message.error("خطأ في تحميل الشعب");
     }
   };
 
@@ -227,6 +219,9 @@ useEffect(() => {
   if (!initialData || !listsReady) return;
 
   /* ───── derive helper values ───── */
+    // allow awaits
+  (async () => {
+    /* ───── derive helper values ───── */
   const responseTypeString = getResponseTypeString(initialData.responseType);
   const isOfficialParty    = initialData.ministryId != null;
 
@@ -237,9 +232,9 @@ useEffect(() => {
     title          : initialData.title,
     subject        : initialData.subject,
     notes          : initialData.notes,
-    date           : initialData.documentDate
-                     ? moment(initialData.documentDate)
-                     : undefined,
+    date: initialData.documentDate
+             ? dayjs(initialData.documentDate)
+             : undefined,
 
     /* classification */
     documentSide : getDocumentSide(initialData.documentType),
@@ -279,12 +274,24 @@ useEffect(() => {
   setIsOfficial(isOfficialParty);
 
   /* ───── preload cascaded dropdowns exactly once ───── */
-  if (isOfficialParty) {
-    if (initialData.ministryId)           handleMinistryChange(initialData.ministryId);
-    if (initialData.generalDirectorateId) handleGeneralDirectorateChange(initialData.generalDirectorateId);
-    if (initialData.directorateId)        handleDirectorateChange(initialData.directorateId);
-    if (initialData.departmentId)         handleDepartmentChange(initialData.departmentId);
-  }
+    /* ───── preload cascaded dropdowns silently ───── */
+    if (isOfficialParty) {
+      const { data: gds }  = await axiosInstance.get(`${Url}/api/GeneralDirectorate/ByMinistry/${initialData.ministryId}`);
+      setGeneralDirectorateOptions(gds);
+      const { data: ds }   = await axiosInstance.get(`${Url}/api/Directorate/ByGeneralDirectorate/${initialData.generalDirectorateId}`);
+      setDirectorateOptions(ds);
+      const { data: deps } = await axiosInstance.get(`${Url}/api/Department/ByDirectorate/${initialData.directorateId}`);
+      setDepartmentOptions(deps);
+      const { data: secs } = await axiosInstance.get(`${Url}/api/Section/ByDepartment/${initialData.departmentId}`);
+      setSectionOptions(secs);
+
+      // now fire your existing handlers so any extra logic still runs
+      handleMinistryChange(initialData.ministryId);
+      handleGeneralDirectorateChange(initialData.generalDirectorateId);
+      handleDirectorateChange(initialData.directorateId);
+      handleDepartmentChange(initialData.departmentId);
+    }
+  })();
 
   // eslint‑disable‑next‑line react-hooks/exhaustive-deps
 }, [initialData, listsReady]);
@@ -345,7 +352,7 @@ useEffect(() => {
       formData.append("ResponseType", getResponseTypeValue(values.documentSide, values.ResponseType));
       
       // Document date
-      formData.append("DocumentDate", values.date.format("YYYY-MM-DDT00:00:00[Z]"));
+    formData.append("DocumentDate", values.date.format("YYYY-MM-DDT00:00:00[Z]")); // dayjs.format is identical
       
       // Boolean flags - exact field names from Postman screenshot
       formData.append("IsRequiresReply", values.isRequiresReply);

@@ -21,7 +21,8 @@ import {
   CopyOutlined,
   TagsOutlined,
 } from "@ant-design/icons";
-import moment         from "moment";
+import dayjs          from "dayjs";
+
 import { useNavigate } from "react-router-dom";
 
 const { Text }   = Typography;
@@ -207,13 +208,13 @@ const DocumentDetails = ({
         <Descriptions.Item label="تاريخ الكتاب">
           <ClockCircleOutlined style={{ marginLeft: 4 }} />
           {documentData.documentDate
-            ? moment(documentData.documentDate).format("YYYY-MM-DD")
+            ? dayjs(documentData.documentDate).format("YYYY-MM-DD")
             : "لا يوجد"}
         </Descriptions.Item>
         <Descriptions.Item label="تاريخ الإنشاء">
           <ClockCircleOutlined style={{ marginLeft: 4 }} />
           {documentData.dateCreated
-            ? moment(documentData.dateCreated).format("YYYY-MM-DD HH:mm")
+            ? dayjs(documentData.dateCreated).format("hh:mm A YYYY-MM-DD")
             : "لا يوجد"}
         </Descriptions.Item>
 
