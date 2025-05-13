@@ -11,6 +11,7 @@ import {
   Card,
   Typography,
   Progress,
+  Select, 
 } from "antd";
 import {
   FileTextOutlined,
@@ -20,6 +21,7 @@ import {
   InfoCircleOutlined,
   MailOutlined,
   DeleteOutlined,
+  TagOutlined, 
 } from "@ant-design/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
@@ -60,10 +62,8 @@ const DocumentShow = () => {
   /* ───── معلومات المستخدم من الـ store ───── */
   const { isSidebarCollapsed, permissions, profile ,roles } = useAuthStore();
   const currentProfileId = profile?.profileId;
-  const isManager = roles.includes("SuperAdmin");
-  console.log(profile?.roles)
-  const isSuperAdmin     =
-    permissions.includes("SuperAdmin") || profile?.role === "SuperAdmin";
+  const isManager = roles.includes("manager");
+ 
 
   const hasDeletePermission = permissions.includes("DOCd");   // صلاحية الحذف
   const hasUpdatePermission = permissions.includes("DOCu");   // صلاحية التعديل
@@ -81,6 +81,10 @@ const DocumentShow = () => {
   const [images, setImages] = useState([]);                    // *** CHANGED ***
   const [loading,      setLoading]      = useState(false);
   const [activeTabKey, setActiveTabKey] = useState("details");
+
+  const [tagModalVisible, setTagModalVisible] = useState(false);
+  const [tags, setTags] = useState([]);                  // all available tags
+  const [selectedTagIds, setSelectedTagIds] = useState([]); // what user picks
 
   /* ───── نافذة التعديل ───── */
   const [editModalVisible, setEditModalVisible] = useState(false);
@@ -132,6 +136,12 @@ const DocumentShow = () => {
     );
     setImages(data); // data = [{id,url}, …]
   };
+
+  // ── load all tags from server ──
+const fetchTags = async () => {
+  const { data } = await axiosInstance.get(`${Url}/api/Tags`);
+  setTags(data);
+};
 const handleUnaudit = () =>
   Modal.confirm({
     title: "تأكيد إلغاء التدقيق",
@@ -159,6 +169,17 @@ const handleUnaudit = () =>
       }
     },
   });
+
+  // ── send selected tag IDs to the backend ──
+const handleAddTags = async () => {
+  await axiosInstance.patch(
+    `${Url}/api/Document/${documentId}`,
+    { TagIds: selectedTagIds }
+  );
+  message.success("تم إضافة الوسوم");
+  await fetchDetails();            // refresh document data
+  setTagModalVisible(false);       // close the modal
+};
   /* ───── تحميل مبدئى ───── */
   useEffect(() => {
     if (!documentId) {
@@ -296,6 +317,17 @@ const handleUnaudit = () =>
                 >
                   رد
                 </Button>
+                    <Button
+                      icon={<TagOutlined />}
+                      onClick={() => {
+                        fetchTags();             // load the tag list
+                        setTagModalVisible(true);// open the modal
+                      }}
+                    >
+                      اضافة وسوم
+                    </Button>
+
+
               </Space>
             </div>
 
@@ -354,10 +386,33 @@ const handleUnaudit = () =>
                 }}
               />
             </Modal>
+            
           </>
         ) : (
           <Progress type="circle" status="exception" percent={0} />
         )}
+        <Modal
+  title="اضافة وسوم"
+  open={tagModalVisible}
+  onCancel={() => setTagModalVisible(false)}
+  onOk={handleAddTags}
+  destroyOnClose
+>
+  <Select
+    mode="multiple"
+    placeholder="اختر الوسوم"
+    value={selectedTagIds}
+    onChange={setSelectedTagIds}
+    style={{ width: "100%" }}
+  >
+    {tags.map(tag => (
+      <Select.Option key={tag.id} value={tag.id}>
+        {tag.name}
+      </Select.Option>
+    ))}
+  </Select>
+</Modal>
+
       </div>
     </ConfigProvider>
   );

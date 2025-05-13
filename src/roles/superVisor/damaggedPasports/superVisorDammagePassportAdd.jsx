@@ -169,10 +169,10 @@ const SuperVisorDammagePassportAdd = () => {
       // Add text fields
       formData.append("PassportNumber", values.passportNumber);
 
-      // Convert date using dayjs instead of moment; add 6 hours
+      // Convert date using dayjs instead of moment; add 3 hours
       const selectedDate = values.date
-        ? dayjs(values.date).add(6, "hour") // or "hours"
-        : dayjs().add(6, "hour");
+        ? dayjs(values.date).add(3, "hour") // or "hours"
+        : dayjs().add(3, "hour");
 
       formData.append(
         "Date",
