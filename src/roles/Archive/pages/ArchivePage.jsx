@@ -20,7 +20,7 @@ const { Content } = Layout;
 const { Option }  = Select;
 
 /* ثابتات */
-const DOCUMENT_TYPES = { 1: "صادر", 2: "وارد" };
+const DOCUMENT_TYPES = { 1: "وارد", 2: "صادر" };
 const RESPONSE_TYPES = {
   1:"اجابة وارد",2:"تأكيد وارد",3:"وارد جديد",
   4:"اجابة صادر",5:"تأكيد صادر",6:"صادر جديد"
