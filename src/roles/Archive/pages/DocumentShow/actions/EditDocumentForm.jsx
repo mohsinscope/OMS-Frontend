@@ -148,8 +148,6 @@ useEffect(() => {
       setGeneralDirectorateOptions(response.data);
       form.resetFields(['generalDirectorateId', 'directorateId', 'departmentId', 'sectionId']);
     } catch (error) {
-      console.error("Error loading general directorates:", error);
-      message.error("خطأ في تحميل المديريات العامة");
     }
   };
 
@@ -166,8 +164,6 @@ useEffect(() => {
       setDirectorateOptions(response.data);
       form.resetFields(['directorateId', 'departmentId', 'sectionId']);
     } catch (error) {
-      console.error("Error loading directorates:", error);
-      message.error("خطأ في تحميل المديريات");
     }
   };
 
@@ -184,8 +180,6 @@ useEffect(() => {
       setDepartmentOptions(response.data);
       form.resetFields(['departmentId', 'sectionId']);
     } catch (error) {
-      console.error("Error loading departments:", error);
-      message.error("خطأ في تحميل الأقسام");
     }
   };
 
@@ -202,8 +196,6 @@ useEffect(() => {
       setSectionOptions(response.data);
       form.resetFields(['sectionId']);
     } catch (error) {
-      console.error("Error loading sections:", error);
-      message.error("خطأ في تحميل الشعب");
     }
   };
 
@@ -227,6 +219,9 @@ useEffect(() => {
   if (!initialData || !listsReady) return;
 
   /* ───── derive helper values ───── */
+    // allow awaits
+  (async () => {
+    /* ───── derive helper values ───── */
   const responseTypeString = getResponseTypeString(initialData.responseType);
   const isOfficialParty    = initialData.ministryId != null;
 
@@ -279,12 +274,24 @@ useEffect(() => {
   setIsOfficial(isOfficialParty);
 
   /* ───── preload cascaded dropdowns exactly once ───── */
-  if (isOfficialParty) {
-    if (initialData.ministryId)           handleMinistryChange(initialData.ministryId);
-    if (initialData.generalDirectorateId) handleGeneralDirectorateChange(initialData.generalDirectorateId);
-    if (initialData.directorateId)        handleDirectorateChange(initialData.directorateId);
-    if (initialData.departmentId)         handleDepartmentChange(initialData.departmentId);
-  }
+    /* ───── preload cascaded dropdowns silently ───── */
+    if (isOfficialParty) {
+      const { data: gds }  = await axiosInstance.get(`${Url}/api/GeneralDirectorate/ByMinistry/${initialData.ministryId}`);
+      setGeneralDirectorateOptions(gds);
+      const { data: ds }   = await axiosInstance.get(`${Url}/api/Directorate/ByGeneralDirectorate/${initialData.generalDirectorateId}`);
+      setDirectorateOptions(ds);
+      const { data: deps } = await axiosInstance.get(`${Url}/api/Department/ByDirectorate/${initialData.directorateId}`);
+      setDepartmentOptions(deps);
+      const { data: secs } = await axiosInstance.get(`${Url}/api/Section/ByDepartment/${initialData.departmentId}`);
+      setSectionOptions(secs);
+
+      // now fire your existing handlers so any extra logic still runs
+      handleMinistryChange(initialData.ministryId);
+      handleGeneralDirectorateChange(initialData.generalDirectorateId);
+      handleDirectorateChange(initialData.directorateId);
+      handleDepartmentChange(initialData.departmentId);
+    }
+  })();
 
   // eslint‑disable‑next‑line react-hooks/exhaustive-deps
 }, [initialData, listsReady]);
