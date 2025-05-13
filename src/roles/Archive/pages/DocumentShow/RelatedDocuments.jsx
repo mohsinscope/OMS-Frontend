@@ -71,9 +71,9 @@ const DocumentCard = ({
           marginRight: level * indentSize,
         }}
       >
-        <Row gutter={24} align="middle">
+        <Row  align="middle">
           {/* Attachment Preview */}
-          <Col xs={8} sm={8} md={6} lg={5}>
+          <Col xs={8} sm={8} md={6} lg={5} >
             <div
               style={{
                 display: "flex",
@@ -93,7 +93,7 @@ const DocumentCard = ({
 
           {/* Main Content */}
           <Col xs={16} sm={16} md={18} lg={19}>
-            <Space direction="vertical" size="small" style={{ width: "100%" }}>
+            <Space direction="vertical" size="small" style={{ width: "100%", marginRight:"50px" }}>
               {/* رقم الكتاب */}
               <div
                 style={{
@@ -132,6 +132,7 @@ const DocumentCard = ({
                     backgroundColor: "#f9f9f9",
                     padding: "6px 10px",
                     borderRadius: 4,
+                    width:"90%"
                   }}
                 >
                   {doc.title}
@@ -151,6 +152,7 @@ const DocumentCard = ({
                     backgroundColor: "#f9f9f9",
                     padding: "6px 10px",
                     borderRadius: 4,
+                    width:"90%"
                   }}
                 >
                   {doc.subject || "لا توجد تفاصيل إضافية"}

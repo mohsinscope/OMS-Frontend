@@ -244,14 +244,12 @@ const handleAddTags = async () => {
     });
 
   /* ───── Tabs ───── */
-  const tabList = [
-    { key: "details",        tab: "معلومات الكتاب" },
-{
-  key: "childDocuments",
-  tab: `سلسلة الكتب (${totalDescendants})`,
-},
-    { key: "history",        tab: "سجلّ الإجراءات" },
-  ];
+ const tabList = [
+  { key: "details",        tab: "معلومات الكتاب" },
+  { key: "attachments",    tab: `المرفقات (${images.length})` },
+  { key: "childDocuments", tab: `سلسلة الكتب (${totalDescendants})` },
+   { key: "history",        tab: "سجلّ الإجراءات" },
+ ];
 
   /* رابط المرفق الرئيسى (إن وُجد) لتمريره إلى نموذج التعديل */
   const currentImageUrl =
@@ -386,6 +384,13 @@ const handleAddTags = async () => {
               {activeTabKey === "history" && (
                 <DocumentHistory documentId={documentId} />
               )}
+                {activeTabKey === "attachments" && (
+                  <DocumentAttachments
+                    documentId={documentId}
+                    defaultWidth={600}
+                    defaultHeight={450}
+                  />
+                )}
             </Card>
 
             {/* ───────── Edit Modal ───────── */}
