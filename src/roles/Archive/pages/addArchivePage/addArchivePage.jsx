@@ -29,7 +29,6 @@ import {
   EyeFilled
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
-import ar_EG from "antd/lib/locale/ar_EG";
 import moment from "moment";
 import axiosInstance from "./../../../../intercepters/axiosInstance.js";
 import PrivatePartySelector from "./components/PrivatePartySelector.jsx";
@@ -350,7 +349,7 @@ const handleSubmit = async () => {
 
   /* Render */
   return (
-    <ConfigProvider locale={ar_EG} direction="rtl">
+    <ConfigProvider  direction="rtl">
       <Layout
         className={`document-page-layout${isSidebarCollapsed ? " document-page-layout-sidebar-collapsed" : ""}`}
         style={{ background: "none" }}

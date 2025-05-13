@@ -114,7 +114,7 @@ const DocumentCard = ({
                       border: "1px solid #b7eb8f",
                     }}
                   >
-                    #{doc.documentNumber}
+                    {doc.documentNumber}
                   </Text>
                 </Space>
               </div>

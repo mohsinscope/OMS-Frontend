@@ -67,7 +67,7 @@ const getDocumentSide = (documentType) => {
    // اقرأ فقط ما تحتاجه من الـ Store (أفضل أداءً)
    const profile     = useAuthStore(state => state.profile);
    const profileId   = profile?.profileId;
-   const isTags      = ["Director", "ReportingAnalyst", "manager"]
+   const isTags      = ["Director", "SuperAdmin", "manager"]
                          .includes(profile?.position);
 
    const [form] = Form.useForm();

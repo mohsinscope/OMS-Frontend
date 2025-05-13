@@ -29,7 +29,6 @@ export default function useCascade() {
       setGenerals(data);
     } catch (error) {
       if (error.response?.status === 404) {
-        message.error("لا توجد مديرية عامة متصلة بهذه الوزارة");
       } else {
         message.error("خطأ في تحميل المديريات العامة");
         console.error(error);
@@ -47,7 +46,6 @@ export default function useCascade() {
       setDirectorates(data);
     } catch (error) {
       if (error.response?.status === 404) {
-        message.error("لا توجد مديرية متصلة بهذه المديرية العامة");
       } else {
         message.error("خطأ في تحميل المديريات");
         console.error(error);
@@ -65,7 +63,7 @@ export default function useCascade() {
       setDepartments(data);
     } catch (error) {
       if (error.response?.status === 404) {
-        message.error("لا يوجد قسم متصل بهذه المديرية");
+       
       } else {
         message.error("خطأ في تحميل الأقسام");
         console.error(error);
@@ -83,7 +81,6 @@ export default function useCascade() {
       setSections(data);
     } catch (error) {
       if (error.response?.status === 404) {
-        message.error("لا توجد شعبة متصله بهذا القسم");
       } else {
         message.error("خطأ في تحميل الشعب");
         console.error(error);
