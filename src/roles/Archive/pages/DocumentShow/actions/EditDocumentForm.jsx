@@ -14,7 +14,7 @@ import {
 } from "antd";
 import { InboxOutlined, CheckCircleOutlined } from "@ant-design/icons";
 import useAuthStore from './../../../../../store/store.js';
-import moment from "moment";
+import dayjs from "dayjs";
 import axiosInstance from '../../../../../intercepters/axiosInstance.js';
 import Url from '../../../../../store/url.js';
 import MinioImagePreviewer from './../../../../../reusable/MinIoImagePreViewer.jsx';
@@ -232,9 +232,9 @@ useEffect(() => {
     title          : initialData.title,
     subject        : initialData.subject,
     notes          : initialData.notes,
-    date           : initialData.documentDate
-                     ? moment(initialData.documentDate)
-                     : undefined,
+    date: initialData.documentDate
+             ? dayjs(initialData.documentDate)
+             : undefined,
 
     /* classification */
     documentSide : getDocumentSide(initialData.documentType),
@@ -352,7 +352,7 @@ useEffect(() => {
       formData.append("ResponseType", getResponseTypeValue(values.documentSide, values.ResponseType));
       
       // Document date
-      formData.append("DocumentDate", values.date.format("YYYY-MM-DDT00:00:00[Z]"));
+    formData.append("DocumentDate", values.date.format("YYYY-MM-DDT00:00:00[Z]")); // dayjs.format is identical
       
       // Boolean flags - exact field names from Postman screenshot
       formData.append("IsRequiresReply", values.isRequiresReply);
