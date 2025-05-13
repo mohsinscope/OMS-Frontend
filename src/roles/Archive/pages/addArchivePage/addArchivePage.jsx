@@ -29,7 +29,6 @@ import {
   EyeFilled
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
-import ar_EG from "antd/lib/locale/ar_EG";
 import moment from "moment";
 import axiosInstance from "./../../../../intercepters/axiosInstance.js";
 import PrivatePartySelector from "./components/PrivatePartySelector.jsx";
@@ -97,7 +96,7 @@ function AddDocumentPage({
   const location = useLocation();
   const profileId = useAuthStore((s) => s.profile?.profileId);
   const { isSidebarCollapsed, profile } = useAuthStore();
-  const isDirector = ["Director", "SuperAdmin"].includes(profile?.position);
+  const isTags = ["Director", "SuperAdmin","manager"].includes(profile?.position);
 
   // single modal flag and data
   const [parentDocModalVisible, setParentDocModalVisible] = useState(false);
@@ -168,9 +167,10 @@ const needParentSearch =
     if (!hasParent) return;
     (async () => {
       try {
-        const { data } = await axiosInstance.get(`/api/Document/${parentDocumentId}`);
-        setFetchedDocumentData(data);
-          prefillFromParent(data, form);          // <<– add this line
+      const { data: { data: doc } } =
+      await axiosInstance.get(`/api/Document/${parentDocumentId}`);
+      setFetchedDocumentData(doc);
+      prefillFromParent(doc, form);
       } catch {
         message.error("تعذّر جلب بيانات الكتاب الأصلى");
       }
@@ -236,13 +236,18 @@ const needParentSearch =
     }
     setSearchingDocument(true);
     try {
-      const { data } = await axiosInstance.get(`/api/Document/bynumber/${searchDocumentNumber.trim()}`);
-      if (foundParentDocument && foundParentDocument.id === data.id) {
+   const { data: outer } = await axiosInstance.get(
+     `/api/Document/bynumber/${searchDocumentNumber.trim()}`
+   );
+   // بعض المسارات تعيد {data:{…}} وأخرى تعيد المستند مباشرة
+   const doc = outer?.data ?? outer;
+
+   if (foundParentDocument && foundParentDocument.id === doc.id) {
         message.info("الكتاب المرجعي موجود بالفعل");
       } else {
-        setFoundParentDocument(data);
-        prefillFromParent(data, form);
-        message.success(`تم العثور على الكتاب: ${data.title}`);
+     setFoundParentDocument(doc);
+     prefillFromParent(doc, form);
+     message.success(`تم العثور على الكتاب: ${doc.title}`);
       }
       setSearchDocumentNumber("");
     } catch {
@@ -301,13 +306,13 @@ const handleSubmit = async () => {
     if (isReplyMode) {
       // … replying to an existing document
       fd.append("ReplyDocumentNumber", values.documentNumber);
-      fd.append("ReplyType",           selectedDocumentSide === "صادر" ? "1" : "2");
+      fd.append("ReplyType",           selectedDocumentSide === "وارد" ? "1" : "2");
       fd.append("ReplyDate",           values.date.format("YYYY-MM-DDT00:00:00[Z]"));
       fd.append("ParentDocumentId",    targetDocumentId);
     } else {
       // … brand‑new document
       fd.append("DocumentNumber",  values.documentNumber);
-      fd.append("DocumentType",    selectedDocumentSide === "صادر" ? "1" : "2");
+      fd.append("DocumentType",    selectedDocumentSide === "وارد" ? "1" : "2");
       fd.append("DocumentDate",    values.date.format("YYYY-MM-DDT00:00:00[Z]"));
       if (targetDocumentId && !isReplyDocument) {
         fd.append("ParentDocumentId", targetDocumentId);
@@ -344,7 +349,7 @@ const handleSubmit = async () => {
 
   /* Render */
   return (
-    <ConfigProvider locale={ar_EG} direction="rtl">
+    <ConfigProvider  direction="rtl">
       <Layout
         className={`document-page-layout${isSidebarCollapsed ? " document-page-layout-sidebar-collapsed" : ""}`}
         style={{ background: "none" }}
@@ -360,7 +365,7 @@ const handleSubmit = async () => {
                 <Col span={24}>
                   <div className="ref-doc-card">
                     <div className={`doc-type-indicator ${fetchedDocumentData.documentType === 1 ? 'outgoing' : 'incoming'}`}>
-                      {fetchedDocumentData.documentType === 1 ? 'صادر' : 'وارد'}
+                      {fetchedDocumentData.documentType === 1 ? 'وارد' : 'صادر'}
                     </div>
                     <div className="ref-doc-content">
                       <div className="ref-doc-info">
@@ -390,7 +395,7 @@ const handleSubmit = async () => {
                 <Col span={24}>
                   <div className="ref-doc-card">
                     <div className={`doc-type-indicator ${foundParentDocument.documentType === 1 ? 'outgoing' : 'incoming'}`}>
-                      {foundParentDocument.documentType === 1 ? 'صادر' : 'وارد'}
+                      {foundParentDocument.documentType === 1 ? 'وارد' : 'صادر'}
                     </div>
                     <div className="ref-doc-content">
                       <div className="ref-doc-info">
@@ -440,8 +445,8 @@ const handleSubmit = async () => {
   title={
     modalDocumentData && (
       <div className="modal-title-container">
-        <div className={`modal-doc-type ${modalDocumentData.documentType === 1 ? 'outgoing' : 'incoming'}`}>
-          {modalDocumentData.documentType === 1 ? 'صادر' : 'وارد'}
+        <div className={`modal-doc-type ${modalDocumentData.documentType === 1 ? 'Incoming' : 'Outgoing'}`}>
+          {modalDocumentData.documentType === 1 ? 'وارد' : 'صادر'}
         </div>
         <span className="modal-title">تفاصيل الكتاب</span>
       </div>
@@ -574,7 +579,7 @@ const handleSubmit = async () => {
             {modalDocumentData.childDocuments.map((child, i) => (
               <div className="child-doc-item" key={i}>
                 <div className={`child-type ${child.documentType === 1 ? 'outgoing' : 'incoming'}`}>
-                  {child.documentType === 1 ? 'صادر' : 'وارد'}
+                  {child.documentType === 1 ? 'وارد' : 'صادر'}
                 </div>
                 <div className="child-info">
                   <div className="child-number">رقم: {child.documentNumber}</div>
@@ -788,7 +793,7 @@ const handleSubmit = async () => {
                       </Col>
                     ))}
 
-                    {isDirector && (
+                    {isTags && (
                       <Col span={6}>
                         <Form.Item name="tagIds" label="الوسوم">
                           <Select

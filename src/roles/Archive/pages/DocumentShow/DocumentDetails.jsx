@@ -68,7 +68,7 @@ const DocumentDetails = ({
         )}
         {documentData.isNeeded    && (
           <Tag color="blue" icon={<ClockCircleOutlined />}>
-            مطلوب
+            يستلزم اجراء
           </Tag>
         )}
         {documentData.isAudited   && (
@@ -194,6 +194,14 @@ const DocumentDetails = ({
             <Badge status="default" text="لا" />
           )}
         </Descriptions.Item>
+           <Descriptions.Item label="يستلزم اجراء ؟" >
+          {documentData.isNeeded ? (
+            <Badge status="success" text="نعم" />
+          ) : (
+            <Badge status="default" text="لا" />
+          )}
+        </Descriptions.Item>
+
 
         {/* التواريخ */}
         <Descriptions.Item label="تاريخ الكتاب">

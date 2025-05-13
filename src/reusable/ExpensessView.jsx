@@ -76,6 +76,11 @@ export default function ExpensesView() {
   const [actionNote, setActionNote] = useState("");
   const [form] = Form.useForm();
   const [isPrinting, setIsPrinting] = useState(false);
+
+const saved = JSON.parse(localStorage.getItem("expensesPagination") || "{}");
+const [currentPage, setCurrentPage] = useState(saved.page || 1);
+const [pageSize,    setPageSize   ] = useState(saved.pageSize || 5);
+
   // Check if user is accountant
   const isAccountant = profile?.position?.toLowerCase()?.includes("accontnt");
 // Flattens top-level items + their children
@@ -276,6 +281,17 @@ const handleActionSubmit = async () => {
   } finally {
     setIsSubmitting(false);
   }
+};
+
+// whenever page or pageSize changes, persist it
+const handleTableChange = (pagination) => {
+  const { current, pageSize } = pagination;
+  setCurrentPage(current);
+  setPageSize(pageSize);
+  localStorage.setItem(
+    "expensesPagination",
+    JSON.stringify({ page: current, pageSize })
+  );
 };
 
   const fetchDailyExpenseDetails = async (id) => {
@@ -1188,7 +1204,17 @@ const handleActionSubmit = async () => {
     dataSource={expense?.items}
     bordered
 
-    pagination={{ pageSize: 5, position: ["bottomCenter"] }}
+       pagination={{
+      current: currentPage,
+      pageSize,
+      showSizeChanger: true,
+      pageSizeOptions: ["5","10","20","50"],
+      position: ["bottomCenter"]
+    }}
+   // ← this is the magic: gets (pagination, filters, sorter) 
+   onChange={(pagination /*, filters, sorter, extra */) => {
+     handleTableChange(pagination);
+   }}
     locale={{ emptyText: "لا توجد عناصر للصرف." }}
     summary={() => {
       const totalExpenses = expense?.generalInfo?.["مجموع الصرفيات"] || 0;

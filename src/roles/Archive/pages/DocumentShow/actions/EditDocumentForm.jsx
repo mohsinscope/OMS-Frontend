@@ -13,11 +13,12 @@ import {
   Space,
 } from "antd";
 import { InboxOutlined, CheckCircleOutlined } from "@ant-design/icons";
+import useAuthStore from './../../../../../store/store.js';
 import moment from "moment";
 import axiosInstance from '../../../../../intercepters/axiosInstance.js';
 import Url from '../../../../../store/url.js';
-import useAuthStore from '../../../../../store/store.js';
 import MinioImagePreviewer from './../../../../../reusable/MinIoImagePreViewer.jsx';
+
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -59,13 +60,17 @@ const getResponseTypeString = (value) => {
 
 // Helper to convert document type number to side string
 const getDocumentSide = (documentType) => {
-  return documentType === 1 ? "صادر" : "وارد";
+  return documentType === 1 ? "وارد" : "صادر";
 };
 
-const EditDocumentForm = ({ initialData, initialImageUrl, onClose, onUpdateSuccess }) => {
-  const [form] = Form.useForm();
-  const { profile } = useAuthStore();
-  const profileId = profile?.profileId;
+ const EditDocumentForm = ({ initialData, initialImageUrl, onClose, onUpdateSuccess }) => {
+   // اقرأ فقط ما تحتاجه من الـ Store (أفضل أداءً)
+   const profile     = useAuthStore(state => state.profile);
+   const profileId   = profile?.profileId;
+   const isTags      = ["Director", "SuperAdmin", "manager"]
+                         .includes(profile?.position);
+
+   const [form] = Form.useForm();
 
   // State for dynamic form data
   const [projectOptions, setProjectOptions] = useState([]);
@@ -90,40 +95,45 @@ const EditDocumentForm = ({ initialData, initialImageUrl, onClose, onUpdateSucce
   
   // State for file upload
   const [fileList, setFileList] = useState([]);
+const [listsReady, setListsReady] = useState(false);
 
   // Load all dropdown options
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch all necessary dropdown data in parallel
-        const [
-          projsRes, 
-          ccsRes, 
-          tagsRes, 
-          ministriesRes, 
-          privatePartiesRes
-        ] = await Promise.all([
-          axiosInstance.get(`${Url}/api/Project?PageNumber=1&PageSize=10000`),
-          axiosInstance.get(`${Url}/api/DocumentCC?PageNumber=1&PageSize=1000`),
-          axiosInstance.get(`${Url}/api/Tags?PageNumber=1&PageSize=1000`),
-          axiosInstance.get(`${Url}/api/Ministry?PageNumber=1&PageSize=1000`),
-          axiosInstance.get(`${Url}/api/PrivateParty?PageNumber=1&PageSize=1000`)
-        ]);
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const [
+        projsRes,
+        ccsRes,
+        tagsRes,
+        ministriesRes,
+        privatePartiesRes,
+      ] = await Promise.all([
+        axiosInstance.get(`${Url}/api/Project?PageNumber=1&PageSize=10000`),
+        axiosInstance.get(`${Url}/api/DocumentCC?PageNumber=1&PageSize=1000`),
+        axiosInstance.get(`${Url}/api/Tags?PageNumber=1&PageSize=1000`),
+        axiosInstance.get(`${Url}/api/Ministry?PageNumber=1&PageSize=1000`),
+        axiosInstance.get(`${Url}/api/PrivateParty?PageNumber=1&PageSize=1000`),
+      ]);
 
-        // Set state for all fetched options
-        setProjectOptions(projsRes.data);
-        setCcOptions(ccsRes.data);
-        setTagOptions(tagsRes.data);
-        setMinistryOptions(ministriesRes.data);
-        setPrivatePartyOptions(privatePartiesRes.data);
-      } catch (error) {
-        console.error("Error loading dropdown options:", error);
-        message.error("خطأ في تحميل القوائم الثابتة");
-      }
-    };
+      setProjectOptions(projsRes.data);
+      setCcOptions(ccsRes.data);
+       const tagRows = Array.isArray(tagsRes.data) ? tagsRes.data       // raw array
+                  : Array.isArray(tagsRes.data?.data) ? tagsRes.data.data : [];
+ setTagOptions(tagRows);
+      setMinistryOptions(ministriesRes.data);
+      setPrivatePartyOptions(privatePartiesRes.data);
 
-    fetchData();
-  }, []);
+      /* 🔑 everything is ready now */
+      setListsReady(true);
+    } catch (err) {
+      console.error("Error loading dropdown options:", err);
+      message.error("خطأ في تحميل القوائم الثابتة");
+    }
+  };
+
+  fetchData();
+}, []);
+
 
   // Load dependent dropdowns when ministry changes
   const handleMinistryChange = async (ministryId) => {
@@ -212,77 +222,73 @@ const EditDocumentForm = ({ initialData, initialImageUrl, onClose, onUpdateSucce
   }, [initialImageUrl]);
 
   // Setup initial form values
-  useEffect(() => {
-    if (!initialData) return;
+ useEffect(() => {
+  // Wait until *both* the record and the dropdown lists are loaded
+  if (!initialData || !listsReady) return;
 
-    // Convert response type to string
-    const responseTypeString = getResponseTypeString(initialData.responseType);
-    
-    // Determine the party type (default to false if not available)
-    const isOfficialParty = initialData.ministryId != null;
-    
-    // Set initial values
-    form.setFieldsValue({
-      // Basic details
-      documentNumber: initialData.documentNumber,
-      title: initialData.title,
-      subject: initialData.subject,
-      notes: initialData.notes,
-      date: initialData.documentDate ? moment(initialData.documentDate) : undefined,
-      
-      // Document classification
-      documentSide: getDocumentSide(initialData.documentType),
-      ResponseType: responseTypeString,
-      
-      // Project and tags
-      projectId: initialData.projectId,
-      ccIds: initialData.ccRecipients?.map(cc => cc.id) || [],
-      tagIds: initialData.tags?.map(tag => tag.id) || [],
-      
-      // Flags
-      isRequiresReply: initialData.isRequiresReply,
-      isUrgent: initialData.isUrgent,
-      isImportant: initialData.isImportant,
-      isNeeded: initialData.isNeeded,
-      
-      // Party type - explicitly set this first
-      isOfficialParty: isOfficialParty,
-      
-      // Official party cascade - only set these if it's an official party
-      ...(isOfficialParty && {
-        ministryId: initialData.ministryId,
-        generalDirectorateId: initialData.generalDirectorateId,
-        directorateId: initialData.directorateId,
-        departmentId: initialData.departmentId,
-        sectionId: initialData.sectionId,
-      }),
-      
-      // Private party - only set this if it's a private party
-      ...(!isOfficialParty && {
-        privatePartyId: initialData.privatePartyId,
-      }),
-    });
-    
-    // Set state to match form values
-    setSelectedDocumentSide(getDocumentSide(initialData.documentType));
-    setIsOfficial(isOfficialParty);
-    
-    // Load dependent dropdowns based on initial data
-    if (isOfficialParty) {
-      if (initialData.ministryId) {
-        handleMinistryChange(initialData.ministryId);
-      }
-      if (initialData.generalDirectorateId) {
-        handleGeneralDirectorateChange(initialData.generalDirectorateId);
-      }
-      if (initialData.directorateId) {
-        handleDirectorateChange(initialData.directorateId);
-      }
-      if (initialData.departmentId) {
-        handleDepartmentChange(initialData.departmentId);
-      }
-    }
-  }, [initialData, form]);
+  /* ───── derive helper values ───── */
+  const responseTypeString = getResponseTypeString(initialData.responseType);
+  const isOfficialParty    = initialData.ministryId != null;
+
+  /* ───── seed every form field ───── */
+  form.setFieldsValue({
+    /* basic info */
+    documentNumber : initialData.documentNumber,
+    title          : initialData.title,
+    subject        : initialData.subject,
+    notes          : initialData.notes,
+    date           : initialData.documentDate
+                     ? moment(initialData.documentDate)
+                     : undefined,
+
+    /* classification */
+    documentSide : getDocumentSide(initialData.documentType),
+    ResponseType : responseTypeString,
+
+    /* relationships */
+    projectId : initialData.projectId,
+    ccIds     : initialData.ccIds  || [],
+    tagIds: initialData.tagIds || [],                  // ← RIGHT
+
+    /* flags */
+    isRequiresReply : initialData.isRequiresReply,
+    isUrgent        : initialData.isUrgent,
+    isImportant     : initialData.isImportant,
+    isNeeded        : initialData.isNeeded,
+
+    /* party selector */
+    isOfficialParty : isOfficialParty,
+
+    /* cascade for official party */
+    ...(isOfficialParty
+      ? {
+          ministryId           : initialData.ministryId,
+          generalDirectorateId : initialData.generalDirectorateId,
+          directorateId        : initialData.directorateId,
+          departmentId         : initialData.departmentId,
+          sectionId            : initialData.sectionId,
+        }
+      : {
+          /* private party */
+          privatePartyId       : initialData.privatePartyId,
+        }),
+  });
+
+  /* ───── keep UI‑level state in sync ───── */
+  setSelectedDocumentSide(getDocumentSide(initialData.documentType));
+  setIsOfficial(isOfficialParty);
+
+  /* ───── preload cascaded dropdowns exactly once ───── */
+  if (isOfficialParty) {
+    if (initialData.ministryId)           handleMinistryChange(initialData.ministryId);
+    if (initialData.generalDirectorateId) handleGeneralDirectorateChange(initialData.generalDirectorateId);
+    if (initialData.directorateId)        handleDirectorateChange(initialData.directorateId);
+    if (initialData.departmentId)         handleDepartmentChange(initialData.departmentId);
+  }
+
+  // eslint‑disable‑next‑line react-hooks/exhaustive-deps
+}, [initialData, listsReady]);
+
 
   // Handle file upload props
   const fileUploadProps = {
@@ -335,7 +341,7 @@ const EditDocumentForm = ({ initialData, initialImageUrl, onClose, onUpdateSucce
       formData.append("ParentDocumentId", initialData?.parentDocumentId || "");
       
       // Document type fields
-      formData.append("DocumentType", values.documentSide === "صادر" ? "1" : "2");
+      formData.append("DocumentType", values.documentSide === "وارد" ? "1" : "2");
       formData.append("ResponseType", getResponseTypeValue(values.documentSide, values.ResponseType));
       
       // Document date
@@ -659,6 +665,8 @@ if (values.ccIds && values.ccIds.length) {
               allowClear
               showSearch
               optionFilterProp="children"
+                maxTagCount="responsive"
+                 maxTagPlaceholder={(omitted) => `+${omitted.length}`}
             >
               {ccOptions.map((cc) => (
                 <Option key={cc.id} value={cc.id}>
@@ -692,13 +700,17 @@ if (values.ccIds && values.ccIds.length) {
             </Select>
           </Form.Item>
         </Col>
-        <Col span={6}>
-          <Form.Item name="tagIds" label="الوسوم">
+        {isTags && 
+        
+                <Col span={6}>
+          <Form.Item name="tagIds" label="الوسوم (tags)">
             <Select
               mode="multiple"
               allowClear
               showSearch
               optionFilterProp="children"
+                 maxTagCount="responsive"
+   maxTagPlaceholder={(omitted) => `+${omitted.length}`}
             >
               {tagOptions.map((tag) => (
                 <Option key={tag.id} value={tag.id}>
@@ -708,6 +720,10 @@ if (values.ccIds && values.ccIds.length) {
             </Select>
           </Form.Item>
         </Col>
+        
+        
+        }
+
       </Row>
 
       {/* Document attributes */}

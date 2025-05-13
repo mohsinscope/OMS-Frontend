@@ -1,5 +1,5 @@
 /*  عرض مستند + تعديل + حذف + مرفقات  */
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo  } from "react";
 import {
   Skeleton,
   message,
@@ -124,10 +124,14 @@ const DocumentShow = () => {
   );
 
   /* ───── API calls ───── */
-  const fetchDetails = async () => {
-    const { data } = await axiosInstance.get(`${Url}/api/Document/${documentId}`);
-    setDocumentData(data);
-  };
+const fetchDetails = async () => {
+  
+ const { data: { data: doc } } =
+   await axiosInstance.get(`${Url}/api/Document/${documentId}?depth=1000`);
+  setDocumentData(doc);
+};
+
+  console.log(documentData)
 
   // استبدلنا مسار MinIO الجديد ليعيد روابط موقّعة *** CHANGED ***
   const fetchImages = async () => {
@@ -136,7 +140,14 @@ const DocumentShow = () => {
     );
     setImages(data); // data = [{id,url}, …]
   };
-
+const totalDescendants = useMemo(() => {
+  const countDeep = (docs = []) =>
+    docs.reduce(
+      (sum, d) => sum + 1 + countDeep(d.childDocuments || []),
+      0
+    );
+  return countDeep(documentData?.childDocuments || []);
+}, [documentData]);
   // ── load all tags from server ──
 const fetchTags = async () => {
   const { data } = await axiosInstance.get(`${Url}/api/Tags`);
@@ -172,13 +183,27 @@ const handleUnaudit = () =>
 
   // ── send selected tag IDs to the backend ──
 const handleAddTags = async () => {
-  await axiosInstance.patch(
+  // 1) build form data
+  const payload = new FormData();
+  selectedTagIds.forEach(id => payload.append("TagIds", id));
+  payload.append("profileId", currentProfileId);      // ← add this line
+  payload.append("DocumentId", documentId);  
+
+
+  // 2) PATCH as form-data
+  await axiosInstance.put(
     `${Url}/api/Document/${documentId}`,
-    { TagIds: selectedTagIds }
+    payload,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    }
   );
+ 
   message.success("تم إضافة الوسوم");
-  await fetchDetails();            // refresh document data
-  setTagModalVisible(false);       // close the modal
+  await fetchDetails();
+  setTagModalVisible(false);
 };
   /* ───── تحميل مبدئى ───── */
   useEffect(() => {
@@ -221,10 +246,10 @@ const handleAddTags = async () => {
   /* ───── Tabs ───── */
   const tabList = [
     { key: "details",        tab: "معلومات الكتاب" },
-    {
-      key: "childDocuments",
-      tab: `سلسلة الكتب (${documentData?.childDocuments?.length || 0})`,
-    },
+{
+  key: "childDocuments",
+  tab: `سلسلة الكتب (${totalDescendants})`,
+},
     { key: "history",        tab: "سجلّ الإجراءات" },
   ];
 
