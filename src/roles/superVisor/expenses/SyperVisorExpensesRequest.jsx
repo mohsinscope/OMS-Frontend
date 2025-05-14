@@ -294,6 +294,7 @@ const disableOtherMonths = (current) => {
             const monthIso = dayjs(values.month)
               .utc()
               .startOf("month")
+              .add(1, "day") 
               .format("YYYY-MM-DDTHH:mm:ss[Z]");
               const payload = {
                  totalAmount: 0,
