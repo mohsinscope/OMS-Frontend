@@ -51,6 +51,7 @@ const ExpensessView = () => {
   const { isSidebarCollapsed, permissions, profile } = useAuthStore();
   const hasUpdatePermission = permissions.includes("EXu");
   const hasDeletePermission = permissions.includes("EXd");
+  console.log(status)
   const canPerformActions = () =>
     hasUpdatePermission &&
     hasDeletePermission &&
@@ -376,7 +377,30 @@ const ExpensessView = () => {
       key: "expenseDate",
       width: 120,
       render: (date) => moment(date).format("YYYY-MM-DD"),
-    }
+    },
+// داخل expensesColumns
+{
+  title: "الإجراءات",
+  key: "actions",
+  width: 100,
+  fixed: "right",
+  render: (_, record) =>
+    !record.isParent && (              // لا زرّ للمصروف الرئيسى
+      <Button
+        type="primary"
+        onClick={() =>
+          navigate("/Expensess-view-daily", {
+            state: {
+              dailyExpenseId: record.id, // معرّف المصروف الفرعي
+              status,                    // ⬅️ الحالة المأخوذة من location.state
+            },
+          })
+        }
+      >
+        العرض
+      </Button>
+    ),
+},
   ];
 
   // Determine if we're viewing a parent expense, a sub-expense, or a regular expense

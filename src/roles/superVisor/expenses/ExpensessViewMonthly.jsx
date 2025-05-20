@@ -109,33 +109,51 @@ export default function ExpensessViewMonthly() {
     }
   };
 
-  const fetchDailyExpenses = async () => {
-    try {
-      const { data } = await axiosInstance.get(`/api/Expense/${monthlyExpenseId}/daily-expenses`);
-      const formatted = data.map(e => ({
-        key: e.id,
-        id: e.id,
-        date: new Date(e.expenseDate).toISOString().split('T')[0],
-        price: e.price,
-        quantity: e.quantity,
-        totalAmount: e.amount,
-        notes: e.notes,
-        expenseTypeName: e.expenseTypeName
-      }));
-      setDailyExpenses(formatted);
+  console.log("month", monthlyExpense)
+const fetchDailyExpenses = async () => {
+  try {
+    const { data } = await axiosInstance.get(
+      `/api/Expense/${monthlyExpenseId}/daily-expenses`
+    );
 
-      const dist = formatted.reduce((acc, cur) => {
-        acc[cur.expenseTypeName] = (acc[cur.expenseTypeName] || 0) + cur.price * cur.quantity;
-        return acc;
-      }, {});
-      setExpenseTypeData(Object.entries(dist).map(([name, value]) => ({ name, value })));
-    } catch (error) {
-      console.error('Error fetching daily expenses:', error);
-      message.error('حدث خطأ في جلب المصروفات اليومية');
-    } finally {
-      setLoading(false);
-    }
+    /* 🟡 المابّـينغ الجديد */
+const formatted = data.map(e => {
+  const hasChildren =
+    Array.isArray(e.subExpenses) && e.subExpenses.length > 0;
+
+  return {
+    key: e.id,
+    id: e.id,
+    date: new Date(e.expenseDate).toISOString().split("T")[0],
+
+    expenseTypeName: hasChildren ? "مصروف متعدد" : e.expenseTypeName,
+    price: hasChildren ? null : e.price,
+    quantity: hasChildren ? e.subExpenses.length : e.quantity,
+    totalAmount: e.totalAmount ?? e.amount,
+
+    notes: hasChildren ? "ـــ" : e.notes,   // ⬅️ هنا
+    hasChildren
   };
+});
+    setDailyExpenses(formatted);
+
+    /* توزيع الأنواع حسب المبلغ الكلّي */
+    const dist = formatted.reduce((acc, cur) => {
+      acc[cur.expenseTypeName] =
+        (acc[cur.expenseTypeName] || 0) + cur.totalAmount;
+      return acc;
+    }, {});
+    setExpenseTypeData(
+      Object.entries(dist).map(([name, value]) => ({ name, value }))
+    );
+  } catch (error) {
+    console.error("Error fetching daily expenses:", error);
+    message.error("حدث خطأ في جلب المصروفات اليومية");
+  } finally {
+    setLoading(false);
+  }
+};
+  console.log("day", dailyExpenses)
 
   useEffect(() => {
     if (monthlyExpenseId) {
@@ -259,23 +277,34 @@ export default function ExpensessViewMonthly() {
   const columns = [
     { title: 'التاريخ', dataIndex: 'date', key: 'date' },
     { title: 'نوع المصروف', dataIndex: 'expenseTypeName', key: 'expenseTypeName' },
-    {
-      title: 'السعر',
-      dataIndex: 'price',
-      key: 'price',
-      render: amt => <span className="monthly-info-value amount">{amt.toLocaleString()} د.ع</span>
-    },
-    { title: 'الكمية', dataIndex: 'quantity', key: 'quantity' },
-    {
-      title: 'المبلغ الإجمالي',
-      dataIndex: 'totalAmount',
-      key: 'totalAmount',
-      render: amt => (
+  {
+  title: "السعر",
+  dataIndex: "price",
+  key: "price",
+  render: (amt, record) =>
+    record.hasChildren
+      ? "----"
+      : (
         <span className="monthly-info-value amount">
-          {amt.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} د.ع
+          {amt.toLocaleString()} د.ع
         </span>
       )
-    },
+},
+    { title: 'الكمية', dataIndex: 'quantity', key: 'quantity' },
+ {
+  title: "المبلغ الإجمالي",
+  dataIndex: "totalAmount",
+  key: "totalAmount",
+  render: amt => (
+    <span className="monthly-info-value amount">
+      {amt.toLocaleString("en-US", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2
+      })}{" "}
+      د.ع
+    </span>
+  )
+},
     { title: 'ملاحظات', dataIndex: 'notes', key: 'notes', ellipsis: true },
     {
       title: 'الإجراءات',
@@ -292,6 +321,7 @@ export default function ExpensessViewMonthly() {
       )
     },
   ];
+
 
   // Monthly info card
   const MonthlyExpenseInfo = () => {
