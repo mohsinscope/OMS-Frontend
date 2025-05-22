@@ -422,22 +422,22 @@ const handleImageUpload = async (files) => {
                   <Select placeholder="اختر المكتب" options={offices} />
                 </Form.Item>
 
-         <Upload
-  multiple                    // ← allow selecting >1
-  accept="image/*"
-  beforeUpload={(_, fileList) => {
-    handleImageUpload(fileList);
-    return false;             // prevent default
-  }}
->
-  <Button
-    style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
-    type="primary"
-    icon={<UploadOutlined />}
-  >
-    {images.length > 0 ? "استبدال الصور" : "إضافة مرفق"}
-  </Button>
-</Upload>
+                    <Upload
+              multiple                    // ← allow selecting >1
+              accept="image/*"
+              beforeUpload={(_, fileList) => {
+                handleImageUpload(fileList);
+                return false;             // prevent default
+              }}
+            >
+              <Button
+                style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+                type="primary"
+                icon={<UploadOutlined />}
+              >
+                {images.length > 0 ? "استبدال الصور" : "إضافة مرفق"}
+              </Button>
+            </Upload>
 
                 {images.length > 0 && (
                   <>

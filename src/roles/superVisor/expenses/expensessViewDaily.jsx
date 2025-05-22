@@ -47,6 +47,7 @@ const ExpensessView = () => {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [form] = Form.useForm();
+const [uploadLoading, setUploadLoading] = useState(false);
 
   const { isSidebarCollapsed, permissions, profile } = useAuthStore();
   const hasUpdatePermission = permissions.includes("EXu");
@@ -181,34 +182,56 @@ const ExpensessView = () => {
     initializeData();
   }, [expenseId, navigate]);
 
- // plain JS version:
- const handleImageUpload = async (files) => {
+// Fixed handleImageUpload function (replace the existing one around line ~139)
+const handleImageUpload = async (files) => {
   if (!files || files.length === 0) {
     return message.error("يرجى اختيار صورة واحدة على الأقل");
   }
 
-  // use parentExpenseData.id if sub-expense, otherwise expenseId
-  const idForUpload = parentExpenseData
-    ? parentExpenseData.id
-    : (expenseData.parentExpenseId || expenseId);
+  // Determine the correct ID to use for upload
+  const idForUpload = parentExpenseData?.id || expenseData?.parentExpenseId || expenseId;
+  
+  if (!idForUpload) {
+    return message.error("لا يمكن تحديد معرف المصروف للرفع");
+  }
 
+  setUploadLoading(true);
   const formData = new FormData();
-  files.forEach(file => {
+  
+  // Handle both single file and file array
+  const fileArray = Array.isArray(files) ? files : [files];
+  fileArray.forEach(file => {
     formData.append("files", file);
   });
   formData.append("entityType", "Expense");
 
   try {
-    await axiosInstance.put(
+    const response = await axiosInstance.put(
       `${Url}/api/attachment/${idForUpload}`,
       formData,
-      { headers: { "Content-Type": "multipart/form-data" } }
+      { 
+        headers: { 
+          "Content-Type": "multipart/form-data" 
+        },
+        timeout: 30000 // Add timeout
+      }
     );
-    message.success("تم تحديث الصور بنجاح");
-    fetchExpensesImages(idForUpload);
+    
+    if (response.status === 200 || response.status === 204) {
+      message.success("تم تحديث الصور بنجاح");
+      // Refresh images after successful upload
+      await fetchExpensesImages(idForUpload);
+    }
   } catch (err) {
-    console.error(err);
-    message.error("حدث خطأ أثناء تعديل الصور");
+    console.error("Upload error:", err);
+    if (err.response?.status === 500) {
+    } else if (err.response?.status === 413) {
+      message.error("حجم الملف كبير جداً");
+    } else {
+      message.error("حدث خطأ أثناء تعديل الصور");
+    }
+  } finally {
+    setUploadLoading(false);
   }
 };
 
@@ -629,22 +652,34 @@ const ExpensessView = () => {
             <Form.Item name="notes" label="الملاحظات">
               <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />
             </Form.Item>
-      <Upload
-  multiple                         // ← allow selecting/uploading multiple
-  accept="image/*"                 // ← optional, restrict to images
-  beforeUpload={(_, fileList) => {
-    // fileList is File[]
+<Upload
+  multiple
+  accept="image/*"
+  showUploadList={false}
+  beforeUpload={(file, fileList) => {
+    // Validate file size (e.g., max 5MB per file)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const oversizedFiles = fileList.filter(f => f.size > maxSize);
+    
+    if (oversizedFiles.length > 0) {
+      message.error("حجم الملف يجب أن يكون أقل من 5 ميجابايت");
+      return false;
+    }
+    
+    // Call upload function with all selected files
     handleImageUpload(fileList);
-    // return false to prevent default upload behaviour
-    return false;
+    return false; // Prevent default upload
   }}
+  disabled={uploadLoading}
 >
   <Button
     style={{ margin: "20px 0", backgroundColor: "#efb034" }}
     type="primary"
     icon={<UploadOutlined />}
+    loading={uploadLoading}
+    disabled={uploadLoading}
   >
-    استبدال الصورة
+    {uploadLoading ? "جاري الرفع..." : "استبدال الصورة"}
   </Button>
 </Upload>
             {images.length > 0 && (

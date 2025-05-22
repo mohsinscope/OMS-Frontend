@@ -41,11 +41,11 @@ import ExpensessAddDaily from './roles/superVisor/expenses/ExpensessAddDaily.jsx
 import SuperVisorLecturerhistory from "./roles/superVisor/lecturer/SuperVisorLecturerhistory.jsx";
 import SuperVisorLecturerAdd from "./roles/superVisor/lecturer/SuperVisorLecturerAdd.jsx";
 import LecturerShow from "./roles/superVisor/lecturer/SuperVisorLecturerShow.jsx";
-import ArchivePage from "./roles/Archive/pages/ArchivePage.jsx";
-import AddDocumentPage from './roles/Archive/pages/addArchivePage/addArchivePage.jsx';
+/* import ArchivePage from "./roles/Archive/pages/ArchivePage.jsx";
+import AddDocumentPage from './roles/Archive/pages/addArchivePage/addArchivePage.jsx'; */
 
 import { ArchiveProvider } from './roles/Archive/contexts/ArchiveContext.jsx';
-import ViewArchivePage from './roles/Archive/pages/DocumentShow/ViewArchivePage.jsx';
+/* import ViewArchivePage from './roles/Archive/pages/DocumentShow/ViewArchivePage.jsx'; */
 
 const App = () => {
   // Centralized routes configuration
@@ -76,9 +76,9 @@ const App = () => {
     { path: "/Expensess-view-daily", element: <ExpensessViewDaily /> },
     { path: "/add-daily-expense", element: <ExpensessAddDaily /> },
     { path: "/ExpensessViewMonthly", element: <ExpensessViewMonthly /> },
-    { path: "/Archive", element: <ArchivePage /> },
+/*     { path: "/Archive", element: <ArchivePage /> },
     { path: "/AddArchive", element: <AddDocumentPage /> },
-    { path: "/ViewArchivePage", element: <ViewArchivePage /> },
+    { path: "/ViewArchivePage", element: <ViewArchivePage /> }, */
     // Common Routes
     { path: "settings", element: <Settings /> },
     { path: "expenses-view", element: <ExpensessView /> },
