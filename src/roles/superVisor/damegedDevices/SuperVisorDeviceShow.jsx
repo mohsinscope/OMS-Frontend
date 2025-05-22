@@ -161,32 +161,29 @@ const SuperVisorDeviceShow = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deviceId]);
 
-  const handleImageUpload = async (file) => {
-    if (!imageData.imageId) {
-      message.error("لم يتم العثور على معرف الصورة");
-      return;
-    }
+const handleImageUpload = async (files) => {
+  if (!files || files.length === 0) {
+    return message.error("يرجى اختيار صورة واحدة على الأقل");
+  }
 
-    try {
-      const formData = new FormData();
-      formData.append("entityId", deviceId);
-      formData.append("entityType", "DamagedDevice");
-      formData.append("file", file);
+  const formData = new FormData();
+  files.forEach(f => formData.append("files", f));
+  formData.append("entityType", "DamagedDevice");
 
-      await axiosInstance.put(`${Url}/api/attachment/${imageData.imageId}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+  try {
+    await axiosInstance.put(
+      `${Url}/api/attachment/${deviceId}`,     // use the damaged‐device ID here
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    message.success("تم تحديث الصور بنجاح");
+    await fetchData(); // or fetch the images again
+  } catch (err) {
+    console.error("DamagedDevice image upload failed:", err.response?.data || err);
+    message.error("حدث خطأ أثناء تعديل الصور");
+  }
+};
 
-      message.success("تم تحديث الصورة بنجاح");
-      // Re-fetch the images to update the modal
-      await fetchData();
-    } catch (error) {
-      console.error("Error uploading image:", error);
-      message.error("حدث خطأ أثناء تعديل الصورة");
-    }
-  };
 
   const handleSaveEdit = async (values) => {
     try {
@@ -425,20 +422,22 @@ const SuperVisorDeviceShow = () => {
                   <Select placeholder="اختر المكتب" options={offices} />
                 </Form.Item>
 
-                <Upload
-                  beforeUpload={(file) => {
-                    handleImageUpload(file);
-                    return false;
-                  }}
-                >
-                  <Button
-                    style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
-                    type="primary"
-                    icon={<UploadOutlined />}
-                  >
-                    استبدال الصورة
-                  </Button>
-                </Upload>
+         <Upload
+  multiple                    // ← allow selecting >1
+  accept="image/*"
+  beforeUpload={(_, fileList) => {
+    handleImageUpload(fileList);
+    return false;             // prevent default
+  }}
+>
+  <Button
+    style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
+    type="primary"
+    icon={<UploadOutlined />}
+  >
+    {images.length > 0 ? "استبدال الصور" : "إضافة مرفق"}
+  </Button>
+</Upload>
 
                 {images.length > 0 && (
                   <>

@@ -15,13 +15,6 @@ export const MENU_ITEMS = [
     role: []
   },
   {
-    label: "الارشيف",
-    icon: "Archive",
-    path: "/Archive",
-    requiredPermission: "DOCr",
-    role: []
-  },
-  {
     label: "الأجهزة التالفة",
     icon: "devices",
     path: "/supervisor/damegedDevices",

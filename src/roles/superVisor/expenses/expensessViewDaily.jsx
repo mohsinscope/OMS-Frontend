@@ -181,32 +181,36 @@ const ExpensessView = () => {
     initializeData();
   }, [expenseId, navigate]);
 
-  // Handle image upload (use parentExpenseId if available)
-  const handleImageUpload = async (file) => {
-    if (!imageData.imageId) {
-      message.error("لم يتم تحديد الصورة");
-      return;
-    }
-    try {
-      // If this is a sub-expense, use the parent ID for image upload
-      const idForUpload = parentExpenseData ? parentExpenseData.id : (expenseData.parentExpenseId || expenseId);
-      const formData = new FormData();
-      formData.append("entityId", idForUpload);
-      formData.append("entityType", "Expense");
-      formData.append("file", file);
+ // plain JS version:
+ const handleImageUpload = async (files) => {
+  if (!files || files.length === 0) {
+    return message.error("يرجى اختيار صورة واحدة على الأقل");
+  }
 
-      const response = await axiosInstance.put(
-        `${Url}/api/attachment/${imageData.imageId}`,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
-      );
-      message.success("تم تحديث الصورة بنجاح");
-      fetchExpensesImages(idForUpload);
-    } catch (error) {
-      console.error("Error during image upload:", error);
-      message.error("حدث خطأ أثناء تعديل الصورة");
-    }
-  };
+  // use parentExpenseData.id if sub-expense, otherwise expenseId
+  const idForUpload = parentExpenseData
+    ? parentExpenseData.id
+    : (expenseData.parentExpenseId || expenseId);
+
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append("files", file);
+  });
+  formData.append("entityType", "Expense");
+
+  try {
+    await axiosInstance.put(
+      `${Url}/api/attachment/${idForUpload}`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    message.success("تم تحديث الصور بنجاح");
+    fetchExpensesImages(idForUpload);
+  } catch (err) {
+    console.error(err);
+    message.error("حدث خطأ أثناء تعديل الصور");
+  }
+};
 
   const handleEditClick = () => {
     form.setFieldsValue({
@@ -625,20 +629,24 @@ const ExpensessView = () => {
             <Form.Item name="notes" label="الملاحظات">
               <Input.TextArea rows={4} placeholder="أدخل الملاحظات" />
             </Form.Item>
-            <Upload
-              beforeUpload={(file) => {
-                if (file.type === "application/pdf" || file.name?.endsWith(".pdf")) {
-                  message.error("تحميل ملفات PDF غير مسموح به. يرجى تحميل صورة بدلاً من ذلك.");
-                  return Upload.LIST_IGNORE;
-                }
-                handleImageUpload(file);
-                return false;
-              }}
-            >
-              <Button style={{ margin: "20px 0px", backgroundColor: "#efb034" }} type="primary" icon={<UploadOutlined />}>
-                استبدال الصورة
-              </Button>
-            </Upload>
+      <Upload
+  multiple                         // ← allow selecting/uploading multiple
+  accept="image/*"                 // ← optional, restrict to images
+  beforeUpload={(_, fileList) => {
+    // fileList is File[]
+    handleImageUpload(fileList);
+    // return false to prevent default upload behaviour
+    return false;
+  }}
+>
+  <Button
+    style={{ margin: "20px 0", backgroundColor: "#efb034" }}
+    type="primary"
+    icon={<UploadOutlined />}
+  >
+    استبدال الصورة
+  </Button>
+</Upload>
             {images.length > 0 && (
               <>
                 <span className="note-details-label">صور المحضر:</span>

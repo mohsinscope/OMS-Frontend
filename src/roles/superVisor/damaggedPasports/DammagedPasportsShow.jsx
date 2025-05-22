@@ -240,35 +240,36 @@ const DamagedPassportsShow = () => {
     fetchAllData();
   }, [passportId, navigate, isSupervisor]);
 
-  const handleImageUpload = async (file) => {
-    try {
-      const formData = new FormData();
-      formData.append("entityId", passportId);
-      formData.append("entityType", "DamagedPassport");
-      formData.append("file", file);
+const handleImageUpload = async (files) => {
+  if (!files || files.length === 0) {
+    return message.error("يرجى اختيار صورة واحدة على الأقل");
+  }
 
-      if (images.length === 0) {
-        await axiosInstance.post(`${Url}/api/attachment/add-attachment`, formData, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
-      } else {
-        await axiosInstance.put(`${Url}/api/attachment/${imageData.imageId}`, formData, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "multipart/form-data",
-          },
-        });
+  // Build FormData
+  const formData = new FormData();
+  files.forEach(f => formData.append("files", f));
+  formData.append("entityType", "DamagedPassport");
+
+  try {
+    // PUT to /api/attachment/{entityId}
+    await axiosInstance.put(
+      `${Url}/api/attachment/${passportId}`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "multipart/form-data",
+        },
       }
-      message.success("تم تحديث الصورة بنجاح");
-      await fetchPassportImages();
-    } catch (error) {
-      console.error("Image upload failed:", error);
-      message.error("حدث خطأ أثناء تعديل الصورة");
-    }
-  };
+    );
+    message.success("تم تحديث الصور بنجاح");
+    await fetchPassportImages();
+  } catch (err) {
+    console.error("Image upload failed:", err);
+    message.error("حدث خطأ أثناء تعديل الصور");
+  }
+};
+
 
   const handleSaveEdit = async (values) => {
     try {
@@ -582,24 +583,24 @@ const DamagedPassportsShow = () => {
                     <Form.Item name="notes" label="الملاحظات">
                       <Input.TextArea placeholder="أدخل الملاحظات" defaultValue="لا يوجد" />
                     </Form.Item>
-                    <Upload
-                      beforeUpload={(file) => {
-                        if (file.type === "application/pdf") {
-                          message.error("لا يمكن تحميل ملفات PDF.");
-                          return Upload.LIST_IGNORE;
-                        }
-                        handleImageUpload(file);
-                        return false;
-                      }}
-                    >
-                      <Button
-                        style={{ margin: "20px 0px", backgroundColor: "#efb034" }}
-                        type="primary"
-                        icon={<UploadOutlined />}
-                      >
-                        {images.length > 0 ? "استبدال الصورة" : "إضافة مرفق"}
-                      </Button>
-                    </Upload>
+        <Upload
+  multiple                          // ← allow picking many at once
+  accept="image/*"                  // ← optional: only images
+  beforeUpload={(_, fileList) => {
+    // fileList is an array of Files
+    handleImageUpload(fileList);
+    return false;                   // prevent default upload
+  }}
+>
+  <Button
+    style={{ margin: "20px 0", backgroundColor: "#efb034" }}
+    type="primary"
+    icon={<UploadOutlined />}
+  >
+    {images.length > 0 ? "استبدال الصور" : "إضافة مرفق"}
+  </Button>
+</Upload>
+
                     {images.length > 0 && (
                       <>
                         <span className="note-details-label">صور الجواز التالف:</span>
