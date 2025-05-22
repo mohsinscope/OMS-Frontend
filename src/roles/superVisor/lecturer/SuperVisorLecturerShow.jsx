@@ -134,30 +134,31 @@ const LecturerShow = () => {
     form.setFieldValue("lectureTypeIds", undefined);
   };
 
-  const handleImageUpload = async (file) => {
-    if (!imageData.imageId) {
-      message.error("لم يتم تحديد الصورة");
-      return;
-    }
+// before: (file) => { … }
+// after:
+const handleImageUpload = async (files) => {
+  if (!files || files.length === 0) {
+    return message.error("يرجى اختيار صورة واحدة على الأقل");
+  }
 
-    try {
-      const formData = new FormData();
-      formData.append("entityId", lectureId);
-      formData.append("entityType", "Lecture");
-      formData.append("file", file);
+  const formData = new FormData();
+  files.forEach(f => formData.append("files", f));
+  formData.append("entityType", "Lecture");
 
-      await axiosInstance.put(`${Url}/api/attachment/${imageData.imageId}`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+  try {
+    await axiosInstance.put(
+      `${Url}/api/attachment/${lectureId}`,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    message.success("تم تحديث الصور بنجاح");
+    await fetchLectureImages();
+  } catch (err) {
+    console.error("Lecture image upload failed:", err.response?.data || err);
+    message.error("حدث خطأ أثناء تعديل الصور");
+  }
+};
 
-      message.success("تم تحديث الصورة بنجاح");
-      await fetchLectureImages();
-    } catch (error) {
-      message.error("حدث خطأ أثناء تعديل الصورة");
-    }
-  };
 
   const handleSaveEdit = async (values) => {
     try {
@@ -228,19 +229,19 @@ const LecturerShow = () => {
                 <Button
                   onClick={() => {
                     // Reset company and lecture type to their initial values
-                    form.setFieldsValue({
-                      companyId: initialCompanyId,
-                      lectureTypeIds: initialLectureTypeIds,
-                    });
+        // Pre-fill every field in the form
+   const selectedCompany = companies.find(c => c.id === initialCompanyId);
+   setLectureTypes(selectedCompany?.lectureTypes || []);
 
-                    // Preload lecture types based on the initial company
-                    const selectedCompany = companies.find(
-                      (c) => c.id === initialCompanyId
-                    );
-                    setLectureTypes(selectedCompany?.lectureTypes || []);
+   form.setFieldsValue({
+     title:         lectureData.title,
+     date:          moment(lectureData.date),       // <-- DatePicker needs a moment()
+     companyId:     initialCompanyId,
+     lectureTypeIds: initialLectureTypeIds,
+     note:          lectureData.note || "",
+   });
 
-                    // Open the edit modal
-                    setEditModalVisible(true);
+   setEditModalVisible(true);
                   }}
                   className="edit-button-passport"
                 >
@@ -327,6 +328,7 @@ const LecturerShow = () => {
             <Modal
               className="model-container"
               open={editModalVisible}
+              
               onCancel={() => setEditModalVisible(false)}
               footer={null}
             >
@@ -349,13 +351,13 @@ const LecturerShow = () => {
                   <Input placeholder="عنوان المحضر" />
                 </Form.Item>
 
-                <Form.Item
-                  name="date"
-                  label="التاريخ"
-                  rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}
-                >
-                  <Input type="date" />
-                </Form.Item>
+        <Form.Item
+  name="date"
+  label="التاريخ"
+  rules={[{ required: true, message: "يرجى إدخال التاريخ" }]}
+>
+  <DatePicker style={{ width: '100%' }} />
+</Form.Item>
 
                 <Form.Item
                   name="companyId"
