@@ -108,7 +108,8 @@ export default function SuperVisorExpensesHistory() {
       isAdmin ||
       isSupervisor ||
       userPosition === "ProjectCoordinator" ||
-      userPosition === "SrController" 
+      userPosition === "SrController" ||
+      userPosition==="ExpenseAuditer"
     ) {
       return Object.values(Status);
     }
@@ -122,7 +123,8 @@ export default function SuperVisorExpensesHistory() {
       isAdmin ||
       isSupervisor ||
       userPosition === "ProjectCoordinator" ||
-      userPosition === "SrController"
+      userPosition === "SrController"||
+      userPosition==="ExpenseAuditer"
     )
       return expenses;
 
@@ -800,7 +802,7 @@ export default function SuperVisorExpensesHistory() {
                 maxTagCount={3}
                 maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
                 className="filter-dropdown"
-                style={{ maxHeight: "200px", overflowY: "auto" }}
+                style={{ maxHeight: "200px", overflowY: "auto" ,width:"250px" }}
               >
                 {availableStatuses.map((statusValue) => (
                   <Select.Option
