@@ -49,7 +49,7 @@ const statusMap = {
   [Status.SentToDirector]: "تم الإرسال إلى المدير التنفيذي",
   [Status.ReturnedToSupervisor]: "تم الإرجاع إلى المشرف",
   [Status.RecievedBySupervisor]: "تم الاستلام من قبل المشرف",
-  [Status.SentFromDirector]: "تم الموافقة من قبل المدير التنفيذي",
+  [Status.SentFromDirector]: "تم الارسال الى مدقق الحسابات",
   [Status.Completed]: "مكتمل",
   [Status.ReturnedToExpendeAuditer]: "تم الارجاع لمدقق الحسابات",
   [Status.SentToExpenseManager]: "تم الارسال لمدير الحسابات",

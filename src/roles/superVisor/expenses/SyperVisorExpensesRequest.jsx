@@ -381,7 +381,7 @@ const disableOtherMonths = (current) => {
     SentToDirector: "تم الإرسال إلى المدير التنفيذي",
     ReturnedToSupervisor: "تم الإرجاع إلى المشرف",
     RecievedBySupervisor: "تم الاستلام من قبل المشرف",
-    SentFromDirector: "تم الموافقة من قبل المدير التنفيذي",
+    SentFromDirector: "تم الارسال الى مدقق الحسابات",
     Completed: "مكتمل",
   };
 
