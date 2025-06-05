@@ -276,20 +276,23 @@ const [currentTabKey,    setCurrentTabKey]  = useState(null);   // المفتا�
           name: values.name,
           companyId: values.companyId,
         };
-      case "/admin/add-office":
-        return {
-          officeId: editingId || undefined,
-          name: values.name,
-          code: Number(values.code),
-          receivingStaff: Number(values.receivingStaff),
-          accountStaff: Number(values.accountStaff),
-          printingStaff: Number(values.printingStaff),
-          qualityStaff: Number(values.qualityStaff),
-          deliveryStaff: Number(values.deliveryStaff),
-          governorateId: values.governorateId,
-          budget: values.budget ? Number(values.budget) : null,
-          isEmbassy: values.isEmbassy, // New field added
-        };
+  
+case "/admin/add-office":
+  return {
+    officeId: editingId || undefined,
+    name: values.name,
+    code: Number(values.code),
+    receivingStaff: Number(values.receivingStaff),
+    accountStaff: Number(values.accountStaff),
+    printingStaff: Number(values.printingStaff),
+    qualityStaff: Number(values.qualityStaff),
+    deliveryStaff: Number(values.deliveryStaff),
+    governorateId: values.governorateId,
+    budget: values.budget ? Number(values.budget) : null,
+    isEmbassy: values.isEmbassy,
+    isTwoShifts: values.isTwoShifts,     // New field added
+    isProjectSite: values.isProjectSite  // New field added
+  };
       case "/admin/device-types":
         return {
           id: editingId,
@@ -472,20 +475,22 @@ case "/admin/tags":
     }
     let formData;
     switch (currentPath) {
-      case "/admin/add-office":
-        formData = {
-          name: record.name,
-          code: record.code,
-          receivingStaff: record.receivingStaff,
-          accountStaff: record.accountStaff,
-          printingStaff: record.printingStaff,
-          qualityStaff: record.qualityStaff,
-          deliveryStaff: record.deliveryStaff,
-          governorateId: record.governorateId,
-          budget: record.budget,
-          isEmbassy: record.isEmbassy, // New field added
-        };
-        break;
+case "/admin/add-office":
+  formData = {
+    name: record.name,
+    code: record.code,
+    receivingStaff: record.receivingStaff,
+    accountStaff: record.accountStaff,
+    printingStaff: record.printingStaff,
+    qualityStaff: record.qualityStaff,
+    deliveryStaff: record.deliveryStaff,
+    governorateId: record.governorateId,
+    budget: record.budget,
+    isEmbassy: record.isEmbassy,
+    isTwoShifts: record.isTwoShifts,     // New field added
+    isProjectSite: record.isProjectSite  // New field added
+  };
+  break;
       case "/admin/add-governorate":
         formData = {
           name: record.name,

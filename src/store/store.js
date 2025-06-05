@@ -25,6 +25,8 @@ const useAuthStore = create((set, get) => ({
   isRefreshing: false,
   searchVisible: true,
   isSidebarCollapsed: false,
+  isTwoShifts: false, // Add this new field
+
   
   toggleSidebar: () => {
     set((state) => ({
@@ -59,6 +61,8 @@ const useAuthStore = create((set, get) => ({
         accessToken,
         refreshToken,
         isInitialized: true,
+        isTwoShifts: userProfile.isTwoShifts || false, // Save isTwoShifts from profile
+
       });
     } catch (error) {
       console.error("[Auth] Initialization failed:", error);
@@ -85,6 +89,8 @@ const useAuthStore = create((set, get) => ({
         isLoggedIn: true,
         accessToken,
         refreshToken,
+        isTwoShifts: userProfile.isTwoShifts || false, // Save isTwoShifts from profile
+
       });
     } catch (error) {
       console.error("[Auth] Login failed:", error);
@@ -129,6 +135,8 @@ const useAuthStore = create((set, get) => ({
       isLoggedIn: false,
       accessToken: null,
       refreshToken: null,
+            isTwoShifts: false, // Reset isTwoShifts on logout
+
     });
 
     window.location.href = '/login';
