@@ -12,7 +12,7 @@ const { TextArea } = Input;
 
 export default function SuperVisorAttendanceAdd() {
   const navigate = useNavigate();
-  const { isSidebarCollapsed, profile, accessToken } = useAuthStore();
+  const { isSidebarCollapsed, profile, accessToken ,isTwoShifts } = useAuthStore();
 
   // Loading state to control the full-page skeleton
   const [loading, setLoading] = useState(true);
@@ -212,7 +212,7 @@ export default function SuperVisorAttendanceAdd() {
             onChange={(e) => setWorkingHours(Number(e.target.value))}
           >
             <option value={1}>صباحي</option>
-            <option value={2}>مسائي</option>
+  {isTwoShifts && <option value={2}>مسائي</option>}
           </select>
         </div>
 

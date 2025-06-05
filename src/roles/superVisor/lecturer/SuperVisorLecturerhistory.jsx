@@ -14,6 +14,9 @@ import "./SuperVisorLecturerhistory.css";
 import useAuthStore from "./../../../store/store";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import Url from "./../../../store/url.js";
+import dayjs from "dayjs";
+
+const STORAGE_KEY = "supervisorLecturerSearchFilters";
 
 const SuperVisorLecturerhistory = () => {
   const {
@@ -99,7 +102,29 @@ const SuperVisorLecturerhistory = () => {
     }
   };
 
+  // --- Storage: Save filters when search or page change
+  const saveFiltersToStorage = (page) => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        formData: {
+          title: formData.title,
+          startDate: formData.startDate ? formData.startDate.toISOString() : null,
+          endDate: formData.endDate ? formData.endDate.toISOString() : null,
+          companyId: formData.companyId,
+          lectureTypeIds: formData.lectureTypeIds,
+        },
+        selectedGovernorate,
+        selectedOffice,
+        currentPage: page,
+      })
+    );
+  };
+
   const handleSearch = async (page = 1) => {
+    setCurrentPage(page);
+    saveFiltersToStorage(page);
+    
     const payload = {
       title: formData.title || "",
       officeId: isSupervisor ? profile.officeId : selectedOffice || null,
@@ -114,28 +139,8 @@ const SuperVisorLecturerhistory = () => {
       },
     };
 
-    setCurrentPage(page);
     await fetchLectures(payload);
   };
-
-  // Fetch initial lectures on mount without restoring any filters from local storage
-  useEffect(() => {
-    const initialPayload = {
-      title: "",
-      officeId: isSupervisor ? profile.officeId : null,
-      governorateId: isSupervisor ? profile.governorateId : null,
-      startDate: null,
-      endDate: null,
-      companyId: null,
-      lectureTypeIds: [],
-      PaginationParams: {
-        PageNumber: 1,
-        PageSize: pageSize,
-      },
-    };
-
-    fetchLectures(initialPayload);
-  }, [isSupervisor, profile.officeId, profile.governorateId]);
 
   const handleDateChange = (date, dateType) => {
     setFormData((prev) => ({
@@ -169,12 +174,6 @@ const SuperVisorLecturerhistory = () => {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       setCompanies(response.data);
-      setlectureTypeNames([]);
-      setFormData((prev) => ({
-        ...prev,
-        companyId: null,
-        lectureTypeIds: [],
-      }));
     } catch (error) {
       message.error("حدث خطأ أثناء جلب بيانات الشركات");
     }
@@ -224,14 +223,92 @@ const SuperVisorLecturerhistory = () => {
     }
   };
 
-  useEffect(() => {
-    fetchGovernorates();
-    fetchCompanies();
-  }, [fetchGovernorates]);
+  // Add a flag to track if initial load is complete
+  const [hasInitialized, setHasInitialized] = useState(false);
 
-  const handlePageChange = (page) => {
-    handleSearch(page);
-  };
+  // --- On mount: Restore filters from storage then fetch data
+  useEffect(() => {
+    const initFilters = async () => {
+      try {
+        await fetchGovernorates();
+        await fetchCompanies();
+        
+        const savedFilters = localStorage.getItem(STORAGE_KEY);
+        if (savedFilters) {
+          const {
+            formData: savedFormData,
+            selectedGovernorate: savedGov,
+            selectedOffice: savedOff,
+            currentPage: savedPage,
+          } = JSON.parse(savedFilters);
+          
+          if (savedFormData) {
+            setFormData({
+              title: savedFormData.title || "",
+              startDate: savedFormData.startDate ? dayjs(savedFormData.startDate) : null,
+              endDate: savedFormData.endDate ? dayjs(savedFormData.endDate) : null,
+              companyId: savedFormData.companyId || null,
+              lectureTypeIds: savedFormData.lectureTypeIds || [],
+            });
+
+            // If company was selected, load its lecture types
+            if (savedFormData.companyId) {
+              const savedCompany = companies.find(
+                (company) => company.id === savedFormData.companyId
+              );
+              if (savedCompany) {
+                setlectureTypeNames(savedCompany.lectureTypes || []);
+              }
+            }
+          }
+          
+          if (!isSupervisor) {
+            setSelectedGovernorate(savedGov || null);
+            setSelectedOffice(savedOff || null);
+            if (savedGov) await fetchOffices(savedGov);
+          }
+          
+          const pageToUse = savedPage || 1;
+          setCurrentPage(pageToUse);
+          
+          // Finally, fetch lectures using saved filters
+          const payload = {
+            title: savedFormData?.title || "",
+            officeId: isSupervisor ? profile.officeId : savedOff || null,
+            governorateId: isSupervisor ? profile.governorateId : savedGov || null,
+            startDate: savedFormData?.startDate ? formatToISO(dayjs(savedFormData.startDate)) : null,
+            endDate: savedFormData?.endDate ? formatToISO(dayjs(savedFormData.endDate)) : null,
+            companyId: savedFormData?.companyId || null,
+            lectureTypeIds: savedFormData?.lectureTypeIds || [],
+            PaginationParams: { PageNumber: pageToUse, PageSize: pageSize },
+          };
+          await fetchLectures(payload);
+        } else {
+          // No saved filters: fetch initial data with default values
+          const payload = {
+            title: "",
+            officeId: isSupervisor ? profile.officeId : null,
+            governorateId: isSupervisor ? profile.governorateId : null,
+            startDate: null,
+            endDate: null,
+            companyId: null,
+            lectureTypeIds: [],
+            PaginationParams: { PageNumber: 1, PageSize: pageSize },
+          };
+          await fetchLectures(payload);
+        }
+        
+        setHasInitialized(true);
+      } catch (error) {
+        console.error(error);
+        setHasInitialized(true);
+      }
+    };
+    
+    if (!hasInitialized) {
+      initFilters();
+    }
+  }, [hasInitialized, accessToken, profile, isSupervisor]);
 
   const handleGovernorateChange = async (value) => {
     setSelectedGovernorate(value);
@@ -241,7 +318,7 @@ const SuperVisorLecturerhistory = () => {
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    handleSearch();
+    handleSearch(1);
   };
 
   const handleInputChange = (value) => {
@@ -260,12 +337,16 @@ const SuperVisorLecturerhistory = () => {
       lectureTypeIds: [],
     });
     setCurrentPage(1);
+    setlectureTypeNames([]);
 
     if (!isSupervisor) {
       setSelectedGovernorate(null);
       setSelectedOffice(null);
       setOffices([]);
     }
+
+    // Remove from localStorage
+    localStorage.removeItem(STORAGE_KEY);
 
     const payload = {
       title: "",
@@ -380,6 +461,9 @@ const SuperVisorLecturerhistory = () => {
         }
       }
       message.success("تم جلب المحاضر الخاصة بك");
+      
+      // Clear saved filters when showing "my lectures"
+      localStorage.removeItem(STORAGE_KEY);
     } catch (error) {
       console.error("Error fetching my lectures:", error);
       message.error("حدث خطأ أثناء جلب المحاضر الخاصة بك");
@@ -457,6 +541,7 @@ const SuperVisorLecturerhistory = () => {
                   className="supervisor-Lectur-input"
                 />
               </div>
+              
               <div className="filter-field">
                 <label htmlFor="company" className="supervisor-Lectur-label">
                   الشركة
@@ -474,7 +559,6 @@ const SuperVisorLecturerhistory = () => {
                   ))}
                 </Select>
               </div>
-
 
               <div className="filter-field">
                 <label>نوع المحضر</label>
@@ -498,13 +582,26 @@ const SuperVisorLecturerhistory = () => {
 
               <div className="supervisor-Lectur-field-wrapper">
                 <label htmlFor="startDate" className="supervisor-Lectur-label">
-                  التاريخ
+                  التاريخ من
                 </label>
                 <DatePicker
                   id="startDate"
                   placeholder="اختر التاريخ"
                   onChange={(date) => handleDateChange(date, "startDate")}
                   value={formData.startDate}
+                  className="supervisor-passport-dameged-input"
+                />
+              </div>
+
+              <div className="supervisor-Lectur-field-wrapper">
+                <label htmlFor="endDate" className="supervisor-Lectur-label">
+                  التاريخ إلى
+                </label>
+                <DatePicker
+                  id="endDate"
+                  placeholder="اختر التاريخ"
+                  onChange={(date) => handleDateChange(date, "endDate")}
+                  value={formData.endDate}
                   className="supervisor-passport-dameged-input"
                 />
               </div>
@@ -548,7 +645,7 @@ const SuperVisorLecturerhistory = () => {
                   pageSize: pageSize,
                   total: totalLectures,
                   position: ["bottomCenter"],
-                  onChange: handlePageChange,
+                  onChange: (page) => handleSearch(page),
                   showTotal: (total, range) => (
                     <span style={{ marginLeft: "8px", fontWeight: "bold" }}>
                       اجمالي السجلات: {total}

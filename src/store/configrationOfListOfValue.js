@@ -38,6 +38,19 @@ export const LovConfig = {
         key: "budget",
       },
       {
+  title: "هل يمتلك شفتين",
+  dataIndex: "isTwoShifts",
+  key: "isTwoShifts",
+  render: (value) => value ? "نعم" : "لا"
+},
+{
+  title: "موقع شركة", 
+  dataIndex: "isProjectSite",
+  key: "isProjectSite",
+  render: (value) => value ? "نعم" : "لا"
+}
+      ,
+      {
         title: "سفارة",
         dataIndex: "isEmbassy",
         key: "isEmbassy",
@@ -68,6 +81,24 @@ export const LovConfig = {
           { label: "لا", value: false },
         ],
       },
+      {
+  name: "isTwoShifts",
+  label: "هل يمتلك شفتين",
+  type: "dropdown",
+  options: [
+    { label: "نعم", value: true },
+    { label: "لا", value: false }
+  ]
+},
+{
+  name: "isProjectSite",
+  label: "موقع الشركة",
+  type: "dropdown", 
+  options: [
+    { label: "نعم", value: true },
+    { label: "لا", value: false }
+  ]
+}
     ],
   },
   "/admin/add-governorate": {

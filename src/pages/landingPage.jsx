@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Building2, Clock, DollarSign, Bell, FileCheck, BookX, MonitorX } from 'lucide-react';
+import { Building2, Clock, DollarSign, Bell, FileCheck, BookX, MonitorX, Sun, Moon, Users } from 'lucide-react';
 import { CartesianGrid, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts';
 import './landingPage.css';
 import useAuthStore from './../store/store.js';
@@ -8,6 +8,84 @@ import axiosInstance from './../intercepters/axiosInstance.js';
 import Url from './../store/url.js';
 import Icons from './../reusable elements/icons.jsx';
 import IraqMap from './../reusable elements/IraqMap.jsx';
+
+// Enhanced Progress Bar Component
+const EnhancedProgressBar = ({ percentage, color = "green", showWave = true }) => {
+  const getColorStyles = (color) => {
+    switch (color) {
+      case 'blue':
+        return {
+          background: 'linear-gradient(90deg, #3b82f6, #2563eb, #1d4ed8)',
+          waveColor: 'rgba(59, 130, 246, 0.5)',
+          bgColor: '#dbeafe'
+        };
+      case 'orange':
+        return {
+          background: 'linear-gradient(90deg, #f59e0b, #d97706, #b45309)',
+          waveColor: 'rgba(245, 158, 11, 0.5)',
+          bgColor: '#fed7aa'
+        };
+      default:
+        return {
+          background: 'linear-gradient(90deg, #10b981, #059669, #047857)',
+          waveColor: 'rgba(16, 185, 129, 0.5)',
+          bgColor: '#d1fae5'
+        };
+    }
+  };
+
+  const styles = getColorStyles(color);
+
+  return (
+    <div 
+      className="enhanced-progress-bar"
+      style={{ backgroundColor: styles.bgColor }}
+    >
+      <div
+        className="enhanced-progress-fill"
+        style={{
+          width: `${percentage}%`,
+          background: styles.background,
+          '--width': `${percentage}%`
+        }}
+      >
+        {showWave && (
+          <div
+            className="enhanced-progress-wave"
+            style={{ background: `linear-gradient(to right, transparent, ${styles.waveColor}, transparent)` }}
+          />
+        )}
+        <div className="enhanced-progress-shine" />
+      </div>
+      <div className="enhanced-progress-text">
+        <span>{percentage}%</span>
+      </div>
+    </div>
+  );
+};
+
+// Individual Attendance Item Component
+const AttendanceItem = ({ icon: Icon, title, percentage, color, description }) => (
+  <div className="enhanced-attendance-item">
+    <div className="enhanced-attendance-header">
+      <div className="enhanced-attendance-icon-wrapper">
+        <div className={`enhanced-attendance-icon enhanced-attendance-icon-${color}`}>
+          <Icon size={24} />
+        </div>
+        <div className="enhanced-attendance-title-wrapper">
+          <h3 className="enhanced-attendance-title">{title}</h3>
+          {description && (
+            <p className="enhanced-attendance-description">{description}</p>
+          )}
+        </div>
+      </div>
+      <div className={`enhanced-attendance-percentage enhanced-attendance-percentage-${color}`}>
+        {percentage}%
+      </div>
+    </div>
+    <EnhancedProgressBar percentage={percentage} color={color} />
+  </div>
+);
 
 export default function LandingPage() {
   const { isSidebarCollapsed, permissions } = useAuthStore();
@@ -98,7 +176,10 @@ export default function LandingPage() {
         totalAccountStaff: 0,
         totalPrintingStaff: 0,
         totalQualityStaff: 0,
-        totalDeliveryStaff: 0
+        totalDeliveryStaff: 0,
+        morningAttendancePercentage:0,
+        eveningAttendancePercentage:0,
+        totalEmbassies:0
       };
       setCounters(initialCounters);
 
@@ -136,6 +217,35 @@ export default function LandingPage() {
   // Memoize COLORS array so it isn't re-created on every render
   const COLORS = useMemo(() => ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'], []);
 
+  // Memoize attendance data for the enhanced cards
+  const attendanceItemsData = useMemo(() => {
+    if (!dashboardStats) return [];
+    
+    return [
+      {
+        icon: Users,
+        title: "إجمالي نسبة الحضور",
+        description: "الصباحي والمسائي معاً",
+        percentage: counters.attendancePercentage || 0,
+        color: "green"
+      },
+      {
+        icon: Sun,
+        title: "نسبة الحضور الصباحي",
+        description: "الدوام الصباحي فقط",
+        percentage: counters.morningAttendancePercentage || 0,
+        color: "blue"
+      },
+      {
+        icon: Moon,
+        title: "نسبة الحضور المسائي", 
+        description: "الدوام المسائي فقط",
+        percentage: counters.eveningAttendancePercentage || 0,
+        color: "orange"
+      }
+    ];
+  }, [counters, dashboardStats]);
+
   return (
     hasDBPermission ? (
       <div className={`db_stats_container ${isSidebarCollapsed ? "sidebar-collapseddb" : ""}`} dir='rtl'>
@@ -172,9 +282,15 @@ export default function LandingPage() {
                     </div>
                   </div>
                   <div style={{display:"flex",flexDirection:"column",width:"100%",justifyContent:"space-between"}}>
-                    <h2 className="db_stat_label1" style={{ textAlign: "center" }}>عدد المكاتب الكلي</h2>
+                    <h2 className="db_stat_label1" style={{ textAlign: "center" }}>  عدد المكاتب داخل العراق</h2>
                     <div className="db_stat_content">
                       <span className="db_stat_value">{counters.totalOffices}</span>
+                    </div>
+                  </div>
+                     <div style={{display:"flex",flexDirection:"column",width:"100%",justifyContent:"space-between"}}>
+                    <h2 className="db_stat_label1" style={{ textAlign: "center" }}>  عدد السفارات</h2>
+                    <div className="db_stat_content">
+                      <span className="db_stat_value">{counters.totalEmbassies}</span>
                     </div>
                   </div>
                 </div>
@@ -195,28 +311,24 @@ export default function LandingPage() {
                   </div>
                 </div>
 
-                {/* Attendance Card */}
-                <div className="db_main_card4 persentage_staff_card">
-                  <h2 className="db_stat_label1" style={{ textAlign: "center" }}>نسبة حضور موظفي الجوازات</h2>
-                  <div className="db_main_stat">
-                    <div className="db_stat_icon">
-                      <Icons type='person' width={60} height={60}/>
-                    </div>
-                    <div className="db_stat_content">
-                      <span className="db_stat_value">{counters.attendancePercentage}%</span>
-                    </div>
-                    <div className="db_percentage_bar_persentage">
-                      <div
-                        className="db_percentage_fill_persentage"
-                        style={{
-                          width: `${dashboardStats.attendancePercentage}%`,
-                          '--width': `${dashboardStats.attendancePercentage}%`
-                        }}
-                      >
-                        <div className="db_percentage_wave"></div>
-                      </div>
-                    </div>
+                {/* Enhanced Attendance Card */}
+                <div className="enhanced-attendance-card">
+            
+
+                  {/* Attendance Items Grid */}
+                  <div className="enhanced-attendance-grid">
+                    {attendanceItemsData.map((item, index) => (
+                      <AttendanceItem
+                        key={index}
+                        icon={item.icon}
+                        title={item.title}
+                        description={item.description}
+                        percentage={item.percentage}
+                        color={item.color}
+                      />
+                    ))}
                   </div>
+
                 </div>
               </div>
 
