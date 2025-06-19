@@ -83,12 +83,18 @@ const disableOtherMonths = (current) => {
     "نوفمبر",
     "ديسمبر",
   ];
+  const formatArabicMonth = (date) => {
+    const monthName = arabicMonths[date.month()];
+    const monthNumber = date.month() + 1; // +1 because months are 0-indexed
+    
+    return `${monthName} - ${monthNumber}`;
+  };
 
   const formattedDate = new Date(officeInfo.date);
   const displayMonthName = arabicMonths[formattedDate.getMonth()];
   const displayYear = formattedDate.getFullYear();
   const displayMonthYear = `${displayMonthName} - ${displayYear}`;
-
+  
   // define state to set office budget
   const [officeBudget, setOfficeBudget] = useState();
 
@@ -943,19 +949,37 @@ const disableOtherMonths = (current) => {
           style={{ marginTop: "10px" }}
         >
            <ConfigProvider direction="rtl" locale={arEG}>
-            <Form.Item
-              name="month"
-              label="اختر الشهر"
-              rules={[{ required: true, message: "يرجى اختيار الشهر" }]}
-            >
-              <DatePicker
-                picker="month"
-                format="MMMM YYYY"
-                style={{ width: "100%" }}
-                placeholder="اختر الشهر"
-                disabledDate={disableOtherMonths}
-              />
-            </Form.Item>
+           <Form.Item
+  name="month"
+  label="اختر الشهر"
+  rules={[{ required: true, message: "يرجى اختيار الشهر" }]}
+>
+  <DatePicker
+    picker="month"
+    format={formatArabicMonth}
+    style={{ width: "100%" }}
+    placeholder="اختر الشهر"
+    disabledDate={disableOtherMonths}
+    monthCellRender={(date, locale) => {
+      const arabicMonths = [
+        "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+        "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+      ];
+      const monthName = arabicMonths[date.month()];
+      const monthNumber = date.month() + 1;
+      return (
+        <div style={{ 
+          fontSize: '18px', 
+          textAlign: 'center',
+          lineHeight: '1'
+        }}>
+          <div>{monthName}</div>
+          <div style={{ color: '#666', fontSize: '14px' }}>{monthNumber}</div>
+        </div>
+      );
+    }}
+  />
+</Form.Item>
               </ConfigProvider> 
           <Form.Item name="notes" label="هل انت متأكد من انشاء مصروف لهذا الشهر" style={{ width: "100%" }} />
           <Form.Item>
