@@ -55,8 +55,39 @@ const statusMap = {
   [Status.SentToExpenseManager]: "تم الارسال لمدير الحسابات",
   [Status.ReturnedToExpenseManager]: "تم الارجاع لمدير الحسابات",
   [Status.SentToExpenseGeneralManager]: "تم الارسال الى مدير ادارة الحسابات",
+};
 
+// Arabic months mapping with numbers
+const arabicMonths = [
+  { value: 1, label: "يناير - الشهر الأول", nameEn: "January" },
+  { value: 2, label: "فبراير - الشهر الثاني", nameEn: "February" },
+  { value: 3, label: "مارس - الشهر الثالث", nameEn: "March" },
+  { value: 4, label: "أبريل - الشهر الرابع", nameEn: "April" },
+  { value: 5, label: "مايو - الشهر الخامس", nameEn: "May" },
+  { value: 6, label: "يونيو - الشهر السادس", nameEn: "June" },
+  { value: 7, label: "يوليو - الشهر السابع", nameEn: "July" },
+  { value: 8, label: "أغسطس - الشهر الثامن", nameEn: "August" },
+  { value: 9, label: "سبتمبر - الشهر التاسع", nameEn: "September" },
+  { value: 10, label: "أكتوبر - الشهر العاشر", nameEn: "October" },
+  { value: 11, label: "نوفمبر - الشهر الحادي عشر", nameEn: "November" },
+  { value: 12, label: "ديسمبر - الشهر الثاني عشر", nameEn: "December" },
+];
 
+// Helper function to get Arabic month name with number
+const getArabicMonthDisplay = (dateString) => {
+  if (!dateString) return "";
+  
+  const date = new Date(dateString);
+  const monthNumber = date.getMonth() + 1; // getMonth() returns 0-11, so add 1
+  const year = date.getFullYear();
+  
+  const arabicMonth = arabicMonths.find(month => month.value === monthNumber);
+  
+  if (arabicMonth) {
+    return `${arabicMonth.label} ${year}`;
+  }
+  
+  return dateString; // fallback to original date if month not found
 };
 
 export default function ExpensesView() {
@@ -179,7 +210,7 @@ function flattenItems(items) {
     return null;
   };
 
-  // 🔽 put this right after the last “useState” declaration
+  // 🔽 put this right after the last "useState" declaration
 //---------------------------------------------------------
 const currentStatus   = expense?.generalInfo?.["الحالة"];  // may be undefined on first render
 const userPosition    = profile?.position || "";
@@ -250,7 +281,7 @@ const handleActionSubmit = async () => {
       `${Url}/api/Actions`,
       {
         actionType:  dynamicActionType,
-        notes,                              // from Ant D form
+        notes,                              // from Ant D form
         profileId:        profile.profileId,
         monthlyExpensesId: expenseId,
       },
@@ -493,6 +524,8 @@ const handleTableChange = (pagination) => {
             المتبقي: remainingAmount,
             التاريخ: new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
             الحالة: expenseResponse.data.status,
+            // NEW: Store the raw date for month calculation
+            rawDate: expenseResponse.data.dateCreated,
           },
           items: allItems, // keep hierarchical for the table
           flattenedItems: flattenedAllItems, // for PDF/Excel usage
@@ -1041,6 +1074,18 @@ const handleTableChange = (pagination) => {
     },
   ];
 
+  // Get Arabic month display for header
+  const getHeaderTitle = () => {
+    const officeName = expense?.generalInfo?.["المكتب"];
+    const rawDate = expense?.generalInfo?.rawDate;
+    
+    if (rawDate) {
+      const arabicMonth = getArabicMonthDisplay(rawDate);
+      return `صرفيات ${officeName} - ${arabicMonth}`;
+    }
+    
+    return `صرفيات ${officeName} بتاريخ ${expense?.generalInfo?.["التاريخ"]}`;
+  };
 
   return (
     <>
@@ -1051,8 +1096,7 @@ const handleTableChange = (pagination) => {
         style={{ padding: "24px" }}
       >
         <h1 className="expensess-date">
-          صرفيات {expense?.generalInfo?.["المكتب"]} بتاريخ{" "}
-          {expense?.generalInfo?.["التاريخ"]}
+          {getHeaderTitle()}
         </h1>
 
   {/* Action Buttons */}

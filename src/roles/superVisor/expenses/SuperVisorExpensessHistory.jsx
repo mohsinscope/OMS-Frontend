@@ -68,6 +68,22 @@ const positionStatusMap = {
 
 };
 
+// Arabic months mapping
+const arabicMonths = [
+  { value: 1, label: "يناير - الشهر الأول", nameEn: "January" },
+  { value: 2, label: "فبراير - الشهر الثاني", nameEn: "February" },
+  { value: 3, label: "مارس - الشهر الثالث", nameEn: "March" },
+  { value: 4, label: "أبريل - الشهر الرابع", nameEn: "April" },
+  { value: 5, label: "مايو - الشهر الخامس", nameEn: "May" },
+  { value: 6, label: "يونيو - الشهر السادس", nameEn: "June" },
+  { value: 7, label: "يوليو - الشهر السابع", nameEn: "July" },
+  { value: 8, label: "أغسطس - الشهر الثامن", nameEn: "August" },
+  { value: 9, label: "سبتمبر - الشهر التاسع", nameEn: "September" },
+  { value: 10, label: "أكتوبر - الشهر العاشر", nameEn: "October" },
+  { value: 11, label: "نوفمبر - الشهر الحادي عشر", nameEn: "November" },
+  { value: 12, label: "ديسمبر - الشهر الثاني عشر", nameEn: "December" },
+];
+
 /** NEW: LocalStorage key for caching filters & pagination. */
 const STORAGE_KEY_EXPENSES = "supervisorExpensesSearchFilters";
 
@@ -84,6 +100,10 @@ export default function SuperVisorExpensesHistory() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
+  
+  // NEW: Month filter state
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   const [isLoading, setIsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -138,6 +158,62 @@ export default function SuperVisorExpensesHistory() {
   };
 
   // ------------------------------------------------------------------------------------------------
+  // NEW: Month handling functions
+  // ------------------------------------------------------------------------------------------------
+  const handleMonthChange = (monthValue) => {
+    setSelectedMonth(monthValue);
+    
+    if (monthValue) {
+      // When month is selected, automatically set date range from 1st to 15th
+      const startOfMonth = dayjs().year(selectedYear).month(monthValue - 1).date(1);
+      const fifteenthOfMonth = dayjs().year(selectedYear).month(monthValue - 1).date(15);
+      
+      setStartDate(startOfMonth);
+      setEndDate(fifteenthOfMonth);
+    } else {
+      // When month is cleared, clear the dates too
+      setStartDate(null);
+      setEndDate(null);
+    }
+  };
+
+  const handleYearChange = (year) => {
+    setSelectedYear(year);
+    
+    // If a month is already selected, update the date range with new year
+    if (selectedMonth) {
+      const startOfMonth = dayjs().year(year).month(selectedMonth - 1).date(1);
+      const fifteenthOfMonth = dayjs().year(year).month(selectedMonth - 1).date(15);
+      
+      setStartDate(startOfMonth);
+      setEndDate(fifteenthOfMonth);
+    }
+  };
+
+  const handleDateChange = (dates, dateType) => {
+    if (dateType === 'start') {
+      setStartDate(dates);
+    } else {
+      setEndDate(dates);
+    }
+    
+    // Clear month selection when manually changing dates
+    if (selectedMonth && dates) {
+      setSelectedMonth(null);
+    }
+  };
+
+  // Generate years for dropdown (current year ± 5 years)
+  const generateYears = () => {
+    const currentYear = new Date().getFullYear();
+    const years = [];
+    for (let i = currentYear - 5; i <= currentYear + 5; i++) {
+      years.push(i);
+    }
+    return years;
+  };
+
+  // ------------------------------------------------------------------------------------------------
   // Fetches
   // ------------------------------------------------------------------------------------------------
   const fetchGovernorates = useCallback(async () => {
@@ -187,7 +263,6 @@ export default function SuperVisorExpensesHistory() {
     }
   };
   
-
   const fetchExpensesData = async (pageNumber = 1) => {
     try {
       setIsLoading(true);
@@ -274,10 +349,12 @@ export default function SuperVisorExpensesHistory() {
         const {
           selectedGovernorate: savedGov,
           selectedOffice: savedOff,
-         startDate: savedStart,  // ISO strings
-         endDate:   savedEnd,
+          startDate: savedStart,  // ISO strings
+          endDate: savedEnd,
           selectedStatuses: savedStatuses,
           currentPage: savedPage,
+          selectedMonth: savedMonth,
+          selectedYear: savedYear,
         } = parsed;
   
         // If supervisor, we typically override with user-based governorate/office
@@ -293,9 +370,11 @@ export default function SuperVisorExpensesHistory() {
           }
         }
   
-       setStartDate(savedStart ? dayjs(savedStart) : null);
-       setEndDate(  savedEnd   ? dayjs(savedEnd)   : null);
+        setStartDate(savedStart ? dayjs(savedStart) : null);
+        setEndDate(savedEnd ? dayjs(savedEnd) : null);
         setSelectedStatuses(savedStatuses || []);
+        setSelectedMonth(savedMonth || null);
+        setSelectedYear(savedYear || new Date().getFullYear());
   
         const finalPage = savedPage || 1;
         setCurrentPage(finalPage);
@@ -374,8 +453,6 @@ export default function SuperVisorExpensesHistory() {
       fetchExpensesData(1);
     }
   }, []); // run once on mount
-   // run once on mount
-  // NOTE: We do not add dependencies so it runs only once
 
   // ------------------------------------------------------------------------------------------------
   // Handlers
@@ -389,6 +466,8 @@ export default function SuperVisorExpensesHistory() {
       startDate: startDate ? startDate.toISOString() : null,
       endDate: endDate ? endDate.toISOString() : null,
       selectedStatuses,
+      selectedMonth,
+      selectedYear,
       currentPage: page,
     };
     localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(filtersData));
@@ -404,6 +483,9 @@ export default function SuperVisorExpensesHistory() {
   const handleReset = () => {
     setStartDate(null);
     setEndDate(null);
+    setSelectedMonth(null);
+    setSelectedYear(new Date().getFullYear());
+    
     if (
       isAdmin ||
       isSupervisor ||
@@ -791,6 +873,51 @@ export default function SuperVisorExpensesHistory() {
                 </div>
               </form>
             )}
+
+            {/* NEW: Month and Year Filter Section */}
+            <div className="filter-field">
+              <label>الشهر</label>
+              <Select
+                value={selectedMonth}
+                onChange={handleMonthChange}
+                placeholder="اختر الشهر"
+                allowClear
+                disabled={!!(startDate && !selectedMonth) || !!(endDate && !selectedMonth)}
+                className="filter-dropdown"
+                style={{ 
+                  width: "200px",
+                  backgroundColor: (!!(startDate && !selectedMonth) || !!(endDate && !selectedMonth)) ? "#f5f5f5" : "white"
+                }}
+              >
+                {arabicMonths.map((month) => (
+                  <Select.Option key={month.value} value={month.value}>
+                    {month.label}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+
+            <div className="filter-field">
+              <label>السنة</label>
+              <Select
+                value={selectedYear}
+                onChange={handleYearChange}
+                placeholder="اختر السنة"
+                disabled={!!(startDate && !selectedMonth) || !!(endDate && !selectedMonth)}
+                className="filter-dropdown"
+                style={{ 
+                  width: "150px",
+                  backgroundColor: (!!(startDate && !selectedMonth) || !!(endDate && !selectedMonth)) ? "#f5f5f5" : "white"
+                }}
+              >
+                {generateYears().map((year) => (
+                  <Select.Option key={year} value={year}>
+                    {year}
+                  </Select.Option>
+                ))}
+              </Select>
+            </div>
+
             <div className="filter-field">
               <label>الحالة</label>
               <Select
@@ -801,7 +928,7 @@ export default function SuperVisorExpensesHistory() {
                 maxTagCount={3}
                 maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
                 className="filter-dropdown"
-                style={{ maxHeight: "200px", overflowY: "auto" ,width:"250px" }}
+                style={{ maxHeight: "200px", overflowY: "auto", width: "250px" }}
               >
                 {availableStatuses.map((statusValue) => (
                   <Select.Option
@@ -815,14 +942,19 @@ export default function SuperVisorExpensesHistory() {
               </Select>
             </div>
 
+            {/* Date Range Filters - Disabled when month is selected */}
             <div className="filter-field">
               <label>التاريخ من</label>
               <DatePicker
                 placeholder="التاريخ من"
-                onChange={(date) => setStartDate(date)}
+                onChange={(date) => handleDateChange(date, 'start')}
                 value={startDate}
+                disabled={!!selectedMonth}
                 className="supervisor-passport-dameged-input"
-                style={{ width: "100%" }}
+                style={{ 
+                  width: "100%",
+                  backgroundColor: selectedMonth ? "#f5f5f5" : "white"
+                }}
               />
             </div>
 
@@ -830,10 +962,14 @@ export default function SuperVisorExpensesHistory() {
               <label>التاريخ إلى</label>
               <DatePicker
                 placeholder="التاريخ إلى"
-                onChange={(date) => setEndDate(date)}
+                onChange={(date) => handleDateChange(date, 'end')}
                 value={endDate}
+                disabled={!!selectedMonth}
                 className="supervisor-passport-dameged-input"
-                style={{ width: "100%" }}
+                style={{ 
+                  width: "100%",
+                  backgroundColor: selectedMonth ? "#f5f5f5" : "white"
+                }}
               />
             </div>
 
