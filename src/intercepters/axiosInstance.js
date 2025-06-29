@@ -102,7 +102,10 @@ axiosInstance.interceptors.response.use(
       if (error.config?.url?.includes('/api/DamagedPassport')) {
         // This error is from the damaged passports endpoint
         messageText = 'رقم الجواز موجود'; // For example
-      } else if (error.config?.url?.includes('/api/Attendance')) {
+      }else if (error.config?.url?.includes('/api/Expense')) {
+    // This error is from the expense endpoint
+    messageText = 'هنالك مصروف شهري بنفس هذا التاريخ';
+  } else if (error.config?.url?.includes('/api/Attendance')) {
         // This error is from the attendance endpoint
         messageText = 'لقد تم انشاء الحضور مسبقا'; // For example
       }

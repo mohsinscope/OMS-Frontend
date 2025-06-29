@@ -8,6 +8,9 @@ import {
   message,
   Input,
   Form,
+  Select,
+  InputNumber,
+  DatePicker,
 } from "antd";
 import { useLocation, useNavigate, Link } from "react-router-dom";
 import html2pdf from "html2pdf.js";
@@ -21,6 +24,7 @@ import { saveAs } from "file-saver";
 import Icons from "./../reusable elements/icons.jsx";
 import ExpensessViewActionsTable from "./ExpensessViewActionsTable";
 import { PlusOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 
 // Status Enum matching backend exactly
 const Status = {
@@ -91,7 +95,7 @@ const getArabicMonthDisplay = (dateString) => {
 };
 
 export default function ExpensesView() {
-  const { isSidebarCollapsed, accessToken, profile } = useAuthStore();
+  const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
   const expenseId = location.state?.expense?.id;
@@ -108,33 +112,46 @@ export default function ExpensesView() {
   const [form] = Form.useForm();
   const [isPrinting, setIsPrinting] = useState(false);
 
-const saved = JSON.parse(localStorage.getItem("expensesPagination") || "{}");
-const [currentPage, setCurrentPage] = useState(saved.page || 1);
-const [pageSize,    setPageSize   ] = useState(saved.pageSize || 5);
+  // Admin Modal States
+  const [adminModalVisible, setAdminModalVisible] = useState(false);
+  const [adminForm] = Form.useForm();
+  const [isAdjusting, setIsAdjusting] = useState(false);
+
+  const saved = JSON.parse(localStorage.getItem("expensesPagination") || "{}");
+  const [currentPage, setCurrentPage] = useState(saved.page || 1);
+  const [pageSize, setPageSize] = useState(saved.pageSize || 5);
+
+  // Check if user has SuperAdmin or Admin role
+  const hasAdminPermission = useMemo(() => {
+    const userRoles = roles || [];
+    return userRoles.some(role => 
+      role?.toLowerCase() === "superadmin" || role?.toLowerCase() === "admin"
+    );
+  }, [roles]);
 
   // Check if user is accountant
   const isAccountant = profile?.position?.toLowerCase()?.includes("accontnt");
-// Flattens top-level items + their children
-function flattenItems(items) {
-  const result = [];
-  items.forEach((item) => {
-    // Push the main item
-    result.push(item);
-    // If it has children (subExpenses), push them too
-    if (item.children && item.children.length > 0) {
-      item.children.forEach((subItem) => {
-        result.push(subItem);
-      });
-    }
-  });
-  return result;
-}
+
+  // Flattens top-level items + their children
+  function flattenItems(items) {
+    const result = [];
+    items.forEach((item) => {
+      // Push the main item
+      result.push(item);
+      // If it has children (subExpenses), push them too
+      if (item.children && item.children.length > 0) {
+        item.children.forEach((subItem) => {
+          result.push(subItem);
+        });
+      }
+    });
+    return result;
+  }
+
   // Helper functions for status transitions
   const getNextStatus = (currentStatus, position) => {
     // Convert the position string to lowercase for case-insensitive matching.
     position = position?.toLowerCase();
-    console.log(position)
-    console.log(currentStatus)
 
     if (currentStatus === "SentFromDirector" && position?.includes("expenseauditer")) {
       return Status.SentToExpenseManager;
@@ -155,7 +172,7 @@ function flattenItems(items) {
     else if (currentStatus === "SentToExpenseGeneralManager" && position?.includes("expensegeneralmanager")) {
       return Status.RecievedBySupervisor;
     }
- else if (currentStatus === "ReturnedToExpendeAuditer" && position?.includes("expenseauditer")) {
+    else if (currentStatus === "ReturnedToExpendeAuditer" && position?.includes("expenseauditer")) {
       return Status.SentToExpenseGeneralManager;
     }
 
@@ -172,10 +189,8 @@ function flattenItems(items) {
       return Status.Completed;
     }
   
-    console.warn(`Unexpected position: ${position} or status: ${currentStatus}`);
     return null;
   };
-
 
   const getRejectionStatus = (currentStatus, position) => {
     position = position?.toLowerCase();
@@ -210,22 +225,132 @@ function flattenItems(items) {
     return null;
   };
 
-  // 🔽 put this right after the last "useState" declaration
-//---------------------------------------------------------
-const currentStatus   = expense?.generalInfo?.["الحالة"];  // may be undefined on first render
-const userPosition    = profile?.position || "";
+  // Admin modal handlers
+  const handleAdminClick = () => {
+    setAdminModalVisible(true);
+    // Pre-fill the form with actual expense data
+    
+    // Get the actual date from the expense data
+    const expenseDate = expense?.generalInfo?.rawDate 
+      ? dayjs(expense.generalInfo.rawDate) 
+      : dayjs();
+    
+    adminForm.setFieldsValue({
+      status: expense?.generalInfo?.["الحالة"] || Status.New,
+      dateCreated: expenseDate, // Use actual expense date
+    });
+  };
 
-/* 🟢 can this user legally approve the current status? */
-const canApprove = useMemo(() => {
-  if (!profile?.profileId || currentStatus == null) return false;
-  return getNextStatus(currentStatus, userPosition) !== null;
-}, [profile?.profileId, currentStatus, userPosition]);
+  const handleAdminCancel = () => {
+    setAdminModalVisible(false);
+    adminForm.resetFields();
+  };
 
-/* 🟢 can this user legally return the current status? */
-const canReturn = useMemo(() => {
-  if (!profile?.profileId || currentStatus == null) return false;
-  return getRejectionStatus(currentStatus, userPosition) !== null;
-}, [profile?.profileId, currentStatus, userPosition]);
+  const handleAdminSubmit = async () => {
+    try {
+      const values = await adminForm.validateFields();
+      setIsAdjusting(true);
+
+      // Get initial values to compare what changed
+      const initialValues = {
+        status: expense?.generalInfo?.["الحالة"] || Status.New,
+        totalAmountAdjustment: expense?.generalInfo?.["مجموع الصرفيات"] || 0,
+        dateCreated: dayjs(), // Current date as initial
+      };
+
+      // Build request body with only changed fields
+      const requestBody = {};
+
+      // Check if status changed
+      if (values.status !== initialValues.status) {
+        const statusValue = Number(values.status);
+        if (isNaN(statusValue)) {
+          message.error('حالة غير صالحة');
+          return;
+        }
+        requestBody.status = statusValue;
+      }
+
+      // Check if total amount changed
+      if (values.totalAmountAdjustment !== initialValues.totalAmountAdjustment) {
+        requestBody.totalAmountAdjustment = parseFloat(values.totalAmountAdjustment);
+      }
+
+      // Check if date changed (compare formatted dates)
+      if (values.dateCreated && dayjs.isDayjs(values.dateCreated)) {
+        const selectedDate = values.dateCreated.format('YYYY-MM-DD');
+        const initialDate = initialValues.dateCreated.format('YYYY-MM-DD');
+        
+        if (selectedDate !== initialDate) {
+          requestBody.dateCreated = values.dateCreated.hour(0).minute(0).second(0).toISOString();
+        }
+      }
+
+      // Check if anything actually changed
+      if (Object.keys(requestBody).length === 0) {
+        message.warning('لم يتم تغيير أي بيانات');
+        return;
+      }
+
+      const response = await axiosInstance.patch(
+        `${Url}/api/Expense/${expenseId}`,
+        requestBody,
+        {
+          headers: { 
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          // Add a flag to prevent interceptor from showing error messages
+        }
+      ).catch((error) => {
+        // 409 error handling here
+  if (patchError.response?.status === 409) {
+    message.error('هنالك مصروف شهري بنفس هذا التاريخ');
+    return;
+  }
+  throw patchError; // Other errors go to outer catch
+      });
+
+      // console.log('Response:', response.data);
+      message.success('تم تحديث المصروف بنجاح');
+      handleAdminCancel();
+      
+      // DON'T reload the page, just refetch the data
+      // window.location.reload(); // Remove this line
+      
+    } catch (error) {
+      
+      // Handle specific authentication errors
+      if (error.response?.status === 401) {
+        message.error('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى');
+        // Don't navigate, let the axios interceptor handle it
+        return;
+      } else if (error.response?.status === 403) {
+        message.error('ليس لديك صلاحية لتنفيذ هذا الإجراء');
+        return;
+      } else if (error.response?.status === 409) {
+        message.error("هنالك مصروف شهري بنفس هذا التاريخ");
+        return;
+      } 
+    } finally {
+      setIsAdjusting(false);
+    }
+  };
+
+  const currentStatus = expense?.generalInfo?.["الحالة"];
+  const userPosition = profile?.position || "";
+
+  /* can this user legally approve the current status? */
+  const canApprove = useMemo(() => {
+    if (!profile?.profileId || currentStatus == null) return false;
+    return getNextStatus(currentStatus, userPosition) !== null;
+  }, [profile?.profileId, currentStatus, userPosition]);
+
+  /* can this user legally return the current status? */
+  const canReturn = useMemo(() => {
+    if (!profile?.profileId || currentStatus == null) return false;
+    return getRejectionStatus(currentStatus, userPosition) !== null;
+  }, [profile?.profileId, currentStatus, userPosition]);
 
   const handleActionClick = (type) => {
     setActionType(type);
@@ -240,90 +365,80 @@ const canReturn = useMemo(() => {
     form.resetFields();
   };
 
-const handleActionSubmit = async () => {
-  try {
-    // 1️⃣ Make sure the note exists
-    const { notes } = await form.validateFields();
+  const handleActionSubmit = async () => {
+    try {
+      const { notes } = await form.validateFields();
 
-    // 2️⃣ Check that we have a logged‑in profile
-    if (!profile?.profileId) {
-      message.error("لم يتم العثور على معلومات المستخدم");
-      return;
+      if (!profile?.profileId) {
+        message.error("لم يتم العثور على معلومات المستخدم");
+        return;
+      }
+
+      setIsSubmitting(true);
+
+      const currentStatus = expense?.generalInfo?.["الحالة"];
+      const getStatusFn = actionType === "Approval" ? getNextStatus : getRejectionStatus;
+      const newStatus = getStatusFn(currentStatus, profile?.position);
+
+      if (newStatus === null) {
+        message.error("لا يمكنك تنفيذ هذا الإجراء على هذه الحالة.");
+        return;
+      }
+
+      if (newStatus === currentStatus) {
+        message.warning("الحالة الحالية لا تسمح بهذا الإجراء.");
+        return;
+      }
+
+      const dynamicActionType =
+        actionType === "Approval"
+          ? `تمت الموافقة من ${profile.position || ""} ${profile.fullName || ""}`
+          : `تم الارجاع من ${profile.position || ""} ${profile.fullName || ""}`;
+
+      await axiosInstance.post(
+        `${Url}/api/Actions`,
+        {
+          actionType: dynamicActionType,
+          notes,
+          profileId: profile.profileId,
+          monthlyExpensesId: expenseId,
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      await axiosInstance.post(
+        `${Url}/api/Expense/${expenseId}/status`,
+        { monthlyExpensesId: expenseId, newStatus },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+
+      message.success(
+        `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`
+      );
+      handleModalCancel();
+      navigate(-1);
+    } catch (err) {
+      console.error("Error in handleActionSubmit:", err);
+      message.error(
+        `حدث خطأ أثناء ${
+          actionType === "Approval" ? "الموافقة" : "الإرجاع"
+        }`
+      );
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    setIsSubmitting(true);
-
-    // 3️⃣ Figure out the requested transition
-    const currentStatus = expense?.generalInfo?.["الحالة"];          // numeric enum
-    const getStatusFn   = actionType === "Approval" ? getNextStatus : getRejectionStatus;
-    const newStatus     = getStatusFn(currentStatus, profile?.position);
-
-    // 3‑a  Guard: illegal transition
-    if (newStatus === null) {
-      message.error("لا يمكنك تنفيذ هذا الإجراء على هذه الحالة.");
-      return;
-    }
-
-    // 3‑b  Guard: nothing changes (e.g. same status)
-    if (newStatus === currentStatus) {
-      message.warning("الحالة الحالية لا تسمح بهذا الإجراء.");
-      return;
-    }
-
-    // 4️⃣ Compose Action text in Arabic
-    const dynamicActionType =
-      actionType === "Approval"
-        ? `تمت الموافقة من ${profile.position || ""} ${profile.fullName || ""}`
-        : `تم الارجاع من ${profile.position || ""} ${profile.fullName || ""}`;
-
-    // 5️⃣ Write the Action record
-    await axiosInstance.post(
-      `${Url}/api/Actions`,
-      {
-        actionType:  dynamicActionType,
-        notes,                              // from Ant D form
-        profileId:        profile.profileId,
-        monthlyExpensesId: expenseId,
-      },
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+  // whenever page or pageSize changes, persist it
+  const handleTableChange = (pagination) => {
+    const { current, pageSize } = pagination;
+    setCurrentPage(current);
+    setPageSize(pageSize);
+    localStorage.setItem(
+      "expensesPagination",
+      JSON.stringify({ page: current, pageSize })
     );
-
-    // 6️⃣ Update the status on the server
-    await axiosInstance.post(
-      `${Url}/api/Expense/${expenseId}/status`,
-      { monthlyExpensesId: expenseId, newStatus },
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-
-    // 7️⃣ Success feedback
-    message.success(
-      `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`
-    );
-    handleModalCancel();          // close the modal & clear form
-    navigate(-1);                 // go back to the previous page
-  } catch (err) {
-    // Validation or request errors
-    console.error("Error in handleActionSubmit:", err);
-    message.error(
-      `حدث خطأ أثناء ${
-        actionType === "Approval" ? "الموافقة" : "الإرجاع"
-      }`
-    );
-  } finally {
-    setIsSubmitting(false);
-  }
-};
-
-// whenever page or pageSize changes, persist it
-const handleTableChange = (pagination) => {
-  const { current, pageSize } = pagination;
-  setCurrentPage(current);
-  setPageSize(pageSize);
-  localStorage.setItem(
-    "expensesPagination",
-    JSON.stringify({ page: current, pageSize })
-  );
-};
+  };
 
   const fetchDailyExpenseDetails = async (id) => {
     try {
@@ -466,29 +581,15 @@ const handleTableChange = (pagination) => {
         
           const dailyRow = {
             key: `daily-${item.id}`,
-            تسلسل: index + 1,           // Adjust if combining with other lists
+            تسلسل: index + 1,
             التاريخ: new Date(item.expenseDate).toLocaleDateString(),
-            // If it has subExpenses, override it to "مستلزمات مكتب"
             "نوع المصروف": hasSubExpenses ? "مستلزمات مكتب" : item.expenseTypeName,
-        
-            // For the "العدد" column, decide whether to sum parent + subs or just show parent
             الكمية: totalQuantity,
-        
-            // For "سعر المفرد", show dashed line if it has children
             السعر: hasSubExpenses ? "------" : item.price,
-        
-            // Sum the amounts if it has children
             المجموع: totalAmount,
-        
-            // If it has children, override notes to "لا يوجد"
             ملاحظات: hasSubExpenses ? "لا يوجد" : item.notes,
-        
-            // Keep IDs or anything else you need
             id: item.id,
             type: "daily",
-        
-            // IMPORTANT: Do NOT attach children here
-            // children: item.subExpenses.map(...)  // <--- remove or comment out
           };
         
           return dailyRow;
@@ -518,17 +619,14 @@ const handleTableChange = (pagination) => {
             المحافظة: expenseResponse.data.governorateName,
             المكتب: expenseResponse.data.officeName,
             "مبلغ النثرية": officeBudget,
-            // Use our computed finalTotal
             "مجموع الصرفيات": finalTotal,
-            // Use our computed remaining
             المتبقي: remainingAmount,
             التاريخ: new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
             الحالة: expenseResponse.data.status,
-            // NEW: Store the raw date for month calculation
             rawDate: expenseResponse.data.dateCreated,
           },
-          items: allItems, // keep hierarchical for the table
-          flattenedItems: flattenedAllItems, // for PDF/Excel usage
+          items: allItems,
+          flattenedItems: flattenedAllItems,
         });
       } catch (error) {
         if (isMounted) {
@@ -611,7 +709,7 @@ const handleTableChange = (pagination) => {
         };
       });
   
-      worksheet.addRow([]); // empty row
+      worksheet.addRow([]);
   
       // 2) Add header row for the items
       const headers = [
@@ -640,27 +738,9 @@ const handleTableChange = (pagination) => {
         };
       });
   
-      // Capture the starting row number for the flattened items
       const itemsStartRow = headerRow.number + 1;
   
-      // 3) Insert each flattened item as a row with correct numbering
-      let mainIndex = 0;
-      let subIndex = 0;
-      let lastMainIndex = 0;
-  
       flattened.forEach((item, index) => {
-        if (!item.isSubExpense) {
-          // It's a main expense
-          mainIndex++;
-          subIndex = 0;
-          lastMainIndex = mainIndex;
-        } else {
-          // It's a sub-expense
-          subIndex++;
-        }
-        // If you need 1 and 1.1 indexing use this
-        // const rowIndex = item.isSubExpense ? `${lastMainIndex}.${subIndex}` : mainIndex;
-  
         const row = worksheet.addRow([
           item["ملاحظات"] || "",
           Number(item["المجموع"] || 0),
@@ -668,7 +748,6 @@ const handleTableChange = (pagination) => {
           item["الكمية"] || "",
           (item.isSubExpense ? "↲ " : "") + item["نوع المصروف"],
           item["التاريخ"] || "",
-          // rowIndex,
           index + 1,
         ]);
   
@@ -680,7 +759,6 @@ const handleTableChange = (pagination) => {
             left: { style: "thin" },
             right: { style: "thin" },
           };
-          // Alternate row color
           cell.fill = {
             type: "pattern",
             pattern: "solid",
@@ -689,19 +767,13 @@ const handleTableChange = (pagination) => {
         });
       });
   
-      // 4) Add a summary row under the table
-      const summaryRowIndex = worksheet.lastRow.number + 1;
       const summaryRow = worksheet.addRow([]);
-      // Place the label in the first cell (you can change this as needed)
       summaryRow.getCell(1).value = "المجموع الكامل للصرفيات";
-      // In the next cell (column B), add the formula to sum the "المجموع" column.
-      // Adjust the range based on your table rows.
       summaryRow.getCell(2).value = {
         formula: `SUM(B${itemsStartRow}:B${worksheet.lastRow.number - 1})`,
         result: 0,
       };
   
-      // Style the summary row cells
       summaryRow.eachCell((cell) => {
         cell.font = { bold: true, color: { argb: "FF000000" } };
         cell.alignment = { horizontal: "center", vertical: "middle" };
@@ -718,7 +790,6 @@ const handleTableChange = (pagination) => {
         };
       });
   
-      // 5) Set column widths
       worksheet.columns = [
         { width: 30 }, // ملاحظات
         { width: 30 }, // المجموع
@@ -736,9 +807,9 @@ const handleTableChange = (pagination) => {
           month: "2-digit",
           day: "2-digit",
         })
-        .replace(/\//g, "-"); // Format: YYYY-MM-DD
+        .replace(/\//g, "-");
       const fileName = `تقرير_المصاريف_${formattedDate}.xlsx`;
-      // 6) Output the file
+      
       const buffer = await workbook.xlsx.writeBuffer();
       saveAs(new Blob([buffer]), fileName);
       message.success(`تم تصدير التقرير بنجاح: ${fileName}`);
@@ -757,15 +828,14 @@ const handleTableChange = (pagination) => {
     const element = document.createElement("div");
     element.dir = "rtl";
     element.style.fontFamily = "Arial, sans-serif";
-    // List of CORS proxies to try
+
     const proxyUrls = [
       (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-      (url) =>
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
       (url) => `https://proxy.cors.sh/${url}`,
       (url) => `https://cors-anywhere.herokuapp.com/${url}`,
     ];
-    // Try each proxy until one works
+
     const fetchImageWithProxy = async (url, proxyIndex = 0) => {
       if (proxyIndex >= proxyUrls.length) {
         throw new Error("All proxies failed");
@@ -782,25 +852,22 @@ const handleTableChange = (pagination) => {
               canvas.height = img.height;
               const ctx = canvas.getContext("2d");
               ctx.drawImage(img, 0, 0);
-              const base64String = canvas.toDataURL("image/jpeg", 0.8); // Reduced quality for better performance
+              const base64String = canvas.toDataURL("image/jpeg", 0.8);
               resolve(base64String);
             } catch (error) {
-              console.warn(`Proxy ${proxyIndex + 1} failed, trying next...`);
               resolve(fetchImageWithProxy(url, proxyIndex + 1));
             }
           };
           img.onerror = () => {
-            console.warn(`Proxy ${proxyIndex + 1} failed, trying next...`);
             resolve(fetchImageWithProxy(url, proxyIndex + 1));
           };
           img.src = proxyUrl;
         });
       } catch (error) {
-        console.warn(`Proxy ${proxyIndex + 1} failed, trying next...`);
         return fetchImageWithProxy(url, proxyIndex + 1);
       }
     };
-    // Fetch images for daily expenses
+
     const fetchImages = async (items) => {
       const imagePromises = items
         .filter((item) => item.type === "daily")
@@ -817,31 +884,26 @@ const handleTableChange = (pagination) => {
                 (attachment) =>
                   `http://oms-cdn.scopesky.iq/${attachment.filePath}`
               ) || [];
-            // Fetch and convert images to Base64 with proxy
+
             const imagesWithBase64 = await Promise.all(
               imageUrls.map(async (url) => {
                 try {
                   return await fetchImageWithProxy(url);
                 } catch (error) {
-                  console.error(
-                    `Failed to fetch image after all proxies: ${url}`
-                  );
+                  console.error(`Failed to fetch image: ${url}`);
                   return null;
                 }
               })
             );
             return { ...item, images: imagesWithBase64.filter(Boolean) };
           } catch (error) {
-            console.error(
-              `Error fetching images for daily expense ${item.id}:`,
-              error
-            );
+            console.error(`Error fetching images for expense ${item.id}:`, error);
             return { ...item, images: [] };
           }
         });
       return Promise.all(imagePromises);
     };
-    // Get items with images
+
     const itemsWithImages = await fetchImages(expense?.items || []);
 
     element.innerHTML = `
@@ -901,23 +963,22 @@ const handleTableChange = (pagination) => {
           </tbody>
         </table>
       </div>
-      <!-- Images Section -->
-    <div style="margin-top: 40px; text-align: center; page-break-before: always;">
-  <h2 style="font-size: 20px; color: #000; margin-bottom: 20px;">صور المصروفات</h2>
-  ${itemsWithImages
-    .filter((item) => item.images && item.images.length > 0)
-    .map((item) =>
-      item.images
-        .map(
-          (base64) =>
-            `<div style="page-break-before: always; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center;">
-              <img src="${base64}" alt="Expense Image" style="max-width: 100%; max-height: 100%; object-fit: contain; margin-bottom: 20px;" />
-            </div>`
-        )
-        .join("")
-    )
-    .join("")}
-</div>
+      <div style="margin-top: 40px; text-align: center; page-break-before: always;">
+        <h2 style="font-size: 20px; color: #000; margin-bottom: 20px;">صور المصروفات</h2>
+        ${itemsWithImages
+          .filter((item) => item.images && item.images.length > 0)
+          .map((item) =>
+            item.images
+              .map(
+                (base64) =>
+                  `<div style="page-break-before: always; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center;">
+                    <img src="${base64}" alt="Expense Image" style="max-width: 100%; max-height: 100%; object-fit: contain; margin-bottom: 20px;" />
+                  </div>`
+              )
+              .join("")
+          )
+          .join("")}
+      </div>
     `;
 
     const opt = {
@@ -940,7 +1001,8 @@ const handleTableChange = (pagination) => {
     setIsPrinting(false);
   }
 };
-  // Define columns for the expense items table with expandable rows for sub-expenses
+
+  // Define columns for the expense items table
   const expenseItemsColumns = [
     {
       title: "",
@@ -956,7 +1018,6 @@ const handleTableChange = (pagination) => {
             width: '20px',
             margin: '0 auto'
           }}>
-           
           </div>
         ) : null;
       }
@@ -976,7 +1037,6 @@ const handleTableChange = (pagination) => {
       dataIndex: "نوع المصروف",
       align: "center",
       render: (text, record) => {
-        // If the record has children, override the text with "مستلزمات مكتب"
         const displayText = record.children && record.children.length > 0 ? "مستلزمات مكتب" : text;
         return (
           <span
@@ -1011,49 +1071,41 @@ const handleTableChange = (pagination) => {
       dataIndex: "السعر",
       align: "center",
       render: (value, record) => {
-        // 1) If it's a subexpense row, display '------'
-        //    (or if you inserted '------' in your data directly)
         if (record.isSubExpense || value === "------") {
           return "------";
         }
     
-        // 2) Otherwise, parse the numeric value
         const numericVal = Number(value);
-        // If it's not a valid number, display '------'
         if (isNaN(numericVal)) {
           return "------";
         }
     
-        // 3) If it's a valid number, format it as IQD
         return `IQD ${numericVal.toLocaleString(undefined, {
           minimumFractionDigits: 0,
           maximumFractionDigits: 2,
         })}`;
       },
     },
-{
-  title: "المجموع",
-  dataIndex: "المجموع",
-  align: "center",
-  render: (text, record) => {
-    // Convert the parent's amount to a number (defaulting to 0)
-    const parentAmount = Number(text) || 0;
-    // If there are children, sum their "المجموع" values
-    const childrenAmount = record.children
-      ? record.children.reduce((sum, child) => sum + (Number(child.المجموع) || 0), 0)
-      : 0;
-    // Total is parent's amount plus subexpenses amounts
-    const total = parentAmount + childrenAmount;
-    return `IQD ${total.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-  },
-},
-{
-  title: "ملاحظات",
-  dataIndex: "ملاحظات",
-  align: "center",
-  render: (text, record) =>
-    record.children && record.children.length > 0 ? "لا يوجد" : text,
-},
+    {
+      title: "المجموع",
+      dataIndex: "المجموع",
+      align: "center",
+      render: (text, record) => {
+        const parentAmount = Number(text) || 0;
+        const childrenAmount = record.children
+          ? record.children.reduce((sum, child) => sum + (Number(child.المجموع) || 0), 0)
+          : 0;
+        const total = parentAmount + childrenAmount;
+        return `IQD ${total.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      },
+    },
+    {
+      title: "ملاحظات",
+      dataIndex: "ملاحظات",
+      align: "center",
+      render: (text, record) =>
+        record.children && record.children.length > 0 ? "لا يوجد" : text,
+    },
     {
       title: "الإجراءات",
       key: "actions",
@@ -1087,6 +1139,26 @@ const handleTableChange = (pagination) => {
     return `صرفيات ${officeName} بتاريخ ${expense?.generalInfo?.["التاريخ"]}`;
   };
 
+  // Admin Button Component
+  const AdminButton = () => {
+    if (!hasAdminPermission) return null;
+
+    return (
+      <Button
+        type="primary"
+        style={{ 
+          padding: "20px 30px",
+          backgroundColor: "#722ed1",
+          borderColor: "#722ed1"
+        }}
+        onClick={handleAdminClick}
+        icon={<PlusOutlined />}
+      >
+        تعديل المصروف (مدير)
+      </Button>
+    );
+  };
+
   return (
     <>
       <Dashboard />
@@ -1099,38 +1171,44 @@ const handleTableChange = (pagination) => {
           {getHeaderTitle()}
         </h1>
 
-  {/* Action Buttons */}
-  {profile?.position?.toLowerCase()?.includes("supervisor") || 
-         profile?.position === "SrController" ? null : (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "20px",
-              width: "100%",
-            }}
-          >
-            <Button
-              type="primary"
-              style={{ padding: "20px 30px" }}
-              onClick={() => handleActionClick("Approval")}
-             disabled={!canApprove}
-            >
-              موافقة
-            </Button>
-            {expense?.generalInfo?.["الحالة"] === "" ? null : (
-              <Button
-                danger
-                type="primary"
-                style={{ padding: "20px 40px" }}
-                onClick={() => handleActionClick("Return")}
-                disabled={!canReturn}
-              >
-                ارجاع
-              </Button>
-            )}
-          </div>
-        )}
+        {/* Action Buttons */}
+        {profile?.position?.toLowerCase()?.includes("supervisor") || 
+               profile?.position === "SrController" ? null : (
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: "20px",
+                    width: "100%",
+                    gap: "10px",
+                  }}
+                >
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <Button
+                      type="primary"
+                      style={{ padding: "20px 30px" }}
+                      onClick={() => handleActionClick("Approval")}
+                      disabled={!canApprove}
+                    >
+                      موافقة
+                    </Button>
+                    {expense?.generalInfo?.["الحالة"] === "" ? null : (
+                      <Button
+                        danger
+                        type="primary"
+                        style={{ padding: "20px 40px" }}
+                        onClick={() => handleActionClick("Return")}
+                        disabled={!canReturn}
+                      >
+                        ارجاع
+                      </Button>
+                    )}
+                  </div>
+                  
+                  {/* Admin Button */}
+                  <AdminButton />
+                </div>
+              )}
 
         {/* General Details Table */}
         <Table
@@ -1238,51 +1316,49 @@ const handleTableChange = (pagination) => {
 
         <hr />
 
-        {/* Combined Expense Items Table with expandable rows for sub-expenses */}
+        {/* Combined Expense Items Table */}
         <ConfigProvider direction="rtl">
-  <Table
-    rowKey="key"
-    className="expense-items-table"
-    loading={isLoading}
-    columns={expenseItemsColumns}
-    dataSource={expense?.items}
-    bordered
-
-       pagination={{
-      current: currentPage,
-      pageSize,
-      showSizeChanger: true,
-      pageSizeOptions: ["5","10","20","50"],
-      position: ["bottomCenter"]
-    }}
-   // ← this is the magic: gets (pagination, filters, sorter) 
-   onChange={(pagination /*, filters, sorter, extra */) => {
-     handleTableChange(pagination);
-   }}
-    locale={{ emptyText: "لا توجد عناصر للصرف." }}
-    summary={() => {
-      const totalExpenses = expense?.generalInfo?.["مجموع الصرفيات"] || 0;
-    
-      return (
-        <Table.Summary fixed>
-          <Table.Summary.Row>
-            <Table.Summary.Cell index={0} colSpan={5} align="center">
-              المجموع الكلي
-            </Table.Summary.Cell>
-            <Table.Summary.Cell index={1} align="center">
-              IQD{" "}
-              {Number(totalExpenses).toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2,
-              })}
-            </Table.Summary.Cell>
-            <Table.Summary.Cell index={2} colSpan={2} />
-          </Table.Summary.Row>
-        </Table.Summary>
-      );
-    }}
-  />
-</ConfigProvider>
+          <Table
+            rowKey="key"
+            className="expense-items-table"
+            loading={isLoading}
+            columns={expenseItemsColumns}
+            dataSource={expense?.items}
+            bordered
+            pagination={{
+              current: currentPage,
+              pageSize,
+              showSizeChanger: true,
+              pageSizeOptions: ["5","10","20","50"],
+              position: ["bottomCenter"]
+            }}
+            onChange={(pagination) => {
+              handleTableChange(pagination);
+            }}
+            locale={{ emptyText: "لا توجد عناصر للصرف." }}
+            summary={() => {
+              const totalExpenses = expense?.generalInfo?.["مجموع الصرفيات"] || 0;
+            
+              return (
+                <Table.Summary fixed>
+                  <Table.Summary.Row>
+                    <Table.Summary.Cell index={0} colSpan={5} align="center">
+                      المجموع الكلي
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={1} align="center">
+                      IQD{" "}
+                      {Number(totalExpenses).toLocaleString(undefined, {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      })}
+                    </Table.Summary.Cell>
+                    <Table.Summary.Cell index={2} colSpan={2} />
+                  </Table.Summary.Row>
+                </Table.Summary>
+              );
+            }}
+          />
+        </ConfigProvider>
 
         {/* Details Modal */}
         <Modal
@@ -1367,6 +1443,61 @@ const handleTableChange = (pagination) => {
                 value={actionNote}
                 onChange={(e) => setActionNote(e.target.value)}
                 placeholder="أدخل الملاحظات هنا..."
+              />
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        {/* Admin Modal */}
+        <Modal
+          title="تعديل المصروف - صلاحية الإدارة"
+          open={adminModalVisible}
+          onCancel={handleAdminCancel}
+          footer={[
+            <Button key="cancel" onClick={handleAdminCancel}>
+              إلغاء
+            </Button>,
+            <Button 
+              key="submit" 
+              type="primary" 
+              loading={isAdjusting} 
+              onClick={handleAdminSubmit}
+              style={{ backgroundColor: "#722ed1", borderColor: "#722ed1" }}
+            >
+              تحديث المصروف
+            </Button>,
+          ]}
+          width={600}
+          style={{ direction: "rtl" }}
+        >
+          <Form 
+            form={adminForm} 
+            layout="vertical"
+            style={{ marginTop: "20px" }}
+          >
+            <Form.Item 
+              label="الحالة" 
+              name="status"
+              rules={[{ required: true, message: "الرجاء اختيار الحالة" }]}
+            >
+              <Select placeholder="اختر الحالة">
+                {Object.entries(statusMap).map(([key, value]) => (
+                  <Select.Option key={key} value={Number(key)}>
+                    {value}
+                  </Select.Option>
+                ))}
+              </Select>
+            </Form.Item>
+
+            <Form.Item 
+              label="تاريخ الإنشاء" 
+              name="dateCreated"
+              rules={[{ required: true, message: "الرجاء اختيار التاريخ" }]}
+            >
+              <DatePicker 
+                style={{ width: "100%" }}
+                format="DD/MM/YYYY"
+                placeholder="اختر التاريخ"
               />
             </Form.Item>
           </Form>
