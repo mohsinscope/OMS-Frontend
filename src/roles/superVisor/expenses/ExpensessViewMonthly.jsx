@@ -84,7 +84,7 @@ export default function ExpensessViewMonthly() {
   const location = useLocation();
   const navigate = useNavigate();
   const { monthlyExpenseId } = location.state || {};
-  const { isSidebarCollapsed, profile } = useAuthStore();
+  const { isSidebarCollapsed, profile ,roles} = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [sendingLoading, setSendingLoading] = useState(false);
   const [completingLoading, setCompletingLoading] = useState(false);
@@ -227,7 +227,7 @@ const formatted = data.map(e => {
 
   // Render buttons
   const renderActionButton = () => {
-    if (monthlyExpense?.status === 'RecievedBySupervisor') {
+    if (monthlyExpense?.status === 'RecievedBySupervisor' && roles?.includes("MainSupervisor")) {
       return (
         <Button
           type="primary"
@@ -240,7 +240,7 @@ const formatted = data.map(e => {
         </Button>
       );
     }
-    if (monthlyExpense?.status === 'ReturnedToSupervisor') {
+    if (monthlyExpense?.status === 'ReturnedToSupervisor' && roles?.includes("MainSupervisor")) {
       return (
         <Space>
           <Button
