@@ -169,15 +169,17 @@ const SuperVisorDammagePassportAdd = () => {
       // Add text fields
       formData.append("PassportNumber", values.passportNumber);
 
-      // Convert date using dayjs instead of moment; add 3 hours
-      const selectedDate = values.date
-        ? dayjs(values.date).add(3, "hour") // or "hours"
-        : dayjs().add(3, "hour");
+      // Convert date using dayjs and set to start of day (00:00:00)
+const selectedDate = values.date
+  ? dayjs(values.date).startOf('day')
+  : dayjs().startOf('day');
 
-      formData.append(
-        "Date",
-        selectedDate.format("YYYY-MM-DDTHH:mm:ss.SSSZ")
-      );
+
+
+formData.append(
+  "Date",
+  selectedDate.format("YYYY-MM-DDTHH:mm:ss") + "Z"
+);
       formData.append("DamagedTypeId", values.damagedTypeId);
       formData.append("OfficeId", isSupervisor ? officeId : selectedOffice);
       formData.append("GovernorateId", isSupervisor ? governorateId : selectedGovernorate);

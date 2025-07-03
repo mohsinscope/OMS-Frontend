@@ -55,29 +55,67 @@ export default function SuperVisorPassport() {
   const [selectedOffice, setSelectedOffice] = useState(null);
   const [damageTypes, setDamageTypes] = useState([]);
 
-  // Filter state (similar to your attendance page)
+  // Filter state
   const [formData, setFormData] = useState({
     passportNumber: "",
     damagedTypeId: null,
     startDate: null,
     endDate: null,
+    dateCreatedStartDate: null,
+    dateCreatedEndDate: null,
   });
 
-  // New states for the email modal and its loading indicator
+  // Updated states for the email modal with two date pickers
   const [isEmailModalVisible, setIsEmailModalVisible] = useState(false);
-  const [emailReportDate, setEmailReportDate] = useState(null);
+  const [emailReportDate, setEmailReportDate] = useState(null); // تاريخ الإنشاء
+  const [damagedDate, setDamagedDate] = useState(null); // تاريخ التلف
   const [isEmailLoading, setIsEmailLoading] = useState(false);
 
-  // Formatting dates to ISO
-  const formatToISO = (date, isEndDate = false) => {
+  // Separate formatting functions for damage dates and creation dates
+  const formatDamageDateToISO = (date, isEndDate = false) => {
     if (!date) return null;
     const d = new Date(date);
+    
     if (isEndDate) {
-      d.setHours(23, 59, 59, 999);
+      // For damage date end: Set to start of NEXT day in UTC
+      d.setUTCHours(0, 0, 0, 0);
+      d.setUTCDate(d.getUTCDate() + 1); // Add one day
     } else {
-      d.setHours(0, 0, 0, 0);
+      // For damage date start: Set to start of day in UTC
+      d.setUTCHours(0, 0, 0, 0);
     }
+    
     return d.toISOString();
+  };
+
+  const formatCreationDateToISO = (date, isEndDate = false) => {
+    if (!date) return null;
+    const d = new Date(date);
+    
+    if (isEndDate) {
+      // For creation date end: Set to end of the SAME day (23:59:59.999)
+      d.setUTCHours(47, 59, 59, 999);
+    } else {
+      // For creation date start: Set to start of day (00:00:00.000)
+      d.setUTCHours(24, 0, 0, 0);
+    }
+    
+    return d.toISOString();
+  };
+
+  // Helper function to create search payload - ensures consistency between search and export
+  const createSearchPayload = (pageNumber = 1, pageSize = 10) => {
+    return {
+      passportNumber: formData.passportNumber || "",
+      officeId: isSupervisor ? profile.officeId : selectedOffice || null,
+      governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
+      damagedTypeId: formData.damagedTypeId || null,
+      startDate: formData.startDate ? formatDamageDateToISO(formData.startDate, true) : null,
+      endDate: formData.endDate ? formatDamageDateToISO(formData.endDate, true) : null,
+      DateCreatedStartDate: formData.dateCreatedStartDate ? formatCreationDateToISO(formData.dateCreatedStartDate, false) : null,
+      DateCreatedEndDate: formData.dateCreatedEndDate ? formatCreationDateToISO(formData.dateCreatedEndDate, true) : null,
+      PaginationParams: { PageNumber: pageNumber, PageSize: pageSize },
+    };
   };
 
   // Fetch damaged passports
@@ -93,6 +131,8 @@ export default function SuperVisorPassport() {
           damagedTypeId: payload.damagedTypeId || null,
           startDate: payload.startDate || null,
           endDate: payload.endDate || null,
+          DateCreatedStartDate: payload.DateCreatedStartDate || null,
+          DateCreatedEndDate: payload.DateCreatedEndDate || null,
           PaginationParams: {
             PageNumber: payload.PaginationParams.PageNumber,
             PageSize: payload.PaginationParams.PageSize,
@@ -131,7 +171,7 @@ export default function SuperVisorPassport() {
       setIsLoading(false);
     }
   };
-  console.log(passportList)
+
   const fetchDamageTypes = async () => {
     try {
       const response = await axiosInstance.get(
@@ -148,6 +188,28 @@ export default function SuperVisorPassport() {
     fetchDamageTypes();
   }, []);
 
+  // Helper function to safely convert date to ISO string
+  const dateToISOString = (date) => {
+    if (!date) return null;
+    // Handle dayjs objects
+    if (date && typeof date.toISOString === 'function') {
+      return date.toISOString();
+    }
+    // Handle dayjs objects with toDate method
+    if (date && typeof date.toDate === 'function') {
+      return date.toDate().toISOString();
+    }
+    // Handle regular Date objects
+    if (date instanceof Date) {
+      return date.toISOString();
+    }
+    // Handle string dates
+    if (typeof date === 'string') {
+      return new Date(date).toISOString();
+    }
+    return null;
+  };
+
   // --- Storage: Save filters when search or page change
   const saveFiltersToStorage = (page) => {
     localStorage.setItem(
@@ -156,8 +218,10 @@ export default function SuperVisorPassport() {
         formData: {
           passportNumber: formData.passportNumber,
           damagedTypeId: formData.damagedTypeId,
-          startDate: formData.startDate ? formData.startDate.toISOString() : null,
-          endDate: formData.endDate ? formData.endDate.toISOString() : null,
+          startDate: dateToISOString(formData.startDate),
+          endDate: dateToISOString(formData.endDate),
+          dateCreatedStartDate: dateToISOString(formData.dateCreatedStartDate),
+          dateCreatedEndDate: dateToISOString(formData.dateCreatedEndDate),
         },
         selectedGovernorate,
         selectedOffice,
@@ -170,15 +234,8 @@ export default function SuperVisorPassport() {
   const handleSearch = async (page = 1) => {
     setCurrentPage(page);
     saveFiltersToStorage(page);
-    const payload = {
-      passportNumber: formData.passportNumber || "",
-      officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-      governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
-      damagedTypeId: formData.damagedTypeId || null,
-      startDate: formData.startDate ? formatToISO(formData.startDate, false) : null,
-      endDate: formData.endDate ? formatToISO(formData.endDate, true) : null,
-      PaginationParams: { PageNumber: page, PageSize: pageSize },
-    };
+    const payload = createSearchPayload(page, pageSize);
+    console.log("Search payload:", payload);
     await fetchPassports(payload);
   };
 
@@ -189,6 +246,8 @@ export default function SuperVisorPassport() {
       damagedTypeId: null,
       startDate: null,
       endDate: null,
+      dateCreatedStartDate: null,
+      dateCreatedEndDate: null,
     });
     setCurrentPage(1);
     if (!isSupervisor) {
@@ -197,6 +256,8 @@ export default function SuperVisorPassport() {
       setOffices([]);
     }
     localStorage.removeItem(STORAGE_KEY);
+    
+    // Use the helper function with empty form data
     const payload = {
       passportNumber: "",
       officeId: isSupervisor ? profile.officeId : null,
@@ -204,6 +265,8 @@ export default function SuperVisorPassport() {
       damagedTypeId: null,
       startDate: null,
       endDate: null,
+      DateCreatedStartDate: null,
+      DateCreatedEndDate: null,
       PaginationParams: { PageNumber: 1, PageSize: pageSize },
     };
     await fetchPassports(payload);
@@ -271,8 +334,10 @@ export default function SuperVisorPassport() {
             setFormData({
               passportNumber: savedFormData.passportNumber || "",
               damagedTypeId: savedFormData.damagedTypeId || null,
-              startDate: savedFormData.startDate ? savedFormData.startDate : null,
-              endDate: savedFormData.endDate ? savedFormData.endDate : null,
+              startDate: savedFormData.startDate ? dayjs(savedFormData.startDate) : null,
+              endDate: savedFormData.endDate ? dayjs(savedFormData.endDate) : null,
+              dateCreatedStartDate: savedFormData.dateCreatedStartDate ? dayjs(savedFormData.dateCreatedStartDate) : null,
+              dateCreatedEndDate: savedFormData.dateCreatedEndDate ? dayjs(savedFormData.dateCreatedEndDate) : null,
             });
           }
           if (!isSupervisor) {
@@ -288,8 +353,10 @@ export default function SuperVisorPassport() {
             officeId: isSupervisor ? profile.officeId : savedOff || null,
             governorateId: isSupervisor ? profile.governorateId : savedGov || null,
             damagedTypeId: savedFormData?.damagedTypeId || null,
-            startDate: savedFormData?.startDate ? formatToISO(savedFormData.startDate, false) : null,
-            endDate: savedFormData?.endDate ? formatToISO(savedFormData.endDate, true) : null,
+            startDate: savedFormData?.startDate ? formatDamageDateToISO(new Date(savedFormData.startDate), false) : null,
+            endDate: savedFormData?.endDate ? formatDamageDateToISO(new Date(savedFormData.endDate), true) : null,
+            DateCreatedStartDate: savedFormData?.dateCreatedStartDate ? formatCreationDateToISO(new Date(savedFormData.dateCreatedStartDate), false) : null,
+            DateCreatedEndDate: savedFormData?.dateCreatedEndDate ? formatCreationDateToISO(new Date(savedFormData.dateCreatedEndDate), true) : null,
             PaginationParams: { PageNumber: pageToUse, PageSize: pageSize },
           };
           await fetchPassports(payload);
@@ -302,6 +369,8 @@ export default function SuperVisorPassport() {
             damagedTypeId: null,
             startDate: null,
             endDate: null,
+            DateCreatedStartDate: null,
+            DateCreatedEndDate: null,
             PaginationParams: { PageNumber: 1, PageSize: pageSize },
           };
           await fetchPassports(payload);
@@ -314,67 +383,146 @@ export default function SuperVisorPassport() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // --- Email Modal handlers (unchanged)
+  // --- Updated Email Modal handlers with selective date picker logic
   const handleEmailReportOk = async () => {
-    if (!emailReportDate) {
-      message.error("الرجاء اختيار تاريخ التقرير");
+    if (!emailReportDate && !damagedDate) {
+      message.error("الرجاء اختيار أحد التواريخ");
       return;
     }
+
     setIsEmailLoading(true);
-    const dateWithFixedHour = new Date(emailReportDate);
-    dateWithFixedHour.setHours(3, 0, 0, 0);
-    const payload = { ReportDate: dateWithFixedHour.toISOString() };
+
     try {
-      const response = await axiosInstance.post(
-        `${Url}/api/DamagedPassportsReport/zip`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          timeout: 180000,
-          responseType: "blob",
+      if (emailReportDate) {
+        // API call for creation date report
+        const creationDateWithFixedHour = new Date(emailReportDate);
+        creationDateWithFixedHour.setHours(3, 0, 0, 0);
+        const creationPayload = { ReportDate: creationDateWithFixedHour.toISOString() };
+
+        const creationResponse = await axiosInstance.post(
+          `${Url}/api/DamagedPassportsReport/zip`,
+          creationPayload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            timeout: 180000,
+            responseType: "blob",
+          }
+        );
+
+        // Handle creation date report download
+        const creationBlob = new Blob([creationResponse.data], { type: "application/zip" });
+        const creationContentDisposition = creationResponse.headers["content-disposition"];
+        let creationFilename = "DamagedPassportsReport_Creation.zip";
+        if (creationContentDisposition) {
+          const filenameMatch = creationContentDisposition.match(/filename="?([^"]+)"?/);
+          if (filenameMatch && filenameMatch.length > 1) {
+            creationFilename = filenameMatch[1];
+          }
         }
-      );
-      const blob = new Blob([response.data], { type: "application/zip" });
-      const contentDisposition = response.headers["content-disposition"];
-      let filename = "DamagedPassportsReport.zip";
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (filenameMatch && filenameMatch.length > 1) {
-          filename = filenameMatch[1];
-        }
+        saveAs(creationBlob, creationFilename);
+        message.success("تم تحميل تقرير تاريخ الإنشاء بنجاح");
       }
-      saveAs(blob, filename);
-      message.success("تم تحميل التقرير بنجاح");
+
+      if (damagedDate) {
+        // API call for damage date report
+        const damageDateWithFixedHour = new Date(damagedDate);
+        damageDateWithFixedHour.setHours(0, 0, 0, 0);
+        const damagePayload = { DamagedDate: damageDateWithFixedHour.toISOString() };
+
+        const damageResponse = await axiosInstance.post(
+          `${Url}/api/DamagedPassportsReport/DamagedDate`,
+          damagePayload,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            timeout: 180000,
+            responseType: "blob",
+          }
+        );
+
+        // Handle damage date report download
+        const damageBlob = new Blob([damageResponse.data], { type: "application/zip" });
+        const damageContentDisposition = damageResponse.headers["content-disposition"];
+        let damageFilename = "DamagedPassportsReport_Damage.zip";
+        if (damageContentDisposition) {
+          const filenameMatch = damageContentDisposition.match(/filename="?([^"]+)"?/);
+          if (filenameMatch && filenameMatch.length > 1) {
+            damageFilename = filenameMatch[1];
+          }
+        }
+        saveAs(damageBlob, damageFilename);
+        message.success("تم تحميل تقرير تاريخ التلف بنجاح");
+      }
+
     } catch (error) {
-      console.error("Error downloading email report:", error);
+      console.error("Error downloading email reports:", error);
       message.error("حدث خطأ أثناء تحميل التقرير");
     } finally {
       setIsEmailLoading(false);
       setIsEmailModalVisible(false);
       setEmailReportDate(null);
+      setDamagedDate(null);
     }
+  };
+
+  // Handle creation date change - clear damage date when this is selected
+  const handleCreationDateChange = (date) => {
+    setEmailReportDate(date);
+    if (date) {
+      setDamagedDate(null); // Clear damage date
+    }
+  };
+
+  // Handle damage date change - clear creation date range when this is selected
+  const handleDamageDateChange = (date) => {
+    setDamagedDate(date);
+    if (date) {
+      setEmailReportDate(null); // Clear creation date
+    }
+  };
+
+  // Handle damage date range changes - clear creation date range when damage date is selected
+  const handleDamageDateRangeChange = (dateField, date) => {
+    setFormData((prev) => {
+      const newFormData = { ...prev, [dateField]: date };
+      // If setting a damage date range, clear creation date range
+      if (date && (dateField === 'startDate' || dateField === 'endDate')) {
+        newFormData.dateCreatedStartDate = null;
+        newFormData.dateCreatedEndDate = null;
+      }
+      return newFormData;
+    });
+  };
+
+  // Handle creation date range changes - clear damage date range when creation date is selected
+  const handleCreationDateRangeChange = (dateField, date) => {
+    setFormData((prev) => {
+      const newFormData = { ...prev, [dateField]: date };
+      // If setting a creation date range, clear damage date range
+      if (date && (dateField === 'dateCreatedStartDate' || dateField === 'dateCreatedEndDate')) {
+        newFormData.startDate = null;
+        newFormData.endDate = null;
+      }
+      return newFormData;
+    });
   };
 
   const handleEmailModalCancel = () => {
     setIsEmailModalVisible(false);
     setEmailReportDate(null);
+    setDamagedDate(null);
   };
 
-  // --- Print PDF and Export Excel handlers remain unchanged
+  // --- Print PDF using same search payload
   const handlePrintPDF = async () => {
     try {
-      const payload = {
-        passportNumber: formData.passportNumber || "",
-        officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-        governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
-        damagedTypeId: formData.damagedTypeId || null,
-        startDate: formData.startDate ? formatToISO(formData.startDate) : null,
-        endDate: formData.endDate ? formatToISO(formData.endDate) : null,
-        PaginationParams: { PageNumber: 1, PageSize: totalPassports },
-      };
+      // Use the same search payload as Excel export to ensure consistency
+      const payload = createSearchPayload(1, 50000);
 
       const response = await axiosInstance.post(
         `${Url}/api/DamagedPassport/search`,
@@ -441,17 +589,11 @@ export default function SuperVisorPassport() {
 
   const handleExportToExcel = async () => {
     try {
-      const payload = {
-        passportNumber: formData.passportNumber || "",
-        profileFullName: formData.profileFullName || "",
-        officeId: isSupervisor ? profile.officeId : selectedOffice || null,
-        governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
-        damagedTypeId: formData.damagedTypeId || null,
-        startDate: formData.startDate ? formatToISO(formData.startDate) : null,
-        endDate: formData.endDate ? formatToISO(formData.endDate) : null,
-        PaginationParams: { PageNumber: 1, PageSize: totalPassports },
-      };
-
+      // Use the exact same search logic as handleSearch but with large page size to get all records
+      const payload = createSearchPayload(1, 50000);
+      
+      console.log("Excel export using identical search payload:", payload);
+      
       const response = await axiosInstance.post(
         `${Url}/api/DamagedPassport/search`,
         payload,
@@ -462,15 +604,22 @@ export default function SuperVisorPassport() {
           },
         }
       );
+      
       const fullPassportList = response.data || [];
-      console.log(fullPassportList)
+      console.log(`Excel export found ${fullPassportList.length} records (Table shows ${passportList.length} on current page)`);
+      
       if (fullPassportList.length === 0) {
         message.error("لا توجد بيانات لتصديرها");
         return;
       }
 
       const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("تقرير الجوازات التالفة", { properties: { rtl: true } });
+      
+      // Determine if we're searching by date created range
+      const isDateCreatedSearch = formData.dateCreatedStartDate || formData.dateCreatedEndDate;
+      const worksheetName = isDateCreatedSearch ? "تقرير الجوازات التالفة - تاريخ الإنشاء" : "تقرير الجوازات التالفة - تاريخ التلف";
+      
+      const worksheet = workbook.addWorksheet(worksheetName, { properties: { rtl: true } });
       const headers = [
         "الملاحضات",
         "نوع التلف",
@@ -478,8 +627,8 @@ export default function SuperVisorPassport() {
         "اسم المستخدم",
         "المكتب",
         "المحافظة",
-        "تاريخ التلف",
-        "تاريخ الانشاء",
+        isDateCreatedSearch ? "تاريخ الإنشاء" : "تاريخ التلف",
+        isDateCreatedSearch ? "وقت الإنشاء" : "تاريخ الانشاء",
         "ت",
       ];
       const headerRow = worksheet.addRow(headers);
@@ -491,14 +640,18 @@ export default function SuperVisorPassport() {
       });
       fullPassportList.forEach((passport, index) => {
         const row = worksheet.addRow([
-          passport.note,
-          passport.damagedTypeName,
-          passport.passportNumber,
-          passport.profileFullName,
-          passport.officeName,
-          passport.governorateName,
-          new Date(passport.date).toLocaleDateString("en-CA"),
-          new Date(passport.datecreated).toLocaleDateString("en-CA"),
+          passport.note || "",
+          passport.damagedTypeName || "",
+          passport.passportNumber || "",
+          passport.profileFullName || "",
+          passport.officeName || "",
+          passport.governorateName || "",
+          isDateCreatedSearch ? new Date(passport.datecreated).toLocaleDateString("en-CA") : new Date(passport.date).toLocaleDateString("en-CA"),
+          isDateCreatedSearch ? new Date(passport.datecreated).toLocaleTimeString("en-CA", {
+            hour12: true,
+            hour: "2-digit",
+            minute: "2-digit",
+          }).replace("a.m.", "صباحا").replace("p.m.", "مساء") : new Date(passport.datecreated).toLocaleDateString("en-CA"),
           index + 1,
         ]);
         row.eachCell((cell) => {
@@ -521,10 +674,12 @@ export default function SuperVisorPassport() {
       const buffer = await workbook.xlsx.writeBuffer();
       const now = new Date();
       const formattedDate = now.toISOString().split("T")[0];
-      saveAs(new Blob([buffer]), `${formattedDate}_تقرير_الجوازات_التالفة.xlsx`);
-      message.success("تم تصدير التقرير بنجاح");
+      const fileName = isDateCreatedSearch ? `${formattedDate}_تقرير_الجوازات_التالفة_تاريخ_الإنشاء.xlsx` : `${formattedDate}_تقرير_الجوازات_التالفة_تاريخ_التلف.xlsx`;
+      saveAs(new Blob([buffer]), fileName);
+      message.success(`تم تصدير ${fullPassportList.length} سجل بنجاح`);
     } catch (error) {
       console.error("Error exporting to Excel:", error);
+      console.error("Error details:", error.response?.data);
       message.error("حدث خطأ أثناء تصدير التقرير");
     }
   };
@@ -690,23 +845,55 @@ export default function SuperVisorPassport() {
                 </Select>
               </div>
               <div className="filter-field">
-                <label>التاريخ من</label>
+                <label style={{ color: formData.dateCreatedStartDate || formData.dateCreatedEndDate ? '#999' : '#000' }}>
+                  التاريخ من (تاريخ التلف)
+                </label>
                 <DatePicker
                   placeholder="اختر التاريخ"
-                  onChange={(date) => setFormData((prev) => ({ ...prev, startDate: date }))}
+                  onChange={(date) => handleDamageDateRangeChange('startDate', date)}
                   value={formData.startDate ? dayjs(formData.startDate) : null}
                   className="supervisor-passport-dameged-input"
                   style={{ width: "100%" }}
+                  disabled={!!(formData.dateCreatedStartDate || formData.dateCreatedEndDate)}
                 />
               </div>
               <div className="filter-field">
-                <label>التاريخ إلى</label>
+                <label style={{ color: formData.dateCreatedStartDate || formData.dateCreatedEndDate ? '#999' : '#000' }}>
+                  التاريخ إلى (تاريخ التلف)
+                </label>
                 <DatePicker
                   placeholder="اختر التاريخ"
-                  onChange={(date) => setFormData((prev) => ({ ...prev, endDate: date }))}
+                  onChange={(date) => handleDamageDateRangeChange('endDate', date)}
                   value={formData.endDate ? dayjs(formData.endDate) : null}
                   className="supervisor-passport-dameged-input"
                   style={{ width: "100%" }}
+                  disabled={!!(formData.dateCreatedStartDate || formData.dateCreatedEndDate)}
+                />
+              </div>
+              <div className="filter-field">
+                <label style={{ color: formData.startDate || formData.endDate ? '#999' : '#000' }}>
+                  تاريخ الإنشاء من
+                </label>
+                <DatePicker
+                  placeholder="اختر تاريخ الإنشاء"
+                  onChange={(date) => handleCreationDateRangeChange('dateCreatedStartDate', date)}
+                  value={formData.dateCreatedStartDate ? dayjs(formData.dateCreatedStartDate) : null}
+                  className="supervisor-passport-dameged-input"
+                  style={{ width: "100%" }}
+                  disabled={!!(formData.startDate || formData.endDate)}
+                />
+              </div>
+              <div className="filter-field">
+                <label style={{ color: formData.startDate || formData.endDate ? '#999' : '#000' }}>
+                  تاريخ الإنشاء إلى
+                </label>
+                <DatePicker
+                  placeholder="اختر تاريخ الإنشاء"
+                  onChange={(date) => handleCreationDateRangeChange('dateCreatedEndDate', date)}
+                  value={formData.dateCreatedEndDate ? dayjs(formData.dateCreatedEndDate) : null}
+                  className="supervisor-passport-dameged-input"
+                  style={{ width: "100%" }}
+                  disabled={!!(formData.startDate || formData.endDate)}
                 />
               </div>
               <div className="supervisor-device-filter-buttons">
@@ -771,8 +958,8 @@ export default function SuperVisorPassport() {
                       width: "fit-content",
                     }}
                   >
-                    ارسال ايميل 
-                    <Icons type="email" />
+                    تنزيل الارشيف
+                    <Icons type="downloadd" />
                   </button>
                 )}
               </div>
@@ -806,20 +993,110 @@ export default function SuperVisorPassport() {
         </>
       )}
       <Modal
-        title="اختر تاريخ التقرير"
+        title="اختر نوع التقرير"
         visible={isEmailModalVisible}
         onOk={handleEmailReportOk}
         onCancel={handleEmailModalCancel}
         okText="ارسال"
         cancelText="إلغاء"
         confirmLoading={isEmailLoading}
+        width={500}
       >
-        <DatePicker
-          placeholder="اختر تاريخ التقرير"
-          onChange={(date) => setEmailReportDate(date)}
-          value={emailReportDate}
-          style={{ width: "100%" }}
-        />
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <div style={{ 
+            padding: "15px", 
+            border: "1px solid #d9d9d9", 
+            borderRadius: "6px",
+            backgroundColor: emailReportDate ? "#f6ffed" : "#fafafa",
+            opacity: damagedDate ? 0.5 : 1,
+            transition: "all 0.3s ease"
+          }}>
+            <label style={{ 
+              display: "block", 
+              marginBottom: "8px", 
+              fontWeight: "bold",
+              color: damagedDate ? "#999" : "#000"
+            }}>
+              تقرير حسب تاريخ الإنشاء:
+            </label>
+            <DatePicker
+              placeholder="اختر تاريخ الإنشاء"
+              onChange={handleCreationDateChange}
+              value={emailReportDate}
+              style={{ width: "100%" }}
+              disabled={!!damagedDate}
+            />
+            {emailReportDate && (
+              <div style={{ 
+                marginTop: "8px", 
+                fontSize: "12px", 
+                color: "#52c41a",
+                fontWeight: "bold"
+              }}>
+                ✓ سيتم إنشاء تقرير الجوازات التالفة حسب تاريخ الإنشاء
+              </div>
+            )}
+          </div>
+          
+          <div style={{ 
+            textAlign: "center", 
+            fontSize: "16px", 
+            fontWeight: "bold",
+            color: "#666",
+            margin: "10px 0"
+          }}>
+            أو
+          </div>
+          
+          <div style={{ 
+            padding: "15px", 
+            border: "1px solid #d9d9d9", 
+            borderRadius: "6px",
+            backgroundColor: damagedDate ? "#f6ffed" : "#fafafa",
+            opacity: emailReportDate ? 0.5 : 1,
+            transition: "all 0.3s ease"
+          }}>
+            <label style={{ 
+              display: "block", 
+              marginBottom: "8px", 
+              fontWeight: "bold",
+              color: emailReportDate ? "#999" : "#000"
+            }}>
+              تقرير حسب تاريخ التلف:
+            </label>
+            <DatePicker
+              placeholder="اختر تاريخ التلف"
+              onChange={handleDamageDateChange}
+              value={damagedDate}
+              style={{ width: "100%" }}
+              disabled={!!emailReportDate}
+            />
+            {damagedDate && (
+              <div style={{ 
+                marginTop: "8px", 
+                fontSize: "12px", 
+                color: "#52c41a",
+                fontWeight: "bold"
+              }}>
+                ✓ سيتم إنشاء تقرير الجوازات التالفة حسب تاريخ التلف
+              </div>
+            )}
+          </div>
+          
+          {!emailReportDate && !damagedDate && (
+            <div style={{ 
+              textAlign: "center", 
+              padding: "10px", 
+              backgroundColor: "#fff7e6",
+              border: "1px solid #ffd591",
+              borderRadius: "6px",
+              color: "#d48806",
+              fontSize: "14px"
+            }}>
+              الرجاء اختيار أحد أنواع التقارير أعلاه
+            </div>
+          )}
+        </div>
       </Modal>
     </div>
   );
