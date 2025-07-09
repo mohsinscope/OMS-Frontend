@@ -73,20 +73,21 @@ export default function SuperVisorPassport() {
 
   // Separate formatting functions for damage dates and creation dates
   const formatDamageDateToISO = (date, isEndDate = false) => {
-    if (!date) return null;
-    const d = new Date(date);
-    
-    if (isEndDate) {
-      // For damage date end: Set to start of NEXT day in UTC
-      d.setUTCHours(0, 0, 0, 0);
-      d.setUTCDate(d.getUTCDate() + 1); // Add one day
-    } else {
-      // For damage date start: Set to start of day in UTC
-      d.setUTCHours(0, 0, 0, 0);
-    }
-    
-    return d.toISOString();
-  };
+  if (!date) return null;
+  const d = new Date(date);
+  
+  if (isEndDate) {
+    // For damage date end: Set to start of NEXT day in UTC
+    d.setUTCHours(0, 0, 0, 0);
+    d.setUTCDate(d.getUTCDate() + 1); // Add one day
+  } else {
+    // For damage date start: Set to start of day in UTC
+    d.setUTCHours(0, 0, 0, 0);
+  }
+  
+  // This will return format: "2025-07-08T00:00:00Z" (without milliseconds)
+  return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+};
 
   const formatCreationDateToISO = (date, isEndDate = false) => {
     if (!date) return null;
@@ -384,91 +385,102 @@ export default function SuperVisorPassport() {
   }, []);
 
   // --- Updated Email Modal handlers with selective date picker logic
-  const handleEmailReportOk = async () => {
-    if (!emailReportDate && !damagedDate) {
-      message.error("الرجاء اختيار أحد التواريخ");
-      return;
+  // Complete handleEmailReportOk function with correct date formatting
+
+const handleEmailReportOk = async () => {
+  console.log(damagedDate);
+  if (!emailReportDate && !damagedDate) {
+    message.error("الرجاء اختيار أحد التواريخ");
+    return;
+  }
+
+  setIsEmailLoading(true);
+
+  try {
+    // Helper function to format date to "2025-06-30T00:00:00Z" format
+    const formatDateToZFormat = (date) => {
+      const d = new Date(date);
+      d.setUTCHours(24, 0, 0, 0);
+      return d.toISOString().replace(/\.\d{3}Z$/, 'Z');
+    };
+
+    // Uncomment this section if you need the creation date report functionality
+    // if (emailReportDate) {
+    //   // API call for creation date report
+    //   const creationDateWithFixedHour = new Date(emailReportDate);
+    //   creationDateWithFixedHour.setHours(3, 0, 0, 0);
+    //   const creationPayload = { ReportDate: creationDateWithFixedHour.toISOString() };
+
+    //   const creationResponse = await axiosInstance.post(
+    //     `${Url}/api/DamagedPassportsReport/zip`,
+    //     creationPayload,
+    //     {
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //         Authorization: `Bearer ${accessToken}`,
+    //       },
+    //       timeout: 300000,
+    //       responseType: "blob",
+    //     }
+    //   );
+
+    //   // Handle creation date report download
+    //   const creationBlob = new Blob([creationResponse.data], { type: "application/zip" });
+    //   const creationContentDisposition = creationResponse.headers["content-disposition"];
+    //   let creationFilename = "DamagedPassportsReport_Creation.zip";
+    //   if (creationContentDisposition) {
+    //     const filenameMatch = creationContentDisposition.match(/filename="?([^"]+)"?/);
+    //     if (filenameMatch && filenameMatch.length > 1) {
+    //       creationFilename = filenameMatch[1];
+    //     }
+    //   }
+    //   saveAs(creationBlob, creationFilename);
+    //   message.success("تم تحميل تقرير تاريخ الإنشاء بنجاح");
+    // }
+    
+    if (damagedDate) {
+      // API call for damage date report - Format: "2025-06-30T00:00:00Z"
+      const damagePayload = { DamagedDate: formatDateToZFormat(damagedDate) };
+
+      console.log("Damage payload:", damagePayload); // For debugging
+
+      const damageResponse = await axiosInstance.post(
+        `${Url}/api/DamagedPassportsReport/DamagedDate`,
+        damagePayload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          timeout: 180000,
+          responseType: "blob",
+        }
+      );
+
+      // Handle damage date report download
+      const damageBlob = new Blob([damageResponse.data], { type: "application/zip" });
+      const damageContentDisposition = damageResponse.headers["content-disposition"];
+      let damageFilename = "DamagedPassportsReport_Damage.zip";
+      if (damageContentDisposition) {
+        const filenameMatch = damageContentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch && filenameMatch.length > 1) {
+          damageFilename = filenameMatch[1];
+        }
+      }
+      saveAs(damageBlob, damageFilename);
+      message.success("تم تحميل تقرير تاريخ التلف بنجاح");
     }
 
-    setIsEmailLoading(true);
-
-    try {
-      if (emailReportDate) {
-        // API call for creation date report
-        const creationDateWithFixedHour = new Date(emailReportDate);
-        creationDateWithFixedHour.setHours(3, 0, 0, 0);
-        const creationPayload = { ReportDate: creationDateWithFixedHour.toISOString() };
-
-        const creationResponse = await axiosInstance.post(
-          `${Url}/api/DamagedPassportsReport/zip`,
-          creationPayload,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
-            },
-            timeout: 180000,
-            responseType: "blob",
-          }
-        );
-
-        // Handle creation date report download
-        const creationBlob = new Blob([creationResponse.data], { type: "application/zip" });
-        const creationContentDisposition = creationResponse.headers["content-disposition"];
-        let creationFilename = "DamagedPassportsReport_Creation.zip";
-        if (creationContentDisposition) {
-          const filenameMatch = creationContentDisposition.match(/filename="?([^"]+)"?/);
-          if (filenameMatch && filenameMatch.length > 1) {
-            creationFilename = filenameMatch[1];
-          }
-        }
-        saveAs(creationBlob, creationFilename);
-        message.success("تم تحميل تقرير تاريخ الإنشاء بنجاح");
-      }
-
-      if (damagedDate) {
-        // API call for damage date report
-        const damageDateWithFixedHour = new Date(damagedDate);
-        damageDateWithFixedHour.setHours(0, 0, 0, 0);
-        const damagePayload = { DamagedDate: damageDateWithFixedHour.toISOString() };
-
-        const damageResponse = await axiosInstance.post(
-          `${Url}/api/DamagedPassportsReport/DamagedDate`,
-          damagePayload,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${accessToken}`,
-            },
-            timeout: 180000,
-            responseType: "blob",
-          }
-        );
-
-        // Handle damage date report download
-        const damageBlob = new Blob([damageResponse.data], { type: "application/zip" });
-        const damageContentDisposition = damageResponse.headers["content-disposition"];
-        let damageFilename = "DamagedPassportsReport_Damage.zip";
-        if (damageContentDisposition) {
-          const filenameMatch = damageContentDisposition.match(/filename="?([^"]+)"?/);
-          if (filenameMatch && filenameMatch.length > 1) {
-            damageFilename = filenameMatch[1];
-          }
-        }
-        saveAs(damageBlob, damageFilename);
-        message.success("تم تحميل تقرير تاريخ التلف بنجاح");
-      }
-
-    } catch (error) {
-      console.error("Error downloading email reports:", error);
-      message.error("حدث خطأ أثناء تحميل التقرير");
-    } finally {
-      setIsEmailLoading(false);
-      setIsEmailModalVisible(false);
-      setEmailReportDate(null);
-      setDamagedDate(null);
-    }
-  };
+  } catch (error) {
+    console.error("Error downloading email reports:", error);
+    message.error("حدث خطأ أثناء تحميل التقرير");
+  } finally {
+    setIsEmailLoading(false);
+    setIsEmailModalVisible(false);
+    setEmailReportDate(null);
+    setDamagedDate(null);
+  }
+};
 
   // Handle creation date change - clear damage date when this is selected
   const handleCreationDateChange = (date) => {
