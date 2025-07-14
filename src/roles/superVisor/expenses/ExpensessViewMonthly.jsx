@@ -162,6 +162,7 @@ const formatted = data.map(e => {
     }
   }, [monthlyExpenseId]);
 
+
   // Handlers
   const handleSendToCoordinator = async values => {
     try {
@@ -257,10 +258,11 @@ const formatted = data.map(e => {
             icon={<PlusOutlined />}
             onClick={() =>
               navigate('/add-daily-expense', {
-                state: {
-                  monthlyExpenseId,
-                  totalMonthlyAmount: monthlyExpense.totalAmount
-                }
+              state: {
+        monthlyExpenseId,
+        totalMonthlyAmount: monthlyExpense.totalAmount,
+        status: monthlyExpense.status   
+      }
               })
             }
             className="send-button"
@@ -321,7 +323,6 @@ const formatted = data.map(e => {
       )
     },
   ];
-
 
   // Monthly info card
   const MonthlyExpenseInfo = () => {
