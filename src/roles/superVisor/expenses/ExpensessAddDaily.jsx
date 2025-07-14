@@ -23,6 +23,7 @@ import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import useAuthStore from "../../../store/store";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import "./../lecturer/SuperVisorLecturerAdd.css";
+import dayjs from "dayjs";
 
 const { Dragger } = Upload;
 
@@ -146,6 +147,9 @@ const TotalAmountDisplay = memo(({ form }) => {
 function ExpensessAddDaily() {
   const navigate = useNavigate();
   const location = useLocation();
+  const status      = location.state?.status;               
+  const RETURNED_TO_SUPERVISOR_STATUS = "ReturnedToSupervisor";
+console.log("status",status)
   const monthlyExpenseId = location.state?.monthlyExpenseId;
   const totalMonthlyAmount = location.state?.totalMonthlyAmount;
 
@@ -463,17 +467,37 @@ function ExpensessAddDaily() {
               label="التاريخ"
               rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
             >
-              <DatePicker
-                style={{ width: "100%", height: "45px" }}
-                disabledDate={(current) => {
-                  const now = new Date();
-                  return (
-                    current &&
-                    (current.month() !== now.getMonth() ||
-                      current.year() !== now.getFullYear())
-                  );
-                }}
-              />
+   <DatePicker
+  style={{ width: "100%", height: "45px" }}
+  disabledDate={(current) => {
+    if (!current) return false;              // احتياط
+
+    const today      = new Date();
+    const thisMonth  = today.getMonth();
+    const thisYear   = today.getFullYear();
+
+    // حساب بيانات الشهر السابق
+    const prev       = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const prevMonth  = prev.getMonth();
+    const prevYear   = prev.getFullYear();
+
+    // هل التاريخ في الشهر الحالي؟
+    const inThisMonth =
+      current.month() === thisMonth && current.year() === thisYear;
+
+    // هل التاريخ في الشهر السابق؟
+    const inPrevMonth =
+      current.month() === prevMonth && current.year() === prevYear;
+
+    // لو الحالة "ReturnedToSupervisor" → اسمح بالشهر الحالي والسابق
+    if (status === "ReturnedToSupervisor") {
+      return !(inThisMonth || inPrevMonth);  // عطل كل ما عدا هذين الشهرين
+    }
+
+    // في باقي الحالات → اسمح بالشهر الحالي فقط
+    return !inThisMonth;                     // عطّل كل ما ليس في الشهر الحالي
+  }}
+/>
             </Form.Item>
 
             <Form.Item name="notes" label="ملاحظات" initialValue="لا يوجد">
