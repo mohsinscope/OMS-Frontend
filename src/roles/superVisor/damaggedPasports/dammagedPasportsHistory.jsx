@@ -405,38 +405,38 @@ const handleEmailReportOk = async () => {
     };
 
     // Uncomment this section if you need the creation date report functionality
-    // if (emailReportDate) {
-    //   // API call for creation date report
-    //   const creationDateWithFixedHour = new Date(emailReportDate);
-    //   creationDateWithFixedHour.setHours(3, 0, 0, 0);
-    //   const creationPayload = { ReportDate: creationDateWithFixedHour.toISOString() };
+    if (emailReportDate) {
+      // API call for creation date report
+      const creationDateWithFixedHour = new Date(emailReportDate);
+      creationDateWithFixedHour.setHours(3, 0, 0, 0);
+      const creationPayload = { ReportDate: creationDateWithFixedHour.toISOString() };
 
-    //   const creationResponse = await axiosInstance.post(
-    //     `${Url}/api/DamagedPassportsReport/zip`,
-    //     creationPayload,
-    //     {
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //         Authorization: `Bearer ${accessToken}`,
-    //       },
-    //       timeout: 300000,
-    //       responseType: "blob",
-    //     }
-    //   );
+      const creationResponse = await axiosInstance.post(
+        `${Url}/api/DamagedPassportsReport/zip`,
+        creationPayload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          timeout: 300000,
+          responseType: "blob",
+        }
+      );
 
     //   // Handle creation date report download
-    //   const creationBlob = new Blob([creationResponse.data], { type: "application/zip" });
-    //   const creationContentDisposition = creationResponse.headers["content-disposition"];
-    //   let creationFilename = "DamagedPassportsReport_Creation.zip";
-    //   if (creationContentDisposition) {
-    //     const filenameMatch = creationContentDisposition.match(/filename="?([^"]+)"?/);
-    //     if (filenameMatch && filenameMatch.length > 1) {
-    //       creationFilename = filenameMatch[1];
-    //     }
-    //   }
-    //   saveAs(creationBlob, creationFilename);
-    //   message.success("تم تحميل تقرير تاريخ الإنشاء بنجاح");
-    // }
+      const creationBlob = new Blob([creationResponse.data], { type: "application/zip" });
+      const creationContentDisposition = creationResponse.headers["content-disposition"];
+      let creationFilename = "DamagedPassportsReport_Creation.zip";
+      if (creationContentDisposition) {
+        const filenameMatch = creationContentDisposition.match(/filename="?([^"]+)"?/);
+        if (filenameMatch && filenameMatch.length > 1) {
+          creationFilename = filenameMatch[1];
+        }
+      }
+      saveAs(creationBlob, creationFilename);
+      message.success("تم تحميل تقرير تاريخ الإنشاء بنجاح");
+    }
     
     if (damagedDate) {
       // API call for damage date report - Format: "2025-06-30T00:00:00Z"
