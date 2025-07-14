@@ -467,35 +467,25 @@ console.log("status",status)
               label="التاريخ"
               rules={[{ required: true, message: "يرجى اختيار التاريخ" }]}
             >
-   <DatePicker
+<DatePicker
   style={{ width: "100%", height: "45px" }}
   disabledDate={(current) => {
-    if (!current) return false;              // احتياط
+    // إذا الحالة ReturnedToSupervisor → لا تعطل أي تاريخ
+    if (status === "ReturnedToSupervisor") {
+      return false;           // كل الشهور متاحة
+    }
 
-    const today      = new Date();
-    const thisMonth  = today.getMonth();
-    const thisYear   = today.getFullYear();
+    // باقي الحالات → اسمح فقط بأيام الشهر الحالي
+    if (!current) return false;
 
-    // حساب بيانات الشهر السابق
-    const prev       = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-    const prevMonth  = prev.getMonth();
-    const prevYear   = prev.getFullYear();
+    const today     = new Date();
+    const thisMonth = today.getMonth();
+    const thisYear  = today.getFullYear();
 
-    // هل التاريخ في الشهر الحالي؟
     const inThisMonth =
       current.month() === thisMonth && current.year() === thisYear;
 
-    // هل التاريخ في الشهر السابق؟
-    const inPrevMonth =
-      current.month() === prevMonth && current.year() === prevYear;
-
-    // لو الحالة "ReturnedToSupervisor" → اسمح بالشهر الحالي والسابق
-    if (status === "ReturnedToSupervisor") {
-      return !(inThisMonth || inPrevMonth);  // عطل كل ما عدا هذين الشهرين
-    }
-
-    // في باقي الحالات → اسمح بالشهر الحالي فقط
-    return !inThisMonth;                     // عطّل كل ما ليس في الشهر الحالي
+    return !inThisMonth;      // عطّل كل ما عدا الشهر الحالي
   }}
 />
             </Form.Item>
