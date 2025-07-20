@@ -26,8 +26,7 @@ const DevToolsBlocker = () => {
 
     const intervalId = setInterval(() => {
       console.clear();
-      console.log('%cStop!', 'color: red; font-size: 30px; font-weight: bold; -webkit-text-stroke: 1px black;');
-      console.log('%cThis is a restricted area.', 'font-size: 16px;');
+
     }, 50);
 
     // Cleanup

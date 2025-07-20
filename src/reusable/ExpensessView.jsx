@@ -311,7 +311,6 @@ export default function ExpensesView() {
   throw patchError; // Other errors go to outer catch
       });
 
-      // console.log('Response:', response.data);
       message.success('تم تحديث المصروف بنجاح');
       handleAdminCancel();
       

@@ -312,7 +312,6 @@ const disableOtherMonths = (current) => {
       };
 
 
-      console.log(payload)
       const response = await axiosInstance.post("/api/Expense/MonthlyExpenses", payload);
       if (response.data) {
         const monthlyExpensesId = response.data.id;

@@ -109,7 +109,6 @@ export default function ExpensessViewMonthly() {
     }
   };
 
-  console.log("month", monthlyExpense)
 const fetchDailyExpenses = async () => {
   try {
     const { data } = await axiosInstance.get(
@@ -153,7 +152,6 @@ const formatted = data.map(e => {
     setLoading(false);
   }
 };
-  console.log("day", dailyExpenses)
 
   useEffect(() => {
     if (monthlyExpenseId) {

@@ -52,7 +52,6 @@ const [uploadLoading, setUploadLoading] = useState(false);
   const { isSidebarCollapsed, permissions, profile } = useAuthStore();
   const hasUpdatePermission = permissions.includes("EXu");
   const hasDeletePermission = permissions.includes("EXd");
-  console.log(status)
   const canPerformActions = () =>
     hasUpdatePermission &&
     hasDeletePermission &&

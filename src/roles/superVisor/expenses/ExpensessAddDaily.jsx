@@ -149,7 +149,6 @@ function ExpensessAddDaily() {
   const location = useLocation();
   const status      = location.state?.status;               
   const RETURNED_TO_SUPERVISOR_STATUS = "ReturnedToSupervisor";
-console.log("status",status)
   const monthlyExpenseId = location.state?.monthlyExpenseId;
   const totalMonthlyAmount = location.state?.totalMonthlyAmount;
 

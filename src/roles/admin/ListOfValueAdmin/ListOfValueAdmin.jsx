@@ -468,7 +468,6 @@ case "/admin/tags":
 
   // Populate the form with the selected record’s data for editing
   const handleEdit = (record) => {
-    console.log(record)
     if (!record.id) {
       message.error("معرف السجل غير متوفر");
       return;

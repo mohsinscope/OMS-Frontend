@@ -28,7 +28,6 @@ export default function DocumentHistory({ documentId }) {
           `${Url}/api/Document/${documentId}/history`
         );
         setRows(data);
-        console.log(data)
       } catch (e) {
         message.error("تعذّر جلب سجلّ الإجراءات");
       } finally {

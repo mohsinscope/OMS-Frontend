@@ -131,7 +131,6 @@ const fetchDetails = async () => {
   setDocumentData(doc);
 };
 
-  console.log(documentData)
 
   // استبدلنا مسار MinIO الجديد ليعيد روابط موقّعة *** CHANGED ***
   const fetchImages = async () => {

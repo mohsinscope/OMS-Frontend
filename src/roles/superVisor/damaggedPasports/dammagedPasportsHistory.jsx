@@ -238,7 +238,6 @@ export default function SuperVisorPassport() {
     setCurrentPage(page);
     saveFiltersToStorage(page);
     const payload = createSearchPayload(page, pageSize);
-    console.log("Search payload:", payload);
     await fetchPassports(payload);
   };
 
@@ -390,7 +389,6 @@ export default function SuperVisorPassport() {
   // Complete handleEmailReportOk function with correct date formatting
 
 const handleEmailReportOk = async () => {
-  console.log(damagedDate);
   if (!emailReportDate && !damagedDate) {
     message.error("الرجاء اختيار أحد التواريخ");
     return;
@@ -444,7 +442,6 @@ const handleEmailReportOk = async () => {
       // API call for damage date report - Format: "2025-06-30T00:00:00Z"
       const damagePayload = { DamagedDate: formatDateToZFormat(damagedDate) };
 
-      console.log("Damage payload:", damagePayload); // For debugging
 
       const damageResponse = await axiosInstance.post(
         `${Url}/api/DamagedPassportsReport/DamagedDate`,
@@ -606,7 +603,6 @@ const handleEmailReportOk = async () => {
       // Use the exact same search logic as handleSearch but with large page size to get all records
       const payload = createSearchPayload(1, 50000);
       
-      console.log("Excel export using identical search payload:", payload);
       
       const response = await axiosInstance.post(
         `${Url}/api/DamagedPassport/search`,
@@ -620,7 +616,6 @@ const handleEmailReportOk = async () => {
       );
       
       const fullPassportList = response.data || [];
-      console.log(`Excel export found ${fullPassportList.length} records (Table shows ${passportList.length} on current page)`);
       
       if (fullPassportList.length === 0) {
         message.error("لا توجد بيانات لتصديرها");
