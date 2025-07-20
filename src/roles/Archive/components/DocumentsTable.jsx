@@ -19,9 +19,7 @@ const DocumentsTable = () => {
   const fetchDocuments = async () => {
     try {
       setLoading(true);
-      console.log(profile.profileId);
       const response = await axiosInstance.get('/api/Document');
-      console.log('API Response:', response.data);
 
       let documentsData = [];
       if (Array.isArray(response.data)) {
@@ -46,7 +44,6 @@ const DocumentsTable = () => {
         key: doc.id || `doc-${index}`,
       }));
 
-      console.log('Processed data:', processedData);
       setDocuments(processedData);
       setLoading(false);
     } catch (error) {

@@ -146,39 +146,57 @@ const SuperVisorDevices = () => {
     }
   };
 
-  // 4) Searching with the current filter state
-  const handleSearch = async (page = 1) => {
-    setIsLoading(true);
+// Add these functions after the fetchDevices function and before handleFormSubmit
 
-    const finalGovernorate = isSupervisor ? profile.governorateId : selectedGovernorate;
-    const finalOffice = isSupervisor ? profile.officeId : selectedOffice;
+// 4) Searching with the current filter state
+const handleSearch = async (page = 1) => {
+  setIsLoading(true);
 
-    const payload = {
-      serialNumber: formData.serialNumber || "",
-      officeId: finalOffice || null,
-      governorateId: finalGovernorate || null,
-      startDate: formData.startDate ? formatToISO(formData.startDate) : null,
-      endDate: formData.endDate ? formatToISO(formData.endDate) : null,
-      PaginationParams: {
-        PageNumber: page,
-        PageSize: pageSize,
-      },
-    };
+  const finalGovernorate = isSupervisor ? profile.governorateId : selectedGovernorate;
+  const finalOffice = isSupervisor ? profile.officeId : selectedOffice;
 
-    // Save search filters in local storage
-    localStorage.setItem(
-      "damagedDeviceSearchFilters",
-      JSON.stringify({
-        formData,
-        selectedGovernorate: finalGovernorate,
-        selectedOffice: finalOffice,
-        currentPage: page,
-      })
-    );
-
-    await fetchDevices(payload);
-    setCurrentPage(page);
+  const payload = {
+    serialNumber: formData.serialNumber || "",
+    officeId: finalOffice || null,
+    governorateId: finalGovernorate || null,
+    startDate: formData.startDate ? formatToISO(formData.startDate) : null,
+    endDate: formData.endDate ? formatToISO(formData.endDate) : null,
+    PaginationParams: {
+      PageNumber: page,
+      PageSize: pageSize,
+    },
   };
+
+  await fetchDevices(payload);
+  setCurrentPage(page);
+};
+
+// 7) "إعادة تعيين" (Reset function)
+const handleReset = async () => {
+  setFormData({ serialNumber: "", startDate: null, endDate: null });
+  setCurrentPage(1);
+
+  if (!isSupervisor) {
+    setSelectedGovernorate(null);
+    setSelectedOffice(null);
+    setOffices([]);
+  }
+
+  setIsLoading(true);
+  const payload = {
+    serialNumber: "",
+    officeId: isSupervisor ? profile.officeId : null,
+    governorateId: isSupervisor ? profile.governorateId : null,
+    startDate: null,
+    endDate: null,
+    PaginationParams: {
+      PageNumber: 1,
+      PageSize: pageSize,
+    },
+  };
+  await fetchDevices(payload);
+  message.success("تم إعادة تعيين الفلاتر بنجاح");
+};
 
   // 5) "البحث" button triggers form submit
   const handleFormSubmit = (e) => {
@@ -201,34 +219,6 @@ const SuperVisorDevices = () => {
     }));
   };
 
-  // 7) "إعادة تعيين" 
-  const handleReset = async () => {
-    setFormData({ serialNumber: "", startDate: null, endDate: null });
-    setCurrentPage(1);
-
-    if (!isSupervisor) {
-      setSelectedGovernorate(null);
-      setSelectedOffice(null);
-      setOffices([]);
-    }
-
-    localStorage.removeItem("damagedDeviceSearchFilters");
-
-    setIsLoading(true);
-    const payload = {
-      serialNumber: "",
-      officeId: isSupervisor ? profile.officeId : null,
-      governorateId: isSupervisor ? profile.governorateId : null,
-      startDate: null,
-      endDate: null,
-      PaginationParams: {
-        PageNumber: 1,
-        PageSize: pageSize,
-      },
-    };
-    await fetchDevices(payload);
-    message.success("تم إعادة تعيين الفلاتر بنجاح");
-  };
 
   // 8) When user changes governorate from the Select
   const handleGovernorateChange = async (value) => {
@@ -238,71 +228,47 @@ const SuperVisorDevices = () => {
   };
 
   // 9) On component mount, do everything in the right order
-  useEffect(() => {
-    const initData = async () => {
-      // 1) Fetch all governorates
-      setIsLoading(true);
-      await fetchGovernorates();
+useEffect(() => {
+  const initData = async () => {
+    setIsLoading(true);
+    await fetchGovernorates();
 
-      // 2) Check local storage
-      const savedFilters = localStorage.getItem("damagedDeviceSearchFilters");
-      let loadedFormData = { serialNumber: "", startDate: null, endDate: null };
-      let loadedGov = null;
-      let loadedOffice = null;
-      let loadedPage = 1;
+    // REMOVED: All localStorage retrieval logic
+    // Set default values based on user role
+    let loadedGov = null;
+    let loadedOffice = null;
 
-      if (savedFilters) {
-        const parsed = JSON.parse(savedFilters);
-        loadedFormData = parsed.formData || loadedFormData;
-        loadedGov = parsed.selectedGovernorate || null;
-        loadedOffice = parsed.selectedOffice || null;
-        loadedPage = parsed.currentPage || 1;
-      }
+    if (isSupervisor) {
+      loadedGov = profile.governorateId;
+      loadedOffice = profile.officeId;
+    }
 
-      // If user is supervisor, override with their own gov/office
-      if (isSupervisor) {
-        loadedGov = profile.governorateId;
-        loadedOffice = profile.officeId;
-      }
+    // If we have a governorate, fetch its offices
+    if (loadedGov) {
+      await fetchOffices(loadedGov);
+    }
 
-      // 3) If we do have a governorate, fetch its offices *before* setting office
-      if (loadedGov) {
-        await fetchOffices(loadedGov);
-      }
+    // Set initial state
+    setSelectedGovernorate(loadedGov);
+    setSelectedOffice(loadedOffice);
 
-      // 4) Now update state
-      setFormData({
-        ...loadedFormData,
-        // If saved start/end date were strings, turn them into Date objects
-        startDate: loadedFormData.startDate ? new Date(loadedFormData.startDate) : null,
-        endDate: loadedFormData.endDate ? new Date(loadedFormData.endDate) : null,
-      });
-      setSelectedGovernorate(loadedGov);
-      setSelectedOffice(loadedOffice);
-      setCurrentPage(loadedPage);
-
-      // 5) Build final payload and fetch devices
-      const finalPayload = {
-        serialNumber: loadedFormData.serialNumber || "",
-        officeId: loadedOffice || null,
-        governorateId: loadedGov || null,
-        startDate: loadedFormData.startDate
-          ? formatToISO(new Date(loadedFormData.startDate))
-          : null,
-        endDate: loadedFormData.endDate
-          ? formatToISO(new Date(loadedFormData.endDate))
-          : null,
-        PaginationParams: {
-          PageNumber: loadedPage,
-          PageSize: pageSize,
-        },
-      };
-      await fetchDevices(finalPayload);
+    // Build payload and fetch devices with default filters
+    const finalPayload = {
+      serialNumber: "",
+      officeId: loadedOffice || null,
+      governorateId: loadedGov || null,
+      startDate: null,
+      endDate: null,
+      PaginationParams: {
+        PageNumber: 1,
+        PageSize: pageSize,
+      },
     };
+    await fetchDevices(finalPayload);
+  };
 
-    initData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  initData();
+}, []);
 
   // 10) Table columns
   const columns = [
