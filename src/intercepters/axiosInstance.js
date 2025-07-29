@@ -7,7 +7,7 @@ import { notification } from 'antd';
 const createAxiosInstance = () =>
   axios.create({
     baseURL: BASE_URL,
-    timeout: 20000,
+    timeout: 40000,
   });
 
 const axiosInstance = createAxiosInstance();
@@ -50,7 +50,7 @@ const refreshToken = async () => {
   try {
     
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Refresh token attempt timed out')), 10000)
+      setTimeout(() => reject(new Error('Refresh token attempt timed out')), 20000)
     );
 
     const refreshPromise = refreshAxios.post('/api/account/refresh-token', {
