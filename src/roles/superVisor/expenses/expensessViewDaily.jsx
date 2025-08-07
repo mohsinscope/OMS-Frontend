@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Spin,
   message,
@@ -13,30 +13,37 @@ import {
   Skeleton,
   Table,
 } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
-import { useLocation, useNavigate } from "react-router-dom";
+import { UploadOutlined,ArrowRightOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import axiosInstance from "./../../../intercepters/axiosInstance.js";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 import ImagePreviewer from "./../../../reusable/ImagePreViewer.jsx";
 import moment from "moment";
 
-const ExpensessView = () => {
+const ExpensessViewDaily   = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+  const currentSeq       = location.state?.currentSeq ?? null;
+const parentExpenseId  = location.state?.parentExpenseId;
   // Retrieve IDs and status from location state or URL query params
   const dailyExpenseId = location.state?.dailyExpenseId;
   const subExpenseId = location.state?.subExpenseId;
   const expenseId = dailyExpenseId || new URLSearchParams(location.search).get("id");
   const status = location.state?.status;
-
-  // Local state declarations
-  const [imageData, setImageData] = useState({
-    imageId: "",
-    entityId: "",
-    entityType: "Expense",
-  });
+const dailyExpensesList =
+  location.state?.dailyExpenses ||
+  JSON.parse(sessionStorage.getItem("dailyList") || "[]");
+const orderedDaily = useMemo(
+  () => [...dailyExpensesList].sort((a, b) => a.seqId - b.seqId),
+  [dailyExpensesList]
+);
+const currentIdx  = orderedDaily.findIndex((e) => e.seqId === currentSeq);
+const prevExpense = currentIdx > 0 ? orderedDaily[currentIdx - 1] : null;
+const nextExpense =
+  currentIdx >= 0 && currentIdx < orderedDaily.length - 1
+    ? orderedDaily[currentIdx + 1]
+    : null;
   const [images, setImages] = useState([]);
   const [expenseData, setExpenseData] = useState(null);
   const [parentExpenseData, setParentExpenseData] = useState(null); // Added for storing parent data
@@ -48,6 +55,7 @@ const ExpensessView = () => {
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [form] = Form.useForm();
 const [uploadLoading, setUploadLoading] = useState(false);
+
 
   const { isSidebarCollapsed, permissions, profile } = useAuthStore();
   const hasUpdatePermission = permissions.includes("EXu");
@@ -157,7 +165,11 @@ const [uploadLoading, setUploadLoading] = useState(false);
       message.error("حدث خطأ أثناء جلب صور المصروف");
     }
   };
-
+useEffect(() => {
+  if (location.state?.dailyExpenses) {
+    sessionStorage.setItem("dailyList", JSON.stringify(location.state.dailyExpenses));
+  }
+}, [location.state]);
   // Initialize data on component mount
   useEffect(() => {
     if (!expenseId) {
@@ -478,25 +490,90 @@ const handleImageUpload = async (files) => {
                 <span style={{ color: "green", marginRight: "8px" }}> - مصروف فرعي</span>
               )}
             </h1>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px", gap: "20px" }}>
-              <Button
-                type="primary"
-                style={{ padding: "20px 30px", backgroundColor: "#efb034" }}
-                onClick={() => navigate(-1)}
-              >
-                الرجوع
-              </Button>
-              {canPerformActions() && (
-                <>
-                  <Button type="primary" style={{ padding: "20px 30px" }} onClick={handleEditClick}>
-                    تعديل
-                  </Button>
-                  <Button danger type="primary" style={{ padding: "20px 40px" }} onClick={confirmDelete}>
-                    حذف
-                  </Button>
-                </>
-              )}
-            </div>
+<div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    gap: 20,
+    flexWrap: "wrap",
+    width:"100%"
+  }}
+>
+  {/* عودة إلى صفحة المصروفات الشهرية */}
+  <Link to="/expenses-view" state={{ expenseId: parentExpenseId }}>
+    <Button
+      type="primary"
+      size="large"
+      shape="round"
+      style={{ paddingInline: 32, background: "#efb034", borderColor: "#efb034" }}
+    >
+      عودة
+    </Button>
+  </Link>
+
+  {/* أزرار الرجوع / التالى داخل المصروفات اليومية */}
+  <div style={{ display: "flex", gap: 12 }}>
+    <Button
+      disabled={!prevExpense}
+      size="large"
+      shape="round"
+      icon={<ArrowRightOutlined />}
+      style={{ paddingInline: 28 }}
+      onClick={() =>
+        prevExpense &&
+        navigate("/Expensess-view-daily", {
+          state: {
+            dailyExpenseId: prevExpense.id,
+            currentSeq: prevExpense.seqId,
+            parentExpenseId,
+            status,
+            dailyExpenses: orderedDaily,
+          },
+          replace: true,
+        })
+      }
+    >
+      الرجوع
+    </Button>
+
+    <Button
+      disabled={!nextExpense}
+      type="primary"
+      size="large"
+      shape="round"
+      icon={<ArrowLeftOutlined />}             /* سهم يشير لليسار */
+      style={{ paddingInline: 28, display: "flex", flexDirection: "row-reverse" }}
+      onClick={() =>
+        nextExpense &&
+        navigate("/Expensess-view-daily", {
+          state: {
+            dailyExpenseId: nextExpense.id,
+            currentSeq: nextExpense.seqId,
+            parentExpenseId,
+            status,
+            dailyExpenses: orderedDaily,
+          },
+          replace: true,
+        })
+      }
+    >
+      التالى
+    </Button>
+  </div>
+
+  {/* edit / delete (unchanged) */}
+  {canPerformActions() && (
+    <>
+      <Button type="primary" style={{ padding: "20px 30px" }} onClick={handleEditClick}>
+        تعديل
+      </Button>
+      <Button danger type="primary" style={{ padding: "20px 40px" }} onClick={confirmDelete}>
+        حذف
+      </Button>
+    </>
+  )}
+</div>
           </div>
 
           <div className="details-container-Lecture">
@@ -722,4 +799,4 @@ const handleImageUpload = async (files) => {
   );
 };
 
-export default ExpensessView;
+export default ExpensessViewDaily ;
