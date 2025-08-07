@@ -419,7 +419,7 @@ const [dailyExpensesList, setDailyExpensesList] = useState([]);
         `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`
       );
       handleModalCancel();
-      navigate(-1);
+      navigate("/supervisor/Expensess", { replace: true });
     } catch (err) {
       console.error("Error in handleActionSubmit:", err);
       message.error(
