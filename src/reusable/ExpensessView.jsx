@@ -98,7 +98,10 @@ export default function ExpensesView() {
   const { isSidebarCollapsed, accessToken, profile, roles } = useAuthStore();
   const location = useLocation();
   const navigate = useNavigate();
-  const expenseId = location.state?.expense?.id;
+  const expenseId =
+   location.state?.expense?.id ||        // الحالة القديمة
+   location.state?.expenseId ||          // الحالة الجديدة
+   new URLSearchParams(location.search).get("id"); // احتياطاً عبر Query
 
   const [expense, setExpense] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -120,6 +123,7 @@ export default function ExpensesView() {
   const saved = JSON.parse(localStorage.getItem("expensesPagination") || "{}");
   const [currentPage, setCurrentPage] = useState(saved.page || 1);
   const [pageSize, setPageSize] = useState(saved.pageSize || 5);
+const [dailyExpensesList, setDailyExpensesList] = useState([]);
 
   // Check if user has SuperAdmin or Admin role
   const hasAdminPermission = useMemo(() => {
@@ -564,35 +568,36 @@ export default function ExpensesView() {
           })) || [];
   
         // 5) Process daily expense items (some may have subExpenses)
-        const dailyItems = dailyExpensesResponse.data.map((item, index) => {
-          const hasSubExpenses = item.subExpenses && item.subExpenses.length > 0;
-        
-          // Calculate sums if you need to combine parent + sub
-          const totalQuantity = hasSubExpenses
-            ? Number(item.quantity) +
-              item.subExpenses.reduce((acc, sub) => acc + (Number(sub.quantity) || 0), 0)
-            : Number(item.quantity) || 0;
-        
-          const totalAmount = hasSubExpenses
-            ? Number(item.amount) +
-              item.subExpenses.reduce((acc, sub) => acc + (Number(sub.amount) || 0), 0)
-            : Number(item.amount) || 0;
-        
-          const dailyRow = {
-            key: `daily-${item.id}`,
-            تسلسل: index + 1,
-            التاريخ: new Date(item.expenseDate).toLocaleDateString(),
-            "نوع المصروف": hasSubExpenses ? "مستلزمات مكتب" : item.expenseTypeName,
-            الكمية: totalQuantity,
-            السعر: hasSubExpenses ? "------" : item.price,
-            المجموع: totalAmount,
-            ملاحظات: hasSubExpenses ? "لا يوجد" : item.notes,
-            id: item.id,
-            type: "daily",
-          };
-        
-          return dailyRow;
-        });
+const dailyItems = dailyExpensesResponse.data.map((item, idx) => {
+  const hasSubExpenses = item.subExpenses?.length > 0;
+
+  const totalQty =
+    (Number(item.quantity) || 0) +
+    (item.subExpenses?.reduce((s, sub) => s + (Number(sub.quantity) || 0), 0) ||
+      0);
+
+  const totalAmt =
+    (Number(item.amount) || 0) +
+    (item.subExpenses?.reduce((s, sub) => s + (Number(sub.amount) || 0), 0) ||
+      0);
+
+  return {
+    key: `daily-${item.id}`,
+    seqId: idx + 1,                         // ★ sequential ID
+    تسلسل: idx + 1,
+    التاريخ: new Date(item.expenseDate).toLocaleDateString(),
+    "نوع المصروف": hasSubExpenses ? "مستلزمات مكتب" : item.expenseTypeName,
+    الكمية: totalQty,
+    السعر: hasSubExpenses ? "------" : item.price,
+    المجموع: totalAmt,
+    ملاحظات: hasSubExpenses ? "لا يوجد" : item.notes,
+    id: item.id,                            // GUID from backend
+    type: "daily",
+  };
+});
+
+/* keep the numbered list for navigation */
+setDailyExpensesList(dailyItems);
   
         // 6) Combine the two sets & sort by date desc
         const allItems = [...regularItems, ...dailyItems].sort(
@@ -1109,18 +1114,21 @@ export default function ExpensesView() {
       title: "الإجراءات",
       key: "actions",
       render: (_, record) => (
-        <Link
-          key={`action-${record.id || record.تسلسل}`}
-          to="/Expensess-view-daily"
-          state={{
-            dailyExpenseId: record.id,
-            status: expense?.generalInfo?.["الحالة"],
-          }}
-        >
-          <Button type="primary" size="large" loading={isLoadingDetails}>
-            عرض
-          </Button>
-        </Link>
+  <Link
+    key={`action-${record.seqId}`}
+    to="/Expensess-view-daily"
+    state={{
+      currentSeq: record.seqId,            // ← رقم تسلسلي 1-based
+      dailyExpenseId: record.id,     // still the backend GUID
+      status: expense?.generalInfo?.["الحالة"],
+      parentExpenseId: expenseId,          
+      dailyExpenses: dailyExpensesList, // ➜ whole numbered list
+    }}
+  >
+    <Button type="primary" size="large" loading={isLoadingDetails}>
+      عرض
+    </Button>
+  </Link>
       ),
     },
   ];
