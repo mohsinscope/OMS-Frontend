@@ -31,6 +31,12 @@ const parentExpenseId  = location.state?.parentExpenseId;
   const subExpenseId = location.state?.subExpenseId;
   const expenseId = dailyExpenseId || new URLSearchParams(location.search).get("id");
   const status = location.state?.status;
+    // Local state declarations
+    const [imageData, setImageData] = useState({
+      imageId: "",
+      entityId: "",
+      entityType: "Expense",
+    });
 const dailyExpensesList =
   location.state?.dailyExpenses ||
   JSON.parse(sessionStorage.getItem("dailyList") || "[]");
