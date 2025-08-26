@@ -31,7 +31,8 @@ const SuperVisorDevices = () => {
   const hasCreatePermission = permissions.includes("DDc");
   const isSupervisor =
     roles.includes("Supervisor") || roles === "I.T" || roles === "MainSupervisor";
-
+  // Add this with your other state variables
+  const [isPdfLoading, setIsPdfLoading] = useState(false);
   // Device list & pagination
   const [devices, setDevices] = useState([]);
   const [totalDevices, setTotalDevices] = useState(0);
@@ -145,7 +146,144 @@ const SuperVisorDevices = () => {
       setIsLoading(false);
     }
   };
-
+  const handlePrintPDF = async () => {
+    // Start loading
+    setIsPdfLoading(true);
+    
+    try {
+      // Show loading message
+      message.loading('جاري تحضير التقرير...', 0);
+      
+      // 1) Fetch all filtered devices
+      const payload = {
+        serialNumber: formData.serialNumber || "",
+        officeId: isSupervisor ? profile.officeId : selectedOffice || null,
+        governorateId: isSupervisor ? profile.governorateId : selectedGovernorate || null,
+        startDate: formData.startDate ? formatToISO(formData.startDate) : null,
+        endDate: formData.endDate ? formatToISO(formData.endDate) : null,
+        PaginationParams: { PageNumber: 1, PageSize: totalDevices },
+      };
+  
+      const { data: devicesList } = await axiosInstance.post(
+        `${Url}/api/DamagedDevice/search`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+  
+      // Update loading message
+      message.loading('جاري تحميل المرفقات...', 0);
+  
+      // 2) Build a map of attachment URLs per device
+      const attachmentMap = {};
+      await Promise.all(
+        (devicesList || []).map(async (dev) => {
+          try {
+            const { data: atts } = await axiosInstance.get(
+              `${Url}/api/Attachment/DamagedDevice/${dev.id}`,
+              { headers: { Authorization: `Bearer ${accessToken}` } }
+            );
+            if (Array.isArray(atts) && atts.length) {
+              const path = atts[0].filePath.replace(/^\/+/, "/");
+              attachmentMap[dev.id] = `https://oms-cdn.scopesky.iq${path}`;
+            }
+          } catch {
+            /* ignore attachment errors per device */
+          }
+        })
+      );
+  
+      // Update loading message
+      message.loading('جاري إنشاء ملف PDF...', 0);
+  
+      // 3) Chunk rows into pages of 10
+      const chunkArray = (arr, size) => {
+        const result = [];
+        for (let i = 0; i < arr.length; i += size) result.push(arr.slice(i, i + size));
+        return result;
+      };
+      const PAGE_SIZE = 10;
+      const pages = chunkArray(devicesList || [], PAGE_SIZE);
+  
+      // 4) Build printable container: one table per page
+      const container = document.createElement("div");
+      container.dir = "rtl";
+      container.style.fontFamily = "Arial, sans-serif";
+  
+      container.innerHTML = pages
+        .map((page, pIdx) => {
+          const pageStyle = `padding:20px; ${pIdx < pages.length - 1 ? "page-break-after: always;" : ""}`;
+          return `
+            <div style="${pageStyle}">
+              <h1 style="text-align:center; margin-top:0;">تقرير الأجهزة التالفة - صفحة ${pIdx + 1}</h1>
+              <table style="width:100%; border-collapse:collapse; font-size:12px;">
+                <thead>
+                  <tr style="background:#f2f2f2;">
+                    <th style="border:1px solid #ddd; padding:8px; text-align:center;">ت</th>
+                    <th style="border:1px solid #ddd; padding:8px; text-align:center;">التاريخ</th>
+                    <th style="border:1px solid #ddd; padding:8px; text-align:center;">المحافظة</th>
+                    <th style="border:1px solid #ddd; padding:8px; text-align:center;">المكتب</th>
+                    <th style="border:1px solid #ddd; padding:8px; text-align:center;">الرقم التسلسلي</th>
+                    <th style="border:1px solid #ddd; padding:8px; text-align:center;">المرفق</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${page
+                    .map((dev, idx) => {
+                      const globalIndex = pIdx * PAGE_SIZE + idx;
+                      const descendingNo = (devicesList?.length || 0) - globalIndex;
+                      const dateStr = dev?.date ? new Date(dev.date).toLocaleDateString("en-CA") : "-";
+                      const att = attachmentMap[dev.id];
+                      return `
+                        <tr>
+                          <td style="border:1px solid #ddd; padding:8px; text-align:center;">${descendingNo}</td>
+                          <td style="border:1px solid #ddd; padding:8px; text-align:center;">${dateStr}</td>
+                          <td style="border:1px solid #ddd; padding:8px; text-align:center;">${dev.governorateName || "-"}</td>
+                          <td style="border:1px solid #ddd; padding:8px; text-align:center;">${dev.officeName || "-"}</td>
+                          <td style="border:1px solid #ddd; padding:8px; text-align:center;">${dev.serialNumber || "-"}</td>
+                          <td style="border:1px solid #ddd; padding:8px; text-align:center;">
+                            ${att ? `<a href="${att}" target="_blank" rel="noreferrer">تحميل المرفق</a>` : "-"}
+                          </td>
+                        </tr>
+                      `;
+                    })
+                    .join("")}
+                </tbody>
+              </table>
+            </div>
+          `;
+        })
+        .join("");
+  
+      // 5) Export to PDF (A4 landscape)
+      await html2pdf()
+        .set({
+          margin: 1,
+          filename: "تقرير_الأجهزة_التالفة.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "cm", format: "a4", orientation: "landscape" },
+        })
+        .from(container)
+        .save();
+  
+      // Success message
+      message.destroy(); // Clear loading message
+      message.success("تم تصدير التقرير بنجاح");
+      
+    } catch (err) {
+      console.error("Error generating PDF:", err);
+      message.destroy(); // Clear loading message
+      message.error("حدث خطأ أثناء إنشاء التقرير");
+    } finally {
+      // Stop loading
+      setIsPdfLoading(false);
+    }
+  };
 // Add these functions after the fetchDevices function and before handleFormSubmit
 
 // 4) Searching with the current filter state
@@ -435,6 +573,17 @@ useEffect(() => {
                 >
                   إعادة تعيين
                 </Button>
+                <Button 
+  onClick={handlePrintPDF} 
+  className="supervisor-passport-dameged-button-pdf"
+  loading={isPdfLoading}
+  disabled={isPdfLoading}
+>
+  {isPdfLoading ? 'جاري التصدير...' : 'تصدير الى PDF'}
+  {!isPdfLoading && <Icons type="pdf" />}
+</Button>
+
+
               </div>
 
               {/* Add new device (permission‐based) */}
