@@ -100,6 +100,23 @@
   border: 1px solid #4880ff;
   transition: all 0.3s ease;
 }
+.supervisor-passport-dameged-button-pdf{
+  background-color: #ff4848;
+  color: white;
+  border: 1px solid #e15826 !important;
+  width: 120px;
+  height: 45px;
+  border: none;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: large;
+}
+.supervisor-passport-dameged-button:hover {
+  background-color: white;
+  color: #ff0101;
+  border: 1px solid #fe0d0d;
+  transition: all 0.3s ease;
+}
 
 .supervisor-passport-dameged-table-container {
   width: 100%;
