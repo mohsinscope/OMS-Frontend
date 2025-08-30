@@ -575,7 +575,7 @@ useEffect(() => {
                 </Button>
                 <Button 
   onClick={handlePrintPDF} 
-  className="supervisor-passport-dameged-button-pdf"
+  className="pdf-export-btn"
   loading={isPdfLoading}
   disabled={isPdfLoading}
 >
