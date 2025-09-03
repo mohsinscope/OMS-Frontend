@@ -48,7 +48,7 @@ export default function NavBar({ onSidebarToggle }) {
 
       {/* Right Section */}
       <div className="navbar-right">
-        <h1 id="title-navbar" style={{ marginRight: "20px" }}>نظام إدارة المكاتب</h1>
+        <h1 id="title-navbar" style={{ marginRight: "20px" }}>نظام إدارة المشاريع</h1>
         <div
   className={`menu-icon ${isSidebarOpen ? 'open' : ''}`}
   onClick={handleSidebarToggle}
