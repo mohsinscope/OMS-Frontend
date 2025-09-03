@@ -294,22 +294,28 @@ const disableOtherMonths = (current) => {
   };
 
   const handleCreateMonthlyExpense = async (values) => {
+      console.log('Form values:', values);
+  console.log('Selected month:', values.month);
     try {
       setLoading(true);
-         // take the selected month, set to first day, zero UTC
-            const monthIso = dayjs(values.month)
-              .utc()
-              .startOf("month")
-              .add(1, "day") 
-              .format("YYYY-MM-DDTHH:mm:ss[Z]");
-              const payload = {
-                 totalAmount: 0,
-                status: 0,
-                 officeId: profile?.officeId,
-                 governorateId: profile?.governorateId,
-                 profileId: profile?.profileId,
-                 dateCreated: monthIso,       // include your new ISO date
-      };
+    // Fix: Create a fresh date from the selected month to avoid rollover issues
+    const selectedMonth = dayjs(values.month);
+    const year = selectedMonth.year();
+    const month = selectedMonth.month() + 1; // dayjs months are 0-indexed, so add 1
+    
+    // Create ISO string for the 2nd day of the selected month
+    const monthIso = dayjs(`${year}-${month.toString().padStart(2, '0')}-02T00:00:00Z`)
+      .format("YYYY-MM-DDTHH:mm:ss[Z]");
+    
+    const payload = {
+      totalAmount: 0,
+      status: 0,
+      officeId: profile?.officeId,
+      governorateId: profile?.governorateId,
+      profileId: profile?.profileId,
+      dateCreated: monthIso,
+    };
+                console.log(monthIso)
 
 
       const response = await axiosInstance.post("/api/Expense/MonthlyExpenses", payload);

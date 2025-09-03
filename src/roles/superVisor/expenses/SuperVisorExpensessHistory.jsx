@@ -264,65 +264,144 @@ export default function SuperVisorExpensesHistory() {
   };
   
   const fetchExpensesData = async (pageNumber = 1) => {
-    try {
-      setIsLoading(true);
+  try {
+    setIsLoading(true);
 
-      // Build filter object
-      const searchBody = {
-        officeId: isSupervisor ? userOfficeId : selectedOffice,
-        governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
-        profileId: profile?.id,
-        statuses: selectedStatuses.length > 0 ? selectedStatuses : null,
-        startDate: startDate ? startDate.toISOString() : null,
-        endDate: endDate ? endDate.toISOString() : null,
-        PaginationParams: {
-          PageNumber: pageNumber,
-          PageSize: pageSize,
-        },
-      };
+    // Build filter object
+    const searchBody = {
+      officeId: isSupervisor ? userOfficeId : selectedOffice,
+      governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
+      profileId: profile?.id,
+      statuses: selectedStatuses.length > 0 ? selectedStatuses : null,
+      startDate: startDate ? startDate.toISOString() : null,
+      endDate: endDate ? endDate.toISOString() : null,
+      PaginationParams: {
+        PageNumber: pageNumber,
+        PageSize: pageSize,
+      },
+    };
 
-      // If user is not admin/supervisor/ProjectCoordinator/SrController and hasn't chosen statuses, use only what's allowed
-      if (
-        selectedStatuses.length === 0 &&
-        !isAdmin &&
-        !isSupervisor &&
-        userPosition !== "ProjectCoordinator" &&
-        userPosition !== "SrController"
-      ) {
-        const allowedStatuses = getAvailableStatuses();
-        searchBody.statuses = allowedStatuses;
-      }
+    // Console log all search parameters
+    console.log("=== SEARCH PARAMETERS ===");
+    console.log("Search Body:", JSON.stringify(searchBody, null, 2));
+    console.log("Office ID:", searchBody.officeId);
+    console.log("Governorate ID:", searchBody.governorateId);
+    console.log("Profile ID:", searchBody.profileId);
+    console.log("Selected Statuses:", searchBody.statuses);
+    console.log("Start Date:", searchBody.startDate);
+    console.log("End Date:", searchBody.endDate);
+    console.log("Page Number:", searchBody.PaginationParams.PageNumber);
+    console.log("Page Size:", searchBody.PaginationParams.PageSize);
+    console.log("Selected Month:", selectedMonth);
+    console.log("Selected Year:", selectedYear);
+    console.log("========================");
 
-      // Make the request
-      const response = await axiosInstance.post(
-        `${Url}/api/Expense/search`,
-        searchBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      // Filter by allowed statuses if not admin or supervisor
-      const filteredExpenses = filterExpensesByAllowedStatuses(response.data);
-      setExpensesList(filteredExpenses);
-
-      const paginationHeader = response.headers["pagination"];
-      if (paginationHeader) {
-        const paginationInfo = JSON.parse(paginationHeader);
-        setTotalRecords(paginationInfo.totalItems);
-      } else {
-        setTotalRecords(response.data.length);
-      }
-    } catch (error) {
-      console.error("Error fetching expenses:", error);
-      message.error("حدث خطأ أثناء جلب البيانات");
-    } finally {
-      setIsLoading(false);
+    // If user is not admin/supervisor/ProjectCoordinator/SrController and hasn't chosen statuses, use only what's allowed
+    if (
+      selectedStatuses.length === 0 &&
+      !isAdmin &&
+      !isSupervisor &&
+      userPosition !== "ProjectCoordinator" &&
+      userPosition !== "SrController"
+    ) {
+      const allowedStatuses = getAvailableStatuses();
+      searchBody.statuses = allowedStatuses;
+      console.log("Auto-set allowed statuses:", allowedStatuses);
     }
-  };
+
+    // Make the request
+    const response = await axiosInstance.post(
+      `${Url}/api/Expense/search`,
+      searchBody,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    // Console log API response
+    console.log("=== API RESPONSE ===");
+    console.log("Response Status:", response.status);
+    console.log("Response Headers:", response.headers);
+    console.log("Raw Response Data:", response.data);
+    console.log("Number of records returned:", response.data?.length || 0);
+    
+    // Log first few records for inspection
+    if (response.data && response.data.length > 0) {
+      console.log("First record:", response.data[0]);
+      console.log("Sample record structure:", Object.keys(response.data[0]));
+    }
+
+    // Filter by allowed statuses if not admin or supervisor
+    const filteredExpenses = filterExpensesByAllowedStatuses(response.data);
+    console.log("Filtered Expenses Count:", filteredExpenses.length);
+    console.log("Filtered Expenses:", filteredExpenses);
+
+    setExpensesList(filteredExpenses);
+
+    const paginationHeader = response.headers["pagination"];
+    if (paginationHeader) {
+      const paginationInfo = JSON.parse(paginationHeader);
+      console.log("Pagination Info:", paginationInfo);
+      setTotalRecords(paginationInfo.totalItems);
+    } else {
+      console.log("No pagination header found, using array length:", response.data.length);
+      setTotalRecords(response.data.length);
+    }
+    console.log("===================");
+
+  } catch (error) {
+    console.error("=== DETAILED SEARCH ERROR ===");
+    console.error("Error object:", error);
+    console.error("Error message:", error.message);
+    console.error("Error name:", error.name);
+    console.error("Error stack:", error.stack);
+    
+    if (error.response) {
+      console.error("=== ERROR RESPONSE DETAILS ===");
+      console.error("Response status:", error.response.status);
+      console.error("Response status text:", error.response.statusText);
+      console.error("Response data:", error.response.data);
+      console.error("Response headers:", error.response.headers);
+      console.error("Response config:", error.response.config);
+      
+      // Log specific error details if available
+      if (error.response.data) {
+        console.error("Error response data type:", typeof error.response.data);
+        console.error("Error response data keys:", Object.keys(error.response.data));
+        if (error.response.data.message) {
+          console.error("Error message from server:", error.response.data.message);
+        }
+        if (error.response.data.errors) {
+          console.error("Validation errors:", error.response.data.errors);
+        }
+      }
+    } else if (error.request) {
+      console.error("=== REQUEST ERROR ===");
+      console.error("Request was made but no response received");
+      console.error("Request details:", error.request);
+    } else {
+      console.error("=== SETUP ERROR ===");
+      console.error("Error in setting up the request:", error.message);
+    }
+    
+    console.error("Request config that failed:");
+    console.error("- URL:", `${Url}/api/Expense/search`);
+    console.error("- Method: POST");
+    console.error("- Headers:", {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    });
+    console.error("- Search body that was sent:", JSON.stringify(searchBody, null, 2));
+    console.error("=============================");
+    
+    message.error("حدث خطأ أثناء جلب البيانات");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // ------------------------------------------------------------------------------------------------
   // useEffect initialization
