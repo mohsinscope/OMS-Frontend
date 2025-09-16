@@ -3,7 +3,10 @@ import { useNavigate } from "react-router-dom";
 import "./signIn.css";
 import Logo from "../assets/Asset 2.png";
 import useAuthStore from "./../store/store.js";
-import axios from "axios";
+ import axios from "axios";
+ import Cookies from "js-cookie";
+
+
 import Icons from "../reusable elements/icons.jsx";
 import BASE_URL from "../store/url.js";
 
@@ -16,7 +19,15 @@ const SignInPage = () => {
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loading, setLoading] = useState(false);
-
+ // Unique cookie names for this app
+ const ACCESS_COOKIE  = 'oms_access_v1';
+ const REFRESH_COOKIE = 'oms_refresh_v1';
+ // Only mark Secure on HTTPS (prod). Strict prevents cross-site.
+ const cookieOpts = {
+   expires: 7,
+   sameSite: 'strict',
+   secure: window.location.protocol === 'https:'
+ };
   // Zustand store actions and state
   const { login, isLoggedIn } = useAuthStore();
 
@@ -50,45 +61,49 @@ const SignInPage = () => {
   };
 
   // Handle login form submission
-  const handleSubmit = async () => {
-    if (!username || !password) {
-      setLoginError("يرجى إدخال اسم المستخدم وكلمة السر");
-      return;
-    }
+const handleSubmit = async () => {
+  if (!username || !password) {
+    setLoginError("يرجى إدخال اسم المستخدم وكلمة السر");
+    return;
+  }
 
-    setLoading(true);
-    setLoginError("");
+  setLoading(true);
+  setLoginError("");
 
-    try {
-      // 1. Perform login request
-      const loginResponse = await axios.post(`${BASE_URL}/api/account/login`, {
-        username,
-        password,
-      });
+  try {
+    // 1. Perform login request
+    const loginResponse = await axios.post(`${BASE_URL}/api/account/login`, {
+      username,
+      password,
+    });
 
-      const { accessToken, refreshToken } = loginResponse.data;
+    const { accessToken, refreshToken } = loginResponse.data;
 
-      // 2. Fetch user profile using the access token
-      const userProfile = await fetchUserProfile(accessToken);
+    // 👇👇👇 ADD THIS — Save tokens to cookies
+ Cookies.set(ACCESS_COOKIE,  accessToken,  cookieOpts);
+ Cookies.set(REFRESH_COOKIE, refreshToken, cookieOpts);
 
-      // 3. Extract permissions from the user profile or set defaults
-      const permissions = userProfile.permissions || [];
+    // 2. Fetch user profile using the access token
+    const userProfile = await fetchUserProfile(accessToken);
 
-      // 4. Save the data in Zustand store
-      login(accessToken, refreshToken, userProfile, permissions);
+    // 3. Extract permissions
+    const permissions = userProfile.permissions || [];
 
-      // 5. Navigate to the landing page
-      navigateToStats();
-    } catch (error) {
-      console.error("Login failed:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        "فشل تسجيل الدخول. يرجى التحقق من البيانات.";
-      setLoginError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // 4. Save in Zustand store
+    login(accessToken, refreshToken, userProfile, permissions);
+
+    // 5. Navigate
+    navigateToStats();
+  } catch (error) {
+    console.error("Login failed:", error);
+    const errorMessage =
+      error.response?.data?.message ||
+      "فشل تسجيل الدخول. يرجى التحقق من البيانات.";
+    setLoginError(errorMessage);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Handle 'Enter' key press for form submission
   const handleKeyDown = (e) => {
