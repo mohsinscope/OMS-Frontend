@@ -161,9 +161,9 @@ const [dailyExpensesList, setDailyExpensesList] = useState([]);
       return Status.SentToExpenseManager;
     } 
    
-    else if (currentStatus === "SentToProjectCoordinator" && position?.includes("projectcoordinator")) {
+    else if (currentStatus === "SentToProjectCoordinator" && position?.includes("projectcoordinator") || position?.includes("srcontroller")) {
       return Status.SentToManager;
-    } else if (currentStatus === "ReturnedToProjectCoordinator" && position?.includes("projectcoordinator")) {
+    } else if (currentStatus === "ReturnedToProjectCoordinator" && position?.includes("projectcoordinator") || position?.includes("srcontroller")) {
       return Status.SentToManager;
     } else if (currentStatus === "SentToManager" && position?.includes("manager")) {
       return Status.SentToDirector;
@@ -198,9 +198,9 @@ const [dailyExpensesList, setDailyExpensesList] = useState([]);
 
   const getRejectionStatus = (currentStatus, position) => {
     position = position?.toLowerCase();
-    if (currentStatus === "SentToProjectCoordinator" && position?.includes("projectcoordinator")) {
+    if (currentStatus === "SentToProjectCoordinator" && position?.includes("projectcoordinator") || position?.includes("srcontroller") ) {
       return Status.ReturnedToSupervisor;
-    }else if (currentStatus === "ReturnedToProjectCoordinator" && position?.includes("projectcoordinator")) {
+    }else if (currentStatus === "ReturnedToProjectCoordinator" && position?.includes("projectcoordinator") || position?.includes("srcontroller")) {
         return Status.ReturnedToSupervisor;
     } else if (currentStatus === "SentToManager" && position?.includes("manager")) {
       return Status.ReturnedToProjectCoordinator;
@@ -1179,8 +1179,7 @@ setDailyExpensesList(dailyItems);
         </h1>
 
         {/* Action Buttons */}
-        {profile?.position?.toLowerCase()?.includes("supervisor") || 
-               profile?.position === "SrController" ? null : (
+        {profile?.position?.toLowerCase()?.includes("supervisor")  ? null : (
                 <div
                   style={{
                     display: "flex",
