@@ -1166,6 +1166,35 @@ setDailyExpensesList(dailyItems);
     );
   };
 
+
+  const isSuperAdminOnly = useMemo(
+  () => (roles || []).some(r => r?.toLowerCase() === "superadmin"),
+  [roles]
+);
+const [adjValue, setAdjValue] = useState(null);
+const [adjLoading, setAdjLoading] = useState(false);
+
+const handleAdjustTotalAmount = async () => {
+  if (adjValue === null || adjValue === "" || isNaN(adjValue)) {
+    return message.error("الرجاء إدخال قيمة صحيحة (يمكن أن تكون سالبة)");
+  }
+  try {
+    setAdjLoading(true);
+    await axiosInstance.patch(
+      `${Url}/api/Expense/${expenseId}`,
+      { totalAmountAdjustment: Number(adjValue) },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    message.success("تم تعديل قيمة المجموع (الإضافة/الخصم) بنجاح");
+  } catch (e) {
+    if (e?.response?.status === 401) message.error("انتهت صلاحية الجلسة");
+    else if (e?.response?.status === 403) message.error("ليس لديك صلاحية");
+    else message.error("فشل تعديل المجموع");
+  } finally {
+    setAdjLoading(false);
+  }
+};
+
   return (
     <>
       <Dashboard />
@@ -1209,10 +1238,40 @@ setDailyExpensesList(dailyItems);
                         ارجاع
                       </Button>
                     )}
+                    {isSuperAdminOnly && (
+  <div
+    style={{
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      flexWrap: "wrap",
+    }}
+  >
+    <InputNumber
+      style={{ width: 240 , height:42 }}
+      placeholder="قيمة التعديل (مثال: -84000)"
+      value={adjValue}
+      onChange={setAdjValue}
+      step={1000}
+      controls
+    />
+    <Button
+    style={{ width: 240 , height:42 }}
+      type="primary"
+      loading={adjLoading}
+      onClick={handleAdjustTotalAmount}
+    >
+      حفظ تعديل المجموع
+    </Button>
+  </div>
+)}
+                    
                   </div>
                   
                   {/* Admin Button */}
+                  
                   <AdminButton />
+                  
                 </div>
               )}
 
