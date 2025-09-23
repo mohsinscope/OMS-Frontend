@@ -63,7 +63,7 @@ const nextExpense =
 const [uploadLoading, setUploadLoading] = useState(false);
 
 
-  const { isSidebarCollapsed, permissions, profile } = useAuthStore();
+  const { isSidebarCollapsed, permissions, profile, roles } = useAuthStore();
   const hasUpdatePermission = permissions.includes("EXu");
   const hasDeletePermission = permissions.includes("EXd");
   const canPerformActions = () =>
@@ -251,6 +251,19 @@ const handleImageUpload = async (files) => {
     setUploadLoading(false);
   }
 };
+
+const isSupervisorOnly = useMemo(() => {
+  const normalize = (v) =>
+    (typeof v === "string" ? v : v?.name ?? v ?? "")
+      .toString()
+      .toLowerCase();
+
+  const roleList = (roles || []).map(normalize).filter(Boolean);
+  const pos = normalize(profile?.position);
+
+  // Hide for explicit role=supervisor OR position contains supervisor
+  return roleList.includes("supervisor") || pos.includes("supervisor");
+}, [roles, profile?.position]);
 
   const handleEditClick = () => {
     form.setFieldsValue({
@@ -506,67 +519,71 @@ const handleImageUpload = async (files) => {
     width:"100%"
   }}
 >
-  {/* عودة إلى صفحة المصروفات الشهرية */}
-  <Link to="/expenses-view" state={{ expenseId: parentExpenseId }}>
-    <Button
-      type="primary"
-      size="large"
-      shape="round"
-      style={{ paddingInline: 32, background: "#efb034", borderColor: "#efb034" }}
-    >
-      عودة
-    </Button>
-  </Link>
+  {/* عودة إلى صفحة المصروفات الشهرية — hidden for Supervisor */}
+  {!isSupervisorOnly && (
+    <Link to="/expenses-view" state={{ expenseId: parentExpenseId }}>
+      <Button
+        type="primary"
+        size="large"
+        shape="round"
+        style={{ paddingInline: 32, background: "#efb034", borderColor: "#efb034" }}
+      >
+        عودة
+      </Button>
+    </Link>
+  )}
 
-  {/* أزرار الرجوع / التالى داخل المصروفات اليومية */}
-  <div style={{ display: "flex", gap: 12 }}>
-    <Button
-      disabled={!prevExpense}
-      size="large"
-      shape="round"
-      icon={<ArrowRightOutlined />}
-      style={{ paddingInline: 28 }}
-      onClick={() =>
-        prevExpense &&
-        navigate("/Expensess-view-daily", {
-          state: {
-            dailyExpenseId: prevExpense.id,
-            currentSeq: prevExpense.seqId,
-            parentExpenseId,
-            status,
-            dailyExpenses: orderedDaily,
-          },
-          replace: true,
-        })
-      }
-    >
-      الرجوع
-    </Button>
+   {/* أزرار الرجوع / التالى — hidden for Supervisor */}
+  {!isSupervisorOnly && (
+    <div style={{ display: "flex", gap: 12 }}>
+      <Button
+        disabled={!prevExpense}
+        size="large"
+        shape="round"
+        icon={<ArrowRightOutlined />}
+        style={{ paddingInline: 28 }}
+        onClick={() =>
+          prevExpense &&
+          navigate("/Expensess-view-daily", {
+            state: {
+              dailyExpenseId: prevExpense.id,
+              currentSeq: prevExpense.seqId,
+              parentExpenseId,
+              status,
+              dailyExpenses: orderedDaily,
+            },
+            replace: true,
+          })
+        }
+      >
+        الرجوع
+      </Button>
 
-    <Button
-      disabled={!nextExpense}
-      type="primary"
-      size="large"
-      shape="round"
-      icon={<ArrowLeftOutlined />}             /* سهم يشير لليسار */
-      style={{ paddingInline: 28, display: "flex", flexDirection: "row-reverse" }}
-      onClick={() =>
-        nextExpense &&
-        navigate("/Expensess-view-daily", {
-          state: {
-            dailyExpenseId: nextExpense.id,
-            currentSeq: nextExpense.seqId,
-            parentExpenseId,
-            status,
-            dailyExpenses: orderedDaily,
-          },
-          replace: true,
-        })
-      }
-    >
-      التالى
-    </Button>
-  </div>
+      <Button
+        disabled={!nextExpense}
+        type="primary"
+        size="large"
+        shape="round"
+        icon={<ArrowLeftOutlined />}
+        style={{ paddingInline: 28, display: "flex", flexDirection: "row-reverse" }}
+        onClick={() =>
+          nextExpense &&
+          navigate("/Expensess-view-daily", {
+            state: {
+              dailyExpenseId: nextExpense.id,
+              currentSeq: nextExpense.seqId,
+              parentExpenseId,
+              status,
+              dailyExpenses: orderedDaily,
+            },
+            replace: true,
+          })
+        }
+      >
+        التالى
+      </Button>
+    </div>
+  )}
 
   {/* edit / delete (unchanged) */}
   {canPerformActions() && (
