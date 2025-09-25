@@ -988,9 +988,9 @@ const disableOtherMonths = (current) => {
               </ConfigProvider> 
           <Form.Item name="notes" label="هل انت متأكد من انشاء مصروف لهذا الشهر" style={{ width: "100%" }} />
           <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading} block size="large">
+        {/*     <Button type="primary" htmlType="submit" loading={loading} block size="large">
               إنشاء
-            </Button>
+            </Button> */}
           </Form.Item>
         </Form>
       </Modal>
