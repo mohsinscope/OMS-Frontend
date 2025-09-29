@@ -156,7 +156,7 @@ const NewActionLogsTable = ({ monthlyExpensesId }) => {
       render: stage => stageMap[stage] || stage,
     },
     {
-      title: 'التعليق',
+      title: 'الملاحظات',
       dataIndex: 'comment',
       key: 'comment',
     },
