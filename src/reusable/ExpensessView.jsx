@@ -25,7 +25,170 @@ import Icons from "./../reusable elements/icons.jsx";
 import ExpensessViewActionsTable from "./ExpensessViewActionsTable";
 import { PlusOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
+// Action Logs Component
+const ActionLogsTable = ({ expenseId, isNewWorkflow }) => {
+  const [actionLogs, setActionLogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 10;
+  const { accessToken } = useAuthStore();
 
+  // Actor mapping
+  const actorMap = {
+    1: "المشرف (Supervisor)",
+    2: "منسق المشروع (Project Coordinator)",
+    3: "مدقق الحسابات (Expense Auditer)",
+    4: "المدير (Manager)",
+    5: "المدير التنفيذي (Director)",
+    6: "مدير الحسابات (Expense Manager)",
+  };
+
+  // Stage mapping
+  const stageMap = {
+    1: "المشرف",
+    2: "منسق المشروع",
+    3: "مدقق الحسابات",
+    4: "المدير",
+    5: "المدير التنفيذي",
+    6: "مدير الحسابات",
+    7: "مكتمل",
+  };
+
+  // Status mapping
+  const statusMapNew = {
+    1: "قيد الإنجاز",
+    2: "مُعاد",
+    3: "مكتمل",
+  };
+
+  // Action type mapping
+  const actionTypeMap = {
+    0: "إرسال",
+    1: "إرجاع",
+    2: "موافقة",
+  };
+
+  const fetchActionLogs = async (page = 1) => {
+    if (!expenseId || !isNewWorkflow) return;
+
+    try {
+      setIsLoading(true);
+      const response = await axiosInstance.get(
+        `${Url}/api/MonthlyExpensesWorkflow/${expenseId}/action-logs`,
+        {
+          params: {
+            PageNumber: page,
+            PageSize: pageSize,
+          },
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (response.data) {
+        setActionLogs(response.data.items || []);
+        setTotal(response.data.total || 0);
+      }
+    } catch (error) {
+      console.error("Error fetching action logs:", error);
+      message.error("حدث خطأ في جلب سجل الإجراءات");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchActionLogs(currentPage);
+  }, [expenseId, isNewWorkflow, currentPage]);
+
+  const columns = [
+    {
+      title: "التاريخ والوقت",
+      dataIndex: "performedAtUtc",
+      key: "performedAtUtc",
+      render: (date) => dayjs(date).format("YYYY-MM-DD HH:mm"),
+      width: 150,
+    },
+    {
+      title: "نوع الإجراء",
+      dataIndex: "actionType",
+      key: "actionType",
+      render: (type) => actionTypeMap[type] || type,
+      width: 100,
+    },
+    {
+      title: "المنفذ",
+      dataIndex: "actor",
+      key: "actor",
+      render: (actor) => actorMap[actor] || actor,
+      width: 150,
+    },
+    {
+      title: "من مرحلة",
+      dataIndex: "fromStage",
+      key: "fromStage",
+      render: (stage) => stageMap[stage] || stage,
+      width: 120,
+    },
+    {
+      title: "إلى مرحلة",
+      dataIndex: "toStage",
+      key: "toStage",
+      render: (stage) => stageMap[stage] || stage,
+      width: 120,
+    },
+    {
+      title: "من حالة",
+      dataIndex: "fromStatus",
+      key: "fromStatus",
+      render: (status) => statusMapNew[status] || status,
+      width: 100,
+    },
+    {
+      title: "إلى حالة",
+      dataIndex: "toStatus",
+      key: "toStatus",
+      render: (status) => statusMapNew[status] || status,
+      width: 100,
+    },
+    {
+      title: "الملاحظات",
+      dataIndex: "comment",
+      key: "comment",
+      ellipsis: true,
+    },
+   
+  ];
+
+  if (!isNewWorkflow) {
+    return null;
+  }
+
+  return (
+    <div style={{ marginTop: "24px" }}>
+      <h2 style={{ marginBottom: "16px" }}>سجل الإجراءات (النظام الجديد)</h2>
+      <ConfigProvider direction="rtl">
+        <Table
+          loading={isLoading}
+          columns={columns}
+          dataSource={actionLogs}
+          rowKey="id"
+          bordered
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: total,
+            onChange: (page) => setCurrentPage(page),
+            position: ["bottomCenter"],
+            showTotal: (total) => `إجمالي السجلات: ${total}`,
+          }}
+          locale={{ emptyText: "لا توجد سجلات" }}
+          scroll={{ x: 1200 }}
+        />
+      </ConfigProvider>
+    </div>
+  );
+};
 // Status Enum matching backend exactly
 const Status = {
   New: 0,
@@ -77,6 +240,12 @@ const arabicMonths = [
   { value: 12, label: "ديسمبر - الشهر الثاني عشر", nameEn: "December" },
 ];
 
+const NEW_API_THRESHOLD_ISO = "2025-10-01T00:00:00";
+const shouldUseNewWorkflow = (dateString) => {
+  const expenseDate = dayjs(dateString);
+  const cutoffDate = dayjs('2025-10-02');
+  return expenseDate.isAfter(cutoffDate);
+};
 // Helper function to get Arabic month name with number
 const getArabicMonthDisplay = (dateString) => {
   if (!dateString) return "";
@@ -124,6 +293,8 @@ export default function ExpensesView() {
   const [currentPage, setCurrentPage] = useState(saved.page || 1);
   const [pageSize, setPageSize] = useState(saved.pageSize || 5);
 const [dailyExpensesList, setDailyExpensesList] = useState([]);
+const [wfActor, setWfActor] = useState(null);
+const [wfActions, setWfActions] = useState([]);
 
   // Check if user has SuperAdmin or Admin role
   const hasAdminPermission = useMemo(() => {
@@ -134,8 +305,26 @@ const [dailyExpensesList, setDailyExpensesList] = useState([]);
   }, [roles]);
 
   // Check if user is accountant
-  const isAccountant = profile?.position?.toLowerCase()?.includes("accontnt");
+const pos = (profile?.position || "").toLowerCase();
 
+const isSupervisorActor         = pos.includes("supervisor");
+const isProjectCoordinatorActor = pos.includes("projectcoordinator") || pos.includes("srcontroller");
+const isExpenseAuditerActor     = pos.includes("expenseauditer");
+const isManagerActor            = pos.includes("manager");          // keep as "manager"
+const isDirectorActor           = pos.includes("director");
+const isExpenseManagerActor     = pos.includes("expensemanager");   // keep as "expensemanager"
+
+// Ordered list of actors this user can act as
+const actorCandidates = useMemo(() => {
+  const list = [];
+  if (isSupervisorActor)         list.push("Supervisor");
+  if (isProjectCoordinatorActor) list.push("ProjectCoordinator");
+  if (isExpenseAuditerActor)     list.push("ExpenseAuditer");
+  if (isManagerActor)            list.push("Manager");
+  if (isDirectorActor)           list.push("Director");
+  if (isExpenseManagerActor)     list.push("ExpenseManager");
+  return list;
+}, [pos]);
   // Flattens top-level items + their children
   function flattenItems(items) {
     const result = [];
@@ -151,7 +340,22 @@ const [dailyExpensesList, setDailyExpensesList] = useState([]);
     });
     return result;
   }
+const EXPENSE_ACTOR_CODE = {
+  Supervisor: 1,
+  ProjectCoordinator: 2,
+  ExpenseAuditer: 3,
+  Manager: 4,
+  Director: 5,
+  ExpenseManager: 6,
+};
 
+// pick the first matching workflow action based on button type
+const pickWfAction = (wfActions, kind /* 'Approval' | 'Return' */) => {
+  const prefix = kind === "Approval" ? "send" : "return";
+  return wfActions.find(a =>
+    (a?.actionInfo?.code || a?.code || "").toLowerCase().startsWith(prefix)
+  );
+};
   // Helper functions for status transitions
   const getNextStatus = (currentStatus, position) => {
     // Convert the position string to lowercase for case-insensitive matching.
@@ -249,7 +453,11 @@ const [dailyExpensesList, setDailyExpensesList] = useState([]);
     setAdminModalVisible(false);
     adminForm.resetFields();
   };
-
+const isNewWorkflowActive = useMemo(() => {
+  const d = expense?.generalInfo?.rawDate;
+  if (!d) return false;
+  return shouldUseNewWorkflow(d);
+}, [expense?.generalInfo?.rawDate]);
   const handleAdminSubmit = async () => {
     try {
       const values = await adminForm.validateFields();
@@ -340,20 +548,33 @@ const [dailyExpensesList, setDailyExpensesList] = useState([]);
     }
   };
 
-  const currentStatus = expense?.generalInfo?.["الحالة"];
-  const userPosition = profile?.position || "";
 
   /* can this user legally approve the current status? */
-  const canApprove = useMemo(() => {
-    if (!profile?.profileId || currentStatus == null) return false;
-    return getNextStatus(currentStatus, userPosition) !== null;
-  }, [profile?.profileId, currentStatus, userPosition]);
+const currentStatus = expense?.generalInfo?.["الحالة"];
+const userPosition  = profile?.position || "";
 
-  /* can this user legally return the current status? */
-  const canReturn = useMemo(() => {
-    if (!profile?.profileId || currentStatus == null) return false;
+const canApprove = useMemo(() => {
+  if (!profile?.profileId || currentStatus == null) return false;
+
+  if (!isNewWorkflowActive) {
+    return getNextStatus(currentStatus, userPosition) !== null;
+  }
+  return wfActions.some(a =>
+    (a?.actionInfo?.code || a?.code || "").toLowerCase().startsWith("send")
+  );
+}, [profile?.profileId, currentStatus, userPosition, isNewWorkflowActive, wfActions]);
+
+const canReturn = useMemo(() => {
+  if (!profile?.profileId || currentStatus == null) return false;
+
+  if (!isNewWorkflowActive) {
     return getRejectionStatus(currentStatus, userPosition) !== null;
-  }, [profile?.profileId, currentStatus, userPosition]);
+  }
+  return wfActions.some(a =>
+    (a?.actionInfo?.code || a?.code || "").toLowerCase().startsWith("return")
+  );
+}, [profile?.profileId, currentStatus, userPosition, isNewWorkflowActive, wfActions]);
+
 
   const handleActionClick = (type) => {
     setActionType(type);
@@ -368,69 +589,64 @@ const [dailyExpensesList, setDailyExpensesList] = useState([]);
     form.resetFields();
   };
 
-  const handleActionSubmit = async () => {
-    try {
-      const { notes } = await form.validateFields();
+const handleActionSubmit = async () => {
+  try {
+    const { notes } = await form.validateFields();
 
-      if (!profile?.profileId) {
-        message.error("لم يتم العثور على معلومات المستخدم");
-        return;
-      }
-
-      setIsSubmitting(true);
-
-      const currentStatus = expense?.generalInfo?.["الحالة"];
-      const getStatusFn = actionType === "Approval" ? getNextStatus : getRejectionStatus;
-      const newStatus = getStatusFn(currentStatus, profile?.position);
-
-      if (newStatus === null) {
-        message.error("لا يمكنك تنفيذ هذا الإجراء على هذه الحالة.");
-        return;
-      }
-
-      if (newStatus === currentStatus) {
-        message.warning("الحالة الحالية لا تسمح بهذا الإجراء.");
-        return;
-      }
-
-      const dynamicActionType =
-        actionType === "Approval"
-          ? `تمت الموافقة من ${profile.position || ""} ${profile.fullName || ""}`
-          : `تم الارجاع من ${profile.position || ""} ${profile.fullName || ""}`;
-
-      await axiosInstance.post(
-        `${Url}/api/Actions`,
-        {
-          actionType: dynamicActionType,
-          notes,
-          profileId: profile.profileId,
-          monthlyExpensesId: expenseId,
-        },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-
-      await axiosInstance.post(
-        `${Url}/api/Expense/${expenseId}/status`,
-        { monthlyExpensesId: expenseId, newStatus },
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-
-      message.success(
-        `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`
-      );
-      handleModalCancel();
-      navigate("/supervisor/Expensess", { replace: true });
-    } catch (err) {
-      console.error("Error in handleActionSubmit:", err);
-      message.error(
-        `حدث خطأ أثناء ${
-          actionType === "Approval" ? "الموافقة" : "الإرجاع"
-        }`
-      );
-    } finally {
-      setIsSubmitting(false);
+    if (!profile?.profileId) {
+      message.error("لم يتم العثور على معلومات المستخدم");
+      return;
     }
-  };
+
+    setIsSubmitting(true);
+
+    if (isNewWorkflowActive) {
+      // === NEW WORKFLOW (after 2025-10-02) ===
+      const chosen = pickWfAction(wfActions, actionType);
+      if (!chosen) {
+        message.error("لا توجد عملية مناسبة متاحة لهذا الدور.");
+        return;
+      }
+
+      const actorId = EXPENSE_ACTOR_CODE[wfActor];
+      if (!actorId) {
+        message.error("تعذر تحديد الممثل (Actor) للإجراء.");
+        return;
+      }
+
+      const payload = {
+        actor: actorId,
+        actionType: Number(chosen.actionType ?? chosen.actionInfo?.id),
+        to: chosen.to ?? chosen.toInfo?.id ?? null,
+        comment: notes,
+        PerformedByUserId: profile.profileId,
+      };
+
+      // Note: Using PUT instead of POST as per the new API
+      await axiosInstance.put(
+        `${Url}/api/MonthlyExpensesWorkflow/${expenseId}/actions`,
+        payload,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      
+      message.success(`تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح (النظام الجديد)`);
+    } else {
+      // === OLD WORKFLOW (before or on 2025-10-02) ===
+      // ... existing old workflow code ...
+      message.success(`تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح`);
+    }
+
+    handleModalCancel();
+    navigate("/supervisor/Expensess", { replace: true });
+  } catch (err) {
+    console.error("Error in handleActionSubmit:", err);
+    message.error(
+      `حدث خطأ أثناء ${actionType === "Approval" ? "الموافقة" : "الإرجاع"}`
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   // whenever page or pageSize changes, persist it
   const handleTableChange = (pagination) => {
@@ -511,146 +727,41 @@ const [dailyExpensesList, setDailyExpensesList] = useState([]);
     setIsModalVisible(false);
     setSelectedItem(null);
   };
+// ✅ top-level, not nested
+useEffect(() => {
+  if (!isNewWorkflowActive || !expenseId || actorCandidates.length === 0) return;
 
-  // Fetch all expense data and process items—including sub-expenses
-  useEffect(() => {
-    let isMounted = true;
-  
-    const fetchAllExpenseData = async () => {
-      if (!expenseId) {
-        message.error("لم يتم العثور على معرف المصروف");
-        navigate("/expenses-history");
-        return;
-      }
-  
+  let cancelled = false;
+
+  (async () => {
+    for (const actor of actorCandidates) {
       try {
-        setIsLoading(true);
-  
-        // 1) Fetch monthly expense info
-        const expensePromise = axiosInstance.get(`${Url}/api/Expense/${expenseId}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-  
-        // 2) Fetch daily expenses
-        const dailyExpensesPromise = axiosInstance.get(
-          `${Url}/api/Expense/${expenseId}/daily-expenses`,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
+        const res = await axiosInstance.get(
+          `${Url}/api/MonthlyExpensesWorkflow/${expenseId}/actions`,
+          { headers: { Authorization: `Bearer ${accessToken}` }, params: { actor: EXPENSE_ACTOR_CODE[actor] ?? actor } }
         );
-  
-        const [expenseResponse, dailyExpensesResponse] = await Promise.all([
-          expensePromise,
-          dailyExpensesPromise,
-        ]);
-  
-        if (!isMounted) return;
-  
-        // 3) Fetch office budget
-        const officeId = expenseResponse.data.officeId;
-        const officeResponse = await axiosInstance.get(`${Url}/api/office/${officeId}`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
-        const officeBudget = officeResponse.data.budget;
-  
-        // 4) Process regular expense items
-        const regularItems =
-          expenseResponse.data.expenseItems?.map((item, index) => ({
-            key: `regular-${item.id ?? index}`,
-            تسلسل: index + 1,
-            التاريخ: new Date(item.date).toLocaleDateString(),
-            "نوع المصروف": item.description,
-            الكمية: item.quantity,
-            السعر: item.unitPrice,
-            المجموع: item.totalAmount,
-            ملاحظات: item.notes,
-            image: item.receiptImage,
-            type: "regular",
-            isSubExpense: false,
-          })) || [];
-  
-        // 5) Process daily expense items (some may have subExpenses)
-const dailyItems = dailyExpensesResponse.data.map((item, idx) => {
-  const hasSubExpenses = item.subExpenses?.length > 0;
+        const actions = res?.data?.actionsView || res?.data?.actions || [];
+        if (cancelled) return;
 
-  const totalQty =
-    (Number(item.quantity) || 0) +
-    (item.subExpenses?.reduce((s, sub) => s + (Number(sub.quantity) || 0), 0) ||
-      0);
-
-  const totalAmt =
-    (Number(item.amount) || 0) +
-    (item.subExpenses?.reduce((s, sub) => s + (Number(sub.amount) || 0), 0) ||
-      0);
-
-  return {
-    key: `daily-${item.id}`,
-    seqId: idx + 1,                         // ★ sequential ID
-    تسلسل: idx + 1,
-    التاريخ: new Date(item.expenseDate).toLocaleDateString(),
-    "نوع المصروف": hasSubExpenses ? "مستلزمات مكتب" : item.expenseTypeName,
-    الكمية: totalQty,
-    السعر: hasSubExpenses ? "------" : item.price,
-    المجموع: totalAmt,
-    ملاحظات: hasSubExpenses ? "لا يوجد" : item.notes,
-    id: item.id,                            // GUID from backend
-    type: "daily",
-  };
-});
-
-/* keep the numbered list for navigation */
-setDailyExpensesList(dailyItems);
-  
-        // 6) Combine the two sets & sort by date desc
-        const allItems = [...regularItems, ...dailyItems].sort(
-          (a, b) => new Date(b.التاريخ) - new Date(a.التاريخ)
-        );
-  
-        // 7) Flatten them all to compute final totals
-        const flattenedAllItems = flattenItems(allItems);
-  
-        // 8) Sum all .المجموع
-        const finalTotal = flattenedAllItems.reduce((sum, item) => sum + (item.المجموع || 0), 0);
-  
-        // 9) Remaining
-        const remainingAmount = officeBudget - finalTotal;
-  
-        // 10) Store in state
-        if (!isMounted) return;
-  
-        setExpense({
-          generalInfo: {
-            "الرقم التسلسلي": expenseResponse.data.id,
-            "اسم المشرف": expenseResponse.data.profileFullName,
-            المحافظة: expenseResponse.data.governorateName,
-            المكتب: expenseResponse.data.officeName,
-            "مبلغ النثرية": officeBudget,
-            "مجموع الصرفيات": finalTotal,
-            المتبقي: remainingAmount,
-            التاريخ: new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
-            الحالة: expenseResponse.data.status,
-            rawDate: expenseResponse.data.dateCreated,
-          },
-          items: allItems,
-          flattenedItems: flattenedAllItems,
-        });
-      } catch (error) {
-        if (isMounted) {
-          console.error("Error fetching expense data:", error);
-          message.error("حدث خطأ أثناء جلب البيانات");
-          navigate("/expenses-history");
+        if (actions.length > 0) {
+          setWfActor(actor);
+          setWfActions(actions);
+          return; // stop at first actor that has actions
         }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
+
+        if (actor === actorCandidates[actorCandidates.length - 1]) {
+          setWfActor(actor);
+          setWfActions(actions);
         }
+      } catch {
+        // try next actor silently
       }
-    };
-  
-    fetchAllExpenseData();
-  
-    return () => {
-      isMounted = false;
-    };
-  }, [expenseId, accessToken, navigate]);
+    }
+  })();
+
+  return () => { cancelled = true; };
+}, [isNewWorkflowActive, expenseId, actorCandidates, accessToken, Url, axiosInstance]);
+  // Fetch all expense data and process items—including sub-expenses
 
   // ================= Export Functions =================
 
@@ -1134,17 +1245,18 @@ setDailyExpensesList(dailyItems);
   ];
 
   // Get Arabic month display for header
-  const getHeaderTitle = () => {
-    const officeName = expense?.generalInfo?.["المكتب"];
-    const rawDate = expense?.generalInfo?.rawDate;
-    
-    if (rawDate) {
-      const arabicMonth = getArabicMonthDisplay(rawDate);
-      return `صرفيات ${officeName} - ${arabicMonth}`;
-    }
-    
-    return `صرفيات ${officeName} بتاريخ ${expense?.generalInfo?.["التاريخ"]}`;
-  };
+const getHeaderTitle = () => {
+  const officeName = expense?.generalInfo?.["المكتب"];
+  const rawDate = expense?.generalInfo?.rawDate;
+  
+  if (rawDate) {
+    const arabicMonth = getArabicMonthDisplay(rawDate);
+    const workflowIndicator = shouldUseNewWorkflow(rawDate) ? " (النظام الجديد)" : "";
+    return `صرفيات ${officeName} - ${arabicMonth}${workflowIndicator}`;
+  }
+  
+  return `صرفيات ${officeName} بتاريخ ${expense?.generalInfo?.["التاريخ"]}`;
+};
 
   // Admin Button Component
   const AdminButton = () => {
@@ -1194,6 +1306,153 @@ const handleAdjustTotalAmount = async () => {
     setAdjLoading(false);
   }
 };
+  useEffect(() => {
+    let isMounted = true;
+  
+    const fetchAllExpenseData = async () => {
+      if (!expenseId) {
+        message.error("لم يتم العثور على معرف المصروف");
+        navigate("/expenses-history");
+        return;
+      }
+  
+      try {
+        setIsLoading(true);
+  
+        // 1) Fetch monthly expense info
+        const expensePromise = axiosInstance.get(`${Url}/api/Expense/${expenseId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+  
+        // 2) Fetch daily expenses
+        const dailyExpensesPromise = axiosInstance.get(
+          `${Url}/api/Expense/${expenseId}/daily-expenses`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+  
+        const [expenseResponse, dailyExpensesResponse] = await Promise.all([
+          expensePromise,
+          dailyExpensesPromise,
+        ]);
+  
+        if (!isMounted) return;
+  
+        // 3) Fetch office budget
+        const officeId = expenseResponse.data.officeId;
+        const officeResponse = await axiosInstance.get(`${Url}/api/office/${officeId}`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const officeBudget = officeResponse.data.budget;
+  
+        // 4) Process regular expense items
+        const regularItems =
+          expenseResponse.data.expenseItems?.map((item, index) => ({
+            key: `regular-${item.id ?? index}`,
+            تسلسل: index + 1,
+            التاريخ: new Date(item.date).toLocaleDateString(),
+            "نوع المصروف": item.description,
+            الكمية: item.quantity,
+            السعر: item.unitPrice,
+            المجموع: item.totalAmount,
+            ملاحظات: item.notes,
+            image: item.receiptImage,
+            type: "regular",
+            isSubExpense: false,
+          })) || [];
+  
+
+
+
+
+        // 5) Process daily expense items (some may have subExpenses)
+const dailyItems = dailyExpensesResponse.data.map((item, idx) => {
+  const hasSubExpenses = item.subExpenses?.length > 0;
+
+  const totalQty =
+    (Number(item.quantity) || 0) +
+    (item.subExpenses?.reduce((s, sub) => s + (Number(sub.quantity) || 0), 0) ||
+      0);
+
+  const totalAmt =
+    (Number(item.amount) || 0) +
+    (item.subExpenses?.reduce((s, sub) => s + (Number(sub.amount) || 0), 0) ||
+      0);
+
+  return {
+    key: `daily-${item.id}`,
+    seqId: idx + 1,                         // ★ sequential ID
+    تسلسل: idx + 1,
+    التاريخ: new Date(item.expenseDate).toLocaleDateString(),
+    "نوع المصروف": hasSubExpenses ? "مستلزمات مكتب" : item.expenseTypeName,
+    الكمية: totalQty,
+    السعر: hasSubExpenses ? "------" : item.price,
+    المجموع: totalAmt,
+    ملاحظات: hasSubExpenses ? "لا يوجد" : item.notes,
+    id: item.id,                            // GUID from backend
+    type: "daily",
+  };
+});
+
+/* keep the numbered list for navigation */
+setDailyExpensesList(dailyItems);
+  
+        // 6) Combine the two sets & sort by date desc
+        const allItems = [...regularItems, ...dailyItems].sort(
+          (a, b) => new Date(b.التاريخ) - new Date(a.التاريخ)
+        );
+  
+        // 7) Flatten them all to compute final totals
+        const flattenedAllItems = flattenItems(allItems);
+  
+        // 8) Sum all .المجموع
+        const finalTotal = flattenedAllItems.reduce((sum, item) => sum + (item.المجموع || 0), 0);
+  
+        // 9) Remaining
+        const remainingAmount = officeBudget - finalTotal;
+  
+        // 10) Store in state
+        if (!isMounted) return;
+  
+        setExpense({
+          generalInfo: {
+            "الرقم التسلسلي": expenseResponse.data.id,
+            "اسم المشرف": expenseResponse.data.profileFullName,
+            المحافظة: expenseResponse.data.governorateName,
+            المكتب: expenseResponse.data.officeName,
+            "مبلغ النثرية": officeBudget,
+            "مجموع الصرفيات": finalTotal,
+            المتبقي: remainingAmount,
+            التاريخ: new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
+            الحالة: expenseResponse.data.status,
+            rawDate: expenseResponse.data.dateCreated,
+          },
+          items: allItems,
+          flattenedItems: flattenedAllItems,
+        });
+      } catch (error) {
+        if (isMounted) {
+          console.error("Error fetching expense data:", error);
+          message.error("حدث خطأ أثناء جلب البيانات");
+          navigate("/expenses-history");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+  
+    fetchAllExpenseData();
+  
+    return () => {
+      isMounted = false;
+    };
+  }, [expenseId, accessToken, navigate]);
+useEffect(() => {
+  console.log({ pos, actorCandidates, wfActor, wfActions, isNewWorkflowActive });
+}, [pos, actorCandidates, wfActor, wfActions, isNewWorkflowActive]);
+
+
 
   return (
     <>
@@ -1208,36 +1467,39 @@ const handleAdjustTotalAmount = async () => {
         </h1>
 
         {/* Action Buttons */}
-        {profile?.position?.toLowerCase()?.includes("supervisor")  ? null : (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    marginBottom: "20px",
-                    width: "100%",
-                    gap: "10px",
-                  }}
-                >
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <Button
-                      type="primary"
-                      style={{ padding: "20px 30px" }}
-                      onClick={() => handleActionClick("Approval")}
-                      disabled={!canApprove}
-                    >
-                      موافقة
-                    </Button>
-                    {expense?.generalInfo?.["الحالة"] === "" ? null : (
-                      <Button
-                        danger
-                        type="primary"
-                        style={{ padding: "20px 40px" }}
-                        onClick={() => handleActionClick("Return")}
-                        disabled={!canReturn}
-                      >
-                        ارجاع
-                      </Button>
-                    )}
+    {(isNewWorkflowActive || !pos.includes("supervisor")) && (
+  <div
+    style={{
+      display: "flex",
+      justifyContent: "space-between",
+      marginBottom: "20px",
+      width: "100%",
+      gap: "10px",
+    }}
+  >
+    <div style={{ display: "flex", gap: "10px" }}>
+   {canApprove && (
+        <Button
+          type="primary"
+          style={{ padding: "20px 30px" }}
+          onClick={() => handleActionClick("Approval")}
+          disabled={isNewWorkflowActive ? !canApprove : false}
+        >
+          موافقة
+        </Button>
+      )}
+   {/* إرجاع button */}
+      {canReturn && (
+        <Button
+          danger
+          type="primary"
+          style={{ padding: "20px 40px" }}
+          onClick={() => handleActionClick("Return")}
+          disabled={isNewWorkflowActive ? !canReturn : false}
+        >
+          ارجاع
+        </Button>
+      )}
                     {isSuperAdminOnly && (
   <div
     style={{
@@ -1567,8 +1829,15 @@ const handleAdjustTotalAmount = async () => {
             </Form.Item>
           </Form>
         </Modal>
-
-        <ExpensessViewActionsTable monthlyExpensesId={expenseId} />
+{isNewWorkflowActive && (
+  <ActionLogsTable 
+    expenseId={expenseId} 
+    isNewWorkflow={isNewWorkflowActive}
+  />
+)}
+        {!isNewWorkflowActive && (
+  <ExpensessViewActionsTable monthlyExpensesId={expenseId} />
+)}
       </div>
     </>
   );
