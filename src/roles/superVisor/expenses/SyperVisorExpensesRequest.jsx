@@ -29,6 +29,9 @@ dayjs.extend(utc);
 dayjs.locale("ar");          // ← set globally to Arabic
 import "./styles/SuperVisorExpinsesRequest.css";
 
+const CUTOFF_ISO = '2025-10-02';
+const shouldUseNewWorkflow = (dateString) =>
+  dayjs(dateString).isAfter(dayjs(CUTOFF_ISO));
 export default function SuperVisorExpensesRequest() {
   const { profile, isSidebarCollapsed } = useAuthStore();
   const [currentMonthlyExpenseId, setCurrentMonthlyExpenseId] = useState(null);
@@ -345,43 +348,110 @@ const disableOtherMonths = (current) => {
     }
   };
 
-  const handleSendMonthlyExpense = async (values) => {
-    try {
-      setSendLoading(true);
+const handleSendMonthlyExpense = async (values) => {
+  try {
+    setSendLoading(true);
 
+    // First, fetch the monthly expense to get its actual creation date
+    const monthlyExpenseResponse = await axiosInstance.get(
+      `/api/Expense/${currentMonthlyExpenseId}`
+    );
+    
+    const monthlyExpenseDate = monthlyExpenseResponse.data.dateCreated;
+    
+    // Check if we should use new workflow based on the MONTHLY EXPENSE date, not today's date
+    const useNewWorkflow = shouldUseNewWorkflow(monthlyExpenseDate);
+    
+    console.log("Monthly Expense Date:", monthlyExpenseDate);
+    console.log("Should use new workflow:", useNewWorkflow);
+
+    if (useNewWorkflow) {
+      // NEW METHOD - For monthly expenses created AFTER 2025-10-02
+      
+      // 1) Fetch available actions for Supervisor
+      const { data } = await axiosInstance.get(
+        `/api/MonthlyExpensesWorkflow/${currentMonthlyExpenseId}/actions`,
+        { params: { actor: 'Supervisor' } }
+      );
+
+      // Extract all numeric values from the response
+      const actor = data.actor; // Will be 1
+      const actions = data.actions || [];
+      
+      // Find the send action
+      const sendAction = actions[0];
+      
+      if (!sendAction) {
+        message.error("لا يمكن إرسال المصروف في الوقت الحالي - لا توجد إجراءات متاحة");
+        setSendLoading(false);
+        return;
+      }
+
+      // 2) Execute the action using all numeric values from response
+      await axiosInstance.put(
+        `/api/MonthlyExpensesWorkflow/${currentMonthlyExpenseId}/actions`,
+        {
+          actor: actor,                      // 1 (from response)
+          actionType: sendAction.actionType, // 0 (from response)
+          to: sendAction.to,                 // 2 (from response)
+          comment: values?.notes || "تم الإرسال من قبل المشرف",
+          PerformedByUserId: profile?.profileId, // User's GUID
+        }
+      );
+
+      message.success("تم إرسال المصروف الشهري بنجاح (النظام الجديد)");
+      
+    } else {
+      // OLD METHOD - For monthly expenses created BEFORE or ON 2025-10-02
+      
       const actionPayload = {
         actionType: `تم ارسال الصرفيات من قبل ${profile.position || ""} ${profile.fullName || ""}`,
-        notes: values.notes || "",
+        notes: values?.notes || "",
         monthlyExpensesId: currentMonthlyExpenseId,
       };
-
       await axiosInstance.post("/api/Actions", actionPayload);
 
       const statusPayload = {
         monthlyExpensesId: currentMonthlyExpenseId,
         newStatus: 1,
       };
-
       await axiosInstance.post(`/api/Expense/${currentMonthlyExpenseId}/status`, statusPayload);
 
-      message.success("تم إرسال المصروف الشهرية بنجاح");
-      setIsSendModalVisible(false);
-      sendForm.resetFields();
-
-      // Reset current monthly data
-      setCurrentMonthlyExpenseId(null);
-      setCurrentMonthDailyExpenses([]);
-      setCanCreateMonthly(true);
-
-      // Refresh last month expense data
-      fetchLastMonthExpense();
-    } catch (error) {
-      console.error("Error sending monthly expense:", error);
-      message.error("حدث خطأ في إرسال المصروف الشهرية");
-    } finally {
-      setSendLoading(false);
+      message.success("تم إرسال المصروف الشهري");
     }
-  };
+
+    // Reset state after successful send
+    setIsSendModalVisible(false);
+    sendForm.resetFields();
+    setCurrentMonthlyExpenseId(null);
+    setCurrentMonthDailyExpenses([]);
+    setOfficeInfo(prev => ({ ...prev, totalExpenses: 0, totalCount: 0 }));
+    setCanCreateMonthly(true);
+    
+    // Refresh data
+    await fetchLastMonthExpense();
+    await fetchMonthlyExpense();
+    
+  } catch (error) {
+    console.error("Error sending monthly expense:", error);
+    console.error("Error details:", error.response?.data);
+    
+    if (error.response?.status === 404) {
+      message.error("لم يتم العثور على المصروف الشهري");
+    } else if (error.response?.status === 400) {
+      const errorMsg = error.response?.data?.errors ? 
+        Object.values(error.response.data.errors).flat().join(', ') : 
+        "البيانات المرسلة غير صحيحة";
+      message.error(errorMsg);
+    } else if (error.response?.data?.message) {
+      message.error(error.response.data.message);
+    } else {
+      message.error("حدث خطأ في إرسال المصروف الشهري");
+    }
+  } finally {
+    setSendLoading(false);
+  }
+};
 
   const statusDisplayNames = {
     New: "جديد",
@@ -988,17 +1058,31 @@ const disableOtherMonths = (current) => {
               </ConfigProvider> 
           <Form.Item name="notes" label="هل انت متأكد من انشاء مصروف لهذا الشهر" style={{ width: "100%" }} />
           <Form.Item>
-        {/*     <Button type="primary" htmlType="submit" loading={loading} block size="large">
+            <Button type="primary" htmlType="submit" loading={loading} block size="large">
               إنشاء
-            </Button> */}
+            </Button>
           </Form.Item>
         </Form>
       </Modal>
 
       {/* Send Monthly Expense Modal */}
-      <Modal
-        title="إرسال المصروف الشهري"
-        open={isSendModalVisible}
+  <Modal
+title={
+  <div>
+    إرسال المصروف الشهري
+    {shouldUseNewWorkflow(officeInfo.date) && (
+      <span style={{ 
+        marginRight: '10px', 
+        fontSize: '12px', 
+        color: '#1890ff',
+        fontWeight: 'normal' 
+      }}>
+        (النظام الجديد)
+      </span>
+    )}
+  </div>
+}
+  open={isSendModalVisible}
         onCancel={() => {
           setIsSendModalVisible(false);
           sendForm.resetFields();

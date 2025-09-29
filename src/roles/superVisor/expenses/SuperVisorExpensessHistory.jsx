@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Table,
   message,
@@ -83,9 +83,25 @@ const arabicMonths = [
   { value: 11, label: "نوفمبر - الشهر الحادي عشر", nameEn: "November" },
   { value: 12, label: "ديسمبر - الشهر الثاني عشر", nameEn: "December" },
 ];
+const NEW_API_THRESHOLD_ISO = "2025-10-02T00:00:00Z";
+const expenseStageOptions = [
+  { value: 1, label: "المشرف" },
+  { value: 2, label: "منسق المشروع" },
+  { value: 3, label: "مدقق الحسابات" },
+  { value: 4, label: "المدير" },
+  { value: 5, label: "المدير التنفيذي" },
+  { value: 6, label: "مدير الحسابات" },
+  { value: 7, label: "مكتمل" },
+];
 
+const expenseStatusOptions = [
+  { value: 1, label: "قيد الإنجاز" },
+  { value: 2, label: "مُعاد" },
+  { value: 3, label: "مكتمل" },
+];
 /** NEW: LocalStorage key for caching filters & pagination. */
 const STORAGE_KEY_EXPENSES = "supervisorExpensesSearchFilters";
+
 
 export default function SuperVisorExpensesHistory() {
   // ------------------------------------------------------------------------------------------------
@@ -110,6 +126,9 @@ export default function SuperVisorExpensesHistory() {
   const [totalRecords, setTotalRecords] = useState(0);
   const pageSize = 10;
 
+  // NEW (only used when date >= Oct 2025):
+const [stage, setStage] = useState(null);
+const [expenseStatus, setExpenseStatus] = useState(null);
   // Store / profile
   const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } =
     useAuthStore();
@@ -118,7 +137,8 @@ export default function SuperVisorExpensesHistory() {
   const isAdmin = roles.includes("SuperAdmin");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
-
+const isRowNewSchema = (rec) =>
+  dayjs(rec?.dateCreated).valueOf() >= dayjs(NEW_API_THRESHOLD_ISO).valueOf();
   // ------------------------------------------------------------------------------------------------
   // Status Filtering Logic
   // ------------------------------------------------------------------------------------------------
@@ -202,7 +222,18 @@ export default function SuperVisorExpensesHistory() {
       setSelectedMonth(null);
     }
   };
+const getEffectiveStartDayjs = () => {
+  if (selectedMonth) return dayjs().year(selectedYear).month(selectedMonth - 1).date(1);
+  if (startDate) return startDate;
+  return null;
+};
 
+/** NEW: Are we on/after 1 Oct 2025? If yes → use new payload (with stage/expenseStatus). */
+const isNewSchemaActive = () => {
+  const eff = getEffectiveStartDayjs();
+  if (!eff) return false;
+  return eff.startOf("day").valueOf() >= dayjs(NEW_API_THRESHOLD_ISO).valueOf();
+};
   // Generate years for dropdown (current year ± 5 years)
   const generateYears = () => {
     const currentYear = new Date().getFullYear();
@@ -280,6 +311,11 @@ export default function SuperVisorExpensesHistory() {
         PageSize: pageSize,
       },
     };
+    // NEW: Switch to the new payload fields when date >= 1 Oct 2025
+    if (isNewSchemaActive()) {
+      searchBody.stage = stage ?? null;              // e.g. 7
+      searchBody.expenseStatus = expenseStatus ?? null;
+    }
 
     // Console log all search parameters
     console.log("=== SEARCH PARAMETERS ===");
@@ -295,7 +331,7 @@ export default function SuperVisorExpensesHistory() {
     console.log("Selected Month:", selectedMonth);
     console.log("Selected Year:", selectedYear);
     console.log("========================");
-
+console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatus:", expenseStatus);
     // If user is not admin/supervisor/ProjectCoordinator/SrController and hasn't chosen statuses, use only what's allowed
     if (
       selectedStatuses.length === 0 &&
@@ -434,6 +470,8 @@ export default function SuperVisorExpensesHistory() {
           currentPage: savedPage,
           selectedMonth: savedMonth,
           selectedYear: savedYear,
+                    stage: savedStage,
+          expenseStatus: savedExpenseStatus,
         } = parsed;
   
         // If supervisor, we typically override with user-based governorate/office
@@ -454,7 +492,8 @@ export default function SuperVisorExpensesHistory() {
         setSelectedStatuses(savedStatuses || []);
         setSelectedMonth(savedMonth || null);
         setSelectedYear(savedYear || new Date().getFullYear());
-  
+          setStage(savedStage ?? null);
+        setExpenseStatus(savedExpenseStatus ?? null);
         const finalPage = savedPage || 1;
         setCurrentPage(finalPage);
   
@@ -548,6 +587,9 @@ export default function SuperVisorExpensesHistory() {
       selectedMonth,
       selectedYear,
       currentPage: page,
+          // NEW: persist new-api fields
+    stage,
+    expenseStatus,
     };
     localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(filtersData));
   };
@@ -564,6 +606,8 @@ export default function SuperVisorExpensesHistory() {
     setEndDate(null);
     setSelectedMonth(null);
     setSelectedYear(new Date().getFullYear());
+   setStage(null);
+  setExpenseStatus(null);
     
     if (
       isAdmin ||
@@ -600,6 +644,16 @@ export default function SuperVisorExpensesHistory() {
     fetchExpensesData(page);
   };
 
+
+// Move these outside the component or define them at the top
+const stageLabelMap = Object.fromEntries(
+  expenseStageOptions.map(o => [o.value, o.label])
+);
+
+const expenseStatusLabelMap = Object.fromEntries(
+  expenseStatusOptions.map(o => [o.value, o.label])
+);
+
   // ------------------------------------------------------------------------------------------------
   // Report / Export
   // ------------------------------------------------------------------------------------------------
@@ -618,7 +672,10 @@ export default function SuperVisorExpensesHistory() {
           PageSize: totalRecords || 99999,
         },
       };
-
+     if (isNewSchemaActive()) {
+        searchBody.stage = stage ?? null;
+        searchBody.expenseStatus = expenseStatus ?? null;
+      }
       const response = await axiosInstance.post(`${Url}/api/Expense/search`, searchBody, {
         headers: {
           "Content-Type": "application/json",
@@ -705,7 +762,10 @@ export default function SuperVisorExpensesHistory() {
           PageSize: totalRecords || 99999,
         },
       };
-
+      if (isNewSchemaActive()) {
+        searchBody.stage = stage ?? null;
+        searchBody.expenseStatus = expenseStatus ?? null;
+      }
       const response = await axiosInstance.post(`${Url}/api/Expense/search`, searchBody, {
         headers: {
           "Content-Type": "application/json",
@@ -800,6 +860,7 @@ export default function SuperVisorExpensesHistory() {
   // ------------------------------------------------------------------------------------------------
   // Table Columns
   // ------------------------------------------------------------------------------------------------
+  const newSchemaActive = isNewSchemaActive();
   const columns = [
     {
       title: "المحافظة",
@@ -823,18 +884,37 @@ export default function SuperVisorExpensesHistory() {
             })
           : value,
     },
-    {
-      title: "الحالة",
-      dataIndex: "status",
-      key: "status",
-      render: (value) => {
-        if (typeof value === "string") {
-          const enumValue = Status[value];
-          return statusDisplayNames[enumValue] || value;
-        }
-        return statusDisplayNames[value] || value;
-      },
-    },
+    // ⬇️ Conditional columns
+   ...(newSchemaActive
+      ? [
+          {
+            title: "المرحلة",
+            dataIndex: "stage",
+            key: "stage",
+            render: (v) => stageLabelMap[v] || v || "-",
+          },
+          {
+            title: "حالة الصرفية", 
+            dataIndex: "expenseStatus",
+            key: "expenseStatus",
+            render: (v) => expenseStatusLabelMap[v] || v || "-",
+          },
+        ]
+      : [
+{
+  title: "الحالة",
+  key: "statusUnified",
+  render: (_, record) => {
+    if (isRowNewSchema(record)) {
+      const stageName = stageLabelMap[record.stage] ?? "-";
+      const statusName = expenseStatusLabelMap[record.expenseStatus] ?? "-";
+      return `${stageName} - ${statusName}`;
+    }
+    const v = typeof record.status === "string" ? Status[record.status] : record.status;
+    return statusDisplayNames[v] || "-";
+  },
+}
+        ]),
     {
       title: "التاريخ",
       dataIndex: "dateCreated",
@@ -845,34 +925,22 @@ export default function SuperVisorExpensesHistory() {
       title: "التفاصيل",
       key: "details",
       render: (_, record) => {
-        // Supervisor logic
-        const expenseStatus =
+        const expStatusValue =
           typeof record.status === "string"
             ? Status[record.status]
             : record.status;
 
-        // If supervisor and status is New or ReturnedToSupervisor, go to different route
         if (
           isSupervisor &&
-          (expenseStatus === Status.New ||
-            expenseStatus === Status.ReturnedToSupervisor||
-            expenseStatus === Status.RecievedBySupervisor)
+          (expStatusValue === Status.New ||
+            expStatusValue === Status.ReturnedToSupervisor ||
+            expStatusValue === Status.RecievedBySupervisor)
         ) {
           return (
-            <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>
-              <Button
-                type="primary"
-                size="large"
-                className="supervisor-expenses-history-details-link"
-              >
-                عرض
-              </Button>
-            </Link>
-          );
-        } else {
-          // Default route
-          return (
-            <Link to="/expenses-view" state={{ expense: record }}>
+            <Link
+              to="/ExpensessViewMonthly"
+              state={{ monthlyExpenseId: record.id }}
+            >
               <Button
                 type="primary"
                 size="large"
@@ -883,6 +951,18 @@ export default function SuperVisorExpensesHistory() {
             </Link>
           );
         }
+
+        return (
+          <Link to="/expenses-view" state={{ expense: record }}>
+            <Button
+              type="primary"
+              size="large"
+              className="supervisor-expenses-history-details-link"
+            >
+              عرض
+            </Button>
+          </Link>
+        );
       },
     },
   ];
@@ -906,6 +986,7 @@ export default function SuperVisorExpensesHistory() {
         <Skeleton active paragraph={{ rows: 10 }} />
       ) : (
         <>
+      
           <div
             className={`supervisor-passport-dameged-filters ${
               searchVisible ? "animate-show" : "animate-hide"
@@ -997,30 +1078,59 @@ export default function SuperVisorExpensesHistory() {
               </Select>
             </div>
 
-            <div className="filter-field">
-              <label>الحالة</label>
-              <Select
-                mode="multiple"
-                value={selectedStatuses}
-                onChange={(values) => setSelectedStatuses(values)}
-                placeholder="اختر الحالات"
-                maxTagCount={3}
-                maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
-                className="filter-dropdown"
-                style={{ maxHeight: "200px", overflowY: "auto", width: "250px" }}
-              >
-                {availableStatuses.map((statusValue) => (
-                  <Select.Option
-                    key={statusValue}
-                    value={statusValue}
-                    className="supervisor-expenses-history-select-option"
-                  >
-                    {statusDisplayNames[statusValue]}
-                  </Select.Option>
-                ))}
-              </Select>
-            </div>
+      {!isNewSchemaActive() && (
+  <div className="filter-field">
+    <label>الحالة</label>
+    <Select
+      mode="multiple"
+      value={selectedStatuses}
+      onChange={(values) => setSelectedStatuses(values)}
+      placeholder="اختر الحالات"
+      maxTagCount={3}
+      maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
+      className="filter-dropdown"
+      style={{ maxHeight: "200px", overflowY: "auto", width: "250px" }}
+    >
+      {availableStatuses.map((statusValue) => (
+        <Select.Option
+          key={statusValue}
+          value={statusValue}
+          className="supervisor-expenses-history-select-option"
+        >
+          {statusDisplayNames[statusValue]}
+        </Select.Option>
+      ))}
+    </Select>
+  </div>
+)}
+ {isNewSchemaActive() && (  <>
+    <div className="filter-field">
+      <label>المرحلة </label>
+      <Select
+        allowClear
+        value={stage}
+        onChange={(v) => setStage(v ?? null)}
+        placeholder="اختر المرحلة"
+        options={expenseStageOptions}
+        className="filter-dropdown"
+        style={{ width: "220px" }}
+      />
+    </div>
 
+    <div className="filter-field">
+      <label>حالة الصرفية </label>
+      <Select
+        allowClear
+        value={expenseStatus}
+        onChange={(v) => setExpenseStatus(v ?? null)}
+        placeholder="اختر الحالة"
+        options={expenseStatusOptions}
+        className="filter-dropdown"
+        style={{ width: "220px" }}
+      />
+    </div>
+  </>
+)}
             {/* Date Range Filters - Disabled when month is selected */}
             <div className="filter-field">
               <label>التاريخ من</label>

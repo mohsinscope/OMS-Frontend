@@ -21,9 +21,13 @@ import axiosInstance from '../../../intercepters/axiosInstance';
 import useAuthStore from '../../../store/store';
 import './styles/ExpensessViewMonthly.css';
 import { PieChart, Pie, Cell, Tooltip } from 'recharts';
-
+import dayjs from 'dayjs';
 const { TextArea } = Input;
-
+const shouldUseNewWorkflow = (dateString) => {
+  const expenseDate = dayjs(dateString);
+  const cutoffDate = dayjs('2025-10-02');
+  return expenseDate.isAfter(cutoffDate);
+};
 // Actions Table Component
 const ActionsTable = ({ monthlyExpensesId }) => {
   const [actions, setActions] = useState([]);
@@ -79,7 +83,105 @@ const ActionsTable = ({ monthlyExpensesId }) => {
     </ConfigProvider>
   );
 };
+// New Action Logs Table Component for workflow after 2025/10/02
+const NewActionLogsTable = ({ monthlyExpensesId }) => {
+  const [actionLogs, setActionLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
+  const actorMap = {
+    1: "المشرف",
+    2: "منسق المشروع",
+    3: "مدقق الحسابات",
+    4: "المدير",
+    5: "المدير التنفيذي",
+    6: "مدير الحسابات",
+  };
+
+  const stageMap = {
+    1: "المشرف",
+    2: "منسق المشروع",
+    3: "مدقق الحسابات",
+    4: "المدير",
+    5: "المدير التنفيذي",
+    6: "مدير الحسابات",
+    7: "مكتمل",
+  };
+
+  const fetchActionLogs = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axiosInstance.get(
+        `/api/MonthlyExpensesWorkflow/${monthlyExpensesId}/action-logs`,
+        { params: { PageNumber: currentPage, PageSize: 10 } }
+      );
+      setActionLogs(data.items || []);
+      setTotal(data.total || 0);
+    } catch (error) {
+      console.error('Error fetching action logs:', error);
+      message.error('حدث خطأ في جلب سجل الإجراءات');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (monthlyExpensesId) fetchActionLogs();
+  }, [monthlyExpensesId, currentPage]);
+
+  const columns = [
+    {
+      title: 'التاريخ والوقت',
+      dataIndex: 'performedAtUtc',
+      key: 'performedAtUtc',
+      render: date => dayjs(date).format('YYYY-MM-DD HH:mm'),
+    },
+    {
+      title: 'المنفذ',
+      dataIndex: 'actor',
+      key: 'actor',
+      render: actor => actorMap[actor] || actor,
+    },
+    {
+      title: 'من مرحلة',
+      dataIndex: 'fromStage',
+      key: 'fromStage',
+      render: stage => stageMap[stage] || stage,
+    },
+    {
+      title: 'إلى مرحلة',
+      dataIndex: 'toStage',
+      key: 'toStage',
+      render: stage => stageMap[stage] || stage,
+    },
+    {
+      title: 'التعليق',
+      dataIndex: 'comment',
+      key: 'comment',
+    },
+  ];
+
+  return (
+    <ConfigProvider direction="rtl">
+      <Table
+        className="actions-table"
+        columns={columns}
+        dataSource={actionLogs}
+        loading={loading}
+        rowKey="id"
+        pagination={{
+          current: currentPage,
+          pageSize: 10,
+          total: total,
+          onChange: page => setCurrentPage(page),
+          position: ['bottomCenter'],
+          showSizeChanger: false
+        }}
+      />
+    </ConfigProvider>
+  );
+};
 export default function ExpensessViewMonthly() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -96,18 +198,36 @@ export default function ExpensessViewMonthly() {
   const [form] = Form.useForm();
   const [completionForm] = Form.useForm();
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#FF6384', '#36A2EB'];
-
+const [isNewWorkflow, setIsNewWorkflow] = useState(false);
+const [workflowActions, setWorkflowActions] = useState(null);
   // Fetch data
-  const fetchMonthlyExpenseDetails = async () => {
-    try {
-      setLoading(true);
-      const { data } = await axiosInstance.get(`/api/Expense/${monthlyExpenseId}`);
-      setMonthlyExpense(data);
-    } catch (error) {
-      console.error('Error fetching monthly expense:', error);
-      message.error('حدث خطأ في جلب تفاصيل المصروف الشهري');
+const fetchMonthlyExpenseDetails = async () => {
+  try {
+    setLoading(true);
+    const { data } = await axiosInstance.get(`/api/Expense/${monthlyExpenseId}`);
+    setMonthlyExpense(data);
+    
+    // Check if should use new workflow based on expense date
+    const useNewWorkflow = shouldUseNewWorkflow(data.dateCreated);
+    setIsNewWorkflow(useNewWorkflow);
+    
+    // If new workflow (expense created after 2025-10-02), fetch available actions
+    if (useNewWorkflow) {
+      try {
+        const actionsResponse = await axiosInstance.get(
+          `/api/MonthlyExpensesWorkflow/${monthlyExpenseId}/actions?actor=Supervisor`
+        );
+        setWorkflowActions(actionsResponse.data);
+      } catch (error) {
+        console.error('Error fetching workflow actions:', error);
+        setWorkflowActions(null);
+      }
     }
-  };
+  } catch (error) {
+    console.error('Error fetching monthly expense:', error);
+    message.error('حدث خطأ في جلب تفاصيل المصروف الشهري');
+  }
+};
 
 const fetchDailyExpenses = async () => {
   try {
@@ -162,116 +282,245 @@ const formatted = data.map(e => {
 
 
   // Handlers
-  const handleSendToCoordinator = async values => {
-    try {
-      setSendingLoading(true);
+const handleSendToCoordinator = async values => {
+  try {
+    setSendingLoading(true);
+    
+    if (isNewWorkflow) {
+      // New workflow for expenses after 2025/10/02
+      // Check if we have workflow actions and can send
+      if (!workflowActions || !workflowActions.actions || workflowActions.actions.length === 0) {
+        message.error('لا يمكن إرسال المصروف في الوقت الحالي - لا توجد إجراءات متاحة');
+        setSendingLoading(false);
+        return;
+      }
+      
+      const sendAction = workflowActions.actions.find(
+        action => action.code === "send.projectcoordinator"
+      ) || workflowActions.actions[0]; // Fallback to first action if specific not found
+
+      if (sendAction) {
+        const workflowPayload = {
+          actor: workflowActions.actor, // Use the actor from the response
+          actionType: sendAction.actionType,
+          to: sendAction.to,
+          comment: values.notes || "تم الإرسال من قبل المشرف",
+          PerformedByUserId: profile?.userId || profile?.profileId
+        };
+
+        await axiosInstance.put(
+          `/api/MonthlyExpensesWorkflow/${monthlyExpenseId}/actions`,
+          workflowPayload
+        );
+
+        message.success('تم إرسال المصروف بنجاح إلى منسق المشروع (النظام الجديد)');
+      } else {
+        message.error('لا يمكن إرسال المصروف في الوقت الحالي');
+        setSendingLoading(false);
+        return;
+      }
+    } else {
+      // Old workflow for expenses before or on 2025/10/02
       let actionType = 'Approval';
       if (monthlyExpense.status === 'ReturnedToSupervisor') {
         actionType = `تم التعديل من قبل المشرف ${profile?.name || ''}`;
       }
+      
       await axiosInstance.post(`/api/Expense/${monthlyExpenseId}/status`, {
         monthlyExpensesId: monthlyExpenseId,
         newStatus: 1
       });
+      
       await axiosInstance.post('/api/Actions', {
         actionType,
         notes: values.notes,
         profileId: profile?.profileId,
         monthlyExpensesId: monthlyExpenseId
       });
+      
       message.success('تم إرسال المصروف بنجاح إلى منسق المشروع');
-      setIsModalVisible(false);
-      form.resetFields();
-      navigate(-1);
-    } catch (error) {
-      if (error.errorFields) {
-        message.error('الرجاء إدخال جميع المعلومات المطلوبة');
-      } else {
-        console.error('Error sending to coordinator:', error);
-        message.error('حدث خطأ في إرسال المصروف');
-      }
-    } finally {
-      setSendingLoading(false);
     }
-  };
+    
+    setIsModalVisible(false);
+    form.resetFields();
+    navigate(-1);
+  } catch (error) {
+    if (error.errorFields) {
+      message.error('الرجاء إدخال جميع المعلومات المطلوبة');
+    } else {
+      console.error('Error sending to coordinator:', error);
+      message.error('حدث خطأ في إرسال المصروف');
+    }
+  } finally {
+    setSendingLoading(false);
+  }
+};
 
-  const handleCompleteMonthlyExpense = async values => {
-    try {
-      setCompletingLoading(true);
+const handleCompleteMonthlyExpense = async values => {
+  try {
+    setCompletingLoading(true);
+    
+    if (isNewWorkflow) {
+      // For new workflow, check if there's a complete action available
+      const completeAction = workflowActions?.actions?.find(
+        action => action.code === "complete" || action.code === "approve"
+      );
+      
+      if (completeAction) {
+        await axiosInstance.put(
+          `/api/MonthlyExpensesWorkflow/${monthlyExpenseId}/actions`,
+          {
+            actor: workflowActions.actor,
+            actionType: completeAction.actionType,
+            to: completeAction.to,
+            comment: values.notes || "تم اتمام المصروف من قبل المشرف",
+            PerformedByUserId: profile?.userId || profile?.profileId
+          }
+        );
+        message.success('تم اتمام عملية مصاريف الشهر بنجاح (النظام الجديد)');
+      } else {
+        message.error('لا يمكن اتمام المصروف في الوقت الحالي');
+        setCompletingLoading(false);
+        return;
+      }
+    } else {
+      // Old workflow
       await axiosInstance.post(`/api/Expense/${monthlyExpenseId}/status`, {
         monthlyExpensesId: monthlyExpenseId,
         newStatus: 9
       });
+      
       await axiosInstance.post('/api/Actions', {
         actionType: `تم اتمام مصروف الشهر من قبل المشرف ${profile?.name || ''}`,
         notes: values.notes,
         profileId: profile?.profileId,
         monthlyExpensesId: monthlyExpenseId
       });
+      
       message.success('تم اتمام عملية مصاريف الشهر بنجاح');
-      setIsCompletionModalVisible(false);
-      completionForm.resetFields();
-      navigate(-1);
-    } catch (error) {
-      if (error.errorFields) {
-        message.error('الرجاء إدخال جميع المعلومات المطلوبة');
-      } else {
-        console.error('Error completing monthly expense:', error);
-        message.error('حدث خطأ في اتمام عملية مصاريف الشهر');
-      }
-    } finally {
-      setCompletingLoading(false);
     }
-  };
+    
+    setIsCompletionModalVisible(false);
+    completionForm.resetFields();
+    navigate(-1);
+  } catch (error) {
+    if (error.errorFields) {
+      message.error('الرجاء إدخال جميع المعلومات المطلوبة');
+    } else {
+      console.error('Error completing monthly expense:', error);
+      message.error('حدث خطأ في اتمام عملية مصاريف الشهر');
+    }
+  } finally {
+    setCompletingLoading(false);
+  }
+};
 
   // Render buttons
-  const renderActionButton = () => {
-    if (monthlyExpense?.status === 'RecievedBySupervisor' && roles?.includes("MainSupervisor")) {
-      return (
+const renderActionButton = () => {
+  // For new workflow (expenses created after 2025-10-02)
+  if (isNewWorkflow) {
+    // Check if supervisor has any actions available
+    const hasActions = workflowActions?.actions?.length > 0;
+    
+    if (hasActions && roles?.includes("MainSupervisor")) {
+      // Check what type of action is available
+      const sendAction = workflowActions.actions.find(
+        a => a.code === "send.projectcoordinator"
+      );
+      
+      if (sendAction) {
+        // Show send button (either initial send or after return)
+        const buttonText = workflowActions.status === 2 
+          ? "ارسال الى منسق المشروع بعد التعديل"
+          : "ارسال الى منسق المشروع";
+          
+        return (
+          <Space>
+            <Button
+              type="primary"
+              icon={<SendOutlined />}
+              onClick={() => setIsModalVisible(true)}
+              loading={sendingLoading}
+              className="send-button"
+            >
+              {buttonText}
+            </Button>
+            {workflowActions.status === 2 && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() =>
+                  navigate('/add-daily-expense', {
+                    state: {
+                      monthlyExpenseId,
+                      totalMonthlyAmount: monthlyExpense.totalAmount,
+                      status: 'Returned'
+                    }
+                  })
+                }
+                className="send-button"
+              >
+                إضافة مصروف يومي
+              </Button>
+            )}
+          </Space>
+        );
+      }
+    }
+    
+    // No actions available in new workflow
+    return null;
+  }
+  
+  // OLD WORKFLOW LOGIC (for expenses created before or on 2025-10-02)
+  if (monthlyExpense?.status === 'RecievedBySupervisor' && roles?.includes("MainSupervisor")) {
+    return (
+      <Button
+        type="primary"
+        icon={<CheckCircleOutlined />}
+        onClick={() => setIsCompletionModalVisible(true)}
+        loading={completingLoading}
+        className="send-button"
+      >
+        اتمام عملية مصاريف الشهر
+      </Button>
+    );
+  }
+  
+  if (monthlyExpense?.status === 'ReturnedToSupervisor' && roles?.includes("MainSupervisor")) {
+    return (
+      <Space>
         <Button
           type="primary"
-          icon={<CheckCircleOutlined />}
-          onClick={() => setIsCompletionModalVisible(true)}
-          loading={completingLoading}
+          icon={<SendOutlined />}
+          onClick={() => setIsModalVisible(true)}
+          loading={sendingLoading}
           className="send-button"
         >
-          اتمام عملية مصاريف الشهر
+          ارسال الى منسق المشروع بعد التعديل
         </Button>
-      );
-    }
-    if (monthlyExpense?.status === 'ReturnedToSupervisor' && roles?.includes("MainSupervisor")) {
-      return (
-        <Space>
-          <Button
-            type="primary"
-            icon={<SendOutlined />}
-            onClick={() => setIsModalVisible(true)}
-            loading={sendingLoading}
-            className="send-button"
-          >
-            ارسال الى منسق المشروع بعد التعديل
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() =>
-              navigate('/add-daily-expense', {
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() =>
+            navigate('/add-daily-expense', {
               state: {
-        monthlyExpenseId,
-        totalMonthlyAmount: monthlyExpense.totalAmount,
-        status: monthlyExpense.status   
-      }
-              })
-            }
-            className="send-button"
-          >
-            إضافة مصروف يومي
-          </Button>
-        </Space>
-      );
-    }
-    return null;
-  };
+                monthlyExpenseId,
+                totalMonthlyAmount: monthlyExpense.totalAmount,
+                status: monthlyExpense.status   
+              }
+            })
+          }
+          className="send-button"
+        >
+          إضافة مصروف يومي
+        </Button>
+      </Space>
+    );
+  }
+  
+  return null;
+};
 
   // Columns
   const columns = [
@@ -444,7 +693,14 @@ const formatted = data.map(e => {
         </div>
 
         <MonthlyExpenseInfo />
-
+{isNewWorkflow && (
+  <div className="monthly-info-item">
+    <span className="monthly-info-label">نظام العمل:</span>
+    <span className="monthly-info-value" style={{ color: '#1890ff' }}>
+      النظام الجديد
+    </span>
+  </div>
+)}
         <ConfigProvider direction="rtl">
           <Table
             className="expenses-table-monthley-in-details"
@@ -456,12 +712,18 @@ const formatted = data.map(e => {
           />
         </ConfigProvider>
 
-        {monthlyExpenseId && (
-          <div style={{ marginTop: 20 }}>
-            <h1 className="header-content">سجل الإجراءات</h1>
-            <ActionsTable monthlyExpensesId={monthlyExpenseId} />
-          </div>
-        )}
+     {monthlyExpenseId && (
+  <div style={{ marginTop: 20 }}>
+    <h1 className="header-content">
+      سجل الإجراءات {isNewWorkflow && "(النظام الجديد)"}
+    </h1>
+    {isNewWorkflow ? (
+      <NewActionLogsTable monthlyExpensesId={monthlyExpenseId} />
+    ) : (
+      <ActionsTable monthlyExpensesId={monthlyExpenseId} />
+    )}
+  </div>
+)}
       </Card>
 
       {/* Send to Coordinator Modal */}
