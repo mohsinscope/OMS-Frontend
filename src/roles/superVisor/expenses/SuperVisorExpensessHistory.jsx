@@ -95,8 +95,8 @@ const expenseStageOptions = [
 ];
 
 const expenseStatusOptions = [
-  { value: 1, label: "قيد الإنجاز" },
-  { value: 2, label: "مُعاد" },
+  { value: 1, label: "تم الارسال الى" },
+  { value: 2, label: "تم الارجاع الى" },
   { value: 3, label: "مكتمل" },
 ];
 /** NEW: LocalStorage key for caching filters & pagination. */
@@ -908,7 +908,7 @@ const expenseStatusLabelMap = Object.fromEntries(
     if (isRowNewSchema(record)) {
       const stageName = stageLabelMap[record.stage] ?? "-";
       const statusName = expenseStatusLabelMap[record.expenseStatus] ?? "-";
-      return `${stageName} - ${statusName}`;
+      return `${statusName} ${stageName} `;
     }
     const v = typeof record.status === "string" ? Status[record.status] : record.status;
     return statusDisplayNames[v] || "-";

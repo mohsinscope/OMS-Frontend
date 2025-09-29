@@ -137,20 +137,7 @@ const ActionLogsTable = ({ expenseId, isNewWorkflow }) => {
       render: (stage) => stageMap[stage] || stage,
       width: 120,
     },
-    {
-      title: "من حالة",
-      dataIndex: "fromStatus",
-      key: "fromStatus",
-      render: (status) => statusMapNew[status] || status,
-      width: 100,
-    },
-    {
-      title: "إلى حالة",
-      dataIndex: "toStatus",
-      key: "toStatus",
-      render: (status) => statusMapNew[status] || status,
-      width: 100,
-    },
+   
     {
       title: "الملاحظات",
       dataIndex: "comment",
