@@ -196,49 +196,67 @@ const disableOtherMonths = (current) => {
     return statusColors[status] || "#000000";
   };
 
-  const fetchMonthlyExpense = async () => {
-    setIsLoading(true); // Start loading
+// put this small helper above fetchMonthlyExpense (optional)
+const applyMonthlyExpenseFromSearch = (expense) => {
+  const dateCreated = moment(expense.dateCreated).startOf("day").format("YYYY-MM-DD");
+  setOfficeInfo((prev) => ({ ...prev, date: dateCreated }));
+  setCurrentMonthlyExpenseId(expense.id);
+  setCanCreateMonthly(false);
+  fetchDailyExpenses(expense.id);
+};
 
-    try {
-      const payload = {
+const fetchMonthlyExpense = async () => {
+  setIsLoading(true);
+
+  try {
+    // 1) your current search (numeric enum array [0])
+    const payloadV1 = {
+      officeId: profile?.officeId,
+      governorateId: profile?.governorateId,
+      profileId: profile?.profileId,
+      statuses: [0],          // existing condition
+      startDate: null,
+      endDate: null,
+      PaginationParams: { PageNumber: 1, PageSize: 10 },
+    };
+
+    const resV1 = await axiosInstance.post("/api/Expense/search", payloadV1);
+
+    if (Array.isArray(resV1.data) && resV1.data.length > 0) {
+      applyMonthlyExpenseFromSearch(resV1.data[0]);
+    } else {
+      // 2) NEW condition: status "New" + stage 1 (and expenseStatus null)
+      const payloadV2 = {
         officeId: profile?.officeId,
         governorateId: profile?.governorateId,
         profileId: profile?.profileId,
-        statuses: [0],
+        statuses: "New",      // ← string enum
+        stage: 1,             // ← new
+        expenseStatus: null,  // ← new
         startDate: null,
         endDate: null,
-        PaginationParams: {
-          PageNumber: 1,
-          PageSize: 10,
-        },
+        PaginationParams: { PageNumber: 1, PageSize: 10 },
       };
 
-      const response = await axiosInstance.post("/api/Expense/search", payload);
+      const resV2 = await axiosInstance.post("/api/Expense/search", payloadV2);
 
-      if (response.data && response.data.length > 0) {
-        const currentExpense = response.data[0];
-        // Set dateCreated with hours removed
-        const dateCreated = moment(currentExpense.dateCreated)
-          .startOf("day")
-          .format("YYYY-MM-DD");
-
-        setOfficeInfo((prev) => ({ ...prev, date: dateCreated }));
-        setCurrentMonthlyExpenseId(currentExpense.id);
-        setCanCreateMonthly(false);
-        fetchDailyExpenses(currentExpense.id);
+      if (Array.isArray(resV2.data) && resV2.data.length > 0) {
+        applyMonthlyExpenseFromSearch(resV2.data[0]);
       } else {
+        // none found in either query = can create
         setCanCreateMonthly(true);
         setCurrentMonthDailyExpenses([]);
       }
-    } catch (error) {
-      console.error("Error fetching monthly expenses:", error);
-      message.error("حدث خطأ في جلب المصروفات الشهرية");
-    } finally {
-      // Ensure budget is fetched after monthly expenses
-      fetchOfficeBudget();
-      setIsLoading(false); // Stop loading
     }
-  };
+  } catch (error) {
+    console.error("Error fetching monthly expenses:", error);
+    message.error("حدث خطأ في جلب المصروفات الشهرية");
+  } finally {
+    // always refresh budget after monthly lookup
+    fetchOfficeBudget();
+    setIsLoading(false);
+  }
+};
 
   const fetchDailyExpenses = async (monthlyExpenseId) => {
     if (!monthlyExpenseId) return;
@@ -452,9 +470,6 @@ const handleSendMonthlyExpense = async (values) => {
     setSendLoading(false);
   }
 };
-// ✅ ADD this near your other state/derived values (inside the component)
-const shouldShowEmptyState =
-  canCreateMonthly || (lastMonthExpense && (lastMonthExpense.status !== 'New' || lastMonthExpense.stage !== 1));
 
   const statusDisplayNames = {
     New: "جديد",
@@ -706,7 +721,7 @@ const shouldShowEmptyState =
       style={{ padding: "24px" }}
     >
       <div className="this-month-container">
-        {!shouldShowEmptyState  ? (
+        {!canCreateMonthly ? (
           <Card className="office-info-card" style={{ width: "25%", flexShrink: 0 }}>
             <h1 style={{ marginBottom: "24px", textAlign: "center" }}>معلومات المكتب</h1>
             <h3 style={{ marginBottom: "24px", textAlign: "center" }}>
@@ -878,7 +893,7 @@ const shouldShowEmptyState =
         ) : null}
 
         <div style={{ flex: 1 }}>
-          {shouldShowEmptyState  ? (
+          {canCreateMonthly ? (
             <EmptyStateCard />
           ) : (
             <>
