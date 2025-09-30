@@ -214,7 +214,9 @@ const fetchMonthlyExpense = async () => {
       officeId: profile?.officeId,
       governorateId: profile?.governorateId,
       profileId: profile?.profileId,
-      statuses: [0],          // existing condition
+        statuses: [0],      // ← string enum
+        stage: 1,             // ← new
+        expenseStatus: null,  // ← new
       startDate: null,
       endDate: null,
       PaginationParams: { PageNumber: 1, PageSize: 10 },
@@ -230,7 +232,7 @@ const fetchMonthlyExpense = async () => {
         officeId: profile?.officeId,
         governorateId: profile?.governorateId,
         profileId: profile?.profileId,
-        statuses: "New",      // ← string enum
+        statuses: [0],      // ← string enum
         stage: 1,             // ← new
         expenseStatus: null,  // ← new
         startDate: null,
