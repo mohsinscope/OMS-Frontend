@@ -452,6 +452,9 @@ const handleSendMonthlyExpense = async (values) => {
     setSendLoading(false);
   }
 };
+// ✅ ADD this near your other state/derived values (inside the component)
+const shouldShowEmptyState =
+  canCreateMonthly || (lastMonthExpense && (lastMonthExpense.status !== 'New' || lastMonthExpense.stage !== 1));
 
   const statusDisplayNames = {
     New: "جديد",
@@ -703,7 +706,7 @@ const handleSendMonthlyExpense = async (values) => {
       style={{ padding: "24px" }}
     >
       <div className="this-month-container">
-        {!canCreateMonthly ? (
+        {!shouldShowEmptyState  ? (
           <Card className="office-info-card" style={{ width: "25%", flexShrink: 0 }}>
             <h1 style={{ marginBottom: "24px", textAlign: "center" }}>معلومات المكتب</h1>
             <h3 style={{ marginBottom: "24px", textAlign: "center" }}>
@@ -875,7 +878,7 @@ const handleSendMonthlyExpense = async (values) => {
         ) : null}
 
         <div style={{ flex: 1 }}>
-          {canCreateMonthly ? (
+          {shouldShowEmptyState  ? (
             <EmptyStateCard />
           ) : (
             <>
