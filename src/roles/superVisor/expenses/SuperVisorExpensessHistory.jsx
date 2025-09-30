@@ -826,108 +826,80 @@ export default function SuperVisorExpensesHistory() {
   // ------------------------------------------------------------------------------------------------
   // Table Columns
   // ------------------------------------------------------------------------------------------------
-  const newSchemaActive = isNewSchemaActive();
-  const columns = [
-    {
-      title: "المحافظة",
-      dataIndex: "governorateName",
-      key: "governorateName",
-    },
-    {
-      title: "المكتب",
-      dataIndex: "officeName",
-      key: "officeName",
-    },
-    {
-      title: "مجموع الصرفيات",
-      dataIndex: "totalAmount",
-      key: "totalAmount",
-      render: (value) =>
-        typeof value === "number"
-          ? value.toLocaleString("en-US", {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            })
-          : value,
-    },
-    ...(newSchemaActive
-      ? [
-          {
-            title: "المرحلة",
-            dataIndex: "stage",
-            key: "stage",
-            render: (v) => labelStage(v),
-          },
-          {
-            title: "حالة الصرفية",
-            dataIndex: "expenseStatus",
-            key: "expenseStatus",
-            render: (v) => labelNewStatus(v),
-          },
-        ]
-      : [
-          {
-            title: "الحالة",
-            key: "statusUnified",
-            render: (_, record) => {
-              if (isRowNewSchema(record)) {
-                const stageName = labelStage(record.stage);
-                const statusName = labelNewStatus(record.expenseStatus);
-                return `${statusName} ${stageName}`;
-              }
-              const v = normalizeOldStatus(record.status);
-              return statusDisplayNames[v] || "-";
-            },
-          },
-        ]),
-    {
-      title: "التاريخ",
-      dataIndex: "dateCreated",
-      key: "dateCreated",
-      render: (date) => new Date(date).toLocaleDateString(),
-    },
-    {
-      title: "التفاصيل",
-      key: "details",
-      render: (_, record) => {
-        const expStatusValue = normalizeOldStatus(record.status);
+const newSchemaActive = isNewSchemaActive();
 
-        if (
-          isSupervisor &&
-          (expStatusValue === Status.New ||
-            expStatusValue === Status.ReturnedToSupervisor ||
-            expStatusValue === Status.RecievedBySupervisor)
-        ) {
-          return (
-            <Link
-              to="/ExpensessViewMonthly"
-              state={{ monthlyExpenseId: record.id }}
-            >
-              <Button
-                type="primary"
-                size="large"
-                className="supervisor-expenses-history-details-link"
-              >
-                عرض
-              </Button>
-            </Link>
-          );
+const columns = [
+  { title: "المحافظة", dataIndex: "governorateName", key: "governorateName" },
+  { title: "المكتب", dataIndex: "officeName", key: "officeName" },
+  {
+    title: "مجموع الصرفيات",
+    dataIndex: "totalAmount",
+    key: "totalAmount",
+    render: (value) =>
+      typeof value === "number"
+        ? value.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })
+        : value,
+  },
+
+  // ✅ Single unified status column for BOTH schemas
+  {
+    title: "الحالة",
+    key: "statusUnified",
+    render: (_, record) => {
+      // If the row is from the new schema, compose the sentence:
+      if (isRowNewSchema(record)) {
+        const stageName = labelStage(record.stage);
+        const statusName = labelNewStatus(record.expenseStatus);
+
+        // 1 = تم الارسال الى ...   2 = تم الارجاع الى ...   3 = مكتمل
+        if (toNum(record.expenseStatus) === 3) {
+          // matches your phrasing: "في الاخير تم الاكمل من قبل مدير الحسابات"
+          return `في الاخير تم الاكمل من قبل ${stageName}`;
         }
+        return `${statusName} ${stageName}`;
+      }
 
+      // Old schema fallback
+      const v = normalizeOldStatus(record.status);
+      return statusDisplayNames[v] || "-";
+    },
+  },
+
+  {
+    title: "التاريخ",
+    dataIndex: "dateCreated",
+    key: "dateCreated",
+    render: (date) => new Date(date).toLocaleDateString(),
+  },
+  {
+    title: "التفاصيل",
+    key: "details",
+    render: (_, record) => {
+      const expStatusValue = normalizeOldStatus(record.status);
+      if (
+        isSupervisor &&
+        (expStatusValue === Status.New ||
+          expStatusValue === Status.ReturnedToSupervisor ||
+          expStatusValue === Status.RecievedBySupervisor)
+      ) {
         return (
-          <Link to="/expenses-view" state={{ expense: record }}>
-            <Button
-              type="primary"
-              size="large"
-              className="supervisor-expenses-history-details-link"
-            >
+          <Link to="/ExpensessViewMonthly" state={{ monthlyExpenseId: record.id }}>
+            <Button type="primary" size="large" className="supervisor-expenses-history-details-link">
               عرض
             </Button>
           </Link>
         );
-      },
+      }
+      return (
+        <Link to="/expenses-view" state={{ expense: record }}>
+          <Button type="primary" size="large" className="supervisor-expenses-history-details-link">
+            عرض
+          </Button>
+        </Link>
+      );
     },
-  ];
+  },
+];
 
   // This ensures the correct list of statuses for the dropdown
   const availableStatuses = getAvailableStatuses();

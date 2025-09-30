@@ -54,12 +54,6 @@ const ActionLogsTable = ({ expenseId, isNewWorkflow }) => {
     7: "مكتمل",
   };
 
-  const actionTypeMap = {
-    0: "إرسال",
-    1: "إرجاع",
-    2: "موافقة",
-  };
-
   const fetchActionLogs = async (page = 1) => {
     if (!expenseId || !isNewWorkflow) return;
     try {
@@ -89,19 +83,42 @@ const ActionLogsTable = ({ expenseId, isNewWorkflow }) => {
 
   if (!isNewWorkflow) return null;
 
+  const describeLog = (log) => {
+    const from = stageMap[log.fromStage] || log.fromStage || "غير معلوم";
+    const to = stageMap[log.toStage] || log.toStage || "غير معلوم";
+    const actor = actorMap[log.actor] || stageMap[log.actor] || "غير معلوم";
+    // Action types (server enum):
+    // 0 Send, 1 Return, 2 Resend, 3 Complete, 4 Cancel
+    switch (Number(log.actionType)) {
+      case 0:
+        return `تم الإرسال من ${from} إلى ${to}`;
+      case 1:
+        return `تم الإرجاع من ${from} إلى ${to}`;
+      case 2:
+        return `تم إعادة الإرسال من ${from} إلى ${to}`;
+      case 3:
+        return `في الأخير تم الإكمال من قبل ${actor}`;
+      case 4:
+        return `تم الإلغاء من قبل ${actor}`;
+      default:
+        return `إجراء غير معروف من ${from}${to ? ` إلى ${to}` : ""}`;
+    }
+  };
+
   const columns = [
     {
       title: "التاريخ والوقت",
       dataIndex: "performedAtUtc",
       key: "performedAtUtc",
       render: (date) => dayjs(date).format("YYYY-MM-DD HH:mm"),
-      width: 150,
+      width: 170,
     },
-    { title: "نوع الإجراء", dataIndex: "actionType", key: "actionType", render: (t) => actionTypeMap[t] || t, width: 100 },
-    { title: "المنفذ", dataIndex: "actor", key: "actor", render: (a) => actorMap[a] || a, width: 150 },
-    { title: "من مرحلة", dataIndex: "fromStage", key: "fromStage", render: (s) => stageMap[s] || s, width: 120 },
-    { title: "إلى مرحلة", dataIndex: "toStage", key: "toStage", render: (s) => stageMap[s] || s, width: 120 },
-    { title: "الملاحظات", dataIndex: "comment", key: "comment", ellipsis: true },
+    {
+      title: "التفاصيل",
+      key: "details",
+      render: (_, record) => describeLog(record),
+    },
+    { title: "الملاحظات", dataIndex: "comment", key: "comment", ellipsis: true, width: 700 },
   ];
 
   return (
@@ -123,7 +140,7 @@ const ActionLogsTable = ({ expenseId, isNewWorkflow }) => {
             showTotal: (t) => `إجمالي السجلات: ${t}`,
           }}
           locale={{ emptyText: "لا توجد سجلات" }}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 800 }}
         />
       </ConfigProvider>
     </div>
@@ -216,7 +233,7 @@ export default function ExpensesView() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false); // ← keep only this one
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false); // keep only this one
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actionModalVisible, setActionModalVisible] = useState(false);
   const [actionType, setActionType] = useState(null);
@@ -257,7 +274,7 @@ export default function ExpensesView() {
   const isManagerActor = pos.includes("manager");
   const isDirectorActor = pos.includes("director");
   const isExpenseManagerActor = pos.includes("expensemanager");
-
+  console.log(pos)
   const actorCandidates = useMemo(() => {
     const list = [];
     if (isSupervisorActor) list.push("Supervisor");
@@ -289,19 +306,25 @@ export default function ExpensesView() {
     ExpenseManager: 6,
   };
 
-  // NEW workflow action picker
+  // ===================== UPDATED pickWfAction =====================
+// Prefer "resend" or "complete" for Approval; otherwise any "send.*". For Return: "return.*"
   const pickWfAction = (actions, kind /* 'Approval' | 'Return' */) => {
-    const prefix = kind === "Approval" ? "send" : "return";
-    return actions.find((a) =>
-      (a?.actionInfo?.code || a?.code || "").toLowerCase().startsWith(prefix)
-    );
+    const codeOf = (a) => (a?.actionInfo?.code || a?.code || "").toLowerCase();
+    const typeOf = (a) => Number(a?.actionInfo?.id ?? a?.actionType);
+
+    if (kind === "Approval") {
+     const resend = actions.find((a) => codeOf(a) === "resend" || typeOf(a) === 2);
+     if (resend) return resend;
+     const complete = actions.find((a) => codeOf(a) === "complete" || typeOf(a) === 3);
+     if (complete) return complete
+      const send = actions.find((a) => codeOf(a).startsWith("send"));
+      if (send) return send;
+      return null;
+    }
+    return actions.find((a) => codeOf(a).startsWith("return")) || null;
   };
 
   // ======== OLD WORKFLOW transition helpers (accept numeric/string) ========
-  const StatusKeyByValue = Object.fromEntries(
-    Object.entries(Status).map(([k, v]) => [v, k])
-  );
-
   const getNextStatus = (currentStatus, position) => {
     const statusKey =
       typeof currentStatus === "number"
@@ -511,11 +534,11 @@ export default function ExpensesView() {
     if (!isNewWorkflowActive) {
       return getNextStatus(currentStatus, userPosition) !== null;
     }
-    return wfActions.some((a) =>
-      (a?.actionInfo?.code || a?.code || "")
-        .toLowerCase()
-        .startsWith("send")
-    );
+    return wfActions.some((a) => {
+      const code = (a?.actionInfo?.code || a?.code || "").toLowerCase();
+      const type = Number(a?.actionInfo?.id ?? a?.actionType);
+      return code === "resend" || type === 2 || code === "complete" || type === 3 || code.startsWith("send");
+    });
   }, [
     profile?.profileId,
     currentStatus,
@@ -580,18 +603,30 @@ export default function ExpensesView() {
           return;
         }
 
+        const numericActionType = Number(
+          chosen.actionType ?? chosen.actionInfo?.id
+        );
+        const code = (chosen?.actionInfo?.code || chosen?.code || "").toLowerCase();
+               const isResendOrComplete =
+         code === "resend" || numericActionType === 2 ||
+         code === "complete" || numericActionType === 3;
+
+        // FORCE to: null for Resend
         const payload = {
           actor: actorId,
-          actionType: Number(chosen.actionType ?? chosen.actionInfo?.id),
-          to: chosen.to ?? chosen.toInfo?.id ?? null,
+          actionType: numericActionType,
+          to: isResendOrComplete ? null : (chosen.to ?? chosen.toInfo?.id ?? null),
           comment: notes,
           PerformedByUserId: profile.profileId,
         };
 
+        // Optional debug:
+        // console.log("WF PAYLOAD =>", JSON.stringify(payload));
+
         await axiosInstance.put(
           `${Url}/api/MonthlyExpensesWorkflow/${expenseId}/actions`,
           payload,
-          { headers: { Authorization: `Bearer ${accessToken}` } }
+          { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" } }
         );
 
         message.success(
@@ -630,7 +665,6 @@ export default function ExpensesView() {
         );
 
         // 2) تحديث الحالة (المنظومة القديمة)
-        // Uses /api/Expense/{id}/status as requested
         await axiosInstance.post(
           `${Url}/api/Expense/${expenseId}/status`,
           { monthlyExpensesId: expenseId, newStatus },
@@ -1332,18 +1366,18 @@ export default function ExpensesView() {
   ];
 
   // ======== Header title ========
-  const getHeaderTitle = () => {
-    const officeName = expense?.generalInfo?.["المكتب"];
-    const rawDate = expense?.generalInfo?.rawDate;
-    if (rawDate) {
-      const arabicMonth = getArabicMonthDisplay(rawDate);
-      const workflowIndicator = shouldUseNewWorkflow(rawDate)
-        ? " (النظام الجديد)"
-        : "";
-      return `صرفيات ${officeName} - ${arabicMonth}${workflowIndicator}`;
-    }
-    return `صرفيات ${officeName} بتاريخ ${expense?.generalInfo?.["التاريخ"]}`;
-  };
+const getHeaderTitle = () => {
+  const officeName = expense?.generalInfo?.["المكتب"] || "";
+  const rawDate = expense?.generalInfo?.rawDate;
+
+  if (rawDate) {
+    const arabicMonth = getArabicMonthDisplay(rawDate); // ✅ correct var name
+    const workflowIndicator = shouldUseNewWorkflow(rawDate) ? " (النظام الجديد)" : "";
+    return `صرفيات ${officeName} - ${arabicMonth}${workflowIndicator}`;
+  }
+
+  return `صرفيات ${officeName} بتاريخ ${expense?.generalInfo?.["التاريخ"] || ""}`;
+};
 
   // ======== Admin button ========
   const AdminButton = () => {
