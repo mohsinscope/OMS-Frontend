@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import {
+ import {
   Table,
   message,
   Button,
@@ -7,7 +7,8 @@ import {
   DatePicker,
   ConfigProvider,
   Skeleton,
-} from "antd";
+  Tooltip,            // NEW
+ } from "antd";
 import { Link } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
 import axiosInstance from "./../../../intercepters/axiosInstance";
@@ -65,7 +66,6 @@ const positionStatusMap = {
   ExpenseAuditer: [Status.ReturnedToExpendeAuditer ,Status.SentFromDirector],
   ExpenseManager: [Status.ReturnedToExpenseManager , Status.SentToExpenseManager],
   ExpenseGeneralManager: [Status.SentToExpenseGeneralManager],
-
 };
 
 // Arabic months mapping
@@ -83,7 +83,7 @@ const arabicMonths = [
   { value: 11, label: "نوفمبر - الشهر الحادي عشر", nameEn: "November" },
   { value: 12, label: "ديسمبر - الشهر الثاني عشر", nameEn: "December" },
 ];
-const NEW_API_THRESHOLD_ISO = "2025-10-02T00:00:00Z";
+const NEW_API_THRESHOLD_ISO = "2025-10-01"; // local midnight (no Z to avoid TZ shift)
 const expenseStageOptions = [
   { value: 1, label: "المشرف" },
   { value: 2, label: "منسق المشروع" },
@@ -127,8 +127,9 @@ export default function SuperVisorExpensesHistory() {
   const pageSize = 10;
 
   // NEW (only used when date >= Oct 2025):
-const [stage, setStage] = useState(null);
-const [expenseStatus, setExpenseStatus] = useState(null);
+  const [stage, setStage] = useState(null);
+  const [expenseStatus, setExpenseStatus] = useState(null);
+
   // Store / profile
   const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } =
     useAuthStore();
@@ -137,8 +138,13 @@ const [expenseStatus, setExpenseStatus] = useState(null);
   const isAdmin = roles.includes("SuperAdmin");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
+
 const isRowNewSchema = (rec) =>
-  dayjs(rec?.dateCreated).valueOf() >= dayjs(NEW_API_THRESHOLD_ISO).valueOf();
+  dayjs(rec?.dateCreated).valueOf() >= dayjs(NEW_API_THRESHOLD_ISO).startOf("day").valueOf();
+
+  // === NEW: require full date range chosen
+  const hasFullDateRange = useMemo(() => Boolean(startDate && endDate), [startDate, endDate]);
+
   // ------------------------------------------------------------------------------------------------
   // Status Filtering Logic
   // ------------------------------------------------------------------------------------------------
@@ -222,18 +228,21 @@ const isRowNewSchema = (rec) =>
       setSelectedMonth(null);
     }
   };
-const getEffectiveStartDayjs = () => {
-  if (selectedMonth) return dayjs().year(selectedYear).month(selectedMonth - 1).date(1);
-  if (startDate) return startDate;
-  return null;
-};
 
-/** NEW: Are we on/after 1 Oct 2025? If yes → use new payload (with stage/expenseStatus). */
+  const getEffectiveStartDayjs = () => {
+    if (selectedMonth) return dayjs().year(selectedYear).month(selectedMonth - 1).date(1);
+    if (startDate) return startDate;
+    return null;
+  };
+
+  /** NEW: Are we on/after 1 Oct 2025? If yes → use new payload (with stage/expenseStatus). */
 const isNewSchemaActive = () => {
   const eff = getEffectiveStartDayjs();
   if (!eff) return false;
-  return eff.startOf("day").valueOf() >= dayjs(NEW_API_THRESHOLD_ISO).valueOf();
+  const threshold = dayjs(NEW_API_THRESHOLD_ISO).startOf("day").valueOf();
+  return eff.startOf("day").valueOf() >= threshold;
 };
+
   // Generate years for dropdown (current year ± 5 years)
   const generateYears = () => {
     const currentYear = new Date().getFullYear();
@@ -295,149 +304,159 @@ const isNewSchemaActive = () => {
   };
   
   const fetchExpensesData = async (pageNumber = 1) => {
-  try {
-    setIsLoading(true);
-
-    // Build filter object
-    const searchBody = {
-      officeId: isSupervisor ? userOfficeId : selectedOffice,
-      governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
-      profileId: profile?.id,
-      statuses: selectedStatuses.length > 0 ? selectedStatuses : null,
-      startDate: startDate ? startDate.toISOString() : null,
-      endDate: endDate ? endDate.toISOString() : null,
-      PaginationParams: {
-        PageNumber: pageNumber,
-        PageSize: pageSize,
-      },
-    };
-    // NEW: Switch to the new payload fields when date >= 1 Oct 2025
-    if (isNewSchemaActive()) {
-      searchBody.stage = stage ?? null;              // e.g. 7
-      searchBody.expenseStatus = expenseStatus ?? null;
+    // NEW: block fetch until full date range picked
+    if (!hasFullDateRange) {
+      setExpensesList([]);
+      setTotalRecords(0);
+      setIsLoading(false);
+      return;
     }
 
-    // Console log all search parameters
-    console.log("=== SEARCH PARAMETERS ===");
-    console.log("Search Body:", JSON.stringify(searchBody, null, 2));
-    console.log("Office ID:", searchBody.officeId);
-    console.log("Governorate ID:", searchBody.governorateId);
-    console.log("Profile ID:", searchBody.profileId);
-    console.log("Selected Statuses:", searchBody.statuses);
-    console.log("Start Date:", searchBody.startDate);
-    console.log("End Date:", searchBody.endDate);
-    console.log("Page Number:", searchBody.PaginationParams.PageNumber);
-    console.log("Page Size:", searchBody.PaginationParams.PageSize);
-    console.log("Selected Month:", selectedMonth);
-    console.log("Selected Year:", selectedYear);
-    console.log("========================");
-console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatus:", expenseStatus);
-    // If user is not admin/supervisor/ProjectCoordinator/SrController and hasn't chosen statuses, use only what's allowed
-    if (
-      selectedStatuses.length === 0 &&
-      !isAdmin &&
-      !isSupervisor &&
-      userPosition !== "ProjectCoordinator" &&
-      userPosition !== "SrController"
-    ) {
-      const allowedStatuses = getAvailableStatuses();
-      searchBody.statuses = allowedStatuses;
-      console.log("Auto-set allowed statuses:", allowedStatuses);
-    }
+    try {
+      setIsLoading(true);
 
-    // Make the request
-    const response = await axiosInstance.post(
-      `${Url}/api/Expense/search`,
-      searchBody,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+      // Build filter object
+      const searchBody = {
+        officeId: isSupervisor ? userOfficeId : selectedOffice,
+        governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
+        profileId: profile?.id,
+        statuses: selectedStatuses.length > 0 ? selectedStatuses : null,
+        // NEW: full-day coverage
+        startDate: startDate ? startDate.startOf('day').toISOString() : null,
+        endDate: endDate ? endDate.endOf('day').toISOString() : null,
+        PaginationParams: {
+          PageNumber: pageNumber,
+          PageSize: pageSize,
         },
+      };
+      // NEW: Switch to the new payload fields when date >= 1 Oct 2025
+      if (isNewSchemaActive()) {
+        searchBody.stage = stage ?? null;              // e.g. 7
+        searchBody.expenseStatus = expenseStatus ?? null;
       }
-    );
 
-    // Console log API response
-    console.log("=== API RESPONSE ===");
-    console.log("Response Status:", response.status);
-    console.log("Response Headers:", response.headers);
-    console.log("Raw Response Data:", response.data);
-    console.log("Number of records returned:", response.data?.length || 0);
-    
-    // Log first few records for inspection
-    if (response.data && response.data.length > 0) {
-      console.log("First record:", response.data[0]);
-      console.log("Sample record structure:", Object.keys(response.data[0]));
-    }
+      // Console log all search parameters
+      console.log("=== SEARCH PARAMETERS ===");
+      console.log("Search Body:", JSON.stringify(searchBody, null, 2));
+      console.log("Office ID:", searchBody.officeId);
+      console.log("Governorate ID:", searchBody.governorateId);
+      console.log("Profile ID:", searchBody.profileId);
+      console.log("Selected Statuses:", searchBody.statuses);
+      console.log("Start Date:", searchBody.startDate);
+      console.log("End Date:", searchBody.endDate);
+      console.log("Page Number:", searchBody.PaginationParams.PageNumber);
+      console.log("Page Size:", searchBody.PaginationParams.PageSize);
+      console.log("Selected Month:", selectedMonth);
+      console.log("Selected Year:", selectedYear);
+      console.log("========================");
+      console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatus:", expenseStatus);
 
-    // Filter by allowed statuses if not admin or supervisor
-    const filteredExpenses = filterExpensesByAllowedStatuses(response.data);
-    console.log("Filtered Expenses Count:", filteredExpenses.length);
-    console.log("Filtered Expenses:", filteredExpenses);
+      // If user is not admin/supervisor/ProjectCoordinator/SrController and hasn't chosen statuses, use only what's allowed
+      if (
+        selectedStatuses.length === 0 &&
+        !isAdmin &&
+        !isSupervisor &&
+        userPosition !== "ProjectCoordinator" &&
+        userPosition !== "SrController"
+      ) {
+        const allowedStatuses = getAvailableStatuses();
+        searchBody.statuses = allowedStatuses;
+        console.log("Auto-set allowed statuses:", allowedStatuses);
+      }
 
-    setExpensesList(filteredExpenses);
+      // Make the request
+      const response = await axiosInstance.post(
+        `${Url}/api/Expense/search`,
+        searchBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
-    const paginationHeader = response.headers["pagination"];
-    if (paginationHeader) {
-      const paginationInfo = JSON.parse(paginationHeader);
-      console.log("Pagination Info:", paginationInfo);
-      setTotalRecords(paginationInfo.totalItems);
-    } else {
-      console.log("No pagination header found, using array length:", response.data.length);
-      setTotalRecords(response.data.length);
-    }
-    console.log("===================");
-
-  } catch (error) {
-    console.error("=== DETAILED SEARCH ERROR ===");
-    console.error("Error object:", error);
-    console.error("Error message:", error.message);
-    console.error("Error name:", error.name);
-    console.error("Error stack:", error.stack);
-    
-    if (error.response) {
-      console.error("=== ERROR RESPONSE DETAILS ===");
-      console.error("Response status:", error.response.status);
-      console.error("Response status text:", error.response.statusText);
-      console.error("Response data:", error.response.data);
-      console.error("Response headers:", error.response.headers);
-      console.error("Response config:", error.response.config);
+      // Console log API response
+      console.log("=== API RESPONSE ===");
+      console.log("Response Status:", response.status);
+      console.log("Response Headers:", response.headers);
+      console.log("Raw Response Data:", response.data);
+      console.log("Number of records returned:", response.data?.length || 0);
       
-      // Log specific error details if available
-      if (error.response.data) {
-        console.error("Error response data type:", typeof error.response.data);
-        console.error("Error response data keys:", Object.keys(error.response.data));
-        if (error.response.data.message) {
-          console.error("Error message from server:", error.response.data.message);
-        }
-        if (error.response.data.errors) {
-          console.error("Validation errors:", error.response.data.errors);
-        }
+      // Log first few records for inspection
+      if (response.data && response.data.length > 0) {
+        console.log("First record:", response.data[0]);
+        console.log("Sample record structure:", Object.keys(response.data[0]));
       }
-    } else if (error.request) {
-      console.error("=== REQUEST ERROR ===");
-      console.error("Request was made but no response received");
-      console.error("Request details:", error.request);
-    } else {
-      console.error("=== SETUP ERROR ===");
-      console.error("Error in setting up the request:", error.message);
+
+      // Filter by allowed statuses if not admin or supervisor
+      const filteredExpenses = filterExpensesByAllowedStatuses(response.data);
+      console.log("Filtered Expenses Count:", filteredExpenses.length);
+      console.log("Filtered Expenses:", filteredExpenses);
+
+      setExpensesList(filteredExpenses);
+
+      const paginationHeader = response.headers["pagination"];
+      if (paginationHeader) {
+        const paginationInfo = JSON.parse(paginationHeader);
+        console.log("Pagination Info:", paginationInfo);
+        setTotalRecords(paginationInfo.totalItems);
+      } else {
+        console.log("No pagination header found, using array length:", response.data.length);
+        setTotalRecords(response.data.length);
+      }
+      console.log("===================");
+
+    } catch (error) {
+      console.error("=== DETAILED SEARCH ERROR ===");
+      console.error("Error object:", error);
+      console.error("Error message:", error.message);
+      console.error("Error name:", error.name);
+      console.error("Error stack:", error.stack);
+      
+      if (error.response) {
+        console.error("=== ERROR RESPONSE DETAILS ===");
+        console.error("Response status:", error.response.status);
+        console.error("Response status text:", error.response.statusText);
+        console.error("Response data:", error.response.data);
+        console.error("Response headers:", error.response.headers);
+        console.error("Response config:", error.response.config);
+        
+        // Log specific error details if available
+        if (error.response.data) {
+          console.error("Error response data type:", typeof error.response.data);
+          console.error("Error response data keys:", Object.keys(error.response.data));
+          if (error.response.data.message) {
+            console.error("Error message from server:", error.response.data.message);
+          }
+          if (error.response.data.errors) {
+            console.error("Validation errors:", error.response.data.errors);
+          }
+        }
+      } else if (error.request) {
+        console.error("=== REQUEST ERROR ===");
+        console.error("Request was made but no response received");
+        console.error("Request details:", error.request);
+      } else {
+        console.error("=== SETUP ERROR ===");
+        console.error("Error in setting up the request:", error.message);
+      }
+      
+      console.error("Request config that failed:");
+      console.error("- URL:", `${Url}/api/Expense/search`);
+      console.error("- Method: POST");
+      console.error("- Headers:", {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      });
+      // we reference searchBody above in logs, so keep as-is
+      console.error("=============================");
+      
+      message.error("حدث خطأ أثناء جلب البيانات");
+    } finally {
+      setIsLoading(false);
     }
-    
-    console.error("Request config that failed:");
-    console.error("- URL:", `${Url}/api/Expense/search`);
-    console.error("- Method: POST");
-    console.error("- Headers:", {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    });
-    console.error("- Search body that was sent:", JSON.stringify(searchBody, null, 2));
-    console.error("=============================");
-    
-    message.error("حدث خطأ أثناء جلب البيانات");
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   // ------------------------------------------------------------------------------------------------
   // useEffect initialization
@@ -454,7 +473,7 @@ console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatu
 
   /**
    * NEW: On mount, load filters from local storage if present.
-   * Then do a fetch with those filters (or with default if none).
+   * Then do a fetch ONLY if a full date range exists. Otherwise, stop loading with empty results.
    */
   useEffect(() => {
     const savedFilters = localStorage.getItem(STORAGE_KEY_EXPENSES);
@@ -470,7 +489,7 @@ console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatu
           currentPage: savedPage,
           selectedMonth: savedMonth,
           selectedYear: savedYear,
-                    stage: savedStage,
+          stage: savedStage,
           expenseStatus: savedExpenseStatus,
         } = parsed;
   
@@ -492,13 +511,20 @@ console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatu
         setSelectedStatuses(savedStatuses || []);
         setSelectedMonth(savedMonth || null);
         setSelectedYear(savedYear || new Date().getFullYear());
-          setStage(savedStage ?? null);
+        setStage(savedStage ?? null);
         setExpenseStatus(savedExpenseStatus ?? null);
         const finalPage = savedPage || 1;
         setCurrentPage(finalPage);
   
-        // Now fetch with these filters
+        // Fetch ONLY if we have a complete date range
         const doFetch = async () => {
+          if (!(savedStart && savedEnd)) {
+            setIsLoading(false);
+            setExpensesList([]);
+            setTotalRecords(0);
+            return;
+          }
+
           setIsLoading(true);
           const searchBody = {
             officeId: isSupervisor
@@ -514,8 +540,9 @@ console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatu
             profileId: profile?.id,
             statuses:
               savedStatuses && savedStatuses.length > 0 ? savedStatuses : null,
-            startDate: savedStart ? new Date(savedStart).toISOString() : null,
-            endDate: savedEnd ? new Date(savedEnd).toISOString() : null,
+            // NEW: full-day coverage
+            startDate: dayjs(savedStart).startOf('day').toISOString(),
+            endDate: dayjs(savedEnd).endOf('day').toISOString(),
             PaginationParams: {
               PageNumber: finalPage,
               PageSize: pageSize,
@@ -565,10 +592,15 @@ console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatu
         doFetch();
       } catch (err) {
         console.error("Error loading saved filters:", err);
+        setIsLoading(false);
+        setExpensesList([]);
+        setTotalRecords(0);
       }
     } else {
-      // If no saved filters, fetch with defaults
-      fetchExpensesData(1);
+      // No saved filters → do NOT fetch; require user to pick a full date range
+      setIsLoading(false);
+      setExpensesList([]);
+      setTotalRecords(0);
     }
   }, []); // run once on mount
 
@@ -587,14 +619,19 @@ console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatu
       selectedMonth,
       selectedYear,
       currentPage: page,
-          // NEW: persist new-api fields
-    stage,
-    expenseStatus,
+      // NEW: persist new-api fields
+      stage,
+      expenseStatus,
     };
     localStorage.setItem(STORAGE_KEY_EXPENSES, JSON.stringify(filtersData));
   };
 
   const handleSearch = () => {
+    // NEW: enforce required full date range
+    if (!hasFullDateRange) {
+      message.error("الرجاء اختيار تاريخ البداية والنهاية أولاً.");
+      return;
+    }
     const newPage = 1;
     setCurrentPage(newPage);
     saveFiltersToStorage(newPage);
@@ -606,8 +643,8 @@ console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatu
     setEndDate(null);
     setSelectedMonth(null);
     setSelectedYear(new Date().getFullYear());
-   setStage(null);
-  setExpenseStatus(null);
+    setStage(null);
+    setExpenseStatus(null);
     
     if (
       isAdmin ||
@@ -629,7 +666,9 @@ console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatu
     // Clear localStorage
     localStorage.removeItem(STORAGE_KEY_EXPENSES);
 
-    fetchExpensesData(1);
+    // NEW: after reset, don't fetch until user picks full date range
+    setExpensesList([]);
+    setTotalRecords(0);
     message.success("تم إعادة تعيين الفلاتر بنجاح");
   };
 
@@ -639,40 +678,50 @@ console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatu
   };
 
   const handlePageChange = (page) => {
+    // NEW: block pagination without date range
+    if (!hasFullDateRange) {
+      message.error("الرجاء اختيار تاريخ البداية والنهاية أولاً.");
+      return;
+    }
     setCurrentPage(page);
     saveFiltersToStorage(page);
     fetchExpensesData(page);
   };
 
+  // Move these outside the component or define them at the top
+  const stageLabelMap = Object.fromEntries(
+    expenseStageOptions.map(o => [o.value, o.label])
+  );
 
-// Move these outside the component or define them at the top
-const stageLabelMap = Object.fromEntries(
-  expenseStageOptions.map(o => [o.value, o.label])
-);
-
-const expenseStatusLabelMap = Object.fromEntries(
-  expenseStatusOptions.map(o => [o.value, o.label])
-);
+  const expenseStatusLabelMap = Object.fromEntries(
+    expenseStatusOptions.map(o => [o.value, o.label])
+  );
 
   // ------------------------------------------------------------------------------------------------
   // Report / Export
   // ------------------------------------------------------------------------------------------------
   const handlePrintPDF = async () => {
+    // NEW: require date range
+    if (!hasFullDateRange) {
+      message.error("لا يمكن إنشاء تقرير بدون تحديد تاريخ (من/إلى).");
+      return;
+    }
+
     try {
-      // We'll need the total count for pageSize if we want all data
       const searchBody = {
         officeId: isSupervisor ? userOfficeId : selectedOffice,
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
         profileId: profile?.id,
         statuses: selectedStatuses,
-        startDate: startDate ? startDate.toISOString() : null,
-        endDate: endDate ? endDate.toISOString() : null,
+        // NEW: full-day coverage
+        startDate: startDate ? startDate.startOf('day').toISOString() : null,
+        endDate: endDate ? endOfDay(endDate).toISOString() : null,
         PaginationParams: {
           PageNumber: 1,
           PageSize: totalRecords || 99999,
         },
       };
-     if (isNewSchemaActive()) {
+      if (isNewSchemaActive()) {
         searchBody.stage = stage ?? null;
         searchBody.expenseStatus = expenseStatus ?? null;
       }
@@ -748,15 +797,27 @@ const expenseStatusLabelMap = Object.fromEntries(
     }
   };
 
+  // helper for end-of-day if needed
+  function endOfDay(dj) {
+    return dj ? dj.endOf('day') : null;
+  }
+
   const handleExportToExcel = async () => {
+    // NEW: require date range
+    if (!hasFullDateRange) {
+      message.error("لا يمكن إنشاء ملف Excel بدون تحديد تاريخ (من/إلى).");
+      return;
+    }
+
     try {
       const searchBody = {
         officeId: isSupervisor ? userOfficeId : selectedOffice,
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
         profileId: profile?.id,
         statuses: selectedStatuses,
-        startDate: startDate ? startDate.toISOString() : null,
-        endDate: endDate ? endDate.toISOString() : null,
+        // NEW: full-day coverage
+        startDate: startDate ? startDate.startOf('day').toISOString() : null,
+        endDate: endDate ? endDate.endOf('day').toISOString() : null,
         PaginationParams: {
           PageNumber: 1,
           PageSize: totalRecords || 99999,
@@ -885,7 +946,7 @@ const expenseStatusLabelMap = Object.fromEntries(
           : value,
     },
     // ⬇️ Conditional columns
-   ...(newSchemaActive
+    ...(newSchemaActive
       ? [
           {
             title: "المرحلة",
@@ -901,19 +962,19 @@ const expenseStatusLabelMap = Object.fromEntries(
           },
         ]
       : [
-{
-  title: "الحالة",
-  key: "statusUnified",
-  render: (_, record) => {
-    if (isRowNewSchema(record)) {
-      const stageName = stageLabelMap[record.stage] ?? "-";
-      const statusName = expenseStatusLabelMap[record.expenseStatus] ?? "-";
-      return `${statusName} ${stageName} `;
-    }
-    const v = typeof record.status === "string" ? Status[record.status] : record.status;
-    return statusDisplayNames[v] || "-";
-  },
-}
+          {
+            title: "الحالة",
+            key: "statusUnified",
+            render: (_, record) => {
+              if (isRowNewSchema(record)) {
+                const stageName = stageLabelMap[record.stage] ?? "-";
+                const statusName = expenseStatusLabelMap[record.expenseStatus] ?? "-";
+                return `${statusName} ${stageName} `;
+              }
+              const v = typeof record.status === "string" ? Status[record.status] : record.status;
+              return statusDisplayNames[v] || "-";
+            },
+          }
         ]),
     {
       title: "التاريخ",
@@ -969,7 +1030,8 @@ const expenseStatusLabelMap = Object.fromEntries(
 
   // This ensures the correct list of statuses for the dropdown
   const availableStatuses = getAvailableStatuses();
-
+ // NEW: disable Search until full date range is set
+ const isSearchDisabled = !hasFullDateRange || isLoading;
   // ------------------------------------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------------------------------------
@@ -1078,59 +1140,60 @@ const expenseStatusLabelMap = Object.fromEntries(
               </Select>
             </div>
 
-      {!isNewSchemaActive() && (
-  <div className="filter-field">
-    <label>الحالة</label>
-    <Select
-      mode="multiple"
-      value={selectedStatuses}
-      onChange={(values) => setSelectedStatuses(values)}
-      placeholder="اختر الحالات"
-      maxTagCount={3}
-      maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
-      className="filter-dropdown"
-      style={{ maxHeight: "200px", overflowY: "auto", width: "250px" }}
-    >
-      {availableStatuses.map((statusValue) => (
-        <Select.Option
-          key={statusValue}
-          value={statusValue}
-          className="supervisor-expenses-history-select-option"
-        >
-          {statusDisplayNames[statusValue]}
-        </Select.Option>
-      ))}
-    </Select>
-  </div>
-)}
- {isNewSchemaActive() && (  <>
-    <div className="filter-field">
-      <label>المرحلة </label>
-      <Select
-        allowClear
-        value={stage}
-        onChange={(v) => setStage(v ?? null)}
-        placeholder="اختر المرحلة"
-        options={expenseStageOptions}
-        className="filter-dropdown"
-        style={{ width: "220px" }}
-      />
-    </div>
+            {!isNewSchemaActive() && (
+              <div className="filter-field">
+                <label>الحالة</label>
+                <Select
+                  mode="multiple"
+                  value={selectedStatuses}
+                  onChange={(values) => setSelectedStatuses(values)}
+                  placeholder="اختر الحالات"
+                  maxTagCount={3}
+                  maxTagPlaceholder={(omitted) => `+ ${omitted} المزيد`}
+                  className="filter-dropdown"
+                  style={{ maxHeight: "200px", overflowY: "auto", width: "250px" }}
+                >
+                  {availableStatuses.map((statusValue) => (
+                    <Select.Option
+                      key={statusValue}
+                      value={statusValue}
+                      className="supervisor-expenses-history-select-option"
+                    >
+                      {statusDisplayNames[statusValue]}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+            )}
 
-    <div className="filter-field">
-      <label>حالة الصرفية </label>
-      <Select
-        allowClear
-        value={expenseStatus}
-        onChange={(v) => setExpenseStatus(v ?? null)}
-        placeholder="اختر الحالة"
-        options={expenseStatusOptions}
-        className="filter-dropdown"
-        style={{ width: "220px" }}
-      />
-    </div>
-  </>
-)}
+            {isNewSchemaActive() && (  <>
+              <div className="filter-field">
+                <label>المرحلة </label>
+                <Select
+                  allowClear
+                  value={stage}
+                  onChange={(v) => setStage(v ?? null)}
+                  placeholder="اختر المرحلة"
+                  options={expenseStageOptions}
+                  className="filter-dropdown"
+                  style={{ width: "220px" }}
+                />
+              </div>
+
+              <div className="filter-field">
+                <label>حالة الصرفية </label>
+                <Select
+                  allowClear
+                  value={expenseStatus}
+                  onChange={(v) => setExpenseStatus(v ?? null)}
+                  placeholder="اختر الحالة"
+                  options={expenseStatusOptions}
+                  className="filter-dropdown"
+                  style={{ width: "220px" }}
+                />
+              </div>
+            </>)}
+
             {/* Date Range Filters - Disabled when month is selected */}
             <div className="filter-field">
               <label>التاريخ من</label>
@@ -1161,15 +1224,30 @@ const expenseStatusLabelMap = Object.fromEntries(
                 }}
               />
             </div>
+           {/* NEW: note that date is required */}
+            {!hasFullDateRange && (
+              <div style={{ color: "#cf1322", fontSize: 12, marginTop: 4 }}>
+                * إدخال التاريخ (من/إلى) مطلوب للبحث
+              </div>
+            )}
 
-            <div className="supervisor-device-filter-buttons">
-              <Button
-                onClick={handleSearch}
-                className="supervisor-passport-dameged-button"
-                loading={isLoading}
+               <div className="supervisor-device-filter-buttons">
+              {/* NEW: tooltip on disabled search button */}
+              <Tooltip
+                title={!hasFullDateRange ? "يجب ادخال التاريخ قبل البحث" : ""}
+                placement="top"
               >
-                البحث
-              </Button>
+                <span>
+                  <Button
+                    onClick={handleSearch}
+                    className="supervisor-passport-dameged-button"
+                    loading={isLoading}
+                    disabled={isSearchDisabled}
+                  >
+                    البحث
+                  </Button>
+                </span>
+              </Tooltip>
 
               <Button
                 className="supervisor-passport-dameged-button"
