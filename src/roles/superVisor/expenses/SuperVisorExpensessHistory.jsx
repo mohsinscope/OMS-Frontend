@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
- import {
+import {
   Table,
   message,
   Button,
@@ -7,8 +7,8 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
   DatePicker,
   ConfigProvider,
   Skeleton,
-  Tooltip,            // NEW
- } from "antd";
+  Tooltip, // NEW
+} from "antd";
 import { Link } from "react-router-dom";
 import useAuthStore from "./../../../store/store";
 import axiosInstance from "./../../../intercepters/axiosInstance";
@@ -61,10 +61,9 @@ const positionStatusMap = {
     Status.SentFromDirector,
   ],
   Manager: [Status.SentToManager, Status.ReturnedToManager],
-  
-  Director: [Status.SentToDirector ],
-  ExpenseAuditer: [Status.ReturnedToExpendeAuditer ,Status.SentFromDirector],
-  ExpenseManager: [Status.ReturnedToExpenseManager , Status.SentToExpenseManager],
+  Director: [Status.SentToDirector],
+  ExpenseAuditer: [Status.ReturnedToExpendeAuditer, Status.SentFromDirector],
+  ExpenseManager: [Status.ReturnedToExpenseManager, Status.SentToExpenseManager],
   ExpenseGeneralManager: [Status.SentToExpenseGeneralManager],
 };
 
@@ -83,7 +82,9 @@ const arabicMonths = [
   { value: 11, label: "نوفمبر - الشهر الحادي عشر", nameEn: "November" },
   { value: 12, label: "ديسمبر - الشهر الثاني عشر", nameEn: "December" },
 ];
+
 const NEW_API_THRESHOLD_ISO = "2025-10-01"; // local midnight (no Z to avoid TZ shift)
+
 const expenseStageOptions = [
   { value: 1, label: "المشرف" },
   { value: 2, label: "منسق المشروع" },
@@ -99,9 +100,9 @@ const expenseStatusOptions = [
   { value: 2, label: "تم الارجاع الى" },
   { value: 3, label: "مكتمل" },
 ];
+
 /** NEW: LocalStorage key for caching filters & pagination. */
 const STORAGE_KEY_EXPENSES = "supervisorExpensesSearchFilters";
-
 
 export default function SuperVisorExpensesHistory() {
   // ------------------------------------------------------------------------------------------------
@@ -116,7 +117,7 @@ export default function SuperVisorExpensesHistory() {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [selectedStatuses, setSelectedStatuses] = useState([]);
-  
+
   // NEW: Month filter state
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -134,29 +135,61 @@ export default function SuperVisorExpensesHistory() {
   const { isSidebarCollapsed, profile, roles, searchVisible, accessToken } =
     useAuthStore();
   const userPosition = profile?.position;
-  const isSupervisor = userPosition === "Supervisor" || userPosition === "MainSupervisor";
+  const isSupervisor =
+    userPosition === "Supervisor" || userPosition === "MainSupervisor";
   const isAdmin = roles.includes("SuperAdmin");
   const userGovernorateId = profile?.governorateId;
   const userOfficeId = profile?.officeId;
 
-const isRowNewSchema = (rec) =>
-  dayjs(rec?.dateCreated).valueOf() >= dayjs(NEW_API_THRESHOLD_ISO).startOf("day").valueOf();
+  const isRowNewSchema = (rec) =>
+    dayjs(rec?.dateCreated).valueOf() >=
+    dayjs(NEW_API_THRESHOLD_ISO).startOf("day").valueOf();
 
   // === NEW: require full date range chosen
-  const hasFullDateRange = useMemo(() => Boolean(startDate && endDate), [startDate, endDate]);
+  const hasFullDateRange = useMemo(
+    () => Boolean(startDate && endDate),
+    [startDate, endDate]
+  );
 
   // ------------------------------------------------------------------------------------------------
-  // Status Filtering Logic
+  // Helpers to normalize values (avoid glitches when API mixes strings/numbers)
   // ------------------------------------------------------------------------------------------------
+  const toNum = (v) => (v == null ? null : typeof v === "number" ? v : Number(v));
+  const normalizeOldStatus = (s) => {
+    if (typeof s === "number") return s;
+    if (typeof s === "string") {
+      const n = Number(s);
+      if (!Number.isNaN(n)) return n; // "4" -> 4
+      return Status[s]; // "SentToManager" -> 3
+    }
+    return undefined;
+  };
+
+  // Maps for display
+  const stageLabelMap = Object.fromEntries(
+    expenseStageOptions.map((o) => [o.value, o.label])
+  );
+  const expenseStatusLabelMap = Object.fromEntries(
+    expenseStatusOptions.map((o) => [o.value, o.label])
+  );
+  const labelStage = (v) => stageLabelMap[toNum(v)] || "-";
+  const labelNewStatus = (v) => expenseStatusLabelMap[toNum(v)] || "-";
+
+  // ------------------------------------------------------------------------------------------------
+  // Status Filtering Logic (OPEN ALL for Manager, ExpenseManager, Director)
+  // ------------------------------------------------------------------------------------------------
+  const canSeeAllStatuses =
+    isAdmin ||
+    isSupervisor ||
+    userPosition === "ProjectCoordinator" ||
+    userPosition === "SrController" ||
+    userPosition === "ExpenseAuditer" ||
+    userPosition === "Manager" || // <- open all
+    userPosition === "ExpenseManager" || // <- open all
+    userPosition === "Director"; // <- open all
+
   const getAvailableStatuses = () => {
-    // Include SrController if relevant
-    if (
-      isAdmin ||
-      isSupervisor ||
-      userPosition === "ProjectCoordinator" ||
-      userPosition === "SrController" ||
-      userPosition==="ExpenseAuditer"
-    ) {
+    if (canSeeAllStatuses) {
       return Object.values(Status);
     }
     const positionStatuses = positionStatusMap[userPosition] || [];
@@ -164,22 +197,11 @@ const isRowNewSchema = (rec) =>
   };
 
   const filterExpensesByAllowedStatuses = (expenses) => {
-    // If admin, supervisor, ProjectCoordinator, or SrController: see all
-    if (
-      isAdmin ||
-      isSupervisor ||
-      userPosition === "ProjectCoordinator" ||
-      userPosition === "SrController"
-    )
-      return expenses;
-
+    if (canSeeAllStatuses) return expenses;
     const allowedStatuses = getAvailableStatuses();
     return expenses.filter((expense) => {
-      const expenseStatus =
-        typeof expense.status === "string"
-          ? Status[expense.status]
-          : expense.status;
-      return allowedStatuses.includes(expenseStatus);
+      const expSt = normalizeOldStatus(expense.status);
+      return allowedStatuses.includes(expSt);
     });
   };
 
@@ -188,16 +210,20 @@ const isRowNewSchema = (rec) =>
   // ------------------------------------------------------------------------------------------------
   const handleMonthChange = (monthValue) => {
     setSelectedMonth(monthValue);
-    
+
     if (monthValue) {
-      // When month is selected, automatically set date range from 1st to 15th
-      const startOfMonth = dayjs().year(selectedYear).month(monthValue - 1).date(1);
-      const fifteenthOfMonth = dayjs().year(selectedYear).month(monthValue - 1).date(15);
-      
+      const startOfMonth = dayjs()
+        .year(selectedYear)
+        .month(monthValue - 1)
+        .date(1);
+      const fifteenthOfMonth = dayjs()
+        .year(selectedYear)
+        .month(monthValue - 1)
+        .date(15);
+
       setStartDate(startOfMonth);
       setEndDate(fifteenthOfMonth);
     } else {
-      // When month is cleared, clear the dates too
       setStartDate(null);
       setEndDate(null);
     }
@@ -205,43 +231,44 @@ const isRowNewSchema = (rec) =>
 
   const handleYearChange = (year) => {
     setSelectedYear(year);
-    
-    // If a month is already selected, update the date range with new year
+
     if (selectedMonth) {
       const startOfMonth = dayjs().year(year).month(selectedMonth - 1).date(1);
-      const fifteenthOfMonth = dayjs().year(year).month(selectedMonth - 1).date(15);
-      
+      const fifteenthOfMonth = dayjs()
+        .year(year)
+        .month(selectedMonth - 1)
+        .date(15);
+
       setStartDate(startOfMonth);
       setEndDate(fifteenthOfMonth);
     }
   };
 
-  const handleDateChange = (dates, dateType) => {
-    if (dateType === 'start') {
-      setStartDate(dates);
+  const handleDateChange = (date, dateType) => {
+    if (dateType === "start") {
+      setStartDate(date);
     } else {
-      setEndDate(dates);
+      setEndDate(date);
     }
-    
-    // Clear month selection when manually changing dates
-    if (selectedMonth && dates) {
+    if (selectedMonth && date) {
       setSelectedMonth(null);
     }
   };
 
   const getEffectiveStartDayjs = () => {
-    if (selectedMonth) return dayjs().year(selectedYear).month(selectedMonth - 1).date(1);
+    if (selectedMonth)
+      return dayjs().year(selectedYear).month(selectedMonth - 1).date(1);
     if (startDate) return startDate;
     return null;
   };
 
   /** NEW: Are we on/after 1 Oct 2025? If yes → use new payload (with stage/expenseStatus). */
-const isNewSchemaActive = () => {
-  const eff = getEffectiveStartDayjs();
-  if (!eff) return false;
-  const threshold = dayjs(NEW_API_THRESHOLD_ISO).startOf("day").valueOf();
-  return eff.startOf("day").valueOf() >= threshold;
-};
+  const isNewSchemaActive = () => {
+    const eff = getEffectiveStartDayjs();
+    if (!eff) return false;
+    const threshold = dayjs(NEW_API_THRESHOLD_ISO).startOf("day").valueOf();
+    return eff.startOf("day").valueOf() >= threshold;
+  };
 
   // Generate years for dropdown (current year ± 5 years)
   const generateYears = () => {
@@ -258,9 +285,12 @@ const isNewSchemaActive = () => {
   // ------------------------------------------------------------------------------------------------
   const fetchGovernorates = useCallback(async () => {
     try {
-      const response = await axiosInstance.get(`${Url}/api/Governorate/dropdown`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await axiosInstance.get(
+        `${Url}/api/Governorate/dropdown`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
       setGovernorates(response.data);
 
       if (isSupervisor) {
@@ -278,7 +308,7 @@ const isNewSchemaActive = () => {
       setSelectedOffice(null);
       return Promise.resolve([]);
     }
-  
+
     try {
       const response = await axiosInstance.get(
         `${Url}/api/Governorate/dropdown/${governorateId}`,
@@ -286,14 +316,14 @@ const isNewSchemaActive = () => {
           headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
-  
+
       if (response.data && response.data[0] && response.data[0].offices) {
         setOffices(response.data[0].offices);
-  
+
         if (isSupervisor) {
           setSelectedOffice(profile.officeId);
         }
-        
+
         return response.data[0].offices;
       }
       return [];
@@ -302,9 +332,8 @@ const isNewSchemaActive = () => {
       return [];
     }
   };
-  
+
   const fetchExpensesData = async (pageNumber = 1) => {
-    // NEW: block fetch until full date range picked
     if (!hasFullDateRange) {
       setExpensesList([]);
       setTotalRecords(0);
@@ -315,56 +344,34 @@ const isNewSchemaActive = () => {
     try {
       setIsLoading(true);
 
-      // Build filter object
       const searchBody = {
         officeId: isSupervisor ? userOfficeId : selectedOffice,
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
         profileId: profile?.id,
         statuses: selectedStatuses.length > 0 ? selectedStatuses : null,
-        // NEW: full-day coverage
-        startDate: startDate ? startDate.startOf('day').toISOString() : null,
-        endDate: endDate ? endDate.endOf('day').toISOString() : null,
+        startDate: startDate ? startDate.startOf("day").toISOString() : null,
+        endDate: endDate ? endDate.endOf("day").toISOString() : null,
         PaginationParams: {
           PageNumber: pageNumber,
           PageSize: pageSize,
         },
       };
+
       // NEW: Switch to the new payload fields when date >= 1 Oct 2025
       if (isNewSchemaActive()) {
-        searchBody.stage = stage ?? null;              // e.g. 7
+        searchBody.stage = stage ?? null;
         searchBody.expenseStatus = expenseStatus ?? null;
       }
 
-      // Console log all search parameters
-      console.log("=== SEARCH PARAMETERS ===");
-      console.log("Search Body:", JSON.stringify(searchBody, null, 2));
-      console.log("Office ID:", searchBody.officeId);
-      console.log("Governorate ID:", searchBody.governorateId);
-      console.log("Profile ID:", searchBody.profileId);
-      console.log("Selected Statuses:", searchBody.statuses);
-      console.log("Start Date:", searchBody.startDate);
-      console.log("End Date:", searchBody.endDate);
-      console.log("Page Number:", searchBody.PaginationParams.PageNumber);
-      console.log("Page Size:", searchBody.PaginationParams.PageSize);
-      console.log("Selected Month:", selectedMonth);
-      console.log("Selected Year:", selectedYear);
-      console.log("========================");
-      console.log("New API mode:", isNewSchemaActive(), "stage:", stage, "expenseStatus:", expenseStatus);
-
-      // If user is not admin/supervisor/ProjectCoordinator/SrController and hasn't chosen statuses, use only what's allowed
+      // If user is not in the "open all" bucket and hasn't chosen statuses, restrict
       if (
         selectedStatuses.length === 0 &&
-        !isAdmin &&
-        !isSupervisor &&
-        userPosition !== "ProjectCoordinator" &&
-        userPosition !== "SrController"
+        !canSeeAllStatuses
       ) {
         const allowedStatuses = getAvailableStatuses();
         searchBody.statuses = allowedStatuses;
-        console.log("Auto-set allowed statuses:", allowedStatuses);
       }
 
-      // Make the request
       const response = await axiosInstance.post(
         `${Url}/api/Expense/search`,
         searchBody,
@@ -376,82 +383,18 @@ const isNewSchemaActive = () => {
         }
       );
 
-      // Console log API response
-      console.log("=== API RESPONSE ===");
-      console.log("Response Status:", response.status);
-      console.log("Response Headers:", response.headers);
-      console.log("Raw Response Data:", response.data);
-      console.log("Number of records returned:", response.data?.length || 0);
-      
-      // Log first few records for inspection
-      if (response.data && response.data.length > 0) {
-        console.log("First record:", response.data[0]);
-        console.log("Sample record structure:", Object.keys(response.data[0]));
-      }
-
-      // Filter by allowed statuses if not admin or supervisor
       const filteredExpenses = filterExpensesByAllowedStatuses(response.data);
-      console.log("Filtered Expenses Count:", filteredExpenses.length);
-      console.log("Filtered Expenses:", filteredExpenses);
-
       setExpensesList(filteredExpenses);
 
       const paginationHeader = response.headers["pagination"];
       if (paginationHeader) {
         const paginationInfo = JSON.parse(paginationHeader);
-        console.log("Pagination Info:", paginationInfo);
         setTotalRecords(paginationInfo.totalItems);
       } else {
-        console.log("No pagination header found, using array length:", response.data.length);
         setTotalRecords(response.data.length);
       }
-      console.log("===================");
-
     } catch (error) {
-      console.error("=== DETAILED SEARCH ERROR ===");
-      console.error("Error object:", error);
-      console.error("Error message:", error.message);
-      console.error("Error name:", error.name);
-      console.error("Error stack:", error.stack);
-      
-      if (error.response) {
-        console.error("=== ERROR RESPONSE DETAILS ===");
-        console.error("Response status:", error.response.status);
-        console.error("Response status text:", error.response.statusText);
-        console.error("Response data:", error.response.data);
-        console.error("Response headers:", error.response.headers);
-        console.error("Response config:", error.response.config);
-        
-        // Log specific error details if available
-        if (error.response.data) {
-          console.error("Error response data type:", typeof error.response.data);
-          console.error("Error response data keys:", Object.keys(error.response.data));
-          if (error.response.data.message) {
-            console.error("Error message from server:", error.response.data.message);
-          }
-          if (error.response.data.errors) {
-            console.error("Validation errors:", error.response.data.errors);
-          }
-        }
-      } else if (error.request) {
-        console.error("=== REQUEST ERROR ===");
-        console.error("Request was made but no response received");
-        console.error("Request details:", error.request);
-      } else {
-        console.error("=== SETUP ERROR ===");
-        console.error("Error in setting up the request:", error.message);
-      }
-      
-      console.error("Request config that failed:");
-      console.error("- URL:", `${Url}/api/Expense/search`);
-      console.error("- Method: POST");
-      console.error("- Headers:", {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      });
-      // we reference searchBody above in logs, so keep as-is
-      console.error("=============================");
-      
+      console.error(error);
       message.error("حدث خطأ أثناء جلب البيانات");
     } finally {
       setIsLoading(false);
@@ -483,7 +426,7 @@ const isNewSchemaActive = () => {
         const {
           selectedGovernorate: savedGov,
           selectedOffice: savedOff,
-          startDate: savedStart,  // ISO strings
+          startDate: savedStart, // ISO strings
           endDate: savedEnd,
           selectedStatuses: savedStatuses,
           currentPage: savedPage,
@@ -492,20 +435,16 @@ const isNewSchemaActive = () => {
           stage: savedStage,
           expenseStatus: savedExpenseStatus,
         } = parsed;
-  
-        // If supervisor, we typically override with user-based governorate/office
+
         if (!isSupervisor) {
           setSelectedGovernorate(savedGov);
-          
-          // Important: Need to load offices for the saved governorate
           if (savedGov) {
             fetchOffices(savedGov).then(() => {
-              // Only set the office after offices are loaded for this governorate
               setSelectedOffice(savedOff);
             });
           }
         }
-  
+
         setStartDate(savedStart ? dayjs(savedStart) : null);
         setEndDate(savedEnd ? dayjs(savedEnd) : null);
         setSelectedStatuses(savedStatuses || []);
@@ -515,8 +454,7 @@ const isNewSchemaActive = () => {
         setExpenseStatus(savedExpenseStatus ?? null);
         const finalPage = savedPage || 1;
         setCurrentPage(finalPage);
-  
-        // Fetch ONLY if we have a complete date range
+
         const doFetch = async () => {
           if (!(savedStart && savedEnd)) {
             setIsLoading(false);
@@ -540,27 +478,18 @@ const isNewSchemaActive = () => {
             profileId: profile?.id,
             statuses:
               savedStatuses && savedStatuses.length > 0 ? savedStatuses : null,
-            // NEW: full-day coverage
-            startDate: dayjs(savedStart).startOf('day').toISOString(),
-            endDate: dayjs(savedEnd).endOf('day').toISOString(),
+            startDate: dayjs(savedStart).startOf("day").toISOString(),
+            endDate: dayjs(savedEnd).endOf("day").toISOString(),
             PaginationParams: {
               PageNumber: finalPage,
               PageSize: pageSize,
             },
           };
-  
-          // If still no statuses and user is not admin/supervisor/ProjectCoordinator/SrController,
-          // set them to allowed
-          if (
-            (!savedStatuses || savedStatuses.length === 0) &&
-            !isAdmin &&
-            !isSupervisor &&
-            userPosition !== "ProjectCoordinator" &&
-            userPosition !== "SrController"
-          ) {
+
+          if (!canSeeAllStatuses && (!savedStatuses || savedStatuses.length === 0)) {
             searchBody.statuses = getAvailableStatuses();
           }
-  
+
           try {
             const resp = await axiosInstance.post(
               `${Url}/api/Expense/search`,
@@ -574,7 +503,7 @@ const isNewSchemaActive = () => {
             );
             const filteredData = filterExpensesByAllowedStatuses(resp.data);
             setExpensesList(filteredData);
-  
+
             const paginationHeader = resp.headers["pagination"];
             if (paginationHeader) {
               const paginationInfo = JSON.parse(paginationHeader);
@@ -597,7 +526,6 @@ const isNewSchemaActive = () => {
         setTotalRecords(0);
       }
     } else {
-      // No saved filters → do NOT fetch; require user to pick a full date range
       setIsLoading(false);
       setExpensesList([]);
       setTotalRecords(0);
@@ -627,7 +555,6 @@ const isNewSchemaActive = () => {
   };
 
   const handleSearch = () => {
-    // NEW: enforce required full date range
     if (!hasFullDateRange) {
       message.error("الرجاء اختيار تاريخ البداية والنهاية أولاً.");
       return;
@@ -645,13 +572,8 @@ const isNewSchemaActive = () => {
     setSelectedYear(new Date().getFullYear());
     setStage(null);
     setExpenseStatus(null);
-    
-    if (
-      isAdmin ||
-      isSupervisor ||
-      userPosition === "ProjectCoordinator" ||
-      userPosition === "SrController"
-    ) {
+
+    if (canSeeAllStatuses) {
       setSelectedStatuses([]);
     } else {
       const allowedStatuses = getAvailableStatuses();
@@ -663,10 +585,8 @@ const isNewSchemaActive = () => {
     }
     setCurrentPage(1);
 
-    // Clear localStorage
     localStorage.removeItem(STORAGE_KEY_EXPENSES);
 
-    // NEW: after reset, don't fetch until user picks full date range
     setExpensesList([]);
     setTotalRecords(0);
     message.success("تم إعادة تعيين الفلاتر بنجاح");
@@ -678,7 +598,6 @@ const isNewSchemaActive = () => {
   };
 
   const handlePageChange = (page) => {
-    // NEW: block pagination without date range
     if (!hasFullDateRange) {
       message.error("الرجاء اختيار تاريخ البداية والنهاية أولاً.");
       return;
@@ -688,20 +607,10 @@ const isNewSchemaActive = () => {
     fetchExpensesData(page);
   };
 
-  // Move these outside the component or define them at the top
-  const stageLabelMap = Object.fromEntries(
-    expenseStageOptions.map(o => [o.value, o.label])
-  );
-
-  const expenseStatusLabelMap = Object.fromEntries(
-    expenseStatusOptions.map(o => [o.value, o.label])
-  );
-
   // ------------------------------------------------------------------------------------------------
   // Report / Export
   // ------------------------------------------------------------------------------------------------
   const handlePrintPDF = async () => {
-    // NEW: require date range
     if (!hasFullDateRange) {
       message.error("لا يمكن إنشاء تقرير بدون تحديد تاريخ (من/إلى).");
       return;
@@ -713,9 +622,8 @@ const isNewSchemaActive = () => {
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
         profileId: profile?.id,
         statuses: selectedStatuses,
-        // NEW: full-day coverage
-        startDate: startDate ? startDate.startOf('day').toISOString() : null,
-        endDate: endDate ? endOfDay(endDate).toISOString() : null,
+        startDate: startDate ? startDate.startOf("day").toISOString() : null,
+        endDate: endOfDay(endDate).toISOString(),
         PaginationParams: {
           PageNumber: 1,
           PageSize: totalRecords || 99999,
@@ -725,12 +633,16 @@ const isNewSchemaActive = () => {
         searchBody.stage = stage ?? null;
         searchBody.expenseStatus = expenseStatus ?? null;
       }
-      const response = await axiosInstance.post(`${Url}/api/Expense/search`, searchBody, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await axiosInstance.post(
+        `${Url}/api/Expense/search`,
+        searchBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       const allExpenses = response.data;
 
@@ -765,10 +677,7 @@ const isNewSchemaActive = () => {
                       ${expense.officeName || ""}
                     </td>
                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
-                      ${
-                        expense.totalAmount?.toLocaleString() ||
-                        ""
-                      }
+                      ${expense.totalAmount?.toLocaleString() || ""}
                     </td>
                     <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">
                       ${new Date(expense.dateCreated).toLocaleDateString()}
@@ -799,11 +708,10 @@ const isNewSchemaActive = () => {
 
   // helper for end-of-day if needed
   function endOfDay(dj) {
-    return dj ? dj.endOf('day') : null;
+    return dj ? dj.endOf("day") : null;
   }
 
   const handleExportToExcel = async () => {
-    // NEW: require date range
     if (!hasFullDateRange) {
       message.error("لا يمكن إنشاء ملف Excel بدون تحديد تاريخ (من/إلى).");
       return;
@@ -815,9 +723,8 @@ const isNewSchemaActive = () => {
         governorateId: isSupervisor ? userGovernorateId : selectedGovernorate,
         profileId: profile?.id,
         statuses: selectedStatuses,
-        // NEW: full-day coverage
-        startDate: startDate ? startDate.startOf('day').toISOString() : null,
-        endDate: endDate ? endDate.endOf('day').toISOString() : null,
+        startDate: startDate ? startDate.startOf("day").toISOString() : null,
+        endDate: endDate ? endDate.endOf("day").toISOString() : null,
         PaginationParams: {
           PageNumber: 1,
           PageSize: totalRecords || 99999,
@@ -827,12 +734,16 @@ const isNewSchemaActive = () => {
         searchBody.stage = stage ?? null;
         searchBody.expenseStatus = expenseStatus ?? null;
       }
-      const response = await axiosInstance.post(`${Url}/api/Expense/search`, searchBody, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await axiosInstance.post(
+        `${Url}/api/Expense/search`,
+        searchBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       const allExpenses = response.data || [];
       if (allExpenses.length === 0) {
@@ -845,13 +756,7 @@ const isNewSchemaActive = () => {
         properties: { rtl: true },
       });
 
-      const headers = [
-        "التاريخ",
-        "مجموع الصرفيات",
-        "المكتب",
-        "المحافظة",
-        "#",
-      ];
+      const headers = ["التاريخ", "مجموع الصرفيات", "المكتب", "المحافظة", "#"];
       const headerRow = worksheet.addRow(headers);
 
       headerRow.eachCell((cell) => {
@@ -902,7 +807,7 @@ const isNewSchemaActive = () => {
         { width: 15 }, // Total Amount
         { width: 20 }, // Office
         { width: 20 }, // Governorate
-        { width: 5 },  // Index
+        { width: 5 }, // Index
       ];
 
       const buffer = await workbook.xlsx.writeBuffer();
@@ -945,20 +850,19 @@ const isNewSchemaActive = () => {
             })
           : value,
     },
-    // ⬇️ Conditional columns
     ...(newSchemaActive
       ? [
           {
             title: "المرحلة",
             dataIndex: "stage",
             key: "stage",
-            render: (v) => stageLabelMap[v] || v || "-",
+            render: (v) => labelStage(v),
           },
           {
-            title: "حالة الصرفية", 
+            title: "حالة الصرفية",
             dataIndex: "expenseStatus",
             key: "expenseStatus",
-            render: (v) => expenseStatusLabelMap[v] || v || "-",
+            render: (v) => labelNewStatus(v),
           },
         ]
       : [
@@ -967,14 +871,14 @@ const isNewSchemaActive = () => {
             key: "statusUnified",
             render: (_, record) => {
               if (isRowNewSchema(record)) {
-                const stageName = stageLabelMap[record.stage] ?? "-";
-                const statusName = expenseStatusLabelMap[record.expenseStatus] ?? "-";
-                return `${statusName} ${stageName} `;
+                const stageName = labelStage(record.stage);
+                const statusName = labelNewStatus(record.expenseStatus);
+                return `${statusName} ${stageName}`;
               }
-              const v = typeof record.status === "string" ? Status[record.status] : record.status;
+              const v = normalizeOldStatus(record.status);
               return statusDisplayNames[v] || "-";
             },
-          }
+          },
         ]),
     {
       title: "التاريخ",
@@ -986,10 +890,7 @@ const isNewSchemaActive = () => {
       title: "التفاصيل",
       key: "details",
       render: (_, record) => {
-        const expStatusValue =
-          typeof record.status === "string"
-            ? Status[record.status]
-            : record.status;
+        const expStatusValue = normalizeOldStatus(record.status);
 
         if (
           isSupervisor &&
@@ -1030,8 +931,9 @@ const isNewSchemaActive = () => {
 
   // This ensures the correct list of statuses for the dropdown
   const availableStatuses = getAvailableStatuses();
- // NEW: disable Search until full date range is set
- const isSearchDisabled = !hasFullDateRange || isLoading;
+  // NEW: disable Search until full date range is set
+  const isSearchDisabled = !hasFullDateRange || isLoading;
+
   // ------------------------------------------------------------------------------------------------
   // Render
   // ------------------------------------------------------------------------------------------------
@@ -1048,7 +950,6 @@ const isNewSchemaActive = () => {
         <Skeleton active paragraph={{ rows: 10 }} />
       ) : (
         <>
-      
           <div
             className={`supervisor-passport-dameged-filters ${
               searchVisible ? "animate-show" : "animate-hide"
@@ -1104,11 +1005,18 @@ const isNewSchemaActive = () => {
                 onChange={handleMonthChange}
                 placeholder="اختر الشهر"
                 allowClear
-                disabled={!!(startDate && !selectedMonth) || !!(endDate && !selectedMonth)}
+                disabled={
+                  !!(startDate && !selectedMonth) ||
+                  !!(endDate && !selectedMonth)
+                }
                 className="filter-dropdown"
-                style={{ 
+                style={{
                   width: "200px",
-                  backgroundColor: (!!(startDate && !selectedMonth) || !!(endDate && !selectedMonth)) ? "#f5f5f5" : "white"
+                  backgroundColor:
+                    !!(startDate && !selectedMonth) ||
+                    !!(endDate && !selectedMonth)
+                      ? "#f5f5f5"
+                      : "white",
                 }}
               >
                 {arabicMonths.map((month) => (
@@ -1125,11 +1033,18 @@ const isNewSchemaActive = () => {
                 value={selectedYear}
                 onChange={handleYearChange}
                 placeholder="اختر السنة"
-                disabled={!!(startDate && !selectedMonth) || !!(endDate && !selectedMonth)}
+                disabled={
+                  !!(startDate && !selectedMonth) ||
+                  !!(endDate && !selectedMonth)
+                }
                 className="filter-dropdown"
-                style={{ 
+                style={{
                   width: "150px",
-                  backgroundColor: (!!(startDate && !selectedMonth) || !!(endDate && !selectedMonth)) ? "#f5f5f5" : "white"
+                  backgroundColor:
+                    !!(startDate && !selectedMonth) ||
+                    !!(endDate && !selectedMonth)
+                      ? "#f5f5f5"
+                      : "white",
                 }}
               >
                 {generateYears().map((year) => (
@@ -1166,46 +1081,48 @@ const isNewSchemaActive = () => {
               </div>
             )}
 
-            {isNewSchemaActive() && (  <>
-              <div className="filter-field">
-                <label>المرحلة </label>
-                <Select
-                  allowClear
-                  value={stage}
-                  onChange={(v) => setStage(v ?? null)}
-                  placeholder="اختر المرحلة"
-                  options={expenseStageOptions}
-                  className="filter-dropdown"
-                  style={{ width: "220px" }}
-                />
-              </div>
+            {isNewSchemaActive() && (
+              <>
+                <div className="filter-field">
+                  <label>المرحلة </label>
+                  <Select
+                    allowClear
+                    value={stage}
+                    onChange={(v) => setStage(v ?? null)}
+                    placeholder="اختر المرحلة"
+                    options={expenseStageOptions}
+                    className="filter-dropdown"
+                    style={{ width: "220px" }}
+                  />
+                </div>
 
-              <div className="filter-field">
-                <label>حالة الصرفية </label>
-                <Select
-                  allowClear
-                  value={expenseStatus}
-                  onChange={(v) => setExpenseStatus(v ?? null)}
-                  placeholder="اختر الحالة"
-                  options={expenseStatusOptions}
-                  className="filter-dropdown"
-                  style={{ width: "220px" }}
-                />
-              </div>
-            </>)}
+                <div className="filter-field">
+                  <label>حالة الصرفية </label>
+                  <Select
+                    allowClear
+                    value={expenseStatus}
+                    onChange={(v) => setExpenseStatus(v ?? null)}
+                    placeholder="اختر الحالة"
+                    options={expenseStatusOptions}
+                    className="filter-dropdown"
+                    style={{ width: "220px" }}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Date Range Filters - Disabled when month is selected */}
             <div className="filter-field">
               <label>التاريخ من</label>
               <DatePicker
                 placeholder="التاريخ من"
-                onChange={(date) => handleDateChange(date, 'start')}
+                onChange={(date) => handleDateChange(date, "start")}
                 value={startDate}
                 disabled={!!selectedMonth}
                 className="supervisor-passport-dameged-input"
-                style={{ 
+                style={{
                   width: "100%",
-                  backgroundColor: selectedMonth ? "#f5f5f5" : "white"
+                  backgroundColor: selectedMonth ? "#f5f5f5" : "white",
                 }}
               />
             </div>
@@ -1214,25 +1131,24 @@ const isNewSchemaActive = () => {
               <label>التاريخ إلى</label>
               <DatePicker
                 placeholder="التاريخ إلى"
-                onChange={(date) => handleDateChange(date, 'end')}
+                onChange={(date) => handleDateChange(date, "end")}
                 value={endDate}
                 disabled={!!selectedMonth}
                 className="supervisor-passport-dameged-input"
-                style={{ 
+                style={{
                   width: "100%",
-                  backgroundColor: selectedMonth ? "#f5f5f5" : "white"
+                  backgroundColor: selectedMonth ? "#f5f5f5" : "white",
                 }}
               />
             </div>
-           {/* NEW: note that date is required */}
+
             {!hasFullDateRange && (
               <div style={{ color: "#cf1322", fontSize: 12, marginTop: 4 }}>
                 * إدخال التاريخ (من/إلى) مطلوب للبحث
               </div>
             )}
 
-               <div className="supervisor-device-filter-buttons">
-              {/* NEW: tooltip on disabled search button */}
+            <div className="supervisor-device-filter-buttons">
               <Tooltip
                 title={!hasFullDateRange ? "يجب ادخال التاريخ قبل البحث" : ""}
                 placement="top"
