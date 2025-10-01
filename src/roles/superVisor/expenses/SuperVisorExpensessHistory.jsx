@@ -854,7 +854,7 @@ const columns = [
         // 1 = تم الارسال الى ...   2 = تم الارجاع الى ...   3 = مكتمل
         if (toNum(record.expenseStatus) === 3) {
           // matches your phrasing: "في الاخير تم الاكمل من قبل مدير الحسابات"
-          return `في الاخير تم الاكمل من قبل ${stageName}`;
+          return `${stageName}`;
         }
         return `${statusName} ${stageName}`;
       }
