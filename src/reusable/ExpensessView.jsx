@@ -579,114 +579,136 @@ export default function ExpensesView() {
   };
 
   // ======== SUBMIT ACTION (NEW + OLD workflows) ========
-  const handleActionSubmit = async () => {
-    try {
-      const { notes } = await form.validateFields();
-      if (!profile?.profileId) {
-        message.error("لم يتم العثور على معلومات المستخدم");
+ const handleActionSubmit = async () => {
+  try {
+    const { notes } = await form.validateFields();
+    if (!profile?.profileId) {
+      message.error("لم يتم العثور على معلومات المستخدم");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // ---------- NEW WORKFLOW (after 2025-10-02) ----------
+    if (isNewWorkflowActive) {
+      // 1) اختر الإجراء المسموح (من منطقك الحالي)
+      const chosen = pickWfAction(wfActions, actionType /* 'Approval' | 'Return' */);
+      if (!chosen) {
+        message.error("لا توجد عملية مناسبة متاحة لهذا الدور.");
         return;
       }
 
-      setIsSubmitting(true);
+      const actorId = EXPENSE_ACTOR_CODE[wfActor];
+      if (!actorId) {
+        message.error("تعذر تحديد الممثل (Actor) للإجراء.");
+        return;
+      }
 
-      if (isNewWorkflowActive) {
-        // -------- NEW WORKFLOW (after 2025-10-02) --------
-        const chosen = pickWfAction(wfActions, actionType);
-        if (!chosen) {
-          message.error("لا توجد عملية مناسبة متاحة لهذا الدور.");
-          return;
-        }
+      const numericActionType = Number(chosen.actionType ?? chosen.actionInfo?.id);
+      const code = (chosen?.actionInfo?.code || chosen?.code || "").toLowerCase();
+      const isResendOrComplete =
+        code === "resend" || numericActionType === 2 ||
+        code === "complete" || numericActionType === 3;
 
-        const actorId = EXPENSE_ACTOR_CODE[wfActor];
-        if (!actorId) {
-          message.error("تعذر تحديد الممثل (Actor) للإجراء.");
-          return;
-        }
+      // 2) الـ payload الافتراضي (كما كان)
+      let payload = {
+        actor: actorId,
+        actionType: numericActionType,
+        to: isResendOrComplete ? null : (chosen.to ?? chosen.toInfo?.id ?? null),
+        comment: notes,
+        PerformedByUserId: profile.profileId,
+      };
 
-        const numericActionType = Number(
-          chosen.actionType ?? chosen.actionInfo?.id
-        );
-        const code = (chosen?.actionInfo?.code || chosen?.code || "").toLowerCase();
-               const isResendOrComplete =
-         code === "resend" || numericActionType === 2 ||
-         code === "complete" || numericActionType === 3;
+      // 3) شرطك الخاص:
+      //    - فقط إذا كان المستخدم ProjectCoordinator/SrController
+      //    - وهناك pendingResendTarget صالح
+      //    - وضغط على "موافقة" (Approval)
+      const isProjectCoordinator =
+        (profile?.position || "").toLowerCase().includes("projectcoordinator") ||
+        (profile?.position || "").toLowerCase().includes("srcontroller");
 
-        // FORCE to: null for Resend
-        const payload = {
-          actor: actorId,
-          actionType: numericActionType,
-          to: isResendOrComplete ? null : (chosen.to ?? chosen.toInfo?.id ?? null),
+      const prtRaw = expense?.generalInfo?.pendingResendTarget;
+      const prt = prtRaw == null ? null : Number(prtRaw);
+
+      if (isProjectCoordinator && actionType === "Approval" && Number.isFinite(prt)) {
+        payload = {
+          actor: 2,          // ثابت
+          actionType: 0,     // ثابت (Send)
+          to: prt,           // 4 أو 5 ... حسب قيمة الـ API
           comment: notes,
           PerformedByUserId: profile.profileId,
         };
-
-        // Optional debug:
-        // console.log("WF PAYLOAD =>", JSON.stringify(payload));
-
-        await axiosInstance.put(
-          `${Url}/api/MonthlyExpensesWorkflow/${expenseId}/actions`,
-          payload,
-          { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" } }
-        );
-
-        message.success(
-          `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح (النظام الجديد)`
-        );
-      } else {
-        // -------- OLD WORKFLOW (on/before 2025-10-02) --------
-        const _getStatusFn =
-          actionType === "Approval" ? getNextStatus : getRejectionStatus;
-        const newStatus = _getStatusFn(currentStatus, userPosition);
-
-        if (newStatus === null) {
-          message.error("لا يمكنك تنفيذ هذا الإجراء على هذه الحالة.");
-          return;
-        }
-        if (newStatus === currentStatus) {
-          message.warning("الحالة الحالية لا تسمح بهذا الإجراء.");
-          return;
-        }
-
-        const dynamicActionType =
-          actionType === "Approval"
-            ? `تمت الموافقة من ${profile.position || ""} ${profile.fullName || ""}`
-            : `تم الارجاع من ${profile.position || ""} ${profile.fullName || ""}`;
-
-        // 1) سجل الإجراء (المنظومة القديمة)
-        await axiosInstance.post(
-          `${Url}/api/Actions`,
-          {
-            actionType: dynamicActionType,
-            notes,
-            profileId: profile.profileId,
-            monthlyExpensesId: expenseId,
-          },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-
-        // 2) تحديث الحالة (المنظومة القديمة)
-        await axiosInstance.post(
-          `${Url}/api/Expense/${expenseId}/status`,
-          { monthlyExpensesId: expenseId, newStatus },
-          { headers: { Authorization: `Bearer ${accessToken}` } }
-        );
-
-        message.success(
-          `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح (النظام القديم)`
-        );
       }
 
+      await axiosInstance.put(
+        `${Url}/api/MonthlyExpensesWorkflow/${expenseId}/actions`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      message.success(
+        `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح (النظام الجديد)`
+      );
       handleModalCancel();
       navigate("/supervisor/Expensess", { replace: true });
-    } catch (err) {
-      console.error("Error in handleActionSubmit:", err);
-      message.error(
-        `حدث خطأ أثناء ${actionType === "Approval" ? "الموافقة" : "الإرجاع"}`
-      );
-    } finally {
-      setIsSubmitting(false);
+      return;
     }
-  };
+
+    // ---------- OLD WORKFLOW (on/before 2025-10-02) ----------
+    const _getStatusFn = actionType === "Approval" ? getNextStatus : getRejectionStatus;
+    const newStatus = _getStatusFn(currentStatus, userPosition);
+
+    if (newStatus === null) {
+      message.error("لا يمكنك تنفيذ هذا الإجراء على هذه الحالة.");
+      return;
+    }
+    if (newStatus === currentStatus) {
+      message.warning("الحالة الحالية لا تسمح بهذا الإجراء.");
+      return;
+    }
+
+    const dynamicActionType =
+      actionType === "Approval"
+        ? `تمت الموافقة من ${profile.position || ""} ${profile.fullName || ""}`
+        : `تم الارجاع من ${profile.position || ""} ${profile.fullName || ""}`;
+
+    await axiosInstance.post(
+      `${Url}/api/Actions`,
+      {
+        actionType: dynamicActionType,
+        notes,
+        profileId: profile.profileId,
+        monthlyExpensesId: expenseId,
+      },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    await axiosInstance.post(
+      `${Url}/api/Expense/${expenseId}/status`,
+      { monthlyExpensesId: expenseId, newStatus },
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    message.success(
+      `تم ${actionType === "Approval" ? "الموافقة" : "الإرجاع"} بنجاح (النظام القديم)`
+    );
+    handleModalCancel();
+    navigate("/supervisor/Expensess", { replace: true });
+  } catch (err) {
+    console.error("Error in handleActionSubmit:", err);
+    message.error(
+      `حدث خطأ أثناء ${actionType === "Approval" ? "الموافقة" : "الإرجاع"}`
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
 
   // ======== Table pagination state persist ========
   const handleTableChange = (pagination) => {
@@ -907,24 +929,23 @@ export default function ExpensesView() {
 
         if (!isMounted) return;
 
-        setExpense({
-          generalInfo: {
-            "الرقم التسلسلي": expenseResponse.data.id,
-            "اسم المشرف": expenseResponse.data.profileFullName,
-            المحافظة: expenseResponse.data.governorateName,
-            المكتب: expenseResponse.data.officeName,
-            "مبلغ النثرية": officeBudget,
-            "مجموع الصرفيات": finalTotal,
-            المتبقي: remainingAmount,
-            التاريخ: new Date(
-              expenseResponse.data.dateCreated
-            ).toLocaleDateString(),
-            الحالة: expenseResponse.data.status,
-            rawDate: expenseResponse.data.dateCreated,
-          },
-          items: allItems,
-          flattenedItems: flattenedAllItems,
-        });
+     setExpense({
+  generalInfo: {
+    "الرقم التسلسلي": expenseResponse.data.id,
+    "اسم المشرف": expenseResponse.data.profileFullName,
+    المحافظة: expenseResponse.data.governorateName,
+    المكتب: expenseResponse.data.officeName,
+    "مبلغ النثرية": officeBudget,
+    "مجموع الصرفيات": finalTotal,
+    المتبقي: remainingAmount,
+    التاريخ: new Date(expenseResponse.data.dateCreated).toLocaleDateString(),
+    الحالة: expenseResponse.data.status,
+    rawDate: expenseResponse.data.dateCreated,
+    pendingResendTarget: expenseResponse.data.pendingResendTarget, // ⬅️ الجديد
+  },
+  items: allItems,
+  flattenedItems: flattenedAllItems,
+});
       } catch (error) {
         if (isMounted) {
           console.error("Error fetching expense data:", error);
