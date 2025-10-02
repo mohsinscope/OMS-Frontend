@@ -474,17 +474,17 @@ function ExpensessAddDaily() {
       return false;           // كل الشهور متاحة
     }
 
-    // باقي الحالات → اسمح فقط بأيام الشهر الحالي
-    if (!current) return false;
+    // // باقي الحالات → اسمح فقط بأيام الشهر الحالي
+    // if (!current) return false;
 
-    const today     = new Date();
-    const thisMonth = today.getMonth();
-    const thisYear  = today.getFullYear();
+    // const today     = new Date();
+    // const thisMonth = today.getMonth();
+    // const thisYear  = today.getFullYear();
 
-    const inThisMonth =
-      current.month() === thisMonth && current.year() === thisYear;
+    // const inThisMonth =
+    //   current.month() === thisMonth && current.year() === thisYear;
 
-    return !inThisMonth;      // عطّل كل ما عدا الشهر الحالي
+    // return !inThisMonth;      // عطّل كل ما عدا الشهر الحالي
   }}
 />
             </Form.Item>
