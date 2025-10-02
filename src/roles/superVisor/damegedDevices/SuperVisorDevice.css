@@ -222,3 +222,37 @@
   width: 200px ;
   height: 47px !important;
 }
+
+.pdf-export-btn {
+  background: linear-gradient(90deg, #ef4444, #dc2626) !important; /* red-500 -> red-600 */
+  border-color: #b91c1c !important; /* red-700 */
+  color: #fff !important;
+  font-weight: 600;
+  border-radius: 10px;
+  transition: all .2s ease-in-out;
+  height: 45px !important;
+}
+
+.pdf-export-btn:hover,
+.pdf-export-btn:focus {
+  background: linear-gradient(90deg, #dc2626, #b91c1c) !important; /* red-600 -> red-700 */
+  border-color: #991b1b !important; /* red-800 */
+  color: #fff !important;
+  box-shadow: 0 8px 18px rgba(185, 28, 28, 0.45);
+}
+
+.pdf-export-btn:disabled {
+  background: #fca5a5 !important; /* red-300 */
+  border-color: #fca5a5 !important;
+  color: #7f1d1d !important; /* red-900-ish */
+  box-shadow: none !important;
+  cursor: not-allowed;
+  opacity: .9;
+}
+
+/* ترتيب النص + الأيقونة مع RTL/LTR تلقائياً */
+.pdf-export-btn__content {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem; /* مسافة بين النص والأيقونة */
+}
