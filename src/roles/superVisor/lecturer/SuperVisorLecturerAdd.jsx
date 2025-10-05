@@ -153,19 +153,20 @@ const SuperVisorLecturerAdd = () => {
     }
   };
 
-  const sendLectureDetails = async (payload) => {
-    try {
-      const response = await axiosInstance.post(`${Url}/api/Lecture`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      return response.data?.id || response.data;
-    } catch (error) {
-      throw new Error("فشل في إرسال بيانات المحضر.");
-    }
-  };
+const sendLectureDetails = async (formData) => {
+  try {
+    const res = await axiosInstance.post(`${Url}/api/Lecture`, formData, {
+      headers: {
+        // DO NOT set 'Content-Type' here; the browser will add the correct multipart boundary
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+    // backend likely returns the created entity; adjust if your shape differs
+    return res.data?.id || res.data;
+  } catch (err) {
+    throw new Error("فشل في إرسال بيانات المحضر.");
+  }
+};
 
   const attachFiles = async (entityId) => {
     for (const file of fileList) {
@@ -187,56 +188,54 @@ const SuperVisorLecturerAdd = () => {
     }
   };
 
-  const handleFormSubmit = async (values) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
+ const handleFormSubmit = async (values) => {
+  if (isSubmitting) return;
+  setIsSubmitting(true);
 
-    try {
-      if (!profileId || !governorateId || !officeId) {
-        throw new Error("تفاصيل المستخدم مفقودة. يرجى تسجيل الدخول مرة أخرى.");
-      }
-
-      const payload = {
-        title: values.title,
-        date: values.date
-          ? values.date.format("YYYY-MM-DDTHH:mm:ss")
-          : moment().format("YYYY-MM-DDTHH:mm:ss"),
-        officeId: isSupervisor ? officeId : values.officeId,
-        governorateId: isSupervisor ? governorateId : values.governorateId,
-        profileId,
-        companyId: selectedCompany,
-        lectureTypeIds: values.lectureTypeIds,
-        note: values.note || "لا يوجد",
-      };
-
-      const entityId = await sendLectureDetails(payload);
-
-      if (!entityId) {
-        throw new Error("فشل في استرداد معرف الكيان من الاستجابة.");
-      }
-
-      try {
-        if (fileList.length > 0) {
-          await attachFiles(entityId);
-          message.success("تم إرسال البيانات والمرفقات بنجاح.");
-        } else {
-          message.success("تم إرسال البيانات بنجاح بدون مرفقات.");
-        }
-        navigate(-1);
-      } catch (attachmentError) {
-        await rollbackLecture(entityId);
-        throw new Error(
-          "فشل في إرفاق الملفات. تم إلغاء إنشاء المحضر لضمان سلامة البيانات."
-        );
-      }
-    } catch (error) {
-      message.error(
-        error.message || "حدث خطأ أثناء إرسال البيانات أو المرفقات."
-      );
-    } finally {
-      setIsSubmitting(false);
+  try {
+    if (!profileId || !governorateId || !officeId) {
+      throw new Error("تفاصيل المستخدم مفقودة. يرجى تسجيل الدخول مرة أخرى.");
     }
-  };
+
+    // ----- Build FormData exactly like Postman -----
+    const fd = new FormData();
+    fd.append("title", values.title);
+    fd.append(
+      "date",
+      values.date ? values.date.toDate().toISOString() : new Date().toISOString()
+    );
+    fd.append("note", values.note || "لا يوجد");
+    fd.append("officeId", isSupervisor ? String(officeId) : String(values.officeId));
+    fd.append(
+      "governorateId",
+      isSupervisor ? String(governorateId) : String(values.governorateId)
+    );
+    fd.append("profileId", String(profileId));
+    fd.append("companyId", String(selectedCompany));
+
+    // IMPORTANT: multiple field entries, not a JSON array
+    (values.lectureTypeIds || []).forEach((id) => {
+      fd.append("lectureTypeIds", String(id));
+    });
+
+    // Match Postman key name exactly: "File"
+    fileList.forEach((f) => {
+      // use original file object
+      const blob = f.originFileObj || f;
+      fd.append("File", blob, f.name || blob.name || `file-${Date.now()}`);
+    });
+
+    const entityId = await sendLectureDetails(fd);
+    if (!entityId) throw new Error("فشل في استرداد معرف الكيان من الاستجابة.");
+
+    message.success("تم إنشاء المحضر وإرفاق الملفات بنجاح.");
+    navigate(-1);
+  } catch (error) {
+    message.error(error.message || "حدث خطأ أثناء إرسال البيانات.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleFileChange = (info) => {
     const updatedFiles = info.fileList.filter((file) => {
