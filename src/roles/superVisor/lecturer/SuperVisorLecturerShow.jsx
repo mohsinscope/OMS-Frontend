@@ -20,7 +20,7 @@ import "./LecturerShow.css";
 import useAuthStore from "./../../../store/store";
 import Url from "./../../../store/url.js";
 import Lele from "./../../../reusable elements/icons.jsx";
-import moment from "moment";
+import dayjs from "dayjs";
 
 const LecturerShow = () => {
   const location = useLocation();
@@ -46,17 +46,24 @@ const LecturerShow = () => {
   const { isSidebarCollapsed, permissions } = useAuthStore();
   const hasUpdatePermission = permissions.includes("Lu");
   const hasDeletePermission = permissions.includes("Ld");
-
+const mapTypeNamesToIds = (names = [], types = []) => {
+  const wanted = new Set(names.map((n) => String(n).trim()));
+  return (types || [])
+    .filter((t) => wanted.has(String(t.name).trim()))
+    .map((t) => String(t.id));
+};
   const fetchCompanies = async () => {
     try {
       const response = await axiosInstance.get(`${Url}/api/Company`);
       setCompanies(response.data);
+      return response.data; // <-- ensure caller can use the fresh list
     } catch (error) {
       message.error("فشل في جلب بيانات الشركات");
+      return [];
     }
   };
 
-  const fetchLectureDetails = async () => {
+  const fetchLectureDetails = async (companiesList = companies) => {
     try {
       const response = await axiosInstance.get(`${Url}/api/Lecture/${lectureId}`);
       const lecture = response.data;
@@ -64,10 +71,11 @@ const LecturerShow = () => {
 
       // Store initial values
       setInitialCompanyId(lecture.companyId);
-      setInitialLectureTypeIds(lecture.lectureTypeIds);
+
 
       // Preload lecture types
-      const selectedCompany = companies.find((c) => c.id === lecture.companyId);
+     const pool = (companiesList?.length ? companiesList : companies) || [];
+   const selectedCompany = pool.find((c) => String(c.id) === String(lecture.companyId));
       if (selectedCompany) {
         setLectureTypes(selectedCompany.lectureTypes || []);
       }
@@ -75,12 +83,11 @@ const LecturerShow = () => {
       // Set form values
       form.setFieldsValue({
         ...lecture,
-        date: moment(lecture.date),
-        companyId: lecture.companyId,
-        lectureTypeIds: lecture.lectureTypeIds,
+     date: dayjs(lecture.date),
+     companyId: lecture.companyId,
+     lectureTypeIds: typeIds,
       });
     } catch (error) {
-      message.error("حدث خطأ أثناء جلب تفاصيل المحضر");
     }
   };
 
@@ -111,10 +118,8 @@ const LecturerShow = () => {
 
       try {
         // Fetch companies first
-        await fetchCompanies();
-
-        // Fetch lecture details after companies are loaded
-        await fetchLectureDetails();
+     const companiesList = await fetchCompanies();
+ await fetchLectureDetails(companiesList);
 
         // Finally, fetch images
         await fetchLectureImages();
@@ -127,11 +132,18 @@ const LecturerShow = () => {
 
     initializeData();
   }, [lectureId, navigate]);
-
+const companyIdWatch = Form.useWatch('companyId', form);
   const handleCompanyChange = (value) => {
-    const selectedCompany = companies.find((c) => c.id === value);
+    const selectedCompany = companies.find((c) => String(c.id) === String(value));
     setLectureTypes(selectedCompany?.lectureTypes || []);
-    form.setFieldValue("lectureTypeIds", undefined);
+
+       // Now map names -> ids safely
+   const typeIds = mapTypeNamesToIds(
+     Array.isArray(lecture.lectureTypeNames) ? lecture.lectureTypeNames : [],
+     selectedCompany?.lectureTypes || []
+   );
+   setInitialLectureTypeIds(typeIds);
+    form.setFieldValue("lectureTypeIds", []);
   };
 
 // before: (file) => { … }
@@ -166,7 +178,7 @@ const handleImageUpload = async (files) => {
         id: lectureId,
         title: values.title,
         // Convert the string date to a Date object and then call toISOString()
-        date: new Date(values.date).toISOString(),
+        date: values.date?.toDate().toISOString(),
         note: values.note || "",
         officeId: lectureData.officeId,
         governorateId: lectureData.governorateId,
@@ -230,14 +242,18 @@ const handleImageUpload = async (files) => {
                   onClick={() => {
                     // Reset company and lecture type to their initial values
         // Pre-fill every field in the form
-   const selectedCompany = companies.find(c => c.id === initialCompanyId);
+   const selectedCompany = companies.find(c => String(c.id) === String(initialCompanyId));
    setLectureTypes(selectedCompany?.lectureTypes || []);
+        const mappedIds = mapTypeNamesToIds(
+       lectureData.lectureTypeNames,
+       selectedCompany?.lectureTypes || []
+    );
 
    form.setFieldsValue({
      title:         lectureData.title,
-     date:          moment(lectureData.date),       // <-- DatePicker needs a moment()
+     date:          dayjs(lectureData.date),
      companyId:     initialCompanyId,
-     lectureTypeIds: initialLectureTypeIds,
+     lectureTypeIds: mappedIds,
      note:          lectureData.note || "",
    });
 
@@ -265,7 +281,7 @@ const handleImageUpload = async (files) => {
                 <span className="details-label">التاريخ:</span>
                 <input
                   className="details-value"
-                  value={moment(lectureData.date).format("YYYY-MM-DD ")}
+                  value={dayjs(lectureData.date).format("YYYY-MM-DD")}
                   disabled
                 />
               </div>
@@ -340,7 +356,8 @@ const handleImageUpload = async (files) => {
                 className="dammaged-passport-container-edit-modal"
                 initialValues={{
                   ...lectureData,
-                  date: moment(lectureData?.date),
+                  date: dayjs(lectureData?.date),
+               
                 }}
               >
                 <Form.Item
@@ -381,12 +398,12 @@ const handleImageUpload = async (files) => {
                   <Select
                     mode="multiple"
                     placeholder="اختر نوع المحضر"
-                    disabled={!form.getFieldValue("companyId")}
-                    onChange={(value) => form.setFieldsValue({ lectureTypeIds: value })}
+                    disabled={!companyIdWatch}
+                    onChange={(value) => form.setFieldsValue({ lectureTypeIds: (value || []).map(String) })}
                     allowClear
                   >
-                    {lectureTypes.map((type) => (
-                      <Select.Option key={type.id} value={type.id}>
+                   {lectureTypes.map((type) => (
+   <Select.Option key={String(type.id)} value={String(type.id)}>
                         {type.name}
                       </Select.Option>
                     ))}
