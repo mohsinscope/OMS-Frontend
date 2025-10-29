@@ -87,19 +87,45 @@ const PasswordResetModal = ({ visible, onCancel, userId }) => {
 };
 
 const PermissionsModal = ({ visible, onCancel, userId }) => {
-  const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+
+  // ✅ allPermissions is now an array of objects: { permission, description }
   const [allPermissions, setAllPermissions] = useState([]);
+
+  // ✅ userPermissions is an array of strings (permission codes) the user already has
   const [userPermissions, setUserPermissions] = useState([]);
-  const [selectedPermissions, setSelectedPermissions] = useState([]);
+
+  // ✅ selectedPermissions is a map: { [permissionCode]: description|null }
+  const [selectedPermissions, setSelectedPermissions] = useState({});
+
+  // roles from user permissions payload
   const [userRoles, setUserRoles] = useState([]);
 
-  // Fetch all available permissions
+  // Helper: build array for API from selectedPermissions map
+  const buildPermissionArray = () => {
+    const arr = [];
+    const keys = Object.keys(selectedPermissions || {});
+    for (const key of keys) {
+      // Prefer description from selected map; fallback to description from allPermissions; else null
+      const fromSelected = selectedPermissions[key];
+      const fromAll = allPermissions.find(p => p.permission === key)?.description ?? null;
+      arr.push({
+        permission: key,
+        description: (fromSelected ?? fromAll ?? null) || null,
+      });
+    }
+    return arr;
+  };
+
+  // Fetch all available permissions (paged)
   useEffect(() => {
     const fetchAllPermissions = async () => {
       try {
-        const response = await axiosInstance.get(`${Url}/api/Permission/all-permissions`);
-        setAllPermissions(response.data);
+        const response = await axiosInstance.get(
+          `${Url}/api/Permission/all-permissions?pageNumber=1&pageSize=100`
+        );
+        // Expecting: [{ permission: "Ac", description: null }, ...]
+        setAllPermissions(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error('Error fetching all permissions:', error);
         message.error('فشل في جلب قائمة الصلاحيات');
@@ -111,19 +137,32 @@ const PermissionsModal = ({ visible, onCancel, userId }) => {
     }
   }, [visible]);
 
-  // Fetch user's current permissions
+  // Fetch user's current permissions (new payload shape)
   useEffect(() => {
     const fetchUserPermissions = async () => {
       try {
         setLoading(true);
         const response = await axiosInstance.get(`${Url}/api/Permission/${userId}/permissions`);
-        setUserRoles(response.data.roles || []);
-        setUserPermissions(response.data.permissions?.AllPermissions || []);
-        setSelectedPermissions(response.data.permissions?.AllPermissions || []);
-      } 
-      
-      
-      catch (error) {
+        // response example:
+        // {
+        //   "roles": ["Supervisor"],
+        //   "permissions": {},
+        //   "permissionDetails": [{ permission, description, source }, ...]
+        // }
+        const roles = response.data?.roles || [];
+        const details = response.data?.permissionDetails || [];
+
+        setUserRoles(roles);
+        const currentPerms = details.map(d => d.permission);
+        setUserPermissions(currentPerms);
+
+        // Seed selected with what user already has (permission -> description)
+        const seeded = {};
+        details.forEach(d => {
+          seeded[d.permission] = d.description ?? null;
+        });
+        setSelectedPermissions(seeded);
+      } catch (error) {
         console.error('Error fetching user permissions:', error);
         message.error('فشل في جلب صلاحيات المستخدم');
       } finally {
@@ -136,53 +175,42 @@ const PermissionsModal = ({ visible, onCancel, userId }) => {
     }
   }, [visible, userId]);
 
-  const handlePermissionToggle = (permission) => {
+  const handlePermissionToggle = (permObj) => {
+    const code = permObj.permission;
     setSelectedPermissions(prev => {
-      if (prev.includes(permission)) {
-        return prev.filter(p => p !== permission);
+      const next = { ...prev };
+      if (Object.prototype.hasOwnProperty.call(next, code)) {
+        // remove
+        delete next[code];
+        return next;
       }
-      return [...prev, permission];
+      // add with available description (could be null)
+      next[code] = permObj.description ?? null;
+      return next;
     });
   };
 
-  const handleUpdatePermissions = async () => {
+  const handleSavePermissions = async () => {
     try {
       setLoading(true);
+      const payload = {
+        permissionUpdates: buildPermissionArray()
+      };
       await axiosInstance.put(
         `${Url}/api/Permission/${userId}/permissions`,
-        selectedPermissions
+        payload
       );
-      message.success('تم تحديث الصلاحيات بنجاح');
+      message.success('تم حفظ الصلاحيات بنجاح');
       onCancel();
     } catch (error) {
       console.error('Error updating permissions:', error);
-      message.error('فشل في تحديث الصلاحيات');
+      message.error('فشل في حفظ الصلاحيات');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddPermissions = async () => {
-    try {
-      if (!selectedPermissions.length) {
-        message.warning('الرجاء اختيار الصلاحيات أولاً');
-        return;
-      }
-
-      setLoading(true);
-      await axiosInstance.post(
-        `${Url}/api/Permission/${userId}/add-permissions`,
-        selectedPermissions
-      );
-      message.success('تم إضافة الصلاحيات بنجاح');
-      onCancel();
-    } catch (error) {
-      console.error('Error adding permissions:', error);
-      message.error('فشل في إضافة الصلاحيات');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const selectedKeys = Object.keys(selectedPermissions || {});
 
   return (
     <Modal
@@ -201,39 +229,41 @@ const PermissionsModal = ({ visible, onCancel, userId }) => {
 
         {/* Permissions Grid */}
         <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto p-4">
-          {allPermissions.map((permission) => (
-            <div 
-              key={permission}
-              className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50"
-            >
-              <Checkbox
-                checked={selectedPermissions.includes(permission)}
-                onChange={() => handlePermissionToggle(permission)}
-              />
-              <span className="flex-1">{permission}</span>
-              {userPermissions.includes(permission) && (
-                <Check className="h-4 w-4 text-green-500" />
-              )}
-            </div>
-          ))}
+          {allPermissions.map((p) => {
+            const code = p.permission;
+            const isSelected = selectedKeys.includes(code);
+            const isOwned = userPermissions.includes(code);
+
+            return (
+              <div
+                key={code}
+                className="flex items-center space-x-2 p-2 border rounded hover:bg-gray-50"
+              >
+                <Checkbox
+                  checked={isSelected}
+                  onChange={() => handlePermissionToggle(p)}
+                />
+                <span className="flex-1">
+                  {code}
+                  {typeof p.description === 'string' && p.description.trim().length > 0
+                    ? ` — ${p.description}`
+                    : ''}
+                </span>
+                {isOwned && <Check className="h-4 w-4 text-green-500" />}
+              </div>
+            );
+          })}
         </div>
 
-        {/* Action Buttons */}
+        {/* Single Save Button (PUT) */}
         <div className="flex gap-2">
-          <Button 
+          <Button
             type="primary"
-            onClick={handleUpdatePermissions}
+            onClick={handleSavePermissions}
             loading={loading}
             block
           >
-            تعديل الصلاحيات
-          </Button>
-          <Button 
-            onClick={handleAddPermissions}
-            loading={loading}
-            block
-          >
-            اضافة صلاحيات
+            حفظ الصلاحيات
           </Button>
         </div>
       </div>
@@ -255,28 +285,27 @@ const EditUserModal = ({
 }) => {
   const userRoles = useAuthStore((state) => state.roles);
   const isSuperAdmin = userRoles.includes('SuperAdmin');
-  
+
   const [isPasswordResetVisible, setIsPasswordResetVisible] = useState(false);
   const [isPermissionsModalVisible, setIsPermissionsModalVisible] = useState(false);
 
   const handleFinish = async (values) => {
     try {
-      
       // Add validation before submitting
       const requiredFields = ['fullName', 'roles', 'position', 'governorate', 'officeName'];
       const missingFields = requiredFields.filter(field => !values[field]);
-      
+
       if (missingFields.length > 0) {
         message.error(`Missing required fields: ${missingFields.join(', ')}`);
         return;
       }
-  
+
       // Add loading state
       form.setFields([{ name: '_loading', value: true }]);
-      
+
       // Call the parent onFinish function
       await onFinish(values);
-      
+
     } catch (error) {
       console.error('Error details:', error); // More detailed error logging
       message.error('فشل في تحديث المستخدم');
@@ -284,7 +313,6 @@ const EditUserModal = ({
       form.setFields([{ name: '_loading', value: false }]);
     }
   };
-  
 
   return (
     <ConfigProvider direction="rtl">
@@ -299,7 +327,7 @@ const EditUserModal = ({
           onFinish={handleFinish}
           layout="vertical"
           className="dammaged-passport-container-edit-modal"
-          
+
         >
           <h1>تعديل المستخدم</h1>
           <Form.Item
@@ -337,7 +365,7 @@ const EditUserModal = ({
             label="المنصب"
             rules={[{ required: true, message: "يرجى اختيار المنصب" }]}
           >
-            <Select 
+            <Select
               placeholder="اختر المنصب"
               dropdownMatchSelectWidth={false}
               listHeight={256}
@@ -365,7 +393,7 @@ const EditUserModal = ({
             label="المحافظة"
             rules={[{ required: true, message: "يرجى اختيار المحافظة" }]}
           >
-            <Select 
+            <Select
               placeholder="اختر المحافظة"
               dropdownMatchSelectWidth={false}
               listHeight={256}
@@ -387,7 +415,7 @@ const EditUserModal = ({
             label="اسم المكتب"
             rules={[{ required: true, message: "يرجى اختيار اسم المكتب" }]}
           >
-            <Select 
+            <Select
               placeholder="اختر المكتب"
               dropdownMatchSelectWidth={false}
               listHeight={256}
@@ -402,8 +430,8 @@ const EditUserModal = ({
           </Form.Item>
 
           <div className="border-t mt-4 pt-4 flex gap-2">
-            <Button 
-              type="default" 
+            <Button
+              type="default"
               onClick={() => setIsPasswordResetVisible(true)}
               className="flex-1"
               style={{margin:"10px 0"}}
@@ -411,8 +439,8 @@ const EditUserModal = ({
               اعادة تعيين كلمة السر
             </Button>
             {isSuperAdmin && (
-              <Button 
-                type="default" 
+              <Button
+                type="default"
                 onClick={() => setIsPermissionsModalVisible(true)}
                 className="flex-1"
               >
